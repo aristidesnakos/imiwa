@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Llanai - Purchase Confirmation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.7;
+      color: #2c2c2c;
+      background: linear-gradient(180deg, #fefcf7 0%, #faf8f3 100%);
+      font-size: 16px;
+      min-height: 100vh;
+      padding: 60px 20px;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(44, 44, 44, 0.08);
+    }
+
+    .header {
+      background: #fefcf7;
+      padding: 48px 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 40px;
+      right: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #f0ede6, transparent);
+    }
+
+    .logo {
+      font-family: Georgia, serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #2c2c2c;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      color: #6b6b6b;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+    }
+
+    .content {
+      padding: 48px 40px 40px;
+    }
+
+    .greeting {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-family: Georgia, serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: #2c2c2c;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #6b6b6b;
+      font-size: 16px;
+      text-align: center;
+      line-height: 1.6;
+      max-width: 400px;
+      margin: 0 auto 32px;
+    }
+
+    .success-badge {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    .plan-details {
+      text-align: center;
+      margin: 32px 0;
+    }
+
+    .plan-name {
+      font-family: Georgia, serif;
+      font-size: 24px;
+      font-weight: 600;
+      color: #2c2c2c;
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 20px;
+      color: #d4a574;
+      font-weight: 500;
+    }
+
+
+    .button-wrapper {
+      text-align: center;
+      margin: 40px 0;
+    }
+
+    .button {
+      display: inline-block;
+      background: #d4a574 !important;
+      color: #fefcf7 !important;
+      padding: 18px 48px;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(44, 44, 44, 0.15);
+      border: none;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(44, 44, 44, 0.2);
+      background: #c4955f !important;
+    }
+
+    .button:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.3);
+    }
+
+
+    .video-section {
+      text-align: center;
+      margin: 40px 0;
+      padding: 32px 20px;
+      background: #faf8f3;
+      border-radius: 12px;
+    }
+
+    .video-title {
+      font-weight: 600;
+      color: #2c2c2c;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .video-subtitle {
+      color: #6b6b6b;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .video-content {
+      text-align: center;
+    }
+
+    .video-thumbnail-wrapper {
+      width: 280px;
+      margin: 0 auto 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(44, 44, 44, 0.12);
+    }
+
+    .video-thumbnail-image {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .video-button {
+      display: inline-block;
+      background: #d4a574 !important;
+      color: #fefcf7 !important;
+      padding: 14px 32px;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 12px rgba(212, 165, 116, 0.25);
+      border: none;
+    }
+
+    .video-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(212, 165, 116, 0.35);
+      background: #c4955f !important;
+    }
+
+    .video-button:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.3);
+    }
+
+    .support-section {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #f0ede6;
+    }
+
+    .support-text {
+      color: #6b6b6b;
+      font-size: 14px;
+    }
+
+    .support-link {
+      color: #d4a574;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .support-link:hover {
+      color: #c4955f;
+      text-decoration: underline;
+    }
+
+    .footer {
+      padding: 48px 40px;
+      background: #fefcf7;
+      text-align: center;
+      border-top: 1px solid #f0ede6;
+    }
+
+    .signature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 8px 24px rgba(44, 44, 44, 0.1);
+    }
+
+    .signature-text {
+      text-align: center;
+    }
+
+    .signature-name {
+      font-family: Georgia, serif;
+      font-weight: 600;
+      color: #2c2c2c;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .signature-role {
+      color: #8b8b8b;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-links {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #f0ede6;
+    }
+
+    .footer-links p {
+      color: #8b8b8b;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .footer-links a {
+      color: #d4a574;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+      margin: 0 8px;
+    }
+
+    .footer-links a:hover {
+      color: #c4955f;
+      text-decoration: underline;
+    }
+
+    .emoji {
+      display: inline-block;
+      font-size: 20px;
+      vertical-align: middle;
+      margin: 0 4px;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 16px;
+      }
+
+      .header,
+      .content,
+      .footer {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      .button {
+        padding: 16px 32px;
+        font-size: 15px;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+        color: #fefcf7;
+      }
+
+      .container {
+        background: #2c2c2c;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      }
+
+      .header {
+        background: #2c2c2c;
+      }
+
+      .header::after {
+        background: linear-gradient(90deg, transparent, #444, transparent);
+      }
+
+      .logo,
+      h2,
+      .plan-name,
+      .info-title,
+      .support-title {
+        color: #fefcf7;
+      }
+
+      .tagline,
+      .subtitle,
+      .plan-price,
+      .info-text,
+      .support-text {
+        color: #a0a0a0;
+      }
+
+      .features-list li {
+        color: #fefcf7;
+      }
+
+      .button {
+        background: #d4a574;
+        color: #2c2c2c;
+      }
+
+      .button:hover {
+        background: #c4955f;
+      }
+
+
+
+      .footer {
+        background: #2c2c2c;
+        border-top-color: #444;
+      }
+
+      .signature-name {
+        color: #fefcf7;
+      }
+
+      .signature-role,
+      .footer-links p {
+        color: #a0a0a0;
+      }
+
+      .footer-links {
+        border-top-color: #444;
+      }
+
+      .video-section {
+        background: #1a1a1a;
+      }
+
+      .video-title {
+        color: #fefcf7;
+      }
+
+      .video-subtitle {
+        color: #a0a0a0;
+      }
+
+      .video-button {
+        background: #d4a574 !important;
+        color: #2c2c2c !important;
+      }
+
+      .video-button:hover {
+        background: #c4955f !important;
+      }
+
+      .support-section {
+        border-top-color: #444;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://llanai.com/images/icon.png"
+           alt="Llanai Logo"
+           style="width: 120px; height: 120px; object-fit: contain; margin: 0 auto 20px; display: block;">
+      <h1 class="logo" style="font-family: Georgia, serif;">Llanai</h1>
+      <div class="tagline">Your Language Learning Journal</div>
+    </div>
+
+    <main class="content" role="main">
+      <div class="greeting">
+        <span class="success-badge">✨ Payment Successful</span>
+        <h2>Welcome to The Writer!</h2>
+        <p class="subtitle">
+          Your subscription is now active.
+        </p>
+      </div>
+
+      <div class="plan-details">
+        <div class="plan-name">The Writer</div>
+        <div class="plan-price">{{ plan_price }}</div>
+      </div>
+
+      <div class="button-wrapper">
+        <a href="{{ app_url }}/journal" class="button" role="button" aria-label="Start Learning">
+          Start Learning Now →
+        </a>
+      </div>
+
+      <div class="video-section">
+        <h3 class="video-title">Quick Start Guide</h3>
+        <p class="video-subtitle">Watch this 1-minute video to get started</p>
+        <div class="video-content">
+          <div class="video-thumbnail-wrapper">
+            <img src="https://llanai.com/images/journal-hero.png"
+                 alt="Llanai Journal Interface"
+                 class="video-thumbnail-image">
+          </div>
+          <a href="https://youtube.com/shorts/qjcKRyzy-9Q" class="video-button" role="button" aria-label="Watch Getting Started Video">
+            Watch Getting Started Video
+          </a>
+        </div>
+      </div>
+
+      <div class="support-section">
+        <p class="support-text">
+          Manage your subscription in
+          <a href="{{ app_url }}/settings" class="support-link">account settings</a>
+        </p>
+      </div>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+      <div class="signature">
+        <img src="https://llanai.com/images/ari-face.png"
+             alt="Ari from Llanai"
+             class="avatar"
+             width="80"
+             height="80">
+        <div class="signature-text">
+          <p class="signature-name">{{ email_signature }}</p>
+          <p class="signature-role">Founder, {{ company_name }}</p>
+        </div>
+      </div>
+
+      <div class="footer-links">
+        <p>Thank you for choosing {{ company_name }}!</p>
+        <div>
+          <a href="https://llanai.com" aria-label="Visit Llanai website">llanai.com</a>
+          •
+          <a href="mailto:ari@llanai.com" aria-label="Email support">ari@llanai.com</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
