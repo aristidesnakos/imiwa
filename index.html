@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imiwa - Kanji Quiz Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 Imiwa - Kanji Knowledge Checker</h1>
+            <p>Upload a picture of a page with kanji and test your knowledge!</p>
+        </header>
+
+        <!-- Step 1: Image Upload -->
+        <section id="upload-section" class="section">
+            <h2>Step 1: Upload or Capture Image</h2>
+            <div class="upload-area">
+                <input type="file" id="imageInput" accept="image/*" capture="environment">
+                <label for="imageInput" class="upload-label">
+                    <span>📷 Choose or Capture Image</span>
+                </label>
+                <div id="imagePreview" class="image-preview"></div>
+            </div>
+            <div class="manual-input">
+                <p>Or enter kanji manually:</p>
+                <textarea id="manualKanji" placeholder="Paste kanji characters here..."></textarea>
+                <button id="processManualBtn" class="btn">Process Kanji</button>
+            </div>
+        </section>
+
+        <!-- Step 2: Kanji Detection Results -->
+        <section id="detection-section" class="section hidden">
+            <h2>Step 2: Detected Kanji</h2>
+            <div id="detectedKanji" class="kanji-grid"></div>
+            <button id="startQuizBtn" class="btn btn-primary">Start Quiz</button>
+        </section>
+
+        <!-- Step 3: Quiz -->
+        <section id="quiz-section" class="section hidden">
+            <h2>Step 3: Kanji Quiz</h2>
+            <div class="quiz-progress">
+                <span id="questionNumber">Question 1</span> / <span id="totalQuestions">10</span>
+            </div>
+            <div id="quizContent" class="quiz-content">
+                <div class="kanji-display">
+                    <span id="currentKanji" class="current-kanji">日</span>
+                </div>
+                <div class="question">
+                    <p id="questionText">What does this kanji mean?</p>
+                </div>
+                <div id="optionsContainer" class="options-container"></div>
+                <div class="quiz-actions">
+                    <button id="submitAnswerBtn" class="btn btn-primary">Submit Answer</button>
+                    <button id="skipBtn" class="btn btn-secondary">Skip</button>
+                </div>
+                <div id="feedback" class="feedback hidden"></div>
+            </div>
+        </section>
+
+        <!-- Step 4: Results -->
+        <section id="results-section" class="section hidden">
+            <h2>Quiz Results</h2>
+            <div id="resultsContent" class="results-content">
+                <div class="score-display">
+                    <h3>Your Score: <span id="finalScore">0</span>/<span id="totalScore">0</span></h3>
+                    <div class="score-percentage" id="scorePercentage">0%</div>
+                </div>
+                <div class="kanji-knowledge">
+                    <h3>Kanji You Know:</h3>
+                    <div id="knownKanji" class="kanji-list"></div>
+                    <h3>Kanji to Study:</h3>
+                    <div id="unknownKanji" class="kanji-list"></div>
+                </div>
+                <button id="restartBtn" class="btn btn-primary">Start New Quiz</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="kanji-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
