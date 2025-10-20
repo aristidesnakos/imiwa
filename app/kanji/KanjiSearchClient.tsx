@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
+import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { Search, BookOpen } from 'lucide-react';
 
-type JLPTLevel = 'N5' | 'N4' | 'ALL';
+type JLPTLevel = 'N5' | 'N4' | 'N3' | 'ALL';
 
 interface KanjiWithLevel {
   kanji: string;
@@ -74,6 +75,7 @@ export function KanjiSearchClient() {
   const ALL_KANJI: KanjiWithLevel[] = [
     ...N5_KANJI.map(k => ({ ...k, level: 'N5' as JLPTLevel })),
     ...N4_KANJI.map(k => ({ ...k, level: 'N4' as JLPTLevel })),
+    ...N3_KANJI.map(k => ({ ...k, level: 'N3' as JLPTLevel })),
   ];
   
   useEffect(() => {
@@ -107,7 +109,7 @@ export function KanjiSearchClient() {
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
           Learn Japanese kanji with interactive stroke order diagrams. Master the correct way to write each character.
         </p>
-        <div className="flex justify-center space-x-2">
+        <div className="flex justify-center space-x-2 flex-wrap gap-2">
           <Badge variant="secondary" className="text-sm">
             <BookOpen className="w-4 h-4 mr-1" />
             {N5_KANJI.length} N5 Kanji
@@ -115,6 +117,10 @@ export function KanjiSearchClient() {
           <Badge variant="secondary" className="text-sm">
             <BookOpen className="w-4 h-4 mr-1" />
             {N4_KANJI.length} N4 Kanji
+          </Badge>
+          <Badge variant="secondary" className="text-sm">
+            <BookOpen className="w-4 h-4 mr-1" />
+            {N3_KANJI.length} N3 Kanji
           </Badge>
           <Badge variant="default" className="text-sm">
             <BookOpen className="w-4 h-4 mr-1" />
@@ -136,10 +142,11 @@ export function KanjiSearchClient() {
       
       {/* Level Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
+        <TabsList className="grid w-full grid-cols-4 max-w-lg mx-auto">
           <TabsTrigger value="ALL">All ({ALL_KANJI.length})</TabsTrigger>
           <TabsTrigger value="N5">N5 ({N5_KANJI.length})</TabsTrigger>
           <TabsTrigger value="N4">N4 ({N4_KANJI.length})</TabsTrigger>
+          <TabsTrigger value="N3">N3 ({N3_KANJI.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="ALL" className="space-y-6">
@@ -147,7 +154,7 @@ export function KanjiSearchClient() {
             title="All JLPT Kanji" 
             kanji={filtered} 
             search={search}
-            description="Browse all available kanji from N5 and N4 levels"
+            description="Browse all available kanji from N5, N4, and N3 levels"
           />
         </TabsContent>
         
@@ -166,6 +173,15 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Intermediate kanji building on N5 foundation"
+          />
+        </TabsContent>
+        
+        <TabsContent value="N3" className="space-y-6">
+          <KanjiSection 
+            title="JLPT N3 Kanji" 
+            kanji={filtered} 
+            search={search}
+            description="Advanced intermediate kanji for complex expressions and formal contexts"
           />
         </TabsContent>
       </Tabs>
@@ -191,12 +207,12 @@ export function KanjiSearchClient() {
         <h3>JLPT Kanji Collection</h3>
         <p>
           This comprehensive collection contains {ALL_KANJI.length} kanji characters covering 
-          JLPT N5 and N4 levels. N5 includes {N5_KANJI.length} fundamental characters that 
-          every Japanese learner should master first, while N4 adds {N4_KANJI.length} 
-          intermediate characters building on the N5 foundation.
+          JLPT N5, N4, and N3 levels. Starting with {N5_KANJI.length} fundamental N5 characters, 
+          progressing through {N4_KANJI.length} intermediate N4 kanji, and expanding to 
+          {N3_KANJI.length} advanced N3 characters for complex expressions and formal contexts.
         </p>
         
-        <div className="grid md:grid-cols-2 gap-6 not-prose">
+        <div className="grid md:grid-cols-3 gap-4 not-prose">
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-semibold text-blue-900 mb-2">JLPT N5 Level</h4>
             <p className="text-sm text-blue-800">
@@ -209,6 +225,13 @@ export function KanjiSearchClient() {
             <p className="text-sm text-green-800">
               Intermediate kanji expanding vocabulary - includes more complex characters 
               for business, education, and social contexts.
+            </p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-purple-900 mb-2">JLPT N3 Level</h4>
+            <p className="text-sm text-purple-800">
+              Advanced intermediate kanji for complex expressions, formal writing, 
+              and sophisticated communication.
             </p>
           </div>
         </div>
