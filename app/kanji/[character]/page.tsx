@@ -23,16 +23,13 @@ interface Props {
   params: Promise<{ character: string }>;
 }
 
+// Force dynamic rendering to bypass any static generation issues
+export const dynamic = 'force-dynamic';
+
 // Generate static paths for all kanji
-export async function generateStaticParams() {
-  const params = ALL_KANJI_DATA.map((kanji) => ({
-    character: encodeURIComponent(kanji.kanji),
-  }));
-  
-  console.log('Generating static params for kanji pages:', params.length);
-  console.log('Sample params:', params.slice(0, 5));
-  
-  return params;
+export async function generateStaticParams(): Promise<{ character: string }[]> {
+  // Return empty array to force all pages to be dynamic
+  return [];
 }
 
 // Enable ISR for missing pages
