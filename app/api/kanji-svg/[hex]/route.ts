@@ -6,13 +6,19 @@ export async function GET(
 ) {
   try {
     const { hex } = await params;
+    console.log('API Route - received hex:', hex);
     
-    // Validate hex parameter
-    if (!hex || !/^[0-9a-f]{5}$/i.test(hex)) {
-      return NextResponse.json({ error: 'Invalid hex parameter' }, { status: 400 });
+    // Validate hex parameter (allow 4-5 characters)
+    if (!hex || !/^[0-9a-f]{4,5}$/i.test(hex)) {
+      console.log('API Route - invalid hex:', hex);
+      return NextResponse.json({ error: 'Invalid hex parameter', received: hex }, { status: 400 });
     }
     
-    const url = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${hex}.svg`;
+    // Pad to 5 characters if needed
+    const paddedHex = hex.padStart(5, '0');
+    
+    const url = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${paddedHex}.svg`;
+    console.log('API Route - fetching URL:', url);
     
     const response = await fetch(url, {
       headers: {

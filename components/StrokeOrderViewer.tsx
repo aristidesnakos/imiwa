@@ -18,24 +18,6 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Helper function to get stroke paths in correct order
-  const getStrokePathsInOrder = (svgElement: SVGSVGElement): SVGPathElement[] => {
-    const allPaths = Array.from(svgElement.querySelectorAll('path'));
-    const strokePaths = allPaths.filter(path => {
-      const id = path.getAttribute('id');
-      return id && id.includes('-s') && /s\d+$/.test(id);
-    }) as SVGPathElement[];
-    
-    // Sort paths by stroke number (e.g., s1, s2, s3...)
-    strokePaths.sort((a, b) => {
-      const aNum = parseInt(a.getAttribute('id')?.split('-s')[1] || '0');
-      const bNum = parseInt(b.getAttribute('id')?.split('-s')[1] || '0');
-      return aNum - bNum;
-    });
-    
-    return strokePaths;
-  };
-  
   const loadStrokeOrder = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -43,7 +25,6 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     
     try {
       const svgContent = await strokeOrderService.loadSVG(kanji);
-      
       if (svgContent) {
         setSvg(svgContent);
       } else {
@@ -61,7 +42,6 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     loadStrokeOrder();
   }, [kanji, loadStrokeOrder]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (animationTimeoutRef.current) {
@@ -70,135 +50,60 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     };
   }, []);
 
-  // Prepare SVG for animation when it loads
+  const initializePaths = () => {
+    if (!svgContainerRef.current) return;
+    
+    const svgElement = svgContainerRef.current.querySelector('svg');
+    if (!svgElement) return;
+    
+    const paths = Array.from(svgElement.querySelectorAll('path'));
+    paths.forEach((path) => {
+      const pathLength = path.getTotalLength();
+      path.style.strokeDasharray = `${pathLength}`;
+      path.style.strokeDashoffset = `${pathLength}`;
+      path.style.stroke = '#2c2c2c';
+      path.style.strokeWidth = '2';
+      path.style.fill = 'none';
+      path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+    });
+  };
+
   useEffect(() => {
-    if (svg && svgContainerRef.current) {
-      console.log('Initializing SVG for animation...');
-      setTimeout(() => {
-        const svgElement = svgContainerRef.current?.querySelector('svg');
-        if (svgElement) {
-          console.log('SVG element found for initialization');
-          const strokePaths = getStrokePathsInOrder(svgElement);
-          console.log('Stroke paths for initialization:', strokePaths.length);
-          
-          if (strokePaths.length === 0) {
-            // Fallback: initialize all paths
-            const allPaths = Array.from(svgElement.querySelectorAll('path'));
-            console.log('Using fallback - initializing all paths:', allPaths.length);
-            allPaths.forEach((path) => {
-              // Try opacity-based animation instead
-              path.style.opacity = '0';
-              path.style.stroke = '#2c2c2c';
-              path.style.strokeWidth = '2';
-              path.style.fill = 'none';
-              path.style.transition = 'opacity 0.8s ease-in-out';
-            });
-          } else {
-            // Initialize stroke paths for animation
-            strokePaths.forEach((path) => {
-              console.log('Initializing path:', path.getAttribute('id'));
-              // Get the actual path length
-              const pathLength = path.getTotalLength();
-              console.log('Path length:', pathLength);
-              
-              // Use proper stroke-dash animation with actual path length
-              path.style.strokeDasharray = `${pathLength}`;
-              path.style.strokeDashoffset = `${pathLength}`;
-              path.style.stroke = '#2c2c2c';
-              path.style.strokeWidth = '2';
-              path.style.fill = 'none';
-              path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
-            });
-          }
-        }
-      }, 100);
+    if (svg) {
+      setTimeout(initializePaths, 100);
     }
   }, [svg]);
   
   const toggleAnimation = () => {
-    console.log('Play button clicked!', { playing, svgContainerRef: !!svgContainerRef.current });
+    if (!svgContainerRef.current || playing) return;
     
-    if (svgContainerRef.current && !playing) {
-      const svgElement = svgContainerRef.current.querySelector('svg');
-      console.log('SVG element found:', !!svgElement);
-      
-      if (svgElement) {
-        setPlaying(true);
-        const strokePaths = getStrokePathsInOrder(svgElement);
-        console.log('Found stroke paths:', strokePaths.length, strokePaths.map(p => p.getAttribute('id')));
-        
-        if (strokePaths.length === 0) {
-          // Fallback: use all paths if no stroke paths found
-          const allPaths = Array.from(svgElement.querySelectorAll('path'));
-          console.log('Using fallback - all paths:', allPaths.length);
-          
-          allPaths.forEach((path, index) => {
-            setTimeout(() => {
-              console.log(`Animating path ${index + 1}/${allPaths.length}`);
-              path.style.opacity = '1';
-            }, index * 800);
-          });
-          
-          const totalDuration = allPaths.length * 800 + 800;
-          animationTimeoutRef.current = setTimeout(() => {
-            setPlaying(false);
-          }, totalDuration);
-        } else {
-          // Animate each stroke one by one in correct order
-          strokePaths.forEach((path, index) => {
-            setTimeout(() => {
-              console.log(`Animating stroke ${index + 1}/${strokePaths.length}:`, path.getAttribute('id'));
-              path.style.strokeDashoffset = '0';
-            }, index * 800);
-          });
-          
-          // Reset playing state after all animations complete
-          const totalDuration = strokePaths.length * 800 + 800;
-          animationTimeoutRef.current = setTimeout(() => {
-            setPlaying(false);
-          }, totalDuration);
-        }
-      }
-    }
+    const svgElement = svgContainerRef.current.querySelector('svg');
+    if (!svgElement) return;
+    
+    setPlaying(true);
+    const paths = Array.from(svgElement.querySelectorAll('path'));
+    
+    paths.forEach((path, index) => {
+      setTimeout(() => {
+        path.style.strokeDashoffset = '0';
+      }, index * 600);
+    });
+    
+    const totalDuration = paths.length * 600 + 600;
+    animationTimeoutRef.current = setTimeout(() => {
+      setPlaying(false);
+    }, totalDuration);
   };
   
   const resetAnimation = () => {
     setPlaying(false);
     
-    // Clear any pending animation timeout
     if (animationTimeoutRef.current) {
       clearTimeout(animationTimeoutRef.current);
       animationTimeoutRef.current = null;
     }
     
-    if (svgContainerRef.current) {
-      const svgElement = svgContainerRef.current.querySelector('svg');
-      if (svgElement) {
-        const strokePaths = getStrokePathsInOrder(svgElement);
-        
-        if (strokePaths.length === 0) {
-          const allPaths = Array.from(svgElement.querySelectorAll('path'));
-          allPaths.forEach(path => {
-            path.style.opacity = '0';
-            path.style.stroke = '#2c2c2c';
-            path.style.strokeWidth = '2';
-            path.style.fill = 'none';
-            path.style.transition = 'opacity 0.8s ease-in-out';
-          });
-        } else {
-          // Reset stroke paths to initial hidden state
-          strokePaths.forEach(path => {
-            const pathLength = path.getTotalLength();
-            path.style.strokeDasharray = `${pathLength}`;
-            path.style.strokeDashoffset = `${pathLength}`;
-            path.style.stroke = '#2c2c2c';
-            path.style.strokeWidth = '2';
-            path.style.fill = 'none';
-            path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
-          });
-        }
-      }
-    }
+    initializePaths();
   };
   
   if (loading) {
