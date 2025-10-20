@@ -7,7 +7,8 @@ export class StrokeOrderService {
     }
     
     const hex = this.getUnicodeHex(kanji);
-    const url = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${hex}.svg`;
+    // Use our internal API route that proxies the KanjiVG requests
+    const url = `/api/kanji-svg/${hex}`;
     
     try {
       const response = await fetch(url);
