@@ -22,14 +22,14 @@ export class StrokeOrderService {
   }
   
   private getUnicodeHex(kanji: string): string {
-    return '0x' + kanji.charCodeAt(0).toString(16).padStart(5, '0');
+    return kanji.charCodeAt(0).toString(16).padStart(5, '0');
   }
   
   // Helper method to get Unicode info for display
   getUnicodeInfo(kanji: string) {
     const codePoint = kanji.charCodeAt(0);
     return {
-      hex: this.getUnicodeHex(kanji),
+      hex: '0x' + this.getUnicodeHex(kanji),
       decimal: codePoint,
       unicode: `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`,
     };
