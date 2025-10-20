@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { Loader2, Play, Pause, RotateCcw, RefreshCw } from 'lucide-react';
@@ -15,13 +15,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
-  const svgContainerRef = useRef<HTMLDivElement>(null);
-  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  const loadStrokeOrder = useCallback(async () => {
+  const loadStrokeOrder = async () => {
     setLoading(true);
     setError(false);
-    setPlaying(false);
     
     try {
       const svgContent = await strokeOrderService.loadSVG(kanji);
@@ -32,96 +29,41 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         setError(true);
       }
     } catch (err) {
-      console.error('StrokeOrderViewer: Failed to load stroke order:', err);
+      console.error('Failed to load stroke order:', err);
       setError(true);
     }
     
     setLoading(false);
-  }, [kanji]);
+  };
   
   useEffect(() => {
     loadStrokeOrder();
-  }, [kanji, loadStrokeOrder]);
-
-  useEffect(() => {
-    return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const initializePaths = () => {
-    if (!svgContainerRef.current) return;
-    
-    const svgElement = svgContainerRef.current.querySelector('svg');
-    if (!svgElement) return;
-    
-    const paths = Array.from(svgElement.querySelectorAll('path'));
-    paths.forEach((path) => {
-      path.style.stroke = '#2c2c2c';
-      path.style.strokeWidth = '2';
-      path.style.fill = 'none';
-      path.style.opacity = '0'; // Start hidden
-      path.style.transition = 'opacity 0.3s ease-in-out';
-    });
-  };
-
-  useEffect(() => {
-    if (svg) {
-      setTimeout(initializePaths, 100);
-    }
-  }, [svg]);
+  }, [kanji]);
   
   const toggleAnimation = () => {
-    if (!svgContainerRef.current || playing) return;
-    
-    const svgElement = svgContainerRef.current.querySelector('svg');
-    if (!svgElement) return;
-    
-    setPlaying(true);
-    const paths = Array.from(svgElement.querySelectorAll('path'));
-    console.log(`Found ${paths.length} paths for opacity animation`);
-    
-    // Hide all paths first
-    paths.forEach((path, index) => {
-      path.style.opacity = '0';
-      console.log(`Hiding path ${index}`);
-    });
-    
-    // Show each path one by one
-    paths.forEach((path, index) => {
-      const delay = index * 1000; // Increase to 1 second
-      console.log(`Scheduling path ${index} to show after ${delay}ms`);
-      setTimeout(() => {
-        console.log(`Showing path ${index} now`);
-        path.style.opacity = '1';
-      }, delay);
-    });
-    
-    const totalDuration = paths.length * 1000 + 300;
-    animationTimeoutRef.current = setTimeout(() => {
+    if (!playing) {
+      // Start animation
+      setPlaying(true);
+      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+      if (element) {
+        element.classList.remove('animate');
+        setTimeout(() => element.classList.add('animate'), 10);
+      }
+    } else {
+      // Pause animation
       setPlaying(false);
-    }, totalDuration);
+      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+      if (element) {
+        element.classList.remove('animate');
+      }
+    }
   };
   
   const resetAnimation = () => {
     setPlaying(false);
-    
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-      animationTimeoutRef.current = null;
-    }
-    
-    // Reset all paths to hidden
-    if (svgContainerRef.current) {
-      const svgElement = svgContainerRef.current.querySelector('svg');
-      if (svgElement) {
-        const paths = Array.from(svgElement.querySelectorAll('path'));
-        paths.forEach((path) => {
-          path.style.opacity = '0';
-        });
-      }
+    const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+    if (element) {
+      element.classList.remove('animate');
     }
   };
   
@@ -154,8 +96,8 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       {/* SVG Display */}
       <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
         <div 
-          ref={svgContainerRef}
-          className="stroke-display"
+          id={`stroke-${kanji.charCodeAt(0)}`}
+          className="stroke-animation"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
