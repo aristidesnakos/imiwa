@@ -19,21 +19,16 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const loadStrokeOrder = useCallback(async () => {
-    console.log('StrokeOrderViewer: Starting to load stroke order for kanji:', kanji);
     setLoading(true);
     setError(false);
     setPlaying(false);
     
     try {
-      console.log('StrokeOrderViewer: Calling strokeOrderService.loadSVG');
       const svgContent = await strokeOrderService.loadSVG(kanji);
-      console.log('StrokeOrderViewer: SVG content received:', !!svgContent, svgContent?.length);
       
       if (svgContent) {
-        console.log('StrokeOrderViewer: Setting SVG content');
         setSvg(svgContent);
       } else {
-        console.log('StrokeOrderViewer: No SVG content, setting error');
         setError(true);
       }
     } catch (err) {
@@ -41,7 +36,6 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       setError(true);
     }
     
-    console.log('StrokeOrderViewer: Setting loading to false');
     setLoading(false);
   }, [kanji]);
   
@@ -65,22 +59,12 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     
     const paths = Array.from(svgElement.querySelectorAll('path'));
     paths.forEach((path) => {
-      const pathLength = path.getTotalLength();
-      path.style.strokeDasharray = `${pathLength}`;
-      path.style.strokeDashoffset = `${pathLength}`;
       path.style.stroke = '#2c2c2c';
       path.style.strokeWidth = '2';
       path.style.fill = 'none';
-      path.style.transition = 'none'; // Remove transition initially
-      path.style.opacity = '1';
+      path.style.opacity = '0'; // Start hidden
+      path.style.transition = 'opacity 0.3s ease-in-out';
     });
-    
-    // Add transition after a brief delay to prevent initial flash
-    setTimeout(() => {
-      paths.forEach((path) => {
-        path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
-      });
-    }, 50);
   };
 
   useEffect(() => {
@@ -97,28 +81,25 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     
     setPlaying(true);
     const paths = Array.from(svgElement.querySelectorAll('path'));
-    console.log(`Found ${paths.length} paths for animation`);
+    console.log(`Found ${paths.length} paths for opacity animation`);
     
-    // Reset all paths to hidden state first
+    // Hide all paths first
     paths.forEach((path, index) => {
-      const pathLength = path.getTotalLength();
-      path.style.strokeDasharray = `${pathLength}`;
-      path.style.strokeDashoffset = `${pathLength}`;
-      path.style.transition = 'stroke-dashoffset 1.2s ease-in-out';
-      console.log(`Reset path ${index} with length ${pathLength}`);
+      path.style.opacity = '0';
+      console.log(`Hiding path ${index}`);
     });
     
-    // Animate each stroke with a delay
+    // Show each path one by one
     paths.forEach((path, index) => {
-      const delay = index * 1500; // Much longer delay
-      console.log(`Scheduling path ${index} to animate after ${delay}ms`);
+      const delay = index * 1000; // Increase to 1 second
+      console.log(`Scheduling path ${index} to show after ${delay}ms`);
       setTimeout(() => {
-        console.log(`Animating path ${index} now`);
-        path.style.strokeDashoffset = '0';
+        console.log(`Showing path ${index} now`);
+        path.style.opacity = '1';
       }, delay);
     });
     
-    const totalDuration = paths.length * 1500 + 1200;
+    const totalDuration = paths.length * 1000 + 300;
     animationTimeoutRef.current = setTimeout(() => {
       setPlaying(false);
     }, totalDuration);
@@ -132,7 +113,16 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       animationTimeoutRef.current = null;
     }
     
-    initializePaths();
+    // Reset all paths to hidden
+    if (svgContainerRef.current) {
+      const svgElement = svgContainerRef.current.querySelector('svg');
+      if (svgElement) {
+        const paths = Array.from(svgElement.querySelectorAll('path'));
+        paths.forEach((path) => {
+          path.style.opacity = '0';
+        });
+      }
+    }
   };
   
   if (loading) {
