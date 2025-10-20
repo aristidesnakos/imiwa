@@ -25,10 +25,18 @@ interface Props {
 
 // Generate static paths for all kanji
 export async function generateStaticParams() {
-  return ALL_KANJI_DATA.map((kanji) => ({
+  const params = ALL_KANJI_DATA.map((kanji) => ({
     character: encodeURIComponent(kanji.kanji),
   }));
+  
+  console.log('Generating static params for kanji pages:', params.length);
+  console.log('Sample params:', params.slice(0, 5));
+  
+  return params;
 }
+
+// Enable ISR for missing pages
+export const dynamicParams = true;
 
 // SEO metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
