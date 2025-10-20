@@ -18,6 +18,24 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
+  // Helper function to get stroke paths in correct order
+  const getStrokePathsInOrder = (svgElement: SVGSVGElement): SVGPathElement[] => {
+    const allPaths = Array.from(svgElement.querySelectorAll('path'));
+    const strokePaths = allPaths.filter(path => {
+      const id = path.getAttribute('id');
+      return id && id.includes('-s') && /s\d+$/.test(id);
+    }) as SVGPathElement[];
+    
+    // Sort paths by stroke number (e.g., s1, s2, s3...)
+    strokePaths.sort((a, b) => {
+      const aNum = parseInt(a.getAttribute('id')?.split('-s')[1] || '0');
+      const bNum = parseInt(b.getAttribute('id')?.split('-s')[1] || '0');
+      return aNum - bNum;
+    });
+    
+    return strokePaths;
+  };
+  
   const loadStrokeOrder = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -58,9 +76,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       setTimeout(() => {
         const svgElement = svgContainerRef.current?.querySelector('svg');
         if (svgElement) {
-          // Initialize all paths for animation
-          const paths = svgElement.querySelectorAll('path');
-          paths.forEach((path) => {
+          const strokePaths = getStrokePathsInOrder(svgElement);
+          
+          // Initialize all stroke paths for animation
+          strokePaths.forEach((path) => {
             // Set initial state - hidden strokes
             path.style.strokeDasharray = '1000';
             path.style.strokeDashoffset = '1000';
@@ -79,17 +98,17 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       const svgElement = svgContainerRef.current.querySelector('svg');
       if (svgElement) {
         setPlaying(true);
-        const paths = svgElement.querySelectorAll('path');
+        const strokePaths = getStrokePathsInOrder(svgElement);
         
-        // Animate each stroke one by one
-        paths.forEach((path, index) => {
+        // Animate each stroke one by one in correct order
+        strokePaths.forEach((path, index) => {
           setTimeout(() => {
             path.style.strokeDashoffset = '0';
           }, index * 800); // 800ms delay between each stroke
         });
         
         // Reset playing state after all animations complete
-        const totalDuration = paths.length * 800 + 800; // Extra 800ms buffer
+        const totalDuration = strokePaths.length * 800 + 800; // Extra 800ms buffer
         animationTimeoutRef.current = setTimeout(() => {
           setPlaying(false);
         }, totalDuration);
@@ -109,9 +128,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     if (svgContainerRef.current) {
       const svgElement = svgContainerRef.current.querySelector('svg');
       if (svgElement) {
-        // Reset all paths to initial hidden state
-        const paths = svgElement.querySelectorAll('path');
-        paths.forEach(path => {
+        const strokePaths = getStrokePathsInOrder(svgElement);
+        
+        // Reset stroke paths to initial hidden state
+        strokePaths.forEach(path => {
           path.style.strokeDasharray = '1000';
           path.style.strokeDashoffset = '1000';
           path.style.stroke = '#2c2c2c';
