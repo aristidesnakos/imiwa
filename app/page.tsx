@@ -9,10 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
+import { N4_KANJI } from '@/lib/constants/n4-kanji';
+import { N3_KANJI } from '@/lib/constants/n3-kanji';
+import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { Search, BookOpen, ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
   const [search, setSearch] = useState('');
+  
+  // Combine all kanji counts for display but only search N5 for simplicity on homepage
+  const ALL_KANJI_COUNT = N5_KANJI.length + N4_KANJI.length + N3_KANJI.length + N2_KANJI.length;
   
   const filtered = N5_KANJI.filter(k => 
     k.kanji.includes(search) || 
@@ -39,10 +45,24 @@ export default function LandingPage() {
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
                 Master kanji with interactive stroke order diagrams. Search, learn, and practice the correct way to write each character.
               </p>
-              <Badge variant="secondary" className="text-sm">
-                <BookOpen className="w-4 h-4 mr-1" />
-                {N5_KANJI.length} JLPT N5 Kanji Available
-              </Badge>
+              <div className="flex justify-center space-x-2 flex-wrap gap-2">
+                <Badge variant="secondary" className="text-sm">
+                  <BookOpen className="w-4 h-4 mr-1" />
+                  {ALL_KANJI_COUNT} JLPT N5-N2 Kanji
+                </Badge>
+                <Badge variant="outline" className="text-sm">
+                  N5: {N5_KANJI.length}
+                </Badge>
+                <Badge variant="outline" className="text-sm">
+                  N4: {N4_KANJI.length}
+                </Badge>
+                <Badge variant="outline" className="text-sm">
+                  N3: {N3_KANJI.length}
+                </Badge>
+                <Badge variant="outline" className="text-sm">
+                  N2: {N2_KANJI.length}
+                </Badge>
+              </div>
             </div>
             
             {/* Immediate Search */}
@@ -126,14 +146,14 @@ export default function LandingPage() {
             <div className="container mx-auto px-4">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-semibold mb-2">
-                  Popular JLPT N5 Kanji
+                  Popular JLPT Kanji
                 </h2>
                 <p className="text-gray-600">
-                  Start with these fundamental characters
+                  Start with these fundamental characters from N5-N2 levels
                 </p>
               </div>
               
-              {/* Featured Kanji Grid - First 20 kanji */}
+              {/* Featured Kanji Grid - First 20 kanji from all levels */}
               <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4 max-w-6xl mx-auto">
                 {N5_KANJI.slice(0, 20).map(kanji => (
                   <Link
@@ -154,7 +174,7 @@ export default function LandingPage() {
               <div className="text-center mt-8">
                 <Button asChild size="lg">
                   <Link href="/kanji">
-                    Explore All {N5_KANJI.length} Kanji
+                    Explore All {ALL_KANJI_COUNT} Kanji
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
@@ -168,7 +188,7 @@ export default function LandingPage() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Why Learn Kanji Here?</h2>
-              <p className="text-lg text-gray-600">Everything you need to master Japanese characters</p>
+              <p className="text-lg text-gray-600">Everything you need to master Japanese characters from N5 to N2</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -192,8 +212,8 @@ export default function LandingPage() {
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto">
                   <ArrowRight className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-semibold">JLPT Focused</h3>
-                <p className="text-gray-600">Organized by JLPT levels for structured learning</p>
+                <h3 className="text-xl font-semibold">JLPT N5-N2 Focused</h3>
+                <p className="text-gray-600">Complete coverage from beginner to advanced intermediate levels</p>
               </div>
             </div>
           </div>
