@@ -2,12 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useUser } from "@/context/user";
 import { BookOpen } from "lucide-react";
 
 const Header = () => {
-  const { profile } = useUser();
-
   return (
     <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -31,25 +28,14 @@ const Header = () => {
           <Link href="/kanji" className="text-foreground hover:text-primary transition-colors">
             Kanji
           </Link>
-          <Link href="#pricing" className="text-foreground hover:text-primary transition-colors">
-            Pricing
-          </Link>
           <Link href="/blog" className="text-foreground hover:text-primary transition-colors">
             Blog
           </Link>
-          {profile?.name ? (
-            <Link href="/journal">
-              <Button variant="outline" size="sm">
-                {profile.name}
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/signin">
-              <Button variant="outline" size="sm">
-                Sign In
-              </Button>
-            </Link>
-          )}
+          <Link href="/settings">
+            <Button variant="outline" size="sm">
+              Settings
+            </Button>
+          </Link>
         </nav>
 
         {/* Mobile menu button - Placeholder for now, actual implementation might involve state */}

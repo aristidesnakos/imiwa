@@ -1,5 +1,4 @@
 import { ConfigProps } from "./types/config";
-import { PRICING_PLANS } from "./lib/pricing/constants";
 
 const config = {
   appName: "Your App Name",
@@ -12,17 +11,7 @@ const config = {
     onlyShowOnRoutes: ["/"],
   },
   stripe: {
-    plans: PRICING_PLANS.map(plan => ({
-      priceId: plan.priceId,
-      name: plan.name,
-      description: plan.description,
-      price: plan.price,
-      interval: plan.interval,
-      priceMonthly: 'priceMonthly' in plan ? plan.priceMonthly : undefined,
-      features: plan.features.map(feature => ({ name: feature })),
-      isFeatured: 'isFeatured' in plan ? plan.isFeatured : false,
-      badge: 'badge' in plan ? plan.badge : undefined,
-    })),
+    plans: [],
   },
   resend: {
     fromNoReply: `Support <support@yourdomain.com>`,

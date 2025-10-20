@@ -17,7 +17,6 @@ Sitemap: ${baseUrl}/sitemap.xml
 # Block admin/private areas
 Disallow: /api/
 Disallow: /settings/
-Disallow: /onboarding/
 Disallow: /_next/
 Disallow: /favicon.ico`;
 

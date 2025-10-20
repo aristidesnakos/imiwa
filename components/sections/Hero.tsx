@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import ButtonSignin from "@/components/buttons/ButtonSignin";
 import Image from "next/image";
 
 const languages = [
@@ -46,10 +45,9 @@ const Hero = () => {
           <h2 className="px-6 py-3 rounded-lg bg-indigo-200 text-foreground text-xl">
             {languages[currentIndex].name}
           </h2>  
-          <ButtonSignin
-            text="Start Your Journal"
-            extraStyle="bg-primary p-2 rounded-lg shadow-lg hover:shadow-xl btn-lg"
-          />
+          <button className="bg-primary text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl text-lg font-semibold hover:bg-primary/90 transition-colors">
+            Start Your Journal
+          </button>
         </motion.div>
 
         <motion.p 

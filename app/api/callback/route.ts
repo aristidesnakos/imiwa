@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { createServerComponentClient } from "@/lib/supabase/server";
 import config from "@/config";
-import { Profile } from "@/types/profiles";
 
 export const dynamic = "force-dynamic";
 
@@ -13,24 +12,8 @@ export async function GET(req: NextRequest) {
   if (code) {
     const supabase = await createServerComponentClient();
     await supabase.auth.exchangeCodeForSession(code);
-    
-    // Check if user has completed onboarding
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_complete')
-        .eq('id', user.id)
-        .single() as { data: Pick<Profile, 'onboarding_complete'> | null };
-      
-      // Redirect to onboarding if not completed
-      if (!profile?.onboarding_complete) {
-        return NextResponse.redirect(requestUrl.origin + '/onboarding');
-      }
-    }
   }
 
-  // URL to redirect to after sign in process completes (for users who completed onboarding)
+  // URL to redirect to after sign in process completes
   return NextResponse.redirect(requestUrl.origin + config.auth.callbackUrl);
 }
