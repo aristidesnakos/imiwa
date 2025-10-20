@@ -73,45 +73,86 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   // Prepare SVG for animation when it loads
   useEffect(() => {
     if (svg && svgContainerRef.current) {
+      console.log('Initializing SVG for animation...');
       setTimeout(() => {
         const svgElement = svgContainerRef.current?.querySelector('svg');
         if (svgElement) {
+          console.log('SVG element found for initialization');
           const strokePaths = getStrokePathsInOrder(svgElement);
+          console.log('Stroke paths for initialization:', strokePaths.length);
           
-          // Initialize all stroke paths for animation
-          strokePaths.forEach((path) => {
-            // Set initial state - hidden strokes
-            path.style.strokeDasharray = '1000';
-            path.style.strokeDashoffset = '1000';
-            path.style.stroke = '#2c2c2c';
-            path.style.strokeWidth = '2';
-            path.style.fill = 'none';
-            path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
-          });
+          if (strokePaths.length === 0) {
+            // Fallback: initialize all paths
+            const allPaths = Array.from(svgElement.querySelectorAll('path'));
+            console.log('Using fallback - initializing all paths:', allPaths.length);
+            allPaths.forEach((path) => {
+              path.style.strokeDasharray = '1000';
+              path.style.strokeDashoffset = '1000';
+              path.style.stroke = '#2c2c2c';
+              path.style.strokeWidth = '2';
+              path.style.fill = 'none';
+              path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+            });
+          } else {
+            // Initialize stroke paths for animation
+            strokePaths.forEach((path) => {
+              // Set initial state - hidden strokes
+              path.style.strokeDasharray = '1000';
+              path.style.strokeDashoffset = '1000';
+              path.style.stroke = '#2c2c2c';
+              path.style.strokeWidth = '2';
+              path.style.fill = 'none';
+              path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+            });
+          }
         }
       }, 100);
     }
   }, [svg]);
   
   const toggleAnimation = () => {
+    console.log('Play button clicked!', { playing, svgContainerRef: !!svgContainerRef.current });
+    
     if (svgContainerRef.current && !playing) {
       const svgElement = svgContainerRef.current.querySelector('svg');
+      console.log('SVG element found:', !!svgElement);
+      
       if (svgElement) {
         setPlaying(true);
         const strokePaths = getStrokePathsInOrder(svgElement);
+        console.log('Found stroke paths:', strokePaths.length, strokePaths.map(p => p.getAttribute('id')));
         
-        // Animate each stroke one by one in correct order
-        strokePaths.forEach((path, index) => {
-          setTimeout(() => {
-            path.style.strokeDashoffset = '0';
-          }, index * 800); // 800ms delay between each stroke
-        });
-        
-        // Reset playing state after all animations complete
-        const totalDuration = strokePaths.length * 800 + 800; // Extra 800ms buffer
-        animationTimeoutRef.current = setTimeout(() => {
-          setPlaying(false);
-        }, totalDuration);
+        if (strokePaths.length === 0) {
+          // Fallback: use all paths if no stroke paths found
+          const allPaths = Array.from(svgElement.querySelectorAll('path'));
+          console.log('Using fallback - all paths:', allPaths.length);
+          
+          allPaths.forEach((path, index) => {
+            setTimeout(() => {
+              console.log(`Animating path ${index + 1}/${allPaths.length}`);
+              path.style.strokeDashoffset = '0';
+            }, index * 800);
+          });
+          
+          const totalDuration = allPaths.length * 800 + 800;
+          animationTimeoutRef.current = setTimeout(() => {
+            setPlaying(false);
+          }, totalDuration);
+        } else {
+          // Animate each stroke one by one in correct order
+          strokePaths.forEach((path, index) => {
+            setTimeout(() => {
+              console.log(`Animating stroke ${index + 1}/${strokePaths.length}:`, path.getAttribute('id'));
+              path.style.strokeDashoffset = '0';
+            }, index * 800);
+          });
+          
+          // Reset playing state after all animations complete
+          const totalDuration = strokePaths.length * 800 + 800;
+          animationTimeoutRef.current = setTimeout(() => {
+            setPlaying(false);
+          }, totalDuration);
+        }
       }
     }
   };
