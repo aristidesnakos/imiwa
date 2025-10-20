@@ -2,9 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
-import logo from "@/app/icon.png"; // Assuming logo path is correct
 import { useUser } from "@/context/user";
+import { BookOpen } from "lucide-react";
 
 const Header = () => {
   const { profile } = useUser();
@@ -16,18 +15,11 @@ const Header = () => {
           <Link
             className="flex items-center gap-2 shrink-0"
             href="/"
-            title="Llanai homepage"
+            title="Imiwa homepage"
           >
-            <Image
-              src={logo}
-              alt="Llanai logo"
-              className="w-8 h-8 rounded-full"
-              priority={true}
-              width={32}
-              height={32}
-            />
+            <BookOpen className="w-8 h-8 text-accent" />
             <span className="font-bold text-2xl text-accent">
-              Llanai
+              Imiwa
             </span>
           </Link>
         </div>
@@ -35,6 +27,9 @@ const Header = () => {
         <nav className="hidden md:flex items-center space-x-8">
           <Link href="/" className="text-foreground hover:text-primary transition-colors">
             Home
+          </Link>
+          <Link href="/kanji" className="text-foreground hover:text-primary transition-colors">
+            Kanji
           </Link>
           <Link href="#pricing" className="text-foreground hover:text-primary transition-colors">
             Pricing
