@@ -13,12 +13,29 @@ export class StrokeOrderService {
       const response = await fetch(url);
       if (!response.ok) return null;
       
-      const svg = await response.text();
+      const rawSvg = await response.text();
+      // Clean the SVG by removing XML declaration and DTD
+      const svg = this.cleanSVG(rawSvg);
       this.cache.set(kanji, svg);
       return svg;
     } catch {
       return null;
     }
+  }
+
+  private cleanSVG(rawSvg: string): string {
+    // Remove XML declaration and DTD sections that cause display issues
+    let cleaned = rawSvg
+      // Remove XML declaration
+      .replace(/<\?xml[^>]*\?>/g, '')
+      // Remove DTD declaration (everything from <!DOCTYPE to ]>)
+      .replace(/<!DOCTYPE[^>]*\[[\s\S]*?\]>/g, '')
+      // Remove comments
+      .replace(/<!--[\s\S]*?-->/g, '')
+      // Clean up whitespace
+      .trim();
+    
+    return cleaned;
   }
   
   private getUnicodeHex(kanji: string): string {
