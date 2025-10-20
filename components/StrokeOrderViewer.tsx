@@ -86,23 +86,23 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
             const allPaths = Array.from(svgElement.querySelectorAll('path'));
             console.log('Using fallback - initializing all paths:', allPaths.length);
             allPaths.forEach((path) => {
-              path.style.strokeDasharray = '1000';
-              path.style.strokeDashoffset = '1000';
+              // Try opacity-based animation instead
+              path.style.opacity = '0';
               path.style.stroke = '#2c2c2c';
               path.style.strokeWidth = '2';
               path.style.fill = 'none';
-              path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+              path.style.transition = 'opacity 0.8s ease-in-out';
             });
           } else {
             // Initialize stroke paths for animation
             strokePaths.forEach((path) => {
-              // Set initial state - hidden strokes
-              path.style.strokeDasharray = '1000';
-              path.style.strokeDashoffset = '1000';
+              console.log('Initializing path:', path.getAttribute('id'));
+              // Try opacity-based animation instead of stroke-dash
+              path.style.opacity = '0';
               path.style.stroke = '#2c2c2c';
               path.style.strokeWidth = '2';
               path.style.fill = 'none';
-              path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+              path.style.transition = 'opacity 0.8s ease-in-out';
             });
           }
         }
@@ -130,7 +130,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
           allPaths.forEach((path, index) => {
             setTimeout(() => {
               console.log(`Animating path ${index + 1}/${allPaths.length}`);
-              path.style.strokeDashoffset = '0';
+              path.style.opacity = '1';
             }, index * 800);
           });
           
@@ -143,7 +143,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
           strokePaths.forEach((path, index) => {
             setTimeout(() => {
               console.log(`Animating stroke ${index + 1}/${strokePaths.length}:`, path.getAttribute('id'));
-              path.style.strokeDashoffset = '0';
+              path.style.opacity = '1';
             }, index * 800);
           });
           
@@ -171,15 +171,25 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       if (svgElement) {
         const strokePaths = getStrokePathsInOrder(svgElement);
         
-        // Reset stroke paths to initial hidden state
-        strokePaths.forEach(path => {
-          path.style.strokeDasharray = '1000';
-          path.style.strokeDashoffset = '1000';
-          path.style.stroke = '#2c2c2c';
-          path.style.strokeWidth = '2';
-          path.style.fill = 'none';
-          path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
-        });
+        if (strokePaths.length === 0) {
+          const allPaths = Array.from(svgElement.querySelectorAll('path'));
+          allPaths.forEach(path => {
+            path.style.opacity = '0';
+            path.style.stroke = '#2c2c2c';
+            path.style.strokeWidth = '2';
+            path.style.fill = 'none';
+            path.style.transition = 'opacity 0.8s ease-in-out';
+          });
+        } else {
+          // Reset stroke paths to initial hidden state
+          strokePaths.forEach(path => {
+            path.style.opacity = '0';
+            path.style.stroke = '#2c2c2c';
+            path.style.strokeWidth = '2';
+            path.style.fill = 'none';
+            path.style.transition = 'opacity 0.8s ease-in-out';
+          });
+        }
       }
     }
   };
