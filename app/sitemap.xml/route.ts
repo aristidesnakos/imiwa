@@ -1,4 +1,5 @@
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
+import { N4_KANJI } from '@/lib/constants/n4-kanji';
 
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://imiwa.app';
@@ -23,7 +24,7 @@ export async function GET() {
     <changefreq>monthly</changefreq>
     <priority>${url === '' ? '1.0' : url === '/kanji' ? '0.9' : '0.7'}</priority>
   </url>`).join('')}
-  ${N5_KANJI.map(kanji => `
+  ${[...N5_KANJI, ...N4_KANJI].map(kanji => `
   <url>
     <loc>${baseUrl}/kanji/${encodeURIComponent(kanji.kanji)}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>

@@ -5,13 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
+import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 
 // Combine all kanji data with levels
 const ALL_KANJI_DATA = [
   ...N5_KANJI.map(k => ({ ...k, level: 'N5' })),
-  // Add N4, N3, N2, N1 as they become available
+  ...N4_KANJI.map(k => ({ ...k, level: 'N4' })),
+  // Add N3, N2, N1 as they become available
 ];
 
 interface Props {
