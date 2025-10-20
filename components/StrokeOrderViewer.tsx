@@ -71,8 +71,16 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       path.style.stroke = '#2c2c2c';
       path.style.strokeWidth = '2';
       path.style.fill = 'none';
-      path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+      path.style.transition = 'none'; // Remove transition initially
+      path.style.opacity = '1';
     });
+    
+    // Add transition after a brief delay to prevent initial flash
+    setTimeout(() => {
+      paths.forEach((path) => {
+        path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+      });
+    }, 50);
   };
 
   useEffect(() => {
