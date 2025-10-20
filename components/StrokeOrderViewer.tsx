@@ -57,31 +57,32 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         animationRef.current = null;
       }
       
-      // Initialize new animation with 800ms duration
+      // Add a unique class to the SVG for targeting
       setTimeout(() => {
         const svgElement = svgContainerRef.current?.querySelector('svg');
         if (svgElement) {
-          animationRef.current = new KanjivgAnimate(svgElement, 800);
+          const uniqueClass = `kanji-svg-${kanji.charCodeAt(0)}`;
+          svgElement.classList.add(uniqueClass);
+          // Initialize with CSS selector
+          animationRef.current = new KanjivgAnimate(`.${uniqueClass}`, 800);
         }
       }, 100);
     }
-  }, [svg]);
+  }, [svg, kanji]);
   
   const toggleAnimation = () => {
-    if (animationRef.current && svgContainerRef.current) {
+    if (svgContainerRef.current) {
       const svgElement = svgContainerRef.current.querySelector('svg');
-      if (svgElement) {
-        if (!playing) {
-          setPlaying(true);
-          // Trigger animation by dispatching a click event
-          const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-          });
-          svgElement.dispatchEvent(clickEvent);
-          // Reset playing state after animation completes
-          setTimeout(() => setPlaying(false), 800 * 20); // Estimate based on stroke count
-        }
+      if (svgElement && !playing) {
+        setPlaying(true);
+        // Trigger animation by clicking the SVG (kanjivganimate handles this)
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+        });
+        svgElement.dispatchEvent(clickEvent);
+        // Reset playing state after reasonable animation time
+        setTimeout(() => setPlaying(false), 10000); // 10 seconds should be enough for most kanji
       }
     }
   };
@@ -91,13 +92,16 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     if (svgContainerRef.current) {
       const svgElement = svgContainerRef.current.querySelector('svg');
       if (svgElement) {
-        // Remove any animation classes to reset
+        // Reset all paths to initial state
         const paths = svgElement.querySelectorAll('path');
         paths.forEach(path => {
           path.style.strokeDasharray = '';
           path.style.strokeDashoffset = '';
           path.style.animation = '';
+          path.style.opacity = '';
         });
+        // Clear any kanjivganimate classes
+        svgElement.classList.remove('animating');
       }
     }
   };
