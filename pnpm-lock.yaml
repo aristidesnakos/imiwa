@@ -146,9 +146,6 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
-      kanjivganimate:
-        specifier: ^0.2.1
-        version: 0.2.1
       lucide-react:
         specifier: ^0.447.0
         version: 0.447.0(react@18.3.1)
@@ -3911,9 +3908,6 @@ packages:
 
   jws@3.2.2:
     resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
-
-  kanjivganimate@0.2.1:
-    resolution: {integrity: sha512-40a3kK7JS2nvTvrgxcXcvOxIV9cSwsBHyC53RMKJuDTVM15zcLCK8k8hrRjVeAVHvQ83xoD8hhWh1XRSuVzhjQ==}
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -9861,8 +9855,6 @@ snapshots:
     dependencies:
       jwa: 1.4.2
       safe-buffer: 5.2.1
-
-  kanjivganimate@0.2.1: {}
 
   keyv@4.5.4:
     dependencies:

@@ -5,12 +5,6 @@ import { Button } from '@/components/ui/button';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { Loader2, Play, Pause, RotateCcw, RefreshCw } from 'lucide-react';
 
-// Import KanjivgAnimate
-let KanjivgAnimate: any;
-if (typeof window !== 'undefined') {
-  KanjivgAnimate = require('kanjivganimate');
-}
-
 interface Props {
   kanji: string;
   className?: string;
@@ -22,7 +16,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const svgContainerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<any>(null);
+  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const loadStrokeOrder = useCallback(async () => {
     setLoading(true);
@@ -49,59 +43,82 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     loadStrokeOrder();
   }, [kanji, loadStrokeOrder]);
 
-  // Initialize KanjivgAnimate when SVG loads
+  // Cleanup on unmount
   useEffect(() => {
-    if (svg && svgContainerRef.current && KanjivgAnimate) {
-      // Clear any existing animation
-      if (animationRef.current) {
-        animationRef.current = null;
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
       }
-      
-      // Add a unique class to the SVG for targeting
+    };
+  }, []);
+
+  // Prepare SVG for animation when it loads
+  useEffect(() => {
+    if (svg && svgContainerRef.current) {
       setTimeout(() => {
         const svgElement = svgContainerRef.current?.querySelector('svg');
         if (svgElement) {
-          const uniqueClass = `kanji-svg-${kanji.charCodeAt(0)}`;
-          svgElement.classList.add(uniqueClass);
-          // Initialize with CSS selector
-          animationRef.current = new KanjivgAnimate(`.${uniqueClass}`, 800);
+          // Initialize all paths for animation
+          const paths = svgElement.querySelectorAll('path');
+          paths.forEach((path) => {
+            // Set initial state - hidden strokes
+            path.style.strokeDasharray = '1000';
+            path.style.strokeDashoffset = '1000';
+            path.style.stroke = '#2c2c2c';
+            path.style.strokeWidth = '2';
+            path.style.fill = 'none';
+            path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+          });
         }
       }, 100);
     }
-  }, [svg, kanji]);
+  }, [svg]);
   
   const toggleAnimation = () => {
-    if (svgContainerRef.current) {
+    if (svgContainerRef.current && !playing) {
       const svgElement = svgContainerRef.current.querySelector('svg');
-      if (svgElement && !playing) {
+      if (svgElement) {
         setPlaying(true);
-        // Trigger animation by clicking the SVG (kanjivganimate handles this)
-        const clickEvent = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
+        const paths = svgElement.querySelectorAll('path');
+        
+        // Animate each stroke one by one
+        paths.forEach((path, index) => {
+          setTimeout(() => {
+            path.style.strokeDashoffset = '0';
+          }, index * 800); // 800ms delay between each stroke
         });
-        svgElement.dispatchEvent(clickEvent);
-        // Reset playing state after reasonable animation time
-        setTimeout(() => setPlaying(false), 10000); // 10 seconds should be enough for most kanji
+        
+        // Reset playing state after all animations complete
+        const totalDuration = paths.length * 800 + 800; // Extra 800ms buffer
+        animationTimeoutRef.current = setTimeout(() => {
+          setPlaying(false);
+        }, totalDuration);
       }
     }
   };
   
   const resetAnimation = () => {
     setPlaying(false);
+    
+    // Clear any pending animation timeout
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+    
     if (svgContainerRef.current) {
       const svgElement = svgContainerRef.current.querySelector('svg');
       if (svgElement) {
-        // Reset all paths to initial state
+        // Reset all paths to initial hidden state
         const paths = svgElement.querySelectorAll('path');
         paths.forEach(path => {
-          path.style.strokeDasharray = '';
-          path.style.strokeDashoffset = '';
-          path.style.animation = '';
-          path.style.opacity = '';
+          path.style.strokeDasharray = '1000';
+          path.style.strokeDashoffset = '1000';
+          path.style.stroke = '#2c2c2c';
+          path.style.strokeWidth = '2';
+          path.style.fill = 'none';
+          path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
         });
-        // Clear any kanjivganimate classes
-        svgElement.classList.remove('animating');
       }
     }
   };
@@ -136,7 +153,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
         <div 
           ref={svgContainerRef}
-          className="stroke-animation"
+          className="stroke-display"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
