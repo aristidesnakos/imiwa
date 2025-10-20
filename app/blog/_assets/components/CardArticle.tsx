@@ -24,7 +24,7 @@ const CardArticle = ({
 
   return (
     <article className="card bg-base-200 rounded-box overflow-hidden">
-      {article.image?.src && (
+      {article.image && (
         <Link
           href={`/blog/${article.slug}`}
           className="link link-hover hover:link-primary"
@@ -33,8 +33,8 @@ const CardArticle = ({
         >
           <figure>
             <Image
-              src={article.image.src}
-              alt={article.image.alt}
+              src={typeof article.image === 'string' ? article.image : (article.image.src || article.image.urlRelative)}
+              alt={typeof article.image === 'string' ? article.title : (article.image.alt || article.title)}
               width={600}
               height={338}
               priority={isImagePriority}
@@ -47,8 +47,11 @@ const CardArticle = ({
         {/* CATEGORIES */}
         {showCategory && (
           <div className="flex flex-wrap gap-2">
-            {article.categories.map((category) => (
-              <BadgeCategory category={category} key={category.slug} />
+            {article.categories.map((category, index) => (
+              <BadgeCategory 
+                category={typeof category === 'string' ? { title: category, slug: category.toLowerCase().replace(/\s+/g, '-'), titleShort: category, description: category } : category} 
+                key={typeof category === 'string' ? category : category.slug || index} 
+              />
             ))}
           </div>
         )}

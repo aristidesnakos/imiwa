@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { strokeOrderService } from '@/lib/stroke-order';
-import { ArrowLeft, BookOpen, Volume2 } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 
 // Combine all kanji data with levels
 const ALL_KANJI_DATA = [
@@ -15,7 +15,7 @@ const ALL_KANJI_DATA = [
 ];
 
 interface Props {
-  params: { character: string };
+  params: Promise<{ character: string }>;
 }
 
 // Generate static paths for all kanji
@@ -27,8 +27,9 @@ export async function generateStaticParams() {
 
 // SEO metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const character = decodeURIComponent(params.character);
-  const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === character);
+  const { character } = await params;
+  const decodedCharacter = decodeURIComponent(character);
+  const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === decodedCharacter);
   
   if (!kanjiData) {
     return {
@@ -70,9 +71,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function KanjiDetailPage({ params }: Props) {
-  const character = decodeURIComponent(params.character);
-  const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === character);
+export default async function KanjiDetailPage({ params }: Props) {
+  const { character } = await params;
+  const decodedCharacter = decodeURIComponent(character);
+  const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === decodedCharacter);
   
   if (!kanjiData) {
     notFound();
@@ -195,7 +197,7 @@ export default function KanjiDetailPage({ params }: Props) {
         <div className="mt-16 prose prose-lg max-w-none">
           <h2>How to Write {kanjiData.kanji}</h2>
           <p>
-            The kanji <strong>{kanjiData.kanji}</strong> means "{kanjiData.meaning}" and is part of the 
+            The kanji <strong>{kanjiData.kanji}</strong> means &quot;{kanjiData.meaning}&quot; and is part of the 
             JLPT {kanjiData.level} curriculum. This character is essential for Japanese learners 
             to master. Use the interactive stroke order diagram above to learn the correct writing 
             sequence and practice until you can write it from memory.

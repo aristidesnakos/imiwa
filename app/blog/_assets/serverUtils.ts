@@ -23,6 +23,7 @@ export function getArticles(): Article[] {
     });
     
     return {
+      id: data.slug,
       slug: data.slug,
       title: data.title,
       description: data.description,

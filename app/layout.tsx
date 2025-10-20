@@ -80,12 +80,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         {/* Peasy analytics is now handled by AnalyticsProvider */}
         <AppProviders>
-          <ClientLayout>
-            {children}
-            <CookieConsent />
-            <AnalyticsProvider />
-            <WebVitals />
-          </ClientLayout>
+          <AnalyticsProvider>
+            <ClientLayout>
+              {children}
+              <CookieConsent />
+              <WebVitals />
+            </ClientLayout>
+          </AnalyticsProvider>
         </AppProviders>
       </body>
     </html>

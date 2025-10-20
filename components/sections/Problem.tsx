@@ -43,7 +43,7 @@ export default function Problem() {
 
         <div className="bg-muted rounded-2xl p-12 text-center">
           <h3 className="text-3xl font-bold mb-4">
-            There's a Better Way
+            There&apos;s a Better Way
           </h3>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Our platform eliminates these obstacles, allowing you to focus on what truly matters - 

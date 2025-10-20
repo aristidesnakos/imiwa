@@ -17,7 +17,7 @@ export default function KanjiNotFound() {
         {/* Description */}
         <div className="space-y-2 text-gray-600">
           <p>
-            The kanji you're looking for is not in our database yet.
+            The kanji you&apos;re looking for is not in our database yet.
           </p>
           <p className="text-sm">
             We currently support JLPT N5 kanji characters. More levels coming soon!
@@ -42,7 +42,7 @@ export default function KanjiNotFound() {
         
         {/* Additional Info */}
         <div className="mt-8 text-sm text-gray-500">
-          <p>Can't find what you're looking for?</p>
+          <p>Can&apos;t find what you&apos;re looking for?</p>
           <p>Try searching for a different kanji character.</p>
         </div>
       </div>
