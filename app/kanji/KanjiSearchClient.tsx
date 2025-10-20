@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Header from '@/components/sections/Header';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -104,7 +105,9 @@ export function KanjiSearchClient() {
   const filtered = getFilteredKanji(activeTab);
   
   return (
-    <div className="container mx-auto p-8 space-y-8">
+    <>
+      <Header />
+      <div className="container mx-auto p-8 space-y-8">
       {/* SEO Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">Japanese Kanji Stroke Order Dictionary</h1>
@@ -269,6 +272,7 @@ export function KanjiSearchClient() {
           <li>Each kanji shows its JLPT level for targeted study</li>
         </ul>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
