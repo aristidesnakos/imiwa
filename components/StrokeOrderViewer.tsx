@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { Loader2, Play, Pause, RotateCcw, RefreshCw } from 'lucide-react';
+
+// Import KanjivgAnimate
+let KanjivgAnimate: any;
+if (typeof window !== 'undefined') {
+  KanjivgAnimate = require('kanjivganimate');
+}
 
 interface Props {
   kanji: string;
@@ -15,10 +21,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<any>(null);
   
-  const loadStrokeOrder = async () => {
+  const loadStrokeOrder = useCallback(async () => {
     setLoading(true);
     setError(false);
+    setPlaying(false);
     
     try {
       const svgContent = await strokeOrderService.loadSVG(kanji);
@@ -34,36 +43,62 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     }
     
     setLoading(false);
-  };
+  }, [kanji]);
   
   useEffect(() => {
     loadStrokeOrder();
-  }, [kanji]);
+  }, [kanji, loadStrokeOrder]);
+
+  // Initialize KanjivgAnimate when SVG loads
+  useEffect(() => {
+    if (svg && svgContainerRef.current && KanjivgAnimate) {
+      // Clear any existing animation
+      if (animationRef.current) {
+        animationRef.current = null;
+      }
+      
+      // Initialize new animation with 800ms duration
+      setTimeout(() => {
+        const svgElement = svgContainerRef.current?.querySelector('svg');
+        if (svgElement) {
+          animationRef.current = new KanjivgAnimate(svgElement, 800);
+        }
+      }, 100);
+    }
+  }, [svg]);
   
   const toggleAnimation = () => {
-    if (!playing) {
-      // Start animation
-      setPlaying(true);
-      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-      if (element) {
-        element.classList.remove('animate');
-        setTimeout(() => element.classList.add('animate'), 10);
-      }
-    } else {
-      // Pause animation
-      setPlaying(false);
-      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-      if (element) {
-        element.classList.remove('animate');
+    if (animationRef.current && svgContainerRef.current) {
+      const svgElement = svgContainerRef.current.querySelector('svg');
+      if (svgElement) {
+        if (!playing) {
+          setPlaying(true);
+          // Trigger animation by dispatching a click event
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+          });
+          svgElement.dispatchEvent(clickEvent);
+          // Reset playing state after animation completes
+          setTimeout(() => setPlaying(false), 800 * 20); // Estimate based on stroke count
+        }
       }
     }
   };
   
   const resetAnimation = () => {
     setPlaying(false);
-    const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-    if (element) {
-      element.classList.remove('animate');
+    if (svgContainerRef.current) {
+      const svgElement = svgContainerRef.current.querySelector('svg');
+      if (svgElement) {
+        // Remove any animation classes to reset
+        const paths = svgElement.querySelectorAll('path');
+        paths.forEach(path => {
+          path.style.strokeDasharray = '';
+          path.style.strokeDashoffset = '';
+          path.style.animation = '';
+        });
+      }
     }
   };
   
@@ -96,7 +131,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       {/* SVG Display */}
       <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
         <div 
-          id={`stroke-${kanji.charCodeAt(0)}`}
+          ref={svgContainerRef}
           className="stroke-animation"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
