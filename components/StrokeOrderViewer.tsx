@@ -97,21 +97,28 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     
     setPlaying(true);
     const paths = Array.from(svgElement.querySelectorAll('path'));
+    console.log(`Found ${paths.length} paths for animation`);
     
     // Reset all paths to hidden state first
-    paths.forEach((path) => {
+    paths.forEach((path, index) => {
       const pathLength = path.getTotalLength();
+      path.style.strokeDasharray = `${pathLength}`;
       path.style.strokeDashoffset = `${pathLength}`;
+      path.style.transition = 'stroke-dashoffset 1.2s ease-in-out';
+      console.log(`Reset path ${index} with length ${pathLength}`);
     });
     
     // Animate each stroke with a delay
     paths.forEach((path, index) => {
+      const delay = index * 1500; // Much longer delay
+      console.log(`Scheduling path ${index} to animate after ${delay}ms`);
       setTimeout(() => {
+        console.log(`Animating path ${index} now`);
         path.style.strokeDashoffset = '0';
-      }, index * 800); // Increased delay for clearer sequential effect
+      }, delay);
     });
     
-    const totalDuration = paths.length * 800 + 1000;
+    const totalDuration = paths.length * 1500 + 1200;
     animationTimeoutRef.current = setTimeout(() => {
       setPlaying(false);
     }, totalDuration);
