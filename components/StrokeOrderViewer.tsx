@@ -16,10 +16,6 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   
-  useEffect(() => {
-    loadStrokeOrder();
-  }, [kanji]);
-  
   const loadStrokeOrder = async () => {
     setLoading(true);
     setError(false);
@@ -39,6 +35,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     
     setLoading(false);
   };
+  
+  useEffect(() => {
+    loadStrokeOrder();
+  }, [kanji]);
   
   const toggleAnimation = () => {
     if (!playing) {
