@@ -8,7 +8,6 @@ import ClientLayout from "@/components/LayoutClient";
 import { JsonLd } from "@/lib/jsonld";
 import { CookieConsent } from "@/components/CookieConsent";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
-import { WebVitals } from "@/components/WebVitals";
 import "./globals.css";
 
 // Font is managed through globals.css with Nunito and Bangers
@@ -84,7 +83,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <ClientLayout>
               {children}
               <CookieConsent />
-              <WebVitals />
             </ClientLayout>
           </AnalyticsProvider>
         </AppProviders>

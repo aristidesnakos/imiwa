@@ -3,7 +3,6 @@ import Header from "@/components/sections/Header";
 import Hero from "@/components/sections/Hero";
 import Problem from "@/components/sections/Problem";
 import Experience from "@/components/sections/Experience";
-import Pricing from "@/components/sections/Pricing";
 import FAQ from "@/components/sections/FAQ";
 import Footer from "@/components/sections/Footer";
 import { getSEOTags } from "@/lib/seo";
@@ -32,8 +31,6 @@ export default function LandingPage() {
         {/* Experience/Features Section - How we solve them */}
         <Experience />
         
-        {/* Pricing Section - Investment options */}
-        <Pricing />
         
         {/* FAQ Section - Address common questions */}
         <FAQ />
