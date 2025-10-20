@@ -2,11 +2,11 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
+import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 
@@ -15,7 +15,8 @@ const ALL_KANJI_DATA = [
   ...N5_KANJI.map(k => ({ ...k, level: 'N5' })),
   ...N4_KANJI.map(k => ({ ...k, level: 'N4' })),
   ...N3_KANJI.map(k => ({ ...k, level: 'N3' })),
-  // Add N2, N1 as they become available
+  ...N2_KANJI.map(k => ({ ...k, level: 'N2' })),
+  // Add N1 as it becomes available
 ];
 
 interface Props {
@@ -187,15 +188,21 @@ export default async function KanjiDetailPage({ params }: Props) {
           </div>
         </div>
         
-        {/* Navigation */}
-        <div className="mt-12 flex justify-center">
-          <Link href="/kanji">
-            <Button variant="outline" size="lg">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Kanji Dictionary
-            </Button>
-          </Link>
-        </div>
+        {/* CTA Section */}
+        <footer className="mt-12 pt-8 border-t border-gray-200">
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="font-semibold mb-3">Ready to Start Your Language Learning Journey?</h3>
+            <p className="mb-4">
+              Practice Japanese with AI-powered feedback tailored to your learning goals.
+            </p>
+            <a 
+              href="https://llanai.com" 
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block"
+            >
+              Start Japanese Practice
+            </a>
+          </div>
+        </footer>
         
         {/* SEO Content */}
         <div className="mt-16 prose prose-lg max-w-none">
