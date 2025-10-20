@@ -27,19 +27,22 @@ export default function PrivacyPolicy() {
       </Link>
 
       <h1 className="text-3xl font-extrabold mb-8">Privacy Policy for {config.appName}</h1>
-      <p className="text-sm text-gray-600 mb-8">Last Updated: April 1, 2025</p>
+      <p className="text-sm text-gray-600 mb-8">Last Updated: January 15, 2025</p>
 
       <div className="prose prose-slate max-w-none space-y-8">
         <section>
           <h2 className="text-xl font-semibold">1. INTRODUCTION</h2>
           <p>
-            We are The Auspicious Company, doing business as Auspicious and Llanai (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; &quot;our&quot;), 
+            We are The Auspicious Company (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; &quot;our&quot;), 
             a company registered in Massachusetts, United States.
           </p>
           <p>
-            We operate the website https://www.llanai.com (the &quot;Site&quot;), the mobile application Llanai (the &quot;App&quot;), 
-            as well as any other related products and services that refer or link to this Privacy Policy 
+            We operate this website and related services that refer or link to this Privacy Policy 
             (collectively, the &quot;Services&quot;).
+          </p>
+          <p>
+            Our Services provide a comprehensive kanji learning tool that allows users to search Japanese kanji by JLPT level, 
+            view meanings, and learn proper stroke order through interactive animated diagrams.
           </p>
           <p>
             This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Services. 
@@ -52,8 +55,8 @@ export default function PrivacyPolicy() {
           <p>We collect information that you provide directly to us, including:</p>
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li>Account information (name, email address, password)</li>
-            <li>Profile information (language preferences, learning goals)</li>
-            <li>Content you create (writing samples, language exercises)</li>
+            <li>Learning preferences (JLPT level preferences, kanji study progress)</li>
+            <li>Usage data (kanji searches, stroke order practice sessions)</li>
             <li>Payment information (when you subscribe to premium features)</li>
             <li>Communications with us</li>
           </ul>
@@ -72,7 +75,7 @@ export default function PrivacyPolicy() {
           <p>We use the information we collect for various purposes, including to:</p>
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li>Provide, maintain, and improve our Services</li>
-            <li>Personalize your language learning experience</li>
+            <li>Personalize your kanji learning experience and track progress</li>
             <li>Process transactions and manage your account</li>
             <li>Communicate with you about our Services</li>
             <li>Monitor and analyze usage patterns and trends</li>
@@ -128,7 +131,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-xl font-semibold">8. CONTACT US</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact us at: {' '}
-            <a href="mailto:ari@llanai.com" className="text-blue-600 hover:underline">ari@llanai.com</a>
+            <a href="mailto:hello@imiwa.net" className="text-blue-600 hover:underline">hello@imiwa.net</a>
           </p>
         </section>
       </div>

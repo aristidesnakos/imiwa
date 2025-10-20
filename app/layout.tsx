@@ -17,7 +17,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export const metadata = getSEOTags();
+export const metadata = getSEOTags({
+  title: "Learn Japanese Kanji with Stroke Order - Interactive Kanji Dictionary",
+  description: "Master Japanese kanji with interactive stroke order diagrams. Search JLPT N5 kanji by character, meaning, or reading. Learn proper stroke order through animated guides.",
+  canonicalUrlRelative: "/",
+});
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -40,9 +44,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'Llanai',
-              url: 'https://llanai.com',
-              logo: 'https://llanai.com/logo.png',
+              name: 'Imiwa',
+              url: 'https://imiwa.com',
+              logo: 'https://imiwa.com/logo.png',
               sameAs: [
                 'https://twitter.com/just_aristides',
               ]
@@ -50,23 +54,31 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'Llanai - Language Learning Journal',
-              url: 'https://llanai.com',
-              description: 'Your personal language learning journal with minimal AI guidance. Practice writing in multiple languages and track your progress over time.',
+              name: 'Imiwa - Japanese Kanji Stroke Order Dictionary',
+              url: 'https://imiwa.com',
+              description: 'Learn Japanese kanji with interactive stroke order diagrams. Master the correct way to write JLPT kanji characters with animated guides.',
               publisher: {
                 '@type': 'Organization',
-                name: 'Llanai',
-                url: 'https://llanai.com',
+                name: 'Imiwa',
+                url: 'https://imiwa.com',
                 logo: {
                   '@type': 'ImageObject',
-                  url: 'https://llanai.com/logo.png'
+                  url: 'https://imiwa.com/logo.png'
                 }
               },
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://llanai.com/search?q={search_term_string}',
+                target: 'https://imiwa.com/kanji?search={search_term_string}',
                 'query-input': 'required name=search_term_string'
               }
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'EducationalOrganization',
+              name: 'Imiwa Kanji Dictionary',
+              url: 'https://imiwa.com',
+              description: 'Interactive Japanese kanji learning platform with stroke order animations for JLPT exam preparation.',
+              educationalCredentialAwarded: 'Japanese Language Proficiency'
             }
           ]
         }} />
