@@ -19,22 +19,29 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const loadStrokeOrder = useCallback(async () => {
+    console.log('StrokeOrderViewer: Starting to load stroke order for kanji:', kanji);
     setLoading(true);
     setError(false);
     setPlaying(false);
     
     try {
+      console.log('StrokeOrderViewer: Calling strokeOrderService.loadSVG');
       const svgContent = await strokeOrderService.loadSVG(kanji);
+      console.log('StrokeOrderViewer: SVG content received:', !!svgContent, svgContent?.length);
+      
       if (svgContent) {
+        console.log('StrokeOrderViewer: Setting SVG content');
         setSvg(svgContent);
       } else {
+        console.log('StrokeOrderViewer: No SVG content, setting error');
         setError(true);
       }
     } catch (err) {
-      console.error('Failed to load stroke order:', err);
+      console.error('StrokeOrderViewer: Failed to load stroke order:', err);
       setError(true);
     }
     
+    console.log('StrokeOrderViewer: Setting loading to false');
     setLoading(false);
   }, [kanji]);
   

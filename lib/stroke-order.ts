@@ -2,24 +2,38 @@ export class StrokeOrderService {
   private cache = new Map<string, string>();
   
   async loadSVG(kanji: string): Promise<string | null> {
+    console.log('StrokeOrderService: Loading SVG for kanji:', kanji);
+    
     if (this.cache.has(kanji)) {
+      console.log('StrokeOrderService: Found in cache');
       return this.cache.get(kanji)!;
     }
     
     const hex = this.getUnicodeHex(kanji);
     // Use our internal API route that proxies the KanjiVG requests
     const url = `/api/kanji-svg/${hex}`;
+    console.log('StrokeOrderService: Fetching from URL:', url);
     
     try {
       const response = await fetch(url);
-      if (!response.ok) return null;
+      console.log('StrokeOrderService: Response status:', response.status, response.ok);
+      
+      if (!response.ok) {
+        console.log('StrokeOrderService: Response not OK');
+        return null;
+      }
       
       const rawSvg = await response.text();
+      console.log('StrokeOrderService: Raw SVG length:', rawSvg.length);
+      console.log('StrokeOrderService: Raw SVG preview:', rawSvg.substring(0, 200));
+      
       // Clean the SVG by removing XML declaration and DTD
       const svg = this.cleanSVG(rawSvg);
+      console.log('StrokeOrderService: Cleaned SVG length:', svg.length);
       this.cache.set(kanji, svg);
       return svg;
-    } catch {
+    } catch (error) {
+      console.error('StrokeOrderService: Error fetching SVG:', error);
       return null;
     }
   }
