@@ -57,6 +57,7 @@
     "gray-matter": "^4.0.3",
     "jsdom": "^26.1.0",
     "jsonwebtoken": "^9.0.2",
+    "kanjivganimate": "^0.2.1",
     "lucide-react": "^0.447.0",
     "marked": "^15.0.12",
     "next": "^15.5.3",
