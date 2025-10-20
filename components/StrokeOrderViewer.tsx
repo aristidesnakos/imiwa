@@ -97,12 +97,17 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
             // Initialize stroke paths for animation
             strokePaths.forEach((path) => {
               console.log('Initializing path:', path.getAttribute('id'));
-              // Try opacity-based animation instead of stroke-dash
-              path.style.opacity = '0';
+              // Get the actual path length
+              const pathLength = path.getTotalLength();
+              console.log('Path length:', pathLength);
+              
+              // Use proper stroke-dash animation with actual path length
+              path.style.strokeDasharray = `${pathLength}`;
+              path.style.strokeDashoffset = `${pathLength}`;
               path.style.stroke = '#2c2c2c';
               path.style.strokeWidth = '2';
               path.style.fill = 'none';
-              path.style.transition = 'opacity 0.8s ease-in-out';
+              path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
             });
           }
         }
@@ -143,7 +148,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
           strokePaths.forEach((path, index) => {
             setTimeout(() => {
               console.log(`Animating stroke ${index + 1}/${strokePaths.length}:`, path.getAttribute('id'));
-              path.style.opacity = '1';
+              path.style.strokeDashoffset = '0';
             }, index * 800);
           });
           
@@ -183,11 +188,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         } else {
           // Reset stroke paths to initial hidden state
           strokePaths.forEach(path => {
-            path.style.opacity = '0';
+            const pathLength = path.getTotalLength();
+            path.style.strokeDasharray = `${pathLength}`;
+            path.style.strokeDashoffset = `${pathLength}`;
             path.style.stroke = '#2c2c2c';
             path.style.strokeWidth = '2';
             path.style.fill = 'none';
-            path.style.transition = 'opacity 0.8s ease-in-out';
+            path.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
           });
         }
       }
