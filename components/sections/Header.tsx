@@ -28,14 +28,6 @@ const Header = () => {
           <Link href="/kanji" className="text-foreground hover:text-primary transition-colors">
             Kanji
           </Link>
-          <Link href="/blog" className="text-foreground hover:text-primary transition-colors">
-            Blog
-          </Link>
-          <Link href="/settings">
-            <Button variant="outline" size="sm">
-              Settings
-            </Button>
-          </Link>
         </nav>
 
         {/* Mobile menu button - Placeholder for now, actual implementation might involve state */}
