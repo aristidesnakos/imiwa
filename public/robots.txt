@@ -1,9 +1,4 @@
-# *
 User-agent: *
 Allow: /
 
-# Host
-Host: https://imiwa.net
-
-# Sitemaps
-Sitemap: https://imiwa.net/sitemap.xml
+Sitemap: https://michikanji.com/sitemap.xml
