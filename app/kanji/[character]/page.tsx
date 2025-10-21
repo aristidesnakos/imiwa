@@ -230,19 +230,12 @@ export default async function KanjiDetailPage({ params }: Props) {
           
           <h3>Learning Tips for {kanjiData.kanji}</h3>
           <ul>
-            <li>Practice writing the strokes in the correct order shown in the animation</li>
+            <li>Practice writing the strokes in the correct order shown in the animation on paper</li>
             <li>Pay attention to stroke direction and sequence</li>
             <li>Start slowly and build up speed as you become more comfortable</li>
             <li>Use spaced repetition to review this kanji regularly</li>
-            <li>Try to think of words that use this kanji to reinforce your memory</li>
+            <li>Watch captioned YouTube videos such as Speak Japanese Naturally</li>
           </ul>
-          
-          <h3>About JLPT {kanjiData.level}</h3>
-          <p>
-            {kanjiData.level === 'N5' && 
-              'JLPT N5 is the most basic level of the Japanese Language Proficiency Test. The kanji at this level are fundamental characters that appear frequently in daily Japanese writing.'
-            }
-          </p>
         </div>
       </div>
     </>
