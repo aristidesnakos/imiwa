@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
@@ -45,24 +44,6 @@ export default function LandingPage() {
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
                 Master kanji with interactive stroke order diagrams. Search, learn, and practice the correct way to write each character.
               </p>
-              <div className="flex justify-center space-x-2 flex-wrap gap-2">
-                <Badge variant="secondary" className="text-sm">
-                  <BookOpen className="w-4 h-4 mr-1" />
-                  {ALL_KANJI_COUNT} JLPT N5-N2 Kanji
-                </Badge>
-                <Badge variant="outline" className="text-sm">
-                  N5: {N5_KANJI.length}
-                </Badge>
-                <Badge variant="outline" className="text-sm">
-                  N4: {N4_KANJI.length}
-                </Badge>
-                <Badge variant="outline" className="text-sm">
-                  N3: {N3_KANJI.length}
-                </Badge>
-                <Badge variant="outline" className="text-sm">
-                  N2: {N2_KANJI.length}
-                </Badge>
-              </div>
             </div>
             
             {/* Immediate Search */}
