@@ -46,9 +46,9 @@ function KanjiSection({ title, kanji, search, description }: KanjiSectionProps) 
       
       {/* Kanji Grid */}
       <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4">
-        {kanji.map(k => (
+        {kanji.map((k, index) => (
           <Link
-            key={k.kanji}
+            key={`${k.kanji}-${k.level}-${index}`}
             href={`/kanji/${encodeURIComponent(k.kanji)}`}
             className="group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center relative"
           >
@@ -73,13 +73,33 @@ export function KanjiSearchClient() {
   const [activeTab, setActiveTab] = useState<JLPTLevel>('ALL');
   const searchParams = useSearchParams();
   
-  // Combine all kanji data with level information
-  const ALL_KANJI: KanjiWithLevel[] = [
-    ...N5_KANJI.map(k => ({ ...k, level: 'N5' as JLPTLevel })),
-    ...N4_KANJI.map(k => ({ ...k, level: 'N4' as JLPTLevel })),
-    ...N3_KANJI.map(k => ({ ...k, level: 'N3' as JLPTLevel })),
-    ...N2_KANJI.map(k => ({ ...k, level: 'N2' as JLPTLevel })),
-  ];
+  // Combine all kanji data with level information, removing duplicates
+  const ALL_KANJI: KanjiWithLevel[] = (() => {
+    const kanjiMap = new Map<string, KanjiWithLevel>();
+    
+    // Add N5 first (highest priority)
+    N5_KANJI.forEach(k => kanjiMap.set(k.kanji, { ...k, level: 'N5' as JLPTLevel }));
+    // Add N4, but don't overwrite N5
+    N4_KANJI.forEach(k => {
+      if (!kanjiMap.has(k.kanji)) {
+        kanjiMap.set(k.kanji, { ...k, level: 'N4' as JLPTLevel });
+      }
+    });
+    // Add N3, but don't overwrite N5/N4
+    N3_KANJI.forEach(k => {
+      if (!kanjiMap.has(k.kanji)) {
+        kanjiMap.set(k.kanji, { ...k, level: 'N3' as JLPTLevel });
+      }
+    });
+    // Add N2, but don't overwrite N5/N4/N3
+    N2_KANJI.forEach(k => {
+      if (!kanjiMap.has(k.kanji)) {
+        kanjiMap.set(k.kanji, { ...k, level: 'N2' as JLPTLevel });
+      }
+    });
+    
+    return Array.from(kanjiMap.values());
+  })();
   
   useEffect(() => {
     const searchParam = searchParams.get('search');
