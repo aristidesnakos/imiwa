@@ -11,9 +11,10 @@ import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
+import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { Search, BookOpen } from 'lucide-react';
 
-type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'ALL';
+type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'ALL';
 
 interface KanjiWithLevel {
   kanji: string;
@@ -97,6 +98,12 @@ export function KanjiSearchClient() {
         kanjiMap.set(k.kanji, { ...k, level: 'N2' as JLPTLevel });
       }
     });
+    // Add N1, but don't overwrite N5/N4/N3/N2
+    N1_KANJI.forEach(k => {
+      if (!kanjiMap.has(k.kanji)) {
+        kanjiMap.set(k.kanji, { ...k, level: 'N1' as JLPTLevel });
+      }
+    });
     
     return Array.from(kanjiMap.values());
   })();
@@ -151,6 +158,10 @@ export function KanjiSearchClient() {
             <BookOpen className="w-4 h-4 mr-1" />
             {N2_KANJI.length} N2 Kanji
           </Badge>
+          <Badge variant="secondary" className="text-sm">
+            <BookOpen className="w-4 h-4 mr-1" />
+            {N1_KANJI.length} N1 Kanji
+          </Badge>
           <Badge variant="default" className="text-sm">
             <BookOpen className="w-4 h-4 mr-1" />
             {ALL_KANJI.length} Total Available
@@ -171,12 +182,13 @@ export function KanjiSearchClient() {
       
       {/* Level Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-2xl mx-auto">
+        <TabsList className="grid w-full grid-cols-6 max-w-3xl mx-auto">
           <TabsTrigger value="ALL">All ({ALL_KANJI.length})</TabsTrigger>
           <TabsTrigger value="N5">N5 ({N5_KANJI.length})</TabsTrigger>
           <TabsTrigger value="N4">N4 ({N4_KANJI.length})</TabsTrigger>
           <TabsTrigger value="N3">N3 ({N3_KANJI.length})</TabsTrigger>
           <TabsTrigger value="N2">N2 ({N2_KANJI.length})</TabsTrigger>
+          <TabsTrigger value="N1">N1 ({N1_KANJI.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="ALL" className="space-y-6">
@@ -184,7 +196,7 @@ export function KanjiSearchClient() {
             title="All JLPT Kanji" 
             kanji={filtered} 
             search={search}
-            description="Browse all available kanji from N5, N4, N3, and N2 levels"
+            description="Browse all available kanji from N5, N4, N3, N2, and N1 levels"
           />
         </TabsContent>
         
@@ -223,6 +235,15 @@ export function KanjiSearchClient() {
             description="Advanced kanji for professional and academic contexts"
           />
         </TabsContent>
+        
+        <TabsContent value="N1" className="space-y-6">
+          <KanjiSection 
+            title="JLPT N1 Kanji" 
+            kanji={filtered} 
+            search={search}
+            description="Expert-level kanji for advanced academic, professional, and literary contexts"
+          />
+        </TabsContent>
       </Tabs>
       
       {/* No results */}
@@ -246,13 +267,14 @@ export function KanjiSearchClient() {
         <h3>JLPT Kanji Collection</h3>
         <p>
           This comprehensive collection contains {ALL_KANJI.length} kanji characters covering 
-          JLPT N5, N4, N3, and N2 levels. Starting with {N5_KANJI.length} fundamental N5 characters, 
+          JLPT N5, N4, N3, N2, and N1 levels. Starting with {N5_KANJI.length} fundamental N5 characters, 
           progressing through {N4_KANJI.length} intermediate N4 kanji, expanding to 
-          {N3_KANJI.length} advanced N3 characters, and reaching {N2_KANJI.length} advanced N2 kanji 
-          for professional and academic contexts.
+          {N3_KANJI.length} advanced N3 characters, {N2_KANJI.length} advanced N2 kanji 
+          for professional and academic contexts, and culminating with {N1_KANJI.length} expert-level N1 kanji 
+          for advanced academic, professional, and literary mastery.
         </p>
         
-        <div className="grid md:grid-cols-4 gap-4 not-prose">
+        <div className="grid md:grid-cols-5 gap-4 not-prose">
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-semibold text-blue-900 mb-2">JLPT N5 Level</h4>
             <p className="text-sm text-blue-800">
@@ -281,11 +303,18 @@ export function KanjiSearchClient() {
               newspapers, and complex literature.
             </p>
           </div>
+          <div className="bg-red-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-red-900 mb-2">JLPT N1 Level</h4>
+            <p className="text-sm text-red-800">
+              Expert-level kanji for advanced academic, professional, and literary contexts. 
+              Complex characters for formal documents and specialized fields.
+            </p>
+          </div>
         </div>
         
         <h3>How to Use This Dictionary</h3>
         <ul>
-          <li>Use the level tabs to focus on N5, N4, N3, N2, or browse all kanji together</li>
+          <li>Use the level tabs to focus on N5, N4, N3, N2, N1, or browse all kanji together</li>
           <li>Search by kanji character, meaning, or reading (onyomi/kunyomi)</li>
           <li>Click any kanji to see its dedicated page with stroke order animation</li>
           <li>Practice writing by following the animated stroke sequences</li>
