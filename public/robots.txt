@@ -1,4 +1,9 @@
+# *
 User-agent: *
 Allow: /
 
+# Host
+Host: https://michikanji.com
+
+# Sitemaps
 Sitemap: https://michikanji.com/sitemap.xml
