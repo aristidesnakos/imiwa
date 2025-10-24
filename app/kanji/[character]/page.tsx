@@ -7,6 +7,7 @@ import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
+import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 
@@ -16,7 +17,7 @@ const ALL_KANJI_DATA = [
   ...N4_KANJI.map(k => ({ ...k, level: 'N4' })),
   ...N3_KANJI.map(k => ({ ...k, level: 'N3' })),
   ...N2_KANJI.map(k => ({ ...k, level: 'N2' })),
-  // Add N1 as it becomes available
+  ...N1_KANJI.map(k => ({ ...k, level: 'N1' })),
 ];
 
 interface Props {

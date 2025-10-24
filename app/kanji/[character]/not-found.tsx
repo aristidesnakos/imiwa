@@ -20,7 +20,7 @@ export default function KanjiNotFound() {
             The kanji you&apos;re looking for is not in our database yet.
           </p>
           <p className="text-sm">
-            We currently support JLPT N5 kanji characters. More levels coming soon!
+            We currently support JLPT N5, N4, N3, N2, and N1 kanji characters.
           </p>
         </div>
         
