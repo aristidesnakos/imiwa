@@ -2,35 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Define the new color palette */
+/* Japan-inspired color palette */
 @layer base {
   :root {
-    --background: #fefcf7; /* Warm off-white */
-    --foreground: #2c2c2c; /* Charcoal black */
-    --accent: #d4a574;     /* Warm sepia/amber */
-    --border: #f0ede6;     /* Clean border color */
-    /* Re-map existing shadcn/ui variables to the new palette for consistency */
-    --primary: var(--accent);
-    --primary-foreground: var(--foreground); /* Text on primary should be charcoal black */
+    /* Core Japan-inspired colors */
+    --coral-sunset: #FF6B47;    /* Main background accent, Japanese sunsets */
+    --deep-ocean: #1B365D;      /* Primary text, deep Japanese waters */
+    --mountain-mist: #2C5F7C;   /* Secondary elements, mountain silhouettes */
+    --sakura-waters: #7BB3D3;   /* Accent highlights, temple waters */
+    --cherry-blossom: #F4A6CD;  /* Call-to-action, sakura petals */
+    --temple-stone: #FAF8F5;    /* Card backgrounds, traditional stone */
+    --ink-black: #1A1A1A;       /* Primary text, calligraphy ink */
+    --soft-mist: #F5F7FA;       /* Subtle backgrounds, morning mist */
+    
+    /* Map to shadcn/ui variables for consistency */
+    --background: var(--temple-stone);
+    --foreground: var(--ink-black);
+    --accent: var(--sakura-waters);
+    --border: #E8EDF2; /* Subtle border between temple-stone and soft-mist */
+    
+    --primary: var(--deep-ocean);
+    --primary-foreground: var(--temple-stone);
 
-    --muted: var(--border); /* Muted background for elements like code blocks */
-    --muted-foreground: var(--foreground); /* Muted foreground for text on muted backgrounds */
+    --muted: var(--soft-mist);
+    --muted-foreground: var(--mountain-mist);
 
-    --card: var(--background); /* Card background */
-    --card-foreground: var(--foreground); /* Card text */
+    --card: var(--temple-stone);
+    --card-foreground: var(--ink-black);
 
-    --popover: var(--background); /* Popover background */
-    --popover-foreground: var(--foreground); /* Popover text */
+    --popover: var(--temple-stone);
+    --popover-foreground: var(--ink-black);
 
-    --secondary: #8b5a3c; /* Darker brown for better contrast than the accent */
-    --secondary-foreground: var(--background); /* Light text on secondary */
+    --secondary: var(--mountain-mist);
+    --secondary-foreground: var(--temple-stone);
 
     --destructive: 0 84.2% 60.2%; /* Keep default destructive */
-    --destructive-foreground: 0 0% 98%; /* Keep default destructive foreground */
+    --destructive-foreground: 0 0% 98%;
 
-    --ring: var(--accent); /* Ring color for focus states */
+    --ring: var(--sakura-waters);
 
-    --radius: 0.5rem; /* Keep default radius */
+    --radius: 0.5rem;
   }
 }
 
@@ -190,15 +201,51 @@ h1, h2, h3, h4, h5, h6 {
   @apply italic;
 }
 
+/* Japanese-inspired traditional patterns */
+.seigaiha-pattern {
+  background-image: 
+    radial-gradient(circle at 50% 0%, transparent 20%, var(--sakura-waters) 21%, var(--sakura-waters) 34%, transparent 35%),
+    linear-gradient(0deg, transparent 24%, var(--sakura-waters) 25%, var(--sakura-waters) 26%, transparent 27%, transparent 74%, var(--sakura-waters) 75%, var(--sakura-waters) 76%, transparent 77%);
+  background-size: 40px 40px;
+  opacity: 0.1;
+}
+
+.asanoha-pattern {
+  background-image: 
+    linear-gradient(30deg, var(--cherry-blossom) 12%, transparent 12.5%, transparent 87%, var(--cherry-blossom) 87.5%, var(--cherry-blossom)),
+    linear-gradient(150deg, var(--cherry-blossom) 12%, transparent 12.5%, transparent 87%, var(--cherry-blossom) 87.5%, var(--cherry-blossom)),
+    linear-gradient(30deg, var(--cherry-blossom) 12%, transparent 12.5%, transparent 87%, var(--cherry-blossom) 87.5%, var(--cherry-blossom)),
+    linear-gradient(150deg, var(--cherry-blossom) 12%, transparent 12.5%, transparent 87%, var(--cherry-blossom) 87.5%, var(--cherry-blossom));
+  background-size: 20px 35px;
+  background-position: 0 0, 0 0, 10px 18px, 10px 18px;
+  opacity: 0.05;
+}
+
+.mountain-silhouette {
+  background: 
+    linear-gradient(45deg, var(--deep-ocean) 0%, var(--mountain-mist) 50%, var(--sakura-waters) 100%);
+  clip-path: polygon(0 80%, 20% 60%, 40% 70%, 60% 40%, 80% 55%, 100% 30%, 100% 100%, 0% 100%);
+}
+
+/* Subtle animation for Japanese elements */
+.sakura-float {
+  animation: sakuraFloat 6s ease-in-out infinite;
+}
+
+@keyframes sakuraFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(2deg); }
+  66% { transform: translateY(-5px) rotate(-1deg); }
+}
+
 /* Remove specific notebook styles */
 .notebook-container,
 .date-text,
 .journal-input {
-  /* Ensure these styles are removed or overridden */
   display: none !important;
 }
 
 /* Utility class for notebook foreground color - keep if used elsewhere, otherwise remove */
 .text-notebook-foreground {
-  color: var(--notebook-foreground); /* This variable is no longer defined in :root */
+  color: var(--notebook-foreground);
 }
