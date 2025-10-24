@@ -17,6 +17,7 @@ const N5_KANJI = extractKanjiFromFile(path.join(__dirname, 'lib/constants/n5-kan
 const N4_KANJI = extractKanjiFromFile(path.join(__dirname, 'lib/constants/n4-kanji.ts'));
 const N3_KANJI = extractKanjiFromFile(path.join(__dirname, 'lib/constants/n3-kanji.ts'));
 const N2_KANJI = extractKanjiFromFile(path.join(__dirname, 'lib/constants/n2-kanji.ts'));
+const N1_KANJI = extractKanjiFromFile(path.join(__dirname, 'lib/constants/n1-kanji.ts'));
 
 // Create deduplicated list of all kanji (same logic as in KanjiSearchClient)
 const getAllKanji = () => {
@@ -38,6 +39,12 @@ const getAllKanji = () => {
   });
   // Add N2, but don't overwrite N5/N4/N3
   N2_KANJI.forEach(k => {
+    if (!kanjiMap.has(k.kanji)) {
+      kanjiMap.set(k.kanji, k);
+    }
+  });
+  // Add N1, but don't overwrite N5/N4/N3/N2
+  N1_KANJI.forEach(k => {
     if (!kanjiMap.has(k.kanji)) {
       kanjiMap.set(k.kanji, k);
     }
