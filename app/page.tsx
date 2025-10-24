@@ -33,33 +33,42 @@ export default function LandingPage() {
       </Suspense>
       
       <main className="min-h-screen">
-        {/* Hero Section with Immediate Search */}
-        <section className="bg-gradient-to-b from-background to-muted/20 pt-20 pb-16">
-          <div className="container mx-auto px-4 text-center space-y-8">
+        {/* Hero Section with Japan-inspired design */}
+        <section className="relative bg-gradient-to-b from-japan-soft-mist via-background to-muted/20 pt-20 pb-16 overflow-hidden">
+          {/* Mountain silhouette background */}
+          <div className="absolute inset-0 w-full h-full">
+            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-japan-mountain-mist/20 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-japan-deep-ocean/10 to-transparent"></div>
+          </div>
+          
+          <div className="relative container mx-auto px-4 text-center space-y-8 z-10">
             {/* Hero Header */}
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-6xl font-bold">
+              <h1 className="text-4xl md:text-6xl font-bold text-japan-deep-ocean">
                 Learn Japanese Kanji
               </h1>
+              <p className="text-lg md:text-xl text-japan-ink-black font-medium">
+                Japan Through Language
+              </p>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
                 Master kanji with interactive stroke order diagrams. Search, learn, and practice the correct way to write each character.
               </p>
             </div>
             
-            {/* Immediate Search */}
+            {/* Enhanced Search with Japan theme */}
             <div className="max-w-md mx-auto space-y-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-japan-mountain-mist w-4 h-4" />
                 <Input
-                  placeholder="Search kanji, meaning, or reading..."
+                  placeholder="Search kanji, meaning, or reading... 🌸"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 text-lg py-3"
+                  className="pl-10 text-lg py-3 border-japan-sakura-waters/30 focus:border-japan-sakura-waters focus:ring-japan-sakura-waters/20"
                 />
               </div>
-              <Button asChild size="lg" className="w-full">
+              <Button asChild size="lg" className="w-full bg-japan-deep-ocean hover:bg-japan-mountain-mist text-white">
                 <Link href="/kanji">
-                  View All Kanji
+                  Start Your Kanji Journey
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -86,12 +95,12 @@ export default function LandingPage() {
                   <Link
                     key={kanji.kanji}
                     href={`/kanji/${encodeURIComponent(kanji.kanji)}`}
-                    className="group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center"
+                    className="group p-4 border border-japan-sakura-waters/20 rounded-lg bg-card hover:bg-japan-soft-mist hover:border-japan-sakura-waters hover:shadow-lg transition-all duration-300 text-center"
                   >
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform text-japan-deep-ocean">
                       {kanji.kanji}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-japan-mountain-mist truncate">
                       {kanji.meaning.split(',')[0]}
                     </div>
                   </Link>
@@ -140,12 +149,12 @@ export default function LandingPage() {
                   <Link
                     key={kanji.kanji}
                     href={`/kanji/${encodeURIComponent(kanji.kanji)}`}
-                    className="group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center"
+                    className="group p-4 border border-japan-sakura-waters/20 rounded-lg bg-card hover:bg-japan-soft-mist hover:border-japan-sakura-waters hover:shadow-lg transition-all duration-300 text-center"
                   >
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform text-japan-deep-ocean">
                       {kanji.kanji}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-japan-mountain-mist truncate">
                       {kanji.meaning.split(',')[0]}
                     </div>
                   </Link>
@@ -164,41 +173,42 @@ export default function LandingPage() {
           </section>
         )}
 
-        {/* Features Section */}
-        <section className="py-16 bg-muted/50">
+        {/* Features Section - Japan Inspired */}
+        <section className="py-16 bg-gradient-to-br from-japan-soft-mist to-background">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Why Learn Kanji Here?</h2>
-              <p className="text-lg text-gray-600">Everything you need to master Japanese characters from N5 to N2</p>
+              <h2 className="text-3xl font-bold mb-4 text-japan-deep-ocean">Why Learn Kanji Here?</h2>
+              <p className="text-lg text-japan-mountain-mist">Everything you need to master Japanese characters from N5 to N1</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="text-center space-y-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto">
-                  <Search className="w-6 h-6 text-blue-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-japan-sakura-waters to-japan-cherry-blossom/30 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                  <Search className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold">Smart Search</h3>
-                <p className="text-gray-600">Find kanji by character, meaning, or reading instantly</p>
+                <h3 className="text-xl font-semibold text-japan-deep-ocean">Smart Search</h3>
+                <p className="text-japan-mountain-mist">Find kanji by character, meaning, or reading instantly</p>
               </div>
               
               <div className="text-center space-y-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto">
-                  <BookOpen className="w-6 h-6 text-green-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-japan-mountain-mist to-japan-deep-ocean rounded-full flex items-center justify-center mx-auto shadow-lg">
+                  <BookOpen className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold">Stroke Order</h3>
-                <p className="text-gray-600">Learn proper stroke order with interactive animations</p>
+                <h3 className="text-xl font-semibold text-japan-deep-ocean">Stroke Order</h3>
+                <p className="text-japan-mountain-mist">Learn proper stroke order with interactive animations</p>
               </div>
               
               <div className="text-center space-y-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto">
-                  <ArrowRight className="w-6 h-6 text-purple-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-japan-cherry-blossom to-japan-coral-sunset/50 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                  <ArrowRight className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold">JLPT N5-N2 Focused</h3>
-                <p className="text-gray-600">Complete coverage from beginner to advanced intermediate levels</p>
+                <h3 className="text-xl font-semibold text-japan-deep-ocean">JLPT N5-N1 Focused</h3>
+                <p className="text-japan-mountain-mist">Complete coverage from beginner to advanced levels</p>
               </div>
             </div>
           </div>
         </section>
+
       </main>
 
       <Footer />

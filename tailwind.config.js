@@ -69,6 +69,17 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			// Japan-inspired direct color access
+  			japan: {
+  				'coral-sunset': 'var(--coral-sunset)',
+  				'deep-ocean': 'var(--deep-ocean)',
+  				'mountain-mist': 'var(--mountain-mist)',
+  				'sakura-waters': 'var(--sakura-waters)',
+  				'cherry-blossom': 'var(--cherry-blossom)',
+  				'temple-stone': 'var(--temple-stone)',
+  				'ink-black': 'var(--ink-black)',
+  				'soft-mist': 'var(--soft-mist)'
   			}
   		},
   		backgroundImage: {
