@@ -11,13 +11,14 @@ import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
+import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { Search, BookOpen, ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
   const [search, setSearch] = useState('');
   
   // Combine all kanji counts for display but only search N5 for simplicity on homepage
-  const ALL_KANJI_COUNT = N5_KANJI.length + N4_KANJI.length + N3_KANJI.length + N2_KANJI.length;
+  const ALL_KANJI_COUNT = N5_KANJI.length + N4_KANJI.length + N3_KANJI.length + N2_KANJI.length + N1_KANJI.length;
   
   const filtered = N5_KANJI.filter(k => 
     k.kanji.includes(search) || 
@@ -47,11 +48,11 @@ export default function LandingPage() {
               <h1 className="text-4xl md:text-6xl font-bold text-japan-deep-ocean">
                 Learn Japanese Kanji
               </h1>
-              <p className="text-lg md:text-xl text-japan-ink-black font-medium">
-                Japan Through Language
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+                Master kanji with interactive stroke order diagrams.
               </p>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-                Master kanji with interactive stroke order diagrams. Search, learn, and practice the correct way to write each character.
+                Search, learn, and practice the correct way to write each character.
               </p>
             </div>
             
@@ -139,7 +140,7 @@ export default function LandingPage() {
                   Popular JLPT Kanji
                 </h2>
                 <p className="text-gray-600">
-                  Start with these fundamental characters from N5-N2 levels
+                  Start with these fundamental characters from N5-N1 levels
                 </p>
               </div>
               
