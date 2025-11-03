@@ -255,5 +255,6 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "捜", onyomi: "そう", kunyomi: "さが（す）", meaning: "search, look for, locate" },
   { kanji: "荒", onyomi: "こう", kunyomi: "あら（い）、あ（れる）", meaning: "laid waste, rough, rude, wild" },
   { kanji: "咽", onyomi: "いん、えつ", kunyomi: "のど", meaning: "throat, choked, smothered, stuffy" },
-  { kanji: "兵", onyomi: "へい、ひょう", kunyomi: "つわもの", meaning: "soldier, private, troops, army" }
+  { kanji: "兵", onyomi: "へい、ひょう", kunyomi: "つわもの", meaning: "soldier, private, troops, army" },
+  { kanji: "飾", onyomi: "しょく", kunyomi: "かざ（る）", meaning: "decorate, ornament, adorn" }
 ];
