@@ -12,7 +12,7 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { Search, BookOpen } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'ALL';
 
@@ -141,32 +141,6 @@ export function KanjiSearchClient() {
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
           Learn Japanese kanji with interactive stroke order diagrams. Master the correct way to write each character.
         </p>
-        <div className="flex justify-center space-x-2 flex-wrap gap-2">
-          <Badge variant="secondary" className="text-sm">
-            <BookOpen className="w-4 h-4 mr-1" />
-            {N5_KANJI.length} N5 Kanji
-          </Badge>
-          <Badge variant="secondary" className="text-sm">
-            <BookOpen className="w-4 h-4 mr-1" />
-            {N4_KANJI.length} N4 Kanji
-          </Badge>
-          <Badge variant="secondary" className="text-sm">
-            <BookOpen className="w-4 h-4 mr-1" />
-            {N3_KANJI.length} N3 Kanji
-          </Badge>
-          <Badge variant="secondary" className="text-sm">
-            <BookOpen className="w-4 h-4 mr-1" />
-            {N2_KANJI.length} N2 Kanji
-          </Badge>
-          <Badge variant="secondary" className="text-sm">
-            <BookOpen className="w-4 h-4 mr-1" />
-            {N1_KANJI.length} N1 Kanji
-          </Badge>
-          <Badge variant="default" className="text-sm">
-            <BookOpen className="w-4 h-4 mr-1" />
-            {ALL_KANJI.length} Total Available
-          </Badge>
-        </div>
       </div>
       
       {/* Search */}
