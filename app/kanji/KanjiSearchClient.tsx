@@ -157,12 +157,12 @@ export function KanjiSearchClient() {
       {/* Level Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)} className="w-full">
         <TabsList className="grid w-full grid-cols-6 max-w-3xl mx-auto">
-          <TabsTrigger value="ALL">All ({ALL_KANJI.length})</TabsTrigger>
-          <TabsTrigger value="N5">N5 ({N5_KANJI.length})</TabsTrigger>
-          <TabsTrigger value="N4">N4 ({N4_KANJI.length})</TabsTrigger>
-          <TabsTrigger value="N3">N3 ({N3_KANJI.length})</TabsTrigger>
-          <TabsTrigger value="N2">N2 ({N2_KANJI.length})</TabsTrigger>
-          <TabsTrigger value="N1">N1 ({N1_KANJI.length})</TabsTrigger>
+          <TabsTrigger value="ALL">All</TabsTrigger>
+          <TabsTrigger value="N5">N5</TabsTrigger>
+          <TabsTrigger value="N4">N4</TabsTrigger>
+          <TabsTrigger value="N3">N3</TabsTrigger>
+          <TabsTrigger value="N2">N2</TabsTrigger>
+          <TabsTrigger value="N1">N1</TabsTrigger>
         </TabsList>
         
         <TabsContent value="ALL" className="space-y-6">
