@@ -196,9 +196,9 @@ export default async function KanjiDetailPage({ params }: Props) {
         </div>
         
         {/* CTA Section */}
-        <footer className="mt-12 pt-8 border-t border-gray-200">
+        <section className="mt-12 pt-8 border-t border-gray-200">
           <CTASection />
-        </footer>
+        </section>
         
         {/* SEO Content */}
         <div className="mt-16 prose prose-lg max-w-none">
