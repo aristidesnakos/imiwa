@@ -155,7 +155,7 @@ export function LearnedKanjiClient() {
         </div>
 
         {/* CTA Section */}
-        <CTASection />
+        <CTASection variant="with-image" />
 
         {/* Progress Chart */}
         <Card className="mb-8">
