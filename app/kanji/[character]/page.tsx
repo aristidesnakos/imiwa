@@ -197,7 +197,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         
         {/* CTA Section */}
         <section className="mt-12 pt-8 border-t border-gray-200">
-          <CTASection />
+          <CTASection variant="with-image" />
         </section>
         
         {/* SEO Content */}
