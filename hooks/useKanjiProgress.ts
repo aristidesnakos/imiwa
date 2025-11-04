@@ -9,6 +9,22 @@ interface KanjiProgressData {
 
 const STORAGE_KEY = 'kanji-progress';
 
+// Helper function to generate date keys for different periods
+function getDateKey(date: Date, period: '24h' | '7d' | '30d' | '12m'): string {
+  switch (period) {
+    case '24h':
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    case '7d':
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    case '30d':
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    case '12m':
+      return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    default:
+      return date.toISOString().split('T')[0];
+  }
+}
+
 export function useKanjiProgress() {
   const [progressData, setProgressData] = useState<KanjiProgressData>({
     learnedKanji: [],
@@ -80,22 +96,68 @@ export function useKanjiProgress() {
     return kanjiList.filter(kanji => progressData.learnedKanji.includes(kanji)).length;
   }, [progressData.learnedKanji]);
 
-  // Get progress over time for chart
-  const getProgressOverTime = useCallback(() => {
-    const sortedEntries = Object.entries(progressData.timestamps)
-      .sort(([, a], [, b]) => a - b);
+  // Get progress over time for chart with period filtering
+  const getProgressOverTime = useCallback((period: '24h' | '7d' | '30d' | '12m' = '30d') => {
+    const now = new Date();
+    let startDate: Date;
     
-    const result = [];
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const [, timestamp] = sortedEntries[i];
-      const date = new Date(timestamp).toISOString().split('T')[0];
-      result.push({
-        date,
-        count: i + 1,
-      });
+    switch (period) {
+      case '24h':
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '12m':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
     }
     
-    return result;
+    // Filter timestamps within the period
+    const filteredEntries = Object.entries(progressData.timestamps)
+      .filter(([, timestamp]) => timestamp >= startDate.getTime())
+      .sort(([, a], [, b]) => a - b);
+    
+    // Create time buckets based on period
+    const buckets = new Map<string, number>();
+    let currentDate = new Date(startDate);
+    
+    // Initialize buckets
+    while (currentDate <= now) {
+      const key = getDateKey(currentDate, period);
+      buckets.set(key, 0);
+      
+      // Increment by appropriate interval
+      switch (period) {
+        case '24h':
+          currentDate.setHours(currentDate.getHours() + 1);
+          break;
+        case '7d':
+        case '30d':
+          currentDate.setDate(currentDate.getDate() + 1);
+          break;
+        case '12m':
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          break;
+      }
+    }
+    
+    // Fill buckets with actual data
+    filteredEntries.forEach(([, timestamp]) => {
+      const date = new Date(timestamp);
+      const key = getDateKey(date, period);
+      buckets.set(key, (buckets.get(key) || 0) + 1);
+    });
+    
+    // Convert to chart data
+    return Array.from(buckets.entries()).map(([dateKey, daily]) => ({
+      name: dateKey,
+      daily,
+      date: dateKey
+    }));
   }, [progressData.timestamps]);
 
   // Reset all progress
