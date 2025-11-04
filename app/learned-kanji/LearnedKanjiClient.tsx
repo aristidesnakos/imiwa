@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/sections/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CTASection } from '@/components/CTASection';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
 import { ArrowLeft, BookOpen, TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -228,20 +229,7 @@ export function LearnedKanjiClient() {
         </Card>
 
         {/* CTA Section */}
-        <div className="mb-6 md:mb-8">
-          <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-            <h3 className="font-semibold mb-3 text-base md:text-lg">Ready to Start Your Language Learning Journey?</h3>
-            <p className="mb-4 text-sm md:text-base">
-              Practice Japanese with AI-powered feedback tailored to your learning goals.
-            </p>
-            <a 
-              href="https://llanai.com" 
-              className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block text-sm md:text-base w-full sm:w-auto text-center"
-            >
-              Start Japanese Practice
-            </a>
-          </div>
-        </div>
+        <CTASection />
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">

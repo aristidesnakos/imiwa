@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
+import { CTASection } from '@/components/CTASection';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
@@ -196,18 +197,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         
         {/* CTA Section */}
         <footer className="mt-12 pt-8 border-t border-gray-200">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="font-semibold mb-3">Ready to Start Your Language Learning Journey?</h3>
-            <p className="mb-4">
-              Practice Japanese with AI-powered feedback tailored to your learning goals.
-            </p>
-            <a 
-              href="https://llanai.com" 
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block"
-            >
-              Start Japanese Practice
-            </a>
-          </div>
+          <CTASection />
         </footer>
         
         {/* SEO Content */}
