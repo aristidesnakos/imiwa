@@ -1,16 +1,48 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/sections/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
 import { ArrowLeft, BookOpen, TrendingUp } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+type TimePeriod = '24h' | '7d' | '30d' | '12m';
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+function CustomTooltip({ active, payload, label }: TooltipProps) {
+  if (!active || !payload?.[0]) return null;
+  
+  return (
+    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+      <p className="text-sm font-medium text-gray-900 mb-1">{label}</p>
+      <div className="space-y-1">
+        <p className="text-sm text-emerald-600">
+          Daily: {payload[0].value} kanji
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function LearnedKanjiClient() {
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('30d');
   const { totalLearned, getProgressOverTime, resetProgress } = useKanjiProgress();
-  const progressData = getProgressOverTime();
+  const progressData = getProgressOverTime(selectedPeriod);
+
+  const periodLabels = {
+    '24h': 'Last 24 Hours',
+    '7d': 'Last 7 Days', 
+    '30d': 'Last 30 Days',
+    '12m': 'Last 12 Months'
+  };
 
   // If no kanji learned yet, show CTA
   if (totalLearned === 0) {
@@ -109,30 +141,30 @@ export function LearnedKanjiClient() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Learning Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium">In {periodLabels[selectedPeriod]}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {progressData.length > 1 
-                  ? Math.round((totalLearned / progressData.length) * 10) / 10
-                  : totalLearned
-                }
+              <div className="text-2xl font-bold text-emerald-600">
+                {progressData.reduce((sum, day) => sum + day.daily, 0)}
               </div>
-              <p className="text-xs text-gray-600">avg per learning session</p>
+              <p className="text-xs text-gray-600">kanji learned</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Progress Percentage</CardTitle>
+              <CardTitle className="text-sm font-medium">Daily Average</CardTitle>
               <div className="h-4 w-4 bg-purple-600 rounded-full" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                {Math.round((totalLearned / 2136) * 100)}%
+                {progressData.length > 0 
+                  ? Math.round((progressData.reduce((sum, day) => sum + day.daily, 0) / progressData.length) * 10) / 10
+                  : 0
+                }
               </div>
-              <p className="text-xs text-gray-600">of all JLPT kanji</p>
+              <p className="text-xs text-gray-600">kanji per day</p>
             </CardContent>
           </Card>
         </div>
@@ -140,38 +172,83 @@ export function LearnedKanjiClient() {
         {/* Progress Chart */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Learning Progress Over Time</CardTitle>
-            <CardDescription>
-              Your kanji learning journey visualized by cumulative count
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Learning Progress - {periodLabels[selectedPeriod]}</CardTitle>
+                <CardDescription>
+                  Daily kanji learned over the selected time period
+                </CardDescription>
+              </div>
+              
+              {/* Period Selector */}
+              <div className="flex gap-2">
+                {(Object.keys(periodLabels) as TimePeriod[]).map((period) => (
+                  <Button
+                    key={period}
+                    variant={selectedPeriod === period ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedPeriod(period)}
+                  >
+                    {period.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={progressData}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <AreaChart data={progressData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
+                  <defs>
+                    <linearGradient id="kanjiGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    angle={selectedPeriod === '24h' ? -45 : 0}
+                    textAnchor={selectedPeriod === '24h' ? 'end' : 'middle'}
+                    stroke="#9ca3af"
+                    height={selectedPeriod === '24h' ? 80 : 60}
                   />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip 
-                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                    formatter={(value) => [value, 'Kanji Learned']}
+                  <YAxis 
+                    tick={{ fontSize: 11 }}
+                    stroke="#9ca3af"
+                    width={40}
                   />
-                  <Line 
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area 
                     type="monotone" 
-                    dataKey="count" 
-                    stroke="#3b82f6" 
-                    strokeWidth={3}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                    dataKey="daily" 
+                    stroke="#10B981"
+                    strokeWidth={2} 
+                    fill="url(#kanjiGradient)"
+                    name="Daily Kanji"
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
+
+        {/* CTA Section */}
+        <div className="mb-8">
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="font-semibold mb-3">Ready to Start Your Language Learning Journey?</h3>
+            <p className="mb-4">
+              Practice Japanese with AI-powered feedback tailored to your learning goals.
+            </p>
+            <a 
+              href="https://llanai.com" 
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block"
+            >
+              Start Japanese Practice
+            </a>
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
