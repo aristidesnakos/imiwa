@@ -7,12 +7,14 @@ import Header from '@/components/sections/Header';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { Search } from 'lucide-react';
+import { Search, Check, Filter } from 'lucide-react';
+import { useKanjiProgress } from '@/hooks/useKanjiProgress';
 
 type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'ALL';
 
@@ -29,16 +31,37 @@ interface KanjiSectionProps {
   kanji: KanjiWithLevel[];
   search: string;
   description: string;
+  isKanjiLearned: (character: string) => boolean;
+  toggleKanjiLearned: (character: string) => void;
+  learnedCount: number;
+  totalCount: number;
 }
 
-function KanjiSection({ title, kanji, search, description }: KanjiSectionProps) {
+function KanjiSection({ title, kanji, search, description, isKanjiLearned, toggleKanjiLearned, learnedCount, totalCount }: KanjiSectionProps) {
+  const progressPercentage = totalCount > 0 ? Math.round((learnedCount / totalCount) * 100) : 0;
+  
   return (
     <>
       {/* Section Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-semibold mb-2">
-          {title} {search && `(${kanji.length} results)`}
-        </h2>
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <h2 className="text-2xl font-semibold">
+            {title} {search && `(${kanji.length} results)`}
+          </h2>
+          {!search && (
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-green-600 font-medium">
+                {learnedCount}/{totalCount} learned ({progressPercentage}%)
+              </div>
+              <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-green-500 transition-all duration-300"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
         <p className="text-gray-600 mb-4">{description}</p>
         <p className="text-sm text-gray-500">
           Click any kanji to see its stroke order, readings, and meaning
@@ -47,23 +70,45 @@ function KanjiSection({ title, kanji, search, description }: KanjiSectionProps) 
       
       {/* Kanji Grid */}
       <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4">
-        {kanji.map((k, index) => (
-          <Link
-            key={`${k.kanji}-${k.level}-${index}`}
-            href={`/kanji/${encodeURIComponent(k.kanji)}`}
-            className="group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center relative"
-          >
-            <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
-              {k.kanji}
+        {kanji.map((k, index) => {
+          const isLearned = isKanjiLearned(k.kanji);
+          return (
+            <div key={`${k.kanji}-${k.level}-${index}`} className="relative">
+              <Link
+                href={`/kanji/${encodeURIComponent(k.kanji)}`}
+                className={`group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center block ${
+                  isLearned ? 'border-emerald-300 bg-emerald-50' : ''
+                }`}
+              >
+                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
+                  {k.kanji}
+                </div>
+                <div className="text-xs text-gray-500 truncate mb-1">
+                  {k.meaning.split(',')[0]}
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {k.level}
+                </Badge>
+              </Link>
+              
+              {/* Check-off button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleKanjiLearned(k.kanji);
+                }}
+                className={`absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  isLearned 
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+                    : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
+                }`}
+                title={isLearned ? 'Mark as unlearned' : 'Mark as learned'}
+              >
+                <Check className="w-3 h-3" />
+              </button>
             </div>
-            <div className="text-xs text-gray-500 truncate mb-1">
-              {k.meaning.split(',')[0]}
-            </div>
-            <Badge variant="outline" className="text-xs">
-              {k.level}
-            </Badge>
-          </Link>
-        ))}
+          );
+        })}
       </div>
     </>
   );
@@ -72,7 +117,9 @@ function KanjiSection({ title, kanji, search, description }: KanjiSectionProps) 
 export function KanjiSearchClient() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<JLPTLevel>('ALL');
+  const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
   const searchParams = useSearchParams();
+  const { isKanjiLearned, getLearnedCountForLevel, totalLearned, toggleKanjiLearned } = useKanjiProgress();
   
   // Combine all kanji data with level information, removing duplicates
   const ALL_KANJI: KanjiWithLevel[] = (() => {
@@ -119,14 +166,32 @@ export function KanjiSearchClient() {
   const getFilteredKanji = (level: JLPTLevel) => {
     let kanjiSet = level === 'ALL' ? ALL_KANJI : ALL_KANJI.filter(k => k.level === level);
     
-    if (!search) return kanjiSet;
+    // Apply search filter
+    if (search) {
+      kanjiSet = kanjiSet.filter(k => 
+        k.kanji.includes(search) || 
+        k.meaning.toLowerCase().includes(search.toLowerCase()) ||
+        k.onyomi.toLowerCase().includes(search.toLowerCase()) ||
+        k.kunyomi.toLowerCase().includes(search.toLowerCase())
+      );
+    }
     
-    return kanjiSet.filter(k => 
-      k.kanji.includes(search) || 
-      k.meaning.toLowerCase().includes(search.toLowerCase()) ||
-      k.onyomi.toLowerCase().includes(search.toLowerCase()) ||
-      k.kunyomi.toLowerCase().includes(search.toLowerCase())
-    );
+    // Apply unlearned filter
+    if (showOnlyUnlearned) {
+      kanjiSet = kanjiSet.filter(k => !isKanjiLearned(k.kanji));
+    }
+    
+    return kanjiSet;
+  };
+
+  // Get counts for progress display
+  const getLevelCounts = (level: JLPTLevel) => {
+    const levelKanji = level === 'ALL' ? ALL_KANJI : ALL_KANJI.filter(k => k.level === level);
+    const levelKanjiChars = levelKanji.map(k => k.kanji);
+    return {
+      learned: getLearnedCountForLevel(levelKanjiChars),
+      total: levelKanji.length
+    };
   };
   
   const filtered = getFilteredKanji(activeTab);
@@ -141,17 +206,42 @@ export function KanjiSearchClient() {
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
           Learn Japanese kanji with interactive stroke order diagrams. Master the correct way to write each character.
         </p>
+        
+        {/* Progress Stats */}
+        <div className="flex items-center justify-center gap-6 text-sm">
+          <Link href="/learned-kanji">
+            <div className="bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
+              <span className="text-blue-600 font-semibold">{totalLearned}</span>
+              <span className="text-blue-800 ml-1">kanji learned</span>
+            </div>
+          </Link>
+        </div>
       </div>
       
-      {/* Search */}
-      <div className="max-w-md mx-auto relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <Input
-          placeholder="Search kanji, meaning, or reading..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Filters */}
+      <div className="max-w-2xl mx-auto space-y-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search kanji, meaning, or reading..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        {/* Filter Controls */}
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant={showOnlyUnlearned ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowOnlyUnlearned(!showOnlyUnlearned)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            {showOnlyUnlearned ? "Show all kanji" : "Show only unlearned"}
+          </Button>
+        </div>
       </div>
       
       {/* Level Tabs */}
@@ -171,6 +261,10 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Browse all available kanji from N5, N4, N3, N2, and N1 levels"
+            isKanjiLearned={isKanjiLearned}
+            toggleKanjiLearned={toggleKanjiLearned}
+            learnedCount={getLevelCounts('ALL').learned}
+            totalCount={getLevelCounts('ALL').total}
           />
         </TabsContent>
         
@@ -180,6 +274,10 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Fundamental kanji for beginners - most essential characters"
+            isKanjiLearned={isKanjiLearned}
+            toggleKanjiLearned={toggleKanjiLearned}
+            learnedCount={getLevelCounts('N5').learned}
+            totalCount={getLevelCounts('N5').total}
           />
         </TabsContent>
         
@@ -189,6 +287,10 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Intermediate kanji building on N5 foundation"
+            isKanjiLearned={isKanjiLearned}
+            toggleKanjiLearned={toggleKanjiLearned}
+            learnedCount={getLevelCounts('N4').learned}
+            totalCount={getLevelCounts('N4').total}
           />
         </TabsContent>
         
@@ -198,6 +300,10 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Advanced intermediate kanji for complex expressions and formal contexts"
+            isKanjiLearned={isKanjiLearned}
+            toggleKanjiLearned={toggleKanjiLearned}
+            learnedCount={getLevelCounts('N3').learned}
+            totalCount={getLevelCounts('N3').total}
           />
         </TabsContent>
         
@@ -207,6 +313,10 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Advanced kanji for professional and academic contexts"
+            isKanjiLearned={isKanjiLearned}
+            toggleKanjiLearned={toggleKanjiLearned}
+            learnedCount={getLevelCounts('N2').learned}
+            totalCount={getLevelCounts('N2').total}
           />
         </TabsContent>
         
@@ -216,6 +326,10 @@ export function KanjiSearchClient() {
             kanji={filtered} 
             search={search}
             description="Expert-level kanji for advanced academic, professional, and literary contexts"
+            isKanjiLearned={isKanjiLearned}
+            toggleKanjiLearned={toggleKanjiLearned}
+            learnedCount={getLevelCounts('N1').learned}
+            totalCount={getLevelCounts('N1').total}
           />
         </TabsContent>
       </Tabs>
