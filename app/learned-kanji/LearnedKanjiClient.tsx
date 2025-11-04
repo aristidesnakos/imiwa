@@ -49,7 +49,7 @@ export function LearnedKanjiClient() {
     return (
       <>
         <Header />
-        <div className="container mx-auto p-8 max-w-4xl">
+        <div className="container mx-auto p-4 md:p-8 max-w-4xl">
           {/* Breadcrumbs */}
           <nav className="text-sm text-gray-600 mb-6">
             <Link href="/kanji" className="hover:text-blue-600 flex items-center">
@@ -59,19 +59,19 @@ export function LearnedKanjiClient() {
           </nav>
 
           {/* Empty State */}
-          <div className="text-center py-16">
-            <div className="mb-8">
-              <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h1 className="text-4xl font-bold mb-4">Start Your Kanji Journey</h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+          <div className="text-center py-8 md:py-16">
+            <div className="mb-6 md:mb-8">
+              <BookOpen className="w-12 h-12 md:w-16 md:h-16 mx-auto text-gray-400 mb-4" />
+              <h1 className="text-2xl md:text-4xl font-bold mb-4">Start Your Kanji Journey</h1>
+              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-6 md:mb-8 px-4">
                 Begin learning Japanese kanji and track your progress over time. 
                 Check off kanji as you learn them to see your growth!
               </p>
             </div>
 
-            <div className="bg-blue-50 p-8 rounded-lg max-w-md mx-auto">
-              <h3 className="font-semibold mb-4">Ready to start learning?</h3>
-              <p className="text-sm text-gray-600 mb-6">
+            <div className="bg-blue-50 p-6 md:p-8 rounded-lg max-w-md mx-auto">
+              <h3 className="font-semibold mb-4 text-base md:text-lg">Ready to start learning?</h3>
+              <p className="text-sm md:text-base text-gray-600 mb-6">
                 Browse our comprehensive kanji dictionary and start checking off characters as you master them.
               </p>
               <Link href="/kanji">
@@ -83,9 +83,9 @@ export function LearnedKanjiClient() {
             </div>
 
             {/* Tips */}
-            <div className="mt-12 max-w-2xl mx-auto">
-              <h3 className="font-semibold mb-4">How it works:</h3>
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
+            <div className="mt-8 md:mt-12 max-w-2xl mx-auto px-4">
+              <h3 className="font-semibold mb-4 text-base md:text-lg">How it works:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="font-medium mb-2">1. Browse Kanji</div>
                   <p className="text-gray-600">Explore kanji organized by JLPT levels N5-N1</p>
@@ -109,7 +109,7 @@ export function LearnedKanjiClient() {
   return (
     <>
       <Header />
-      <div className="container mx-auto p-8 max-w-6xl">
+      <div className="container mx-auto p-4 md:p-8 max-w-6xl">
         {/* Breadcrumbs */}
         <nav className="text-sm text-gray-600 mb-6">
           <Link href="/kanji" className="hover:text-blue-600 flex items-center">
@@ -119,15 +119,15 @@ export function LearnedKanjiClient() {
         </nav>
 
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Your Kanji Progress</h1>
-          <p className="text-xl text-gray-600">
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4">Your Kanji Progress</h1>
+          <p className="text-lg md:text-xl text-gray-600 px-4">
             Track your Japanese kanji learning journey over time
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Learned</CardTitle>
@@ -135,7 +135,7 @@ export function LearnedKanjiClient() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{totalLearned}</div>
-              <p className="text-xs text-gray-600">kanji mastered</p>
+              <p className="text-sm text-gray-600">kanji mastered</p>
             </CardContent>
           </Card>
           
@@ -148,23 +148,7 @@ export function LearnedKanjiClient() {
               <div className="text-2xl font-bold text-emerald-600">
                 {progressData.reduce((sum, day) => sum + day.daily, 0)}
               </div>
-              <p className="text-xs text-gray-600">kanji learned</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Daily Average</CardTitle>
-              <div className="h-4 w-4 bg-purple-600 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {progressData.length > 0 
-                  ? Math.round((progressData.reduce((sum, day) => sum + day.daily, 0) / progressData.length) * 10) / 10
-                  : 0
-                }
-              </div>
-              <p className="text-xs text-gray-600">kanji per day</p>
+              <p className="text-sm text-gray-600">kanji learned</p>
             </CardContent>
           </Card>
         </div>
@@ -172,22 +156,23 @@ export function LearnedKanjiClient() {
         {/* Progress Chart */}
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col gap-4">
               <div>
-                <CardTitle>Learning Progress - {periodLabels[selectedPeriod]}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg md:text-xl">Learning Progress - {periodLabels[selectedPeriod]}</CardTitle>
+                <CardDescription className="text-sm">
                   Daily kanji learned over the selected time period
                 </CardDescription>
               </div>
               
               {/* Period Selector */}
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 sm:flex gap-2">
                 {(Object.keys(periodLabels) as TimePeriod[]).map((period) => (
                   <Button
                     key={period}
                     variant={selectedPeriod === period ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedPeriod(period)}
+                    className="text-xs sm:text-sm"
                   >
                     {period.toUpperCase()}
                   </Button>
@@ -196,9 +181,17 @@ export function LearnedKanjiClient() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={progressData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
+                <AreaChart 
+                  data={progressData} 
+                  margin={{ 
+                    top: 20, 
+                    right: 10, 
+                    bottom: selectedPeriod === '24h' ? 80 : 60, 
+                    left: 10 
+                  }}
+                >
                   <defs>
                     <linearGradient id="kanjiGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
@@ -208,16 +201,16 @@ export function LearnedKanjiClient() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis 
                     dataKey="name"
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 10 }}
                     angle={selectedPeriod === '24h' ? -45 : 0}
                     textAnchor={selectedPeriod === '24h' ? 'end' : 'middle'}
                     stroke="#9ca3af"
-                    height={selectedPeriod === '24h' ? 80 : 60}
+                    interval="preserveStartEnd"
                   />
                   <YAxis 
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 10 }}
                     stroke="#9ca3af"
-                    width={40}
+                    width={30}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Area 
@@ -235,15 +228,15 @@ export function LearnedKanjiClient() {
         </Card>
 
         {/* CTA Section */}
-        <div className="mb-8">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="font-semibold mb-3">Ready to Start Your Language Learning Journey?</h3>
-            <p className="mb-4">
+        <div className="mb-6 md:mb-8">
+          <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
+            <h3 className="font-semibold mb-3 text-base md:text-lg">Ready to Start Your Language Learning Journey?</h3>
+            <p className="mb-4 text-sm md:text-base">
               Practice Japanese with AI-powered feedback tailored to your learning goals.
             </p>
             <a 
               href="https://llanai.com" 
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block"
+              className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block text-sm md:text-base w-full sm:w-auto text-center"
             >
               Start Japanese Practice
             </a>
@@ -251,9 +244,9 @@ export function LearnedKanjiClient() {
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/kanji">
-            <Button variant="default" size="lg">
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+          <Link href="/kanji" className="w-full sm:w-auto">
+            <Button variant="default" size="lg" className="w-full sm:w-auto">
               <BookOpen className="w-4 h-4 mr-2" />
               Continue Learning
             </Button>
@@ -262,6 +255,7 @@ export function LearnedKanjiClient() {
           <Button 
             variant="outline" 
             size="lg"
+            className="w-full sm:w-auto"
             onClick={() => {
               if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
                 resetProgress();
@@ -273,9 +267,9 @@ export function LearnedKanjiClient() {
         </div>
 
         {/* Additional Info */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-            Your progress is saved locally in your browser. Keep learning consistently 
+        <div className="mt-8 md:mt-12 text-center px-4">
+          <p className="text-xs md:text-sm text-gray-600 max-w-2xl mx-auto">
+            Your progress is saved locally in this browser. If you clear your history you will lose your progress. Keep learning consistently 
             to build a strong foundation in Japanese kanji recognition and writing.
           </p>
         </div>
