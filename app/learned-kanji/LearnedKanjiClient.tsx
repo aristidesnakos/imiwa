@@ -154,6 +154,9 @@ export function LearnedKanjiClient() {
           </Card>
         </div>
 
+        {/* CTA Section */}
+        <CTASection />
+
         {/* Progress Chart */}
         <Card className="mb-8">
           <CardHeader>
@@ -227,9 +230,6 @@ export function LearnedKanjiClient() {
             </div>
           </CardContent>
         </Card>
-
-        {/* CTA Section */}
-        <CTASection />
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
