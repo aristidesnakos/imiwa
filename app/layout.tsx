@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 
 export const metadata = getSEOTags({
   title: "Learn Japanese Kanji with Stroke Order - Interactive Kanji Dictionary",
-  description: "Master Japanese kanji with interactive stroke order diagrams. Search JLPT N5 kanji by character, meaning, or reading. Learn proper stroke order through animated guides.",
+  description: "Master Japanese kanji with interactive stroke order diagrams. Search JLPT N5, N4, N3, N2, and N1 kanji by character, meaning, or reading. Learn proper stroke order through animated guides.",
   canonicalUrlRelative: "/",
 });
 
