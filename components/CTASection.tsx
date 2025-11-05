@@ -48,12 +48,12 @@ export function CTASection({ className = "", variant = 'with-image' }: CTASectio
           </div>
 
           {/* Image Section */}
-          <div className="p-6 relative h-48 min-h-[200px] order-1 lg:order-2">
+          <div className="p-6 relative h-48 md:h-64 lg:h-full min-h-[200px] order-1 lg:order-2">
             <Image
               src="/assets/llanai-exemplary-correction-journal.png"
               alt="Japanese learning interface showing text correction and feedback"
               fill
-              className="object-center"
+              className="object-contain object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority={false}
             />
