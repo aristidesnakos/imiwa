@@ -14,5 +14,18 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "michikanji.com"
+        }
+      ],
+      "destination": "https://www.michikanji.com/$1",
+      "permanent": true
+    }
   ]
 }

@@ -4,7 +4,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://imiwa.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.michikanji.com';
   
   // Static pages
   const staticUrls = [

@@ -4,7 +4,7 @@ const config = {
   appName: "Your App Name",
   appDescription: "Your app description here.",
   keywords: ["nextjs", "starter", "template"],
-  domainName: "yourdomain.com",
+  domainName: "www.michikanji.com",
   crisp: {
     // Crisp website ID. Leave empty if not using Crisp
     id: "",
@@ -14,10 +14,10 @@ const config = {
     plans: [],
   },
   resend: {
-    fromNoReply: `Support <support@yourdomain.com>`,
-    fromAdmin: `Admin <admin@yourdomain.com>`,
-    supportEmail: "support@yourdomain.com",
-    forwardRepliesTo: "admin@yourdomain.com",
+    fromNoReply: `Support <support@michikanji.com>`,
+    fromAdmin: `Admin <admin@michikanji.com>`,
+    supportEmail: "support@michikanji.com",
+    forwardRepliesTo: "admin@michikanji.com",
   },
   auth: {
     // REQUIRED — the path to log in users

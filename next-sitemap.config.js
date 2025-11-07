@@ -55,7 +55,7 @@ const getAllKanji = () => {
 
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.SITE_URL || 'https://michikanji.com',
+  siteUrl: process.env.SITE_URL || 'https://www.michikanji.com',
   generateRobotsTxt: true,
   generateIndexSitemap: false,
   robotsTxtOptions: {

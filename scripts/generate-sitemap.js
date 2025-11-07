@@ -38,7 +38,7 @@ N2_KANJI.forEach(k => {
 });
 
 const allKanji = Array.from(kanjiMap.values());
-const siteUrl = 'https://michikanji.com';
+const siteUrl = 'https://www.michikanji.com';
 const lastmod = new Date().toISOString();
 
 // Generate XML sitemap
