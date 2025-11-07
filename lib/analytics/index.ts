@@ -4,13 +4,8 @@
 const ANALYTICS_CONFIG = {
   ahrefs: {
     src: 'https://analytics.ahrefs.com/analytics.js',
-    dataKey: 'vlS7rCycKsz4Pmd+ZrZW8w',
+    dataKey: 'y2KOOjqcvhiNu078UeIYyw', //change this to the data-key value provided by Ahrefs
     selector: 'script[src*="analytics.ahrefs.com"]'
-  },
-  peasy: {
-    src: 'https://cdn.peasy.so/peasy.js',
-    websiteId: '01jnwzsxch26jap05chah06gw3',
-    selector: 'script[src*="cdn.peasy.so/peasy.js"]'
   },
   // PostHog is handled separately in app/providers.js
   // but we include it here for documentation purposes
@@ -46,7 +41,6 @@ export function initializeAnalytics(): void {
   }
 
   initializeAhrefsAnalytics();
-  initializePeasyAnalytics();
 }
 
 // Initialize Ahrefs analytics
@@ -71,38 +65,12 @@ function initializeAhrefsAnalytics(): void {
   }
 }
 
-// Initialize Peasy analytics
-function initializePeasyAnalytics(): void {
-  try {
-    const { src, websiteId, selector } = ANALYTICS_CONFIG.peasy;
-
-    // Check if script already exists to avoid duplicates
-    if (document.querySelector(selector)) {
-      console.log('Peasy analytics script already loaded');
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = src;
-    script.setAttribute('data-website-id', websiteId);
-    document.head.appendChild(script);
-    console.log('Peasy analytics initialized');
-  } catch (error) {
-    console.error('Error initializing Peasy analytics:', error);
-  }
-}
-
 // Remove all analytics scripts
 function removeAnalyticsScripts(): void {
   try {
     // Remove Ahrefs scripts
     const ahrefsScripts = document.querySelectorAll(ANALYTICS_CONFIG.ahrefs.selector);
     ahrefsScripts.forEach(script => script.remove());
-
-    // Remove Peasy scripts
-    const peasyScripts = document.querySelectorAll(ANALYTICS_CONFIG.peasy.selector);
-    peasyScripts.forEach(script => script.remove());
 
     console.log('Analytics scripts removed');
   } catch (error) {
