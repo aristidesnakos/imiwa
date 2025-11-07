@@ -1,5 +1,5 @@
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://imiwa.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.michikanji.com';
   
   const robots = `User-agent: *
 Allow: /
