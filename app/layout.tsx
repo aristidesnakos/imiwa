@@ -44,9 +44,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'Imiwa',
-              url: 'https://imiwa.com',
-              logo: 'https://imiwa.com/logo.png',
+              name: 'MichiKanji',
+              url: 'https://michikanji.com',
+              logo: 'https://michikanji.com/logo.png',
               sameAs: [
                 'https://twitter.com/just_aristides',
               ]
@@ -54,31 +54,30 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'Imiwa - Japanese Kanji Stroke Order Dictionary',
-              url: 'https://imiwa.com',
+              name: 'MichiKanji - Japanese Kanji Stroke Order Dictionary',
+              url: 'https://michikanji.com',
               description: 'Learn Japanese kanji with interactive stroke order diagrams. Master the correct way to write JLPT kanji characters with animated guides.',
               publisher: {
                 '@type': 'Organization',
-                name: 'Imiwa',
-                url: 'https://imiwa.com',
+                name: 'MichiKanji',
+                url: 'https://michikanji.com',
                 logo: {
                   '@type': 'ImageObject',
-                  url: 'https://imiwa.com/logo.png'
+                  url: 'https://michikanji.com/logo.png'
                 }
               },
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://imiwa.com/kanji?search={search_term_string}',
+                target: 'https://michikanji.com/kanji?search={search_term_string}',
                 'query-input': 'required name=search_term_string'
               }
             },
             {
               '@context': 'https://schema.org',
               '@type': 'EducationalOrganization',
-              name: 'Imiwa Kanji Dictionary',
-              url: 'https://imiwa.com',
-              description: 'Interactive Japanese kanji learning platform with stroke order animations for JLPT exam preparation.',
-              educationalCredentialAwarded: 'Japanese Language Proficiency'
+              name: 'MichiKanji Dictionary',
+              url: 'https://michikanji.com',
+              description: 'Interactive Japanese kanji learning platform with stroke order animations for JLPT exam preparation.'
             }
           ]
         }} />

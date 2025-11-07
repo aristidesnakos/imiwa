@@ -131,7 +131,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-xl font-semibold">8. CONTACT US</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact us at: {' '}
-            <a href="mailto:hello@imiwa.net" className="text-blue-600 hover:underline">hello@imiwa.net</a>
+            <a href="mailto:ari@llanai.com" className="text-blue-600 hover:underline">ari@llanai.com</a>
           </p>
         </section>
       </div>
