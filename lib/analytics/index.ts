@@ -6,12 +6,6 @@ const ANALYTICS_CONFIG = {
     src: 'https://analytics.ahrefs.com/analytics.js',
     dataKey: 'y2KOOjqcvhiNu078UeIYyw', //change this to the data-key value provided by Ahrefs
     selector: 'script[src*="analytics.ahrefs.com"]'
-  },
-  // PostHog is handled separately in app/providers.js
-  // but we include it here for documentation purposes
-  posthog: {
-    // PostHog is initialized via its own provider
-    isConfigured: true
   }
 };
 
