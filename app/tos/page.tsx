@@ -46,7 +46,7 @@ export default function TermsOfService() {
             traditional learning methods with modern interactive technology to help Japanese language learners explore 
             and master kanji characters.
           </p>
-          <p>You can contact us by email at hello@imiwa.net.</p>
+          <p>You can contact us by email at ari@llanai.com.</p>
         </section>
 
         <section>
@@ -146,7 +146,7 @@ export default function TermsOfService() {
           <p className="text-sm text-gray-600">
             For the complete terms and conditions, including sections on User Representations, Registration, Payments, 
             Prohibited Activities, and more, please contact us at {' '}
-            <a href="mailto:hello@imiwa.net" className="text-blue-600 hover:underline">hello@imiwa.net</a>
+            <a href="mailto:ari@llanai.com" className="text-blue-600 hover:underline">ari@llanai.com</a>
           </p>
         </section>
       </div>
