@@ -13,11 +13,10 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { RARE_KANJI } from '@/lib/constants/rare-kanji';
 import { Search, Check, Filter } from 'lucide-react';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
 
-type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'RARE' | 'ALL';
+type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'ALL';
 
 interface KanjiWithLevel {
   kanji: string;
@@ -152,12 +151,6 @@ export function KanjiSearchClient() {
         kanjiMap.set(k.kanji, { ...k, level: 'N1' as JLPTLevel });
       }
     });
-    // Add RARE, but don't overwrite any JLPT levels
-    RARE_KANJI.forEach(k => {
-      if (!kanjiMap.has(k.kanji)) {
-        kanjiMap.set(k.kanji, { ...k, level: 'RARE' as JLPTLevel });
-      }
-    });
     
     return Array.from(kanjiMap.values());
   })();
@@ -254,14 +247,13 @@ export function KanjiSearchClient() {
           {/* JLPT Level Tabs */}
           <div className="flex justify-center">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)}>
-              <TabsList className="grid grid-cols-7 w-full max-w-3xl">
+              <TabsList className="grid grid-cols-6 w-full max-w-2xl">
                 <TabsTrigger value="ALL" className="text-xs sm:text-sm">All</TabsTrigger>
                 <TabsTrigger value="N5" className="text-xs sm:text-sm">N5</TabsTrigger>
                 <TabsTrigger value="N4" className="text-xs sm:text-sm">N4</TabsTrigger>
                 <TabsTrigger value="N3" className="text-xs sm:text-sm">N3</TabsTrigger>
                 <TabsTrigger value="N2" className="text-xs sm:text-sm">N2</TabsTrigger>
                 <TabsTrigger value="N1" className="text-xs sm:text-sm">N1</TabsTrigger>
-                <TabsTrigger value="RARE" className="text-xs sm:text-sm">Rare</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -273,7 +265,7 @@ export function KanjiSearchClient() {
               title="All JLPT Kanji" 
               kanji={filtered} 
               search={search}
-              description="Browse all available kanji from N5, N4, N3, N2, N1 levels, plus rare kanji"
+              description="Browse all available kanji from N5, N4, N3, N2, and N1 levels"
               isKanjiLearned={isKanjiLearned}
               toggleKanjiLearned={toggleKanjiLearned}
               learnedCount={getLevelCounts('ALL').learned}
@@ -346,18 +338,6 @@ export function KanjiSearchClient() {
             />
           </TabsContent>
           
-          <TabsContent value="RARE" className="space-y-6">
-            <KanjiSection 
-              title="Rare Kanji" 
-              kanji={filtered} 
-              search={search}
-              description="Uncommon kanji not included in standard JLPT levels"
-              isKanjiLearned={isKanjiLearned}
-              toggleKanjiLearned={toggleKanjiLearned}
-              learnedCount={getLevelCounts('RARE').learned}
-              totalCount={getLevelCounts('RARE').total}
-            />
-          </TabsContent>
         </Tabs>
         
         {/* No results */}
