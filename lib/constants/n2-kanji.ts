@@ -79,6 +79,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "派", onyomi: "は", kunyomi: "", meaning: "faction, group, party, clique, sect, school" },
   { kanji: "志", onyomi: "し", kunyomi: "こころざし", meaning: "intention, plan, resolve, aspire, motive, hopes, shilling" },
   { kanji: "環", onyomi: "かん", kunyomi: "わ", meaning: "ring, circle, link, wheel" },
+  { kanji: "丸", onyomi: "がん", kunyomi: "まる", meaning: "round, full, perfection" },
   { kanji: "複", onyomi: "ふく", kunyomi: "", meaning: "duplicate, double, compound, multiple" },
   { kanji: "編", onyomi: "へん", kunyomi: "あ（む）", meaning: "compilation, knit, plait, braid, twist, editing, completed poem, part of a book" },
   { kanji: "算", onyomi: "さん", kunyomi: "", meaning: "calculate, divining, number, abacus, probability" },
