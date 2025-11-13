@@ -375,5 +375,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "偉", onyomi: "い", kunyomi: "えら（い）", meaning: "admirable, greatness" },
   { kanji: "猫", onyomi: "びょう", kunyomi: "ねこ", meaning: "cat" },
   { kanji: "幾", onyomi: "き", kunyomi: "いく（つ）", meaning: "how many, how much, some" },
-  { kanji: "誰", onyomi: "すい", kunyomi: "だれ", meaning: "who, someone, somebody" }
+  { kanji: "誰", onyomi: "すい", kunyomi: "だれ", meaning: "who, someone, somebody" },
+  { kanji: "練", onyomi: "れん", kunyomi: "ね（る）", meaning: "practice, drill, exercise, train" }
 ];
