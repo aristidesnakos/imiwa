@@ -10,8 +10,6 @@ export async function GET() {
   const staticUrls = [
     '',
     '/kanji',
-    '/blog',
-    '/signin',
     '/privacy-policy',
     '/tos',
   ];
