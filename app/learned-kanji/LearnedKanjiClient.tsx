@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CTASection } from '@/components/CTASection';
 import { ProgressChart } from '@/components/progress/ProgressChart';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, TrendingUp } from 'lucide-react';
 
 export function LearnedKanjiClient() {
   const { totalLearned, getProgressOverTime, resetProgress } = useKanjiProgress();
@@ -18,6 +18,11 @@ export function LearnedKanjiClient() {
     '30d': 'Last 30 Days',
     '12m': 'Last 12 Months'
   };
+
+  // Get data for the default period to show in stats
+  const selectedPeriod = '30d';
+  const periodData = getProgressOverTime(selectedPeriod);
+  const totalInPeriod = periodData.reduce((sum, day) => sum + day.daily, 0);
 
   // If no kanji learned yet, show CTA
   if (totalLearned === 0) {
@@ -113,12 +118,24 @@ export function LearnedKanjiClient() {
               <p className="text-sm text-gray-600">kanji mastered</p>
             </CardContent>
           </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">In {periodLabels[selectedPeriod]}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-600">
+                {totalInPeriod}
+              </div>
+              <p className="text-sm text-gray-600">kanji learned</p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="mb-8">
           <ProgressChart
             getProgressData={getProgressOverTime}
-            periodLabels={periodLabels}
             initialPeriod="30d"
           />
         </div>
