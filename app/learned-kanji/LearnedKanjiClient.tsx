@@ -122,6 +122,16 @@ export function LearnedKanjiClient() {
           />
         </div>
 
+        <div className="grid grid-cols-1　gap-4 md:gap-6 mb-8">
+          
+          <ProgressChart
+            getProgressData={getProgressOverTime}
+            periodLabels={periodLabels}
+            initialPeriod="30d"
+            className=""
+          />
+        </div>
+
         {/* CTA Section */}
         <CTASection variant="with-image" />
 
