@@ -85,7 +85,7 @@ export function ProgressChart({
           <div className="flex flex-col gap-4">
             <div>
               <CardTitle className="text-lg md:text-xl">
-                {title || `Learning Progress - ${periodLabels[selectedPeriod]}`}
+                {title || `Learning Progress`}
               </CardTitle>
               <CardDescription className="text-sm">
                 {description}
