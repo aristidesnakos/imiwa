@@ -58,20 +58,20 @@ export function LearnedKanjiClient() {
             </div>
 
             {/* Tips */}
-            <div className="mt-8 md:mt-12 max-w-2xl mx-auto px-4">
-              <h3 className="font-semibold mb-4 text-base md:text-lg">How it works:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="font-medium mb-2">1. Browse Kanji</div>
-                  <p className="text-gray-600">Explore kanji organized by JLPT levels N5-N1</p>
+            <div className="mt-8 md:mt-12 max-w-4xl mx-auto px-4">
+              <h3 className="font-semibold mb-6 text-base md:text-lg text-center">How it works:</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="bg-gray-50 p-4 md:p-6 rounded-lg text-center">
+                  <div className="font-medium mb-2 text-sm md:text-base">1. Browse Kanji</div>
+                  <p className="text-gray-600 text-xs md:text-sm">Explore kanji organized by JLPT levels N5-N1</p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="font-medium mb-2">2. Check Off Learned</div>
-                  <p className="text-gray-600">Click the checkmark button when you master a character</p>
+                <div className="bg-gray-50 p-4 md:p-6 rounded-lg text-center">
+                  <div className="font-medium mb-2 text-sm md:text-base">2. Check Off Learned</div>
+                  <p className="text-gray-600 text-xs md:text-sm">Click the checkmark button when you master a character</p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="font-medium mb-2">3. Track Progress</div>
-                  <p className="text-gray-600">Watch your learning progress grow over time</p>
+                <div className="bg-gray-50 p-4 md:p-6 rounded-lg text-center sm:col-span-2 lg:col-span-1">
+                  <div className="font-medium mb-2 text-sm md:text-base">3. Track Progress</div>
+                  <p className="text-gray-600 text-xs md:text-sm">Watch your learning progress grow over time</p>
                 </div>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function LearnedKanjiClient() {
         </div>
 
         {/* Stats Cards */}
-        <Card className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+        <Card className="mb-8">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Learned</CardTitle>
             <BookOpen className="h-4 w-4 text-blue-600" />
@@ -113,13 +113,11 @@ export function LearnedKanjiClient() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1　gap-4 md:gap-6 mb-8">
-          
+        <div className="mb-8">
           <ProgressChart
             getProgressData={getProgressOverTime}
             periodLabels={periodLabels}
             initialPeriod="30d"
-            className=""
           />
         </div>
 
@@ -128,9 +126,9 @@ export function LearnedKanjiClient() {
 
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-          <Link href="/kanji" className="w-full sm:w-auto">
-            <Button variant="default" size="lg" className="w-full sm:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
+          <Link href="/kanji" className="w-full">
+            <Button variant="default" size="lg" className="w-full">
               <BookOpen className="w-4 h-4 mr-2" />
               Continue Learning
             </Button>
@@ -139,7 +137,7 @@ export function LearnedKanjiClient() {
           <Button 
             variant="outline" 
             size="lg"
-            className="w-full sm:w-auto"
+            className="w-full"
             onClick={() => {
               if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
                 resetProgress();
