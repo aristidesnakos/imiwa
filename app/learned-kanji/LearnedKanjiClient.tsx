@@ -113,13 +113,6 @@ export function LearnedKanjiClient() {
               <p className="text-sm text-gray-600">kanji mastered</p>
             </CardContent>
           </Card>
-          
-          <ProgressChart
-            getProgressData={getProgressOverTime}
-            periodLabels={periodLabels}
-            initialPeriod="30d"
-            className=""
-          />
         </div>
 
         <div className="grid grid-cols-1　gap-4 md:gap-6 mb-8">
