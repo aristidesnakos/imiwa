@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import Header from '@/components/sections/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +10,11 @@ import { ProgressChart } from '@/components/progress/ProgressChart';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
 import { ArrowLeft, BookOpen, TrendingUp } from 'lucide-react';
 
+type TimePeriod = '24h' | '7d' | '30d' | '12m';
+
 export function LearnedKanjiClient() {
   const { totalLearned, getProgressOverTime, resetProgress } = useKanjiProgress();
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('30d');
 
   const periodLabels = {
     '24h': 'Last 24 Hours',
@@ -19,8 +23,7 @@ export function LearnedKanjiClient() {
     '12m': 'Last 12 Months'
   };
 
-  // Get data for the default period to show in stats
-  const selectedPeriod = '30d';
+  // Get data for the selected period to show in stats
   const periodData = getProgressOverTime(selectedPeriod);
   const totalInPeriod = periodData.reduce((sum, day) => sum + day.daily, 0);
 
@@ -106,6 +109,23 @@ export function LearnedKanjiClient() {
           </p>
         </div>
 
+        {/* Period Selector */}
+        <div className="flex justify-center mb-6">
+          <div className="grid grid-cols-2 sm:flex gap-2">
+            {(Object.keys(periodLabels) as TimePeriod[]).map((period) => (
+              <Button
+                key={period}
+                variant={selectedPeriod === period ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedPeriod(period)}
+                className="text-xs sm:text-sm"
+              >
+                {period.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
           <Card>
@@ -136,7 +156,8 @@ export function LearnedKanjiClient() {
         <div className="mb-8">
           <ProgressChart
             getProgressData={getProgressOverTime}
-            initialPeriod="30d"
+            initialPeriod={selectedPeriod}
+            showPeriodSelector={false}
           />
         </div>
 

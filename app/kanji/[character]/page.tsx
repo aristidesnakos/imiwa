@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getSEOTags } from '@/lib/seo';
 import { Badge } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
@@ -45,16 +46,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === decodedCharacter);
   
   if (!kanjiData) {
-    return {
+    return getSEOTags({
       title: 'Kanji Not Found | Japanese Stroke Order Dictionary',
       description: 'The requested kanji was not found in our database.',
-    };
+    });
   }
   
   const title = `${kanjiData.kanji} Kanji: Stroke Order, Meaning & Readings | ${kanjiData.level} JLPT`;
   const description = `Learn how to write ${kanjiData.kanji} kanji with interactive stroke order diagram. Meaning: ${kanjiData.meaning}. Onyomi: ${kanjiData.onyomi}. Kunyomi: ${kanjiData.kunyomi}. JLPT ${kanjiData.level} level.`;
   
-  return {
+  return getSEOTags({
     title,
     description,
     keywords: [
@@ -66,22 +67,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       'kanji writing',
       'stroke order animation',
       kanjiData.meaning,
-    ].join(', '),
+    ],
     openGraph: {
       title,
       description,
       type: 'article',
-      url: `/kanji/${encodeURIComponent(kanjiData.kanji)}`,
     },
-    twitter: {
-      card: 'summary',
-      title,
-      description,
-    },
-    alternates: {
-      canonical: `/kanji/${encodeURIComponent(kanjiData.kanji)}`,
-    },
-  };
+    canonicalUrlRelative: `/kanji/${encodeURIComponent(kanjiData.kanji)}`,
+  });
 }
 
 export default async function KanjiDetailPage({ params }: Props) {
