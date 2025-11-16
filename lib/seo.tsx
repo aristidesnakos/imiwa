@@ -47,7 +47,6 @@ export const getSEOTags = ({
       siteName: config.appName,
       images: openGraph?.images,
       locale: openGraph?.locale || 'en_US',
-      type: openGraph?.type || 'website',
     },
 
     twitter: {
