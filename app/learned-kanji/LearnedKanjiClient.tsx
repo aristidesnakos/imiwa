@@ -156,7 +156,7 @@ export function LearnedKanjiClient() {
         <div className="mb-8">
           <ProgressChart
             getProgressData={getProgressOverTime}
-            initialPeriod={selectedPeriod}
+            selectedPeriod={selectedPeriod}
             showPeriodSelector={false}
           />
         </div>

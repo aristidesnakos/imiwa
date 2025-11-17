@@ -23,6 +23,7 @@ interface ProgressChartProps {
   getProgressData: (period: TimePeriod) => ProgressData[];
   periodLabels?: Record<TimePeriod, string>;
   initialPeriod?: TimePeriod;
+  selectedPeriod?: TimePeriod;
   showPeriodSelector?: boolean;
   title?: string;
   description?: string;
@@ -53,6 +54,7 @@ export function ProgressChart({
     '12m': 'Last 12 Months'
   },
   initialPeriod = '30d',
+  selectedPeriod: externalSelectedPeriod,
   showPeriodSelector = true,
   title,
   description = "Daily kanji learned over the selected time period",
@@ -60,7 +62,8 @@ export function ProgressChart({
 }: ProgressChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(initialPeriod);
   
-  const data = getProgressData(selectedPeriod);
+  const currentPeriod = externalSelectedPeriod || selectedPeriod;
+  const data = getProgressData(currentPeriod);
 
   return (
     <>
@@ -83,7 +86,7 @@ export function ProgressChart({
                 {(Object.keys(periodLabels) as TimePeriod[]).map((period) => (
                   <Button
                     key={period}
-                    variant={selectedPeriod === period ? "default" : "outline"}
+                    variant={currentPeriod === period ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedPeriod(period)}
                     className="text-xs sm:text-sm"
@@ -103,7 +106,7 @@ export function ProgressChart({
                 margin={{ 
                   top: 20, 
                   right: 10, 
-                  bottom: selectedPeriod === '24h' ? 80 : 60, 
+                  bottom: currentPeriod === '24h' ? 80 : 60, 
                   left: 10 
                 }}
               >
@@ -117,8 +120,8 @@ export function ProgressChart({
                 <XAxis 
                   dataKey="name"
                   tick={{ fontSize: 10 }}
-                  angle={selectedPeriod === '24h' ? -45 : 0}
-                  textAnchor={selectedPeriod === '24h' ? 'end' : 'middle'}
+                  angle={currentPeriod === '24h' ? -45 : 0}
+                  textAnchor={currentPeriod === '24h' ? 'end' : 'middle'}
                   stroke="#9ca3af"
                   interval="preserveStartEnd"
                 />
