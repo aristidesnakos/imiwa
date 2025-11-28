@@ -357,6 +357,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "憤", onyomi: "ふん", kunyomi: "いきどお（る）", meaning: "aroused, resent, be indignant, anger" },
   { kanji: "憧", onyomi: "しょう、どう", kunyomi: "あこが（れる）", meaning: "yearn, long for, aspire to, admire, adore" },
   { kanji: "憩", onyomi: "けい", kunyomi: "いこ（い）", meaning: "repose, rest, relax, recess" },
+  { kanji: "健", onyomi: "けん", kunyomi: "すこ（やか）", meaning: "healthy, health, strength, persistence" },
   { kanji: "憲", onyomi: "けん", kunyomi: "", meaning: "constitution, law" },
   { kanji: "憶", onyomi: "おく", kunyomi: "", meaning: "recollection, think, remember" },
   { kanji: "憾", onyomi: "かん", kunyomi: "", meaning: "remorse, regret, be sorry" },
