@@ -95,7 +95,7 @@ const Footer = () => {
               <Link 
                 href="https://theauspiciouscompany.com" 
                 target="_blank" 
-                rel="noopener noreferrer"
+                rel="noopener"
                 className="hover:text-japan-sakura-waters transition-colors underline"
               >
                 The Auspicious Company
