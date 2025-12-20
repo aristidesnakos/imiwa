@@ -85,5 +85,7 @@ export const N5_KANJI: KanjiData[] = [
   { kanji: "左", onyomi: "さ、しゃ", kunyomi: "ひだり", meaning: "left" },
   { kanji: "休", onyomi: "きゅう", kunyomi: "やす（む）", meaning: "rest, day off, retire, sleep" },
   { kanji: "父", onyomi: "ふ", kunyomi: "ちち、とう", meaning: "father" },
-  { kanji: "雨", onyomi: "う", kunyomi: "あめ、あま", meaning: "rain" }
+  { kanji: "雨", onyomi: "う", kunyomi: "あめ、あま", meaning: "rain" },
+  { kanji: "刀", onyomi: "とう", kunyomi: "かたな", meaning: "sword, saber, knife" },
+  { kanji: "刃", onyomi: "じん、にん", kunyomi: "は、やいば", meaning: "blade, sword, edge" }
 ];

@@ -378,5 +378,10 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "誰", onyomi: "すい", kunyomi: "だれ", meaning: "who, someone, somebody" },
   { kanji: "練", onyomi: "れん", kunyomi: "ね（る）", meaning: "practice, drill, exercise, train" },
   { kanji: "陶", onyomi: "とう", kunyomi: "す（え）", meaning: "pottery, ceramics" },
-  { kanji: "芸", onyomi: "げい", kunyomi: "", meaning: "art, performance, skill" }
+  { kanji: "芸", onyomi: "げい", kunyomi: "", meaning: "art, performance, skill" },
+  { kanji: "企", onyomi: "き", kunyomi: "くわだ（てる）", meaning: "undertake, scheme, design, attempt, plan" },
+  { kanji: "促", onyomi: "そく", kunyomi: "うなが（す）", meaning: "stimulate, urge, press, demand, incite" },
+  { kanji: "債", onyomi: "さい", kunyomi: "", meaning: "bond, loan, debt" },
+  { kanji: "兼", onyomi: "けん", kunyomi: "か（ねる）", meaning: "concurrently, and, beforehand, in advance" },
+  { kanji: "冒", onyomi: "ぼう", kunyomi: "おか（す）", meaning: "risk, face, defy, dare, damage, assume (a name)" }
 ];
