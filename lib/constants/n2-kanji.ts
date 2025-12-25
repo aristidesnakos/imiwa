@@ -259,5 +259,6 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "兵", onyomi: "へい、ひょう", kunyomi: "つわもの", meaning: "soldier, private, troops, army" },
   { kanji: "飾", onyomi: "しょく", kunyomi: "かざ（る）", meaning: "decorate, ornament, adorn" },
   { kanji: "詞", onyomi: "し", kunyomi: "", meaning: "part of speech, word, poetry" },
-  { kanji: "震", onyomi: "しん", kunyomi: "ふる（う）、ふる（える）", meaning: "quake, shake, tremble, quiver" }
+  { kanji: "震", onyomi: "しん", kunyomi: "ふる（う）、ふる（える）", meaning: "quake, shake, tremble, quiver" },
+  { kanji: "像", onyomi: "ぞう", kunyomi: "", meaning: "statue, picture, image, figure, portrait" }
 ];
