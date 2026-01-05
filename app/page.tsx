@@ -5,17 +5,16 @@ import { Suspense } from "react";
 import Link from 'next/link';
 import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { Search, BookOpen, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
-  const [search, setSearch] = useState('');
+  const [search] = useState('');
   
   // Combine all kanji counts for display but only search N5 for simplicity on homepage
   const ALL_KANJI_COUNT = N5_KANJI.length + N4_KANJI.length + N3_KANJI.length + N2_KANJI.length + N1_KANJI.length;

@@ -38,7 +38,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   
   useEffect(() => {
     loadStrokeOrder();
-  }, [kanji]);
+  }, [kanji, loadStrokeOrder]);
   
   const toggleAnimation = () => {
     if (!playing) {
