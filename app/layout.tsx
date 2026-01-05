@@ -88,6 +88,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
           crossOrigin="anonymous"
         />
+        <Script
+          defer
+          data-website-id="dfid_yWGzMf4z22IEHANBbTIqo"
+          data-domain="michikanji.com"
+          src="https://datafa.st/js/script.js"
+        />
         {/* Peasy analytics is now handled by AnalyticsProvider */}
         <AppProviders>
           <AnalyticsProvider>
