@@ -1,28 +1,10 @@
 // Analytics service to handle conditional loading of analytics scripts
 
-declare global {
-  interface Window {
-    dataLayer?: any[];
-  }
-}
-
-// Analytics configuration
-const ANALYTICS_CONFIG = {
-  ahrefs: {
-    src: 'https://analytics.ahrefs.com/analytics.js',
-    dataKey: 'y2KOOjqcvhiNu078UeIYyw', //change this to the data-key value provided by Ahrefs
-    selector: 'script[src*="analytics.ahrefs.com"]'
-  },
-  datafast: {
-    src: 'https://datafa.st/js/script.js',
-    websiteId: 'dfid_yWGzMf4z22IEHANBbTIqo',
-    selector: 'script[src*="datafa.st/js/script.js"]'
-  }
-};
-
-export interface ConversionData {
+// Type definitions for DataFast events
+export interface ConversionEvent {
   name: string;
   properties?: Record<string, any>;
+  visitor_id?: string;
 }
 
 // Check if analytics consent is given
@@ -41,152 +23,36 @@ export function hasAnalyticsConsent(): boolean {
   }
 }
 
-// Initialize all analytics scripts if consent is given
-export function initializeAnalytics(): void {
+// Get or generate DataFast visitor ID
+export function getDataFastVisitorId(): string {
+  if (typeof window === 'undefined') return '';
+  
+  try {
+    let visitorId = localStorage.getItem('datafast_visitor_id');
+    if (!visitorId) {
+      visitorId = 'visitor_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      localStorage.setItem('datafast_visitor_id', visitorId);
+    }
+    return visitorId;
+  } catch (error) {
+    console.error('Error managing visitor ID:', error);
+    return 'visitor_' + Math.random().toString(36).substr(2, 9);
+  }
+}
+
+// Track conversion event via DataFast
+export async function trackConversion(event: ConversionEvent): Promise<void> {
   if (typeof window === 'undefined') return;
-
+  
   if (!hasAnalyticsConsent()) {
-    console.log('Analytics consent not given, skipping initialization');
+    console.log('Analytics consent not given, skipping conversion tracking');
     return;
   }
 
-  initializeAhrefsAnalytics();
-  initializeDataFastAnalytics();
-}
-
-// Initialize Ahrefs analytics
-function initializeAhrefsAnalytics(): void {
   try {
-    const { src, dataKey, selector } = ANALYTICS_CONFIG.ahrefs;
-
-    // Check if script already exists to avoid duplicates
-    if (document.querySelector(selector)) {
-      console.log('Ahrefs analytics script already loaded');
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = src;
-    script.setAttribute('data-key', dataKey);
-    document.head.appendChild(script);
-    console.log('Ahrefs analytics initialized');
-  } catch (error) {
-    console.error('Error initializing Ahrefs analytics:', error);
-  }
-}
-
-// Initialize DataFast analytics
-function initializeDataFastAnalytics(): void {
-  try {
-    const { src, websiteId, selector } = ANALYTICS_CONFIG.datafast;
-
-    // Check if script already exists to avoid duplicates
-    if (document.querySelector(selector)) {
-      console.log('DataFast analytics script already loaded');
-      return;
-    }
-
-    // Get current domain dynamically
-    const currentDomain = window.location.hostname;
-    const isProduction = currentDomain === 'michikanji.com' || currentDomain === 'www.michikanji.com';
-    const isLocalhost = currentDomain === 'localhost' || currentDomain === '127.0.0.1';
+    const visitorId = event.visitor_id || getDataFastVisitorId();
     
-    // Only initialize on production domain or localhost for testing
-    if (isProduction || isLocalhost) {
-      const script = document.createElement('script');
-      script.defer = true;
-      script.src = src;
-      script.setAttribute('data-website-id', websiteId);
-      
-      // Use appropriate domain for DataFast
-      const datafastDomain = isProduction ? 'michikanji.com' : 'localhost';
-      script.setAttribute('data-domain', datafastDomain);
-      
-      document.head.appendChild(script);
-      console.log(`DataFast analytics initialized for domain: ${datafastDomain}`);
-    } else {
-      console.log(`DataFast not initialized for domain: ${currentDomain}`);
-    }
-  } catch (error) {
-    console.error('Error initializing DataFast analytics:', error);
-  }
-}
-
-// Remove all analytics scripts
-function removeAnalyticsScripts(): void {
-  try {
-    // Remove Ahrefs scripts
-    const ahrefsScripts = document.querySelectorAll(ANALYTICS_CONFIG.ahrefs.selector);
-    ahrefsScripts.forEach(script => script.remove());
-
-    // Remove DataFast scripts
-    const datafastScripts = document.querySelectorAll(ANALYTICS_CONFIG.datafast.selector);
-    datafastScripts.forEach(script => script.remove());
-
-    console.log('Analytics scripts removed');
-  } catch (error) {
-    console.error('Error removing analytics scripts:', error);
-  }
-}
-
-// Get DataFast visitor ID
-export function getDataFastVisitorId(): string | null {
-  if (typeof window === 'undefined') return null;
-  
-  try {
-    // DataFast typically stores visitor ID in localStorage or as a cookie
-    const visitorId = localStorage.getItem('datafast_visitor_id') || 
-                     document.cookie
-                       .split('; ')
-                       .find(row => row.startsWith('datafast_visitor_id='))
-                       ?.split('=')[1];
-    
-    return visitorId || null;
-  } catch (error) {
-    console.warn('Error getting DataFast visitor ID:', error);
-    return null;
-  }
-}
-
-// Debug analytics consent
-export function debugAnalyticsConsent(): void {
-  if (typeof window === 'undefined') {
-    console.log('Server-side: Cannot check consent');
-    return;
-  }
-  
-  const consent = localStorage.getItem('cookie-consent');
-  console.log('Cookie consent data:', consent);
-  
-  if (consent) {
-    try {
-      const parsed = JSON.parse(consent);
-      console.log('Parsed consent:', parsed);
-      console.log('Analytics consent granted:', parsed.analytics === true);
-    } catch (error) {
-      console.error('Error parsing consent:', error);
-    }
-  } else {
-    console.log('No consent data found');
-  }
-}
-
-// Track conversion/goal events
-export async function trackConversion(data: ConversionData): Promise<void> {
-  if (!hasAnalyticsConsent()) {
-    console.log('Analytics consent not granted, skipping conversion tracking');
-    return;
-  }
-  
-  const visitorId = getDataFastVisitorId();
-  if (!visitorId) {
-    console.warn('No DataFast visitor ID found, cannot track conversion');
-    return;
-  }
-  
-  try {
-    const response = await fetch('/api/datafast', {
+    await fetch('/api/datafast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -194,38 +60,125 @@ export async function trackConversion(data: ConversionData): Promise<void> {
       body: JSON.stringify({
         type: 'goal',
         datafast_visitor_id: visitorId,
-        name: data.name,
+        name: event.name,
         metadata: {
+          ...event.properties,
           page_url: window.location.href,
           page_title: document.title,
           user_agent: navigator.userAgent,
           timestamp: new Date().toISOString(),
-          ...data.properties
-        }
+        },
       }),
     });
-    
-    if (!response.ok) {
-      throw new Error(`DataFast API error: ${response.status}`);
-    }
-    
-    console.log('Conversion tracked successfully:', data.name);
   } catch (error) {
     console.error('Error tracking conversion:', error);
+  }
+}
+
+// Get visitor data from DataFast
+export async function getVisitorData(visitorId?: string): Promise<any> {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const id = visitorId || getDataFastVisitorId();
+    const response = await fetch(`/api/datafast?visitor_id=${id}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch visitor data: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching visitor data:', error);
+    return null;
+  }
+}
+
+// Debug function to check consent status
+export function debugAnalyticsConsent(): void {
+  if (typeof window === 'undefined') return;
+  
+  const consent = localStorage.getItem('cookie-consent');
+  console.log('Cookie consent raw:', consent);
+  
+  if (consent) {
+    try {
+      const parsed = JSON.parse(consent);
+      console.log('Cookie consent parsed:', parsed);
+      console.log('Analytics consent:', parsed.analytics);
+    } catch (error) {
+      console.error('Failed to parse consent:', error);
+    }
+  }
+  
+  console.log('hasAnalyticsConsent():', hasAnalyticsConsent());
+}
+
+// Initialize analytics if consent is given
+export function initializeAnalytics(): void {
+  if (typeof window === 'undefined') return;
+  
+  if (!hasAnalyticsConsent()) {
+    console.log('Analytics consent not given, skipping initialization');
+    console.log('To debug consent, call debugAnalyticsConsent() in console');
+    return;
+  }
+
+  try {
+    // Initialize Ahrefs
+    if (!document.querySelector('script[src*="analytics.ahrefs.com"]')) {
+      var ahrefs_analytics_script = document.createElement('script');
+      ahrefs_analytics_script.async = true;
+      ahrefs_analytics_script.src = 'https://analytics.ahrefs.com/analytics.js';
+      ahrefs_analytics_script.setAttribute('data-key', 'y2KOOjqcvhiNu078UeIYyw');
+      document.getElementsByTagName('head')[0].appendChild(ahrefs_analytics_script);
+    }
+
+    // Initialize DataFast
+    if (!document.querySelector('script[src*="datafa.st/js/script.js"]')) {
+      // Get current domain dynamically
+      const currentDomain = window.location.hostname;
+      const isProduction = currentDomain === 'michikanji.com' || currentDomain === 'www.michikanji.com';
+      const isLocalhost = currentDomain === 'localhost' || currentDomain === '127.0.0.1';
+      
+      // Only initialize on production domain or localhost for testing
+      if (isProduction || isLocalhost) {
+        var datafast_script = document.createElement('script');
+        datafast_script.defer = true;
+        datafast_script.src = 'https://datafa.st/js/script.js';
+        datafast_script.setAttribute('data-website-id', 'dfid_yWGzMf4z22IEHANBbTIqo');
+        
+        // Use appropriate domain for DataFast
+        const datafastDomain = isProduction ? 'michikanji.com' : 'localhost';
+        datafast_script.setAttribute('data-domain', datafastDomain);
+        
+        document.getElementsByTagName('head')[0].appendChild(datafast_script);
+        console.log(`DataFast initialized for domain: ${datafastDomain}`);
+      } else {
+        console.log(`DataFast not initialized for domain: ${currentDomain}`);
+      }
+    }
+    
+    console.log('Analytics initialized');
+  } catch (error) {
+    console.error('Error initializing analytics:', error);
   }
 }
 
 // Listen for consent changes
 export function setupConsentListener(): void {
   if (typeof window === 'undefined') return;
-
+  
   window.addEventListener('consentUpdated', (event) => {
     const { detail } = event as CustomEvent;
 
     if (detail?.analytics) {
       initializeAnalytics();
     } else {
-      removeAnalyticsScripts();
+      // Remove analytics scripts if consent is withdrawn
+      const ahrefsScripts = document.querySelectorAll('script[src*="analytics.ahrefs.com"]');
+      const datafastScripts = document.querySelectorAll('script[src*="datafa.st/js/script.js"]');
+      [...ahrefsScripts, ...datafastScripts].forEach(script => script.remove());
     }
   });
 }
