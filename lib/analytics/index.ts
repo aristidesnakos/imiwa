@@ -23,20 +23,27 @@ export function hasAnalyticsConsent(): boolean {
   }
 }
 
-// Get or generate DataFast visitor ID
+// Get DataFast visitor ID from cookie
 export function getDataFastVisitorId(): string {
   if (typeof window === 'undefined') return '';
   
   try {
-    let visitorId = localStorage.getItem('datafast_visitor_id');
-    if (!visitorId) {
-      visitorId = 'visitor_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-      localStorage.setItem('datafast_visitor_id', visitorId);
+    // DataFast stores visitor ID in a cookie named 'datafast_visitor_id'
+    // Extract from document.cookie since we're on client-side
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'datafast_visitor_id') {
+        return decodeURIComponent(value);
+      }
     }
-    return visitorId;
+    
+    // If no cookie found, DataFast hasn't loaded yet or user is new
+    // Return empty string so the event can be queued until DataFast initializes
+    return '';
   } catch (error) {
-    console.error('Error managing visitor ID:', error);
-    return 'visitor_' + Math.random().toString(36).substr(2, 9);
+    console.error('Error getting DataFast visitor ID:', error);
+    return '';
   }
 }
 
@@ -51,6 +58,13 @@ export async function trackConversion(event: ConversionEvent): Promise<void> {
 
   try {
     const visitorId = event.visitor_id || getDataFastVisitorId();
+    
+    // If no visitor ID is available, skip server-side tracking
+    // DataFast client-side script will handle it when it loads
+    if (!visitorId) {
+      console.log('DataFast visitor ID not available, skipping server-side tracking');
+      return;
+    }
     
     await fetch('/api/datafast', {
       method: 'POST',
@@ -81,6 +95,12 @@ export async function getVisitorData(visitorId?: string): Promise<any> {
   
   try {
     const id = visitorId || getDataFastVisitorId();
+    
+    if (!id) {
+      console.log('DataFast visitor ID not available');
+      return null;
+    }
+    
     const response = await fetch(`/api/datafast?visitor_id=${id}`);
     
     if (!response.ok) {
