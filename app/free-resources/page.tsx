@@ -120,7 +120,7 @@ export default function FreeResourcesPage() {
             </div>
             
             <p className="text-gray-500 mb-4">
-              We're working on expanding our collection of free Japanese learning resources. 
+              We are working on expanding our collection of free Japanese learning resources. 
               Stay tuned for vocabulary cards, grammar guides, and more practice materials.
             </p>
             
