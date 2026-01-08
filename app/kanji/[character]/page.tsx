@@ -11,7 +11,7 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { strokeOrderService } from '@/lib/stroke-order';
+// import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 
 // Combine all kanji data with levels
@@ -86,7 +86,7 @@ export default async function KanjiDetailPage({ params }: Props) {
     notFound();
   }
   
-  const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
+  // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   
   // Generate JSON-LD structured data for SEO
   const jsonLd = {
@@ -171,7 +171,7 @@ export default async function KanjiDetailPage({ params }: Props) {
             </div>
             
             {/* Additional Information */}
-            <div className="bg-blue-50 p-4 rounded-lg">
+            {/* <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="font-medium mb-3">Character Information</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -187,7 +187,7 @@ export default async function KanjiDetailPage({ params }: Props) {
                   <span className="font-mono">{unicodeInfo.hex}</span>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
         
