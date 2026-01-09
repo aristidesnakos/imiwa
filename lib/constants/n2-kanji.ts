@@ -260,5 +260,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "飾", onyomi: "しょく", kunyomi: "かざ（る）", meaning: "decorate, ornament, adorn" },
   { kanji: "詞", onyomi: "し", kunyomi: "", meaning: "part of speech, word, poetry" },
   { kanji: "震", onyomi: "しん", kunyomi: "ふる（う）、ふる（える）", meaning: "quake, shake, tremble, quiver" },
-  { kanji: "像", onyomi: "ぞう", kunyomi: "", meaning: "statue, picture, image, figure, portrait" }
+  { kanji: "像", onyomi: "ぞう", kunyomi: "", meaning: "statue, picture, image, figure, portrait" },
+  { kanji: "胆", onyomi: "たん", kunyomi: "きも", meaning: "gallbladder, courage, nerve, daring, spirit" },
+  { kanji: "丹", onyomi: "たん", kunyomi: "", meaning: "cinnabar, red, tan" }
 ];

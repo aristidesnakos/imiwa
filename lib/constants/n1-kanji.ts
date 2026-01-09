@@ -784,7 +784,6 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "肢", onyomi: "あし", kunyomi: "", meaning: "foot, paw, arm (of an octopus, squid, etc.)" },
   { kanji: "肥", onyomi: "こえ", kunyomi: "", meaning: "manure, night soil, dung" },
   { kanji: "肪", onyomi: "ボウ", kunyomi: "", meaning: "fat, fatty tissue" },
-  { kanji: "胆", onyomi: "い", kunyomi: "", meaning: "gallbladder, liver" },
   { kanji: "胎", onyomi: "たい", kunyomi: "", meaning: "womb" },
   { kanji: "胞", onyomi: "ホウ", kunyomi: "", meaning: "cell, membrane, sac" },
   { kanji: "胡", onyomi: "こ", kunyomi: "", meaning: "barbarian tribes surrounding ancient China, Ethnic groups in Chinese history" },
