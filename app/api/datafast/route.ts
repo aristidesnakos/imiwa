@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface DataFastPayment {
+  amount: number;
+  currency: string;
+  transaction_id: string;
+  datafast_visitor_id?: string;
+  email?: string;
+  name?: string;
+  customer_id?: string;
+  renewal?: boolean;
+  refunded?: boolean;
+  timestamp?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.DATAFAST_API_KEY) {
@@ -27,10 +40,21 @@ export async function POST(request: NextRequest) {
           ...(data.metadata && { metadata: data.metadata })
         };
         break;
+      case 'payment':
+        endpoint = 'https://datafa.st/api/v1/payments';
+        payload = data as DataFastPayment;
+        break;
+      case 'visitor':
+        // This should be a GET request, not POST
+        console.error('Visitor requests should use GET method');
+        return NextResponse.json(
+          { error: 'Use GET method for visitor requests' },
+          { status: 400 }
+        );
       default:
         console.error('Invalid request type:', type);
         return NextResponse.json(
-          { error: 'Invalid request type. Use "goal"' },
+          { error: 'Invalid request type. Use "goal" or "payment"' },
           { status: 400 }
         );
     }
