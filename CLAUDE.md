@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 - `pnpm dev` - Start development server  
-- `pnpm build` - Build for production
+- `pnpm build` - Build for production (includes postbuild sitemap generation)
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint
 - `pnpm analyze` - Build with bundle analyzer
@@ -57,6 +57,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Kanji data structured with character, onyomi, kunyomi, and meaning fields
 - Progress data tracks learned kanji with timestamps for analytics
 - No user accounts - all data stored client-side for privacy
+- JLPT level organization: N5 (~88), N4 (~170), N3 (~370), N2 (~370), N1 (~1000+) kanji
 
 ### Key Services
 
