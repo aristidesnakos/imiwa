@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
+import { getOptimizedKanjiMetadata } from '@/lib/seo/kanji-optimization';
 import { Badge } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
@@ -39,27 +40,6 @@ export async function generateStaticParams(): Promise<{ character: string }[]> {
 // Enable ISR for missing pages
 export const dynamicParams = true;
 
-// Optimized metadata generation based on search intent
-function getOptimizedMetadata(kanjiData: { kanji: string; meaning: string; onyomi: string; kunyomi: string; level: string }) {
-  const { kanji, meaning, onyomi, kunyomi, level } = kanjiData;
-  
-  // High-opportunity kanji get stroke-order focused titles
-  const highOpportunityKanji = ['止', '死', '大', '日', '出', '前', '入', '長', '時', '分'];
-  const isHighOpportunity = highOpportunityKanji.includes(kanji);
-  
-  if (isHighOpportunity) {
-    return {
-      title: `How to Write ${kanji} - Stroke Order & Meaning | JLPT ${level} Kanji`,
-      description: `✓ Learn ${kanji} stroke order step-by-step ✓ Meaning: "${meaning}" ✓ Readings: ${onyomi}, ${kunyomi} ✓ Interactive animation for JLPT ${level}`
-    };
-  }
-  
-  // Standard optimization for other kanji
-  return {
-    title: `${kanji} Kanji: "${meaning}" | Stroke Order & Readings | JLPT ${level}`,
-    description: `Master ${kanji} kanji meaning "${meaning}" with stroke order animation. Learn readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} level.`
-  };
-}
 
 // SEO metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -74,8 +54,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     });
   }
   
-  // Use the new optimized metadata function
-  const { title, description } = getOptimizedMetadata(kanjiData);
+  // Use the optimized metadata function from dedicated utility
+  const { title, description } = getOptimizedKanjiMetadata(kanjiData);
   
   return getSEOTags({
     title,
