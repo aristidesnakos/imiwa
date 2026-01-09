@@ -39,6 +39,28 @@ export async function generateStaticParams(): Promise<{ character: string }[]> {
 // Enable ISR for missing pages
 export const dynamicParams = true;
 
+// Optimized metadata generation based on search intent
+function getOptimizedMetadata(kanjiData: { kanji: string; meaning: string; onyomi: string; kunyomi: string; level: string }) {
+  const { kanji, meaning, onyomi, kunyomi, level } = kanjiData;
+  
+  // High-opportunity kanji get stroke-order focused titles
+  const highOpportunityKanji = ['止', '死', '大', '日', '出', '前', '入', '長', '時', '分'];
+  const isHighOpportunity = highOpportunityKanji.includes(kanji);
+  
+  if (isHighOpportunity) {
+    return {
+      title: `How to Write ${kanji} - Stroke Order & Meaning | JLPT ${level} Kanji`,
+      description: `✓ Learn ${kanji} stroke order step-by-step ✓ Meaning: "${meaning}" ✓ Readings: ${onyomi}, ${kunyomi} ✓ Interactive animation for JLPT ${level}`
+    };
+  }
+  
+  // Standard optimization for other kanji
+  return {
+    title: `${kanji} Kanji: "${meaning}" | Stroke Order & Readings | JLPT ${level}`,
+    description: `Master ${kanji} kanji meaning "${meaning}" with stroke order animation. Learn readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} level.`
+  };
+}
+
 // SEO metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { character } = await params;
@@ -52,8 +74,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     });
   }
   
-  const title = `${kanjiData.kanji} Kanji: Stroke Order, Meaning & Readings | ${kanjiData.level} JLPT`;
-  const description = `Learn how to write ${kanjiData.kanji} kanji with interactive stroke order diagram. Meaning: ${kanjiData.meaning}. Onyomi: ${kanjiData.onyomi}. Kunyomi: ${kanjiData.kunyomi}. JLPT ${kanjiData.level} level.`;
+  // Use the new optimized metadata function
+  const { title, description } = getOptimizedMetadata(kanjiData);
   
   return getSEOTags({
     title,
@@ -61,6 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     keywords: [
       `${kanjiData.kanji} kanji`,
       `${kanjiData.kanji} stroke order`,
+      `how to write ${kanjiData.kanji}`,
       `${kanjiData.kanji} meaning`,
       `JLPT ${kanjiData.level}`,
       'Japanese kanji',
