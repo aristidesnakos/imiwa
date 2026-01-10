@@ -38,13 +38,13 @@ export function KanaWorkbookCTA({ className = "" }: KanaWorkbookCTAProps) {
           </div>
 
           {/* Image Section */}
-          <div className="relative h-48 md:h-64 lg:h-full min-h-[200px] order-1 lg:order-2">
+          <div className="relative h-48 md:h-64 lg:h-full min-h-[200px] order-1 lg:order-2 p-6 md:p-8 flex items-center justify-center">
             <Image
               src="/assets/kana-workbook-cover.jpg"
               alt="Kana workbook cover for beginners"
               fill
-              className="object-contain object-center"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-contain object-center p-4"
+              sizes="(max-width: 1024px) 90vw, 50vw"
               priority={false}
             />
           </div>
