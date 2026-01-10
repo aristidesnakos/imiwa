@@ -1,17 +1,25 @@
-# N5 Kanji Practice Sheets Generator
+# JLPT Kanji Practice Sheets Generator
 
 ## Overview
 
-Building on the successful implementation of the kana practice sheets, this proposal outlines the development of a focused N5 kanji practice sheet generator. Each sheet will be dedicated to a single kanji character with extensive repetition practice grids, stroke order diagrams, and essential learning information - designed for intensive handwriting practice and memorization.
+Building on the successful implementation of the kana practice sheets, this documents the kanji practice sheet generator for all JLPT levels (N5-N1). Each sheet is dedicated to a single kanji character with extensive repetition practice grids, stroke order diagrams, and essential learning information - designed for intensive handwriting practice and memorization.
+
+**Implementation Status:**
+- ✅ N5 (~90 characters) - LIVE
+- 🔄 N4 (~170 characters) - Coming Soon
+- 🔄 N3 (~370 characters) - Coming Soon
+- 🔄 N2 (~370 characters) - Coming Soon
+- 🔄 N1 (~1000+ characters) - Coming Soon
 
 ## Goals
 
-- Generate high-quality single-character practice sheets for all N5 JLPT kanji (~100 characters)
-- Provide intensive repetition practice with large practice grids (50+ practice squares per character)
-- Include comprehensive character information: meaning, readings, vocabulary examples, and stroke count
-- Display clear stroke order diagrams for proper writing technique
-- Enable both guided practice (with stroke order) and independent practice (empty grids)
+- Generate high-quality single-character practice sheets for all JLPT kanji levels
+- Provide intensive repetition practice with large practice grids (80 practice squares per character)
+- Include comprehensive character information: meaning, readings, and stroke count
+- Display clear stroke order diagrams for proper writing technique from KanjiVG
+- Enable guided practice (with stroke order in first column) and independent practice (empty grids)
 - Integrate seamlessly with the existing Japanese learning platform
+- Scalable architecture to easily add new JLPT levels
 
 ## Key Features
 
@@ -41,125 +49,113 @@ Each practice sheet is dedicated to one N5 kanji character, following this layou
 - **Empty practice area** - Columns 4-10 for independent practice
 - **Proper proportions** - Square grids sized for optimal character practice
 
-### 2. N5 Character Coverage
+### 2. JLPT Level Coverage
 
-#### Complete N5 Set
-- All ~100 N5 JLPT kanji characters
-- Ordered by learning frequency and stroke complexity
+#### Multi-Level Architecture
+- **Landing page** at `/free-resources/kanji-sheets` - Level selection hub
+- **Level-specific pages** at `/free-resources/kanji-sheets/[level]-sheets`
 - Individual sheet generation for any selected character
-- Bulk generation for complete N5 set
+- Scalable structure for adding N4, N3, N2, N1
+
+#### Current Implementation (N5)
+- All ~90 N5 JLPT kanji characters
+- Individual sheet generation via API route
+- Print-to-PDF workflow for user-generated downloads
 
 #### Single Standard Format
-- **Complete information**: Kanji details, meanings, readings, vocabulary
-- **Stroke order diagram**: Clear visual guide for proper writing
-- **Practice grid**: 80 squares with guided practice columns
-
-#### Special Handling for Number Kanji
-- Mathematical context explanations (一, 二, 三, etc.)
-- Visual addition/progression demonstrations
-- Practical counting applications
+- **Complete information**: Kanji details, meanings, readings, stroke count
+- **Stroke order diagram**: Clear visual guide from KanjiVG
+- **Practice grid**: 80 squares (10×8) with guided practice in first column
 
 ## Technical Implementation
 
-### Static Pre-Generation Architecture
+### On-Demand HTML Generation Architecture
 
-**Core Strategy**: Generate all practice sheets at build time as static PDF files, eliminating server load and providing instant downloads.
+**Core Strategy**: Following the proven kana-sheets pattern, generate HTML practice sheets on-demand via API route. Users print to PDF client-side.
 
-**See**: `/documentation/physical-products/pdf-generation-utility.md` for complete technical charter.
+**Benefits:**
+- No build complexity or static file management
+- No PDF generation libraries needed
+- Zero server cost (HTML generation only)
+- Users generate PDFs on-demand via browser print
+- Can iterate quickly without rebuilds
 
-### Data Structure Enhancement
+### Data Structure
 
-Building on the existing N5 kanji data structure:
+Uses existing JLPT kanji data structures from `/lib/constants/`:
 
 ```typescript
-export interface KanjiSheetData extends KanjiData {
-  // Existing: kanji, onyomi, kunyomi, meaning
-  unicode: number;           // For SVG stroke order lookup
-  strokeCount: number;       // Number of strokes (from KanjiVG)
-  vocabulary: string[];      // 2-3 common vocabulary examples
-  mathContext?: string;      // For number kanji (e.g., "1 + 2 = 3")
-  referenceId: string;       // For external stroke order reference (e.g., "4E09")
+export interface KanjiData {
+  kanji: string;      // The character
+  onyomi: string;     // Chinese reading
+  kunyomi: string;    // Japanese reading
+  meaning: string;    // English meaning
 }
 
-// Example implementation for 三 (three)
-const sanKanji: KanjiSheetData = {
-  kanji: "三",
-  onyomi: "さん",
-  kunyomi: "みつ/み-",
-  meaning: "Three", 
-  unicode: 19977,
-  strokeCount: 3,
-  vocabulary: ["3日 - みっか - mikka - The 3rd"],
-  mathContext: "三 is the result of 一 + 二, 1 + 2 = 3",
-  referenceId: "4E09"
-}
+// Stroke count extracted dynamically from KanjiVG SVG
+// Unicode calculated via charCodeAt(0).toString(16)
 ```
 
-### Static File Architecture
-
-Pre-generated PDF structure:
+### Application Architecture
 
 ```
-public/kanji-sheets/
-└── 一.pdf        # Standard format: complete info + stroke order + practice grid
-    二.pdf
-    三.pdf
-    ...100 files (~35MB total)
+app/
+├── api/
+│   └── kanji-sheets/
+│       └── route.ts                    # Generates HTML for individual sheets
+└── free-resources/
+    └── kanji-sheets/
+        ├── page.tsx                    # Landing page - level selection
+        ├── n5-sheets/
+        │   └── page.tsx                # N5 character grid
+        ├── n4-sheets/
+        │   └── page.tsx                # N4 character grid (future)
+        ├── n3-sheets/
+        │   └── page.tsx                # N3 character grid (future)
+        ├── n4-sheets/
+        │   └── page.tsx                # N2 character grid (future)
+        └── n1-sheets/
+            └── page.tsx                # N1 character grid (future)
 ```
 
 ### Frontend Interface
 
-Create `/free-resources/kanji-sheets` page with:
+#### Landing Page (`/free-resources/kanji-sheets`)
+- **Level selection cards** - N5, N4, N3, N2, N1
+- Shows character counts and descriptions for each level
+- "Available" badge for implemented levels (currently N5)
+- "Coming Soon" for future levels
+- Clean, scalable card-based layout
 
-#### N5 Character Grid Display
-- Visual grid showing all ~100 N5 kanji characters
-- Large, clear character display for easy selection
-- Click any character for **instant PDF download** (direct file links)
-- Character info on hover: meaning, stroke count, frequency
+#### Level-Specific Pages (e.g., `/free-resources/kanji-sheets/n5-sheets`)
+- **Character grid** - Interactive grid showing all kanji for that level
+- Click any character opens its practice sheet in new tab
+- Character info on hover: meaning and readings
+- Print instructions and feature list
 
-#### Quick Actions Panel
-- **Individual character selection** - Click any kanji for instant download
-- **Client-side bulk downloads** (generated on demand):
-  - "All N5 Characters" → Creates zip from 100 individual PDFs
-  - "First 20 Characters" → Creates zip from first 20 PDFs
-  - "Number Characters" → Creates zip from number character PDFs
-  - "Custom Selection" → Creates zip from user-selected PDFs
+#### API Route (`/api/kanji-sheets?character=日`)
+- Accepts character query parameter
+- Fetches stroke order SVG from KanjiVG
+- Extracts stroke count from SVG data
+- Generates complete HTML with embedded CSS
+- Returns HTML (user prints to PDF via browser)
 
-#### Single Optimized Format
-- **Standard format only**: Complete information + stroke order + practice grid
-- Additional formats can be added later if needed
-
-#### Simplified Download Architecture
 ```typescript
-// Direct file links to individual PDFs
-function KanjiDownloadLink({ character }: { character: string }) {
-  return (
-    <a 
-      href={`/kanji-sheets/${character}.pdf`}
-      download={`${character}-practice.pdf`}
-      className="download-link"
-    >
-      Download {character} Practice Sheet
-    </a>
-  );
-}
+// Level-specific page example
+import { N5_KANJI } from '@/lib/constants/n5-kanji';
 
-// Client-side bulk zip generation
-function BulkDownload() {
-  const generateZip = async (characters: string[], name: string) => {
-    const zip = new JSZip();
-    for (const char of characters) {
-      const response = await fetch(`/kanji-sheets/${char}.pdf`);
-      zip.file(`${char}.pdf`, await response.blob());
-    }
-    const blob = await zip.generateAsync({ type: 'blob' });
-    downloadBlob(blob, `${name}.zip`);
-  };
-  
+export default function N5KanjiSheetsPage() {
   return (
-    <button onClick={() => generateZip(allN5Characters, 'n5-complete')}>
-      Download All N5 Characters
-    </button>
+    <div className="grid">
+      {N5_KANJI.map((kanji) => (
+        <a
+          href={`/api/kanji-sheets?character=${encodeURIComponent(kanji.kanji)}`}
+          target="_blank"
+        >
+          {kanji.kanji}
+        </a>
+      ))}
+    </div>
   );
 }
 ```
@@ -175,10 +171,11 @@ function BulkDownload() {
 - **Proper margins** ensuring no content cutoff
 
 #### Grid Specifications
-- **Square size**: 20mm × 20mm for optimal handwriting practice
-- **Grid lines**: 1px solid #ccc for clear boundaries
-- **Stroke order guides**: First 3 columns with progressive opacity
-- **Empty practice area**: Columns 4-10 with clean grid lines only
+- **Square size**: 60px height for optimal handwriting practice
+- **Grid lines**: 1px solid #333 for clear boundaries
+- **Crosshair guides**: Center lines in each square using CSS pseudo-elements
+- **Stroke order in first column**: Shows reference diagram at 30% opacity
+- **Empty practice area**: Columns 2-10 with clean crosshair guides only
 
 #### Print CSS Optimizations
 ```css
@@ -203,43 +200,44 @@ function BulkDownload() {
 
 ## Integration Points
 
-### Simplified Build Integration
-- **N5 kanji dataset**: Use existing `/lib/constants/n5-kanji.ts` data
-- **KanjiVG stroke order**: Fetch SVG data during build
-- **PDF Generation**: Simple Node.js script generates 100 PDFs
-- **Static Hosting**: Vercel serves files directly from `/public/kanji-sheets/`
-
 ### Runtime Integration
-- **Character pages**: Link to individual kanji detail pages (e.g., `/kanji/三`)
-- **Progress tracking**: Optional integration with localStorage learning progress
-- **Download tracking**: Optional analytics via client-side events
+- **Kanji datasets**: Use existing `/lib/constants/n*-kanji.ts` data for all levels
+- **KanjiVG stroke order**: Fetch SVG data on-demand via API route
+- **Stroke order service**: Reuse existing `strokeOrderService` from kanji detail pages
+- **HTML generation**: Server-side rendering in API route
+- **No build process**: Pure runtime generation, no static files needed
 
-### CDN Strategy
-- **Primary**: Vercel static file serving with global CDN
-- **Fallback**: Optional external CDN for additional redundancy
-- **Caching**: Aggressive caching (1 year) since files never change
-- **Performance**: Sub-100ms download initiation globally
+### Cross-Feature Links
+- **Character pages**: Can link to practice sheets from detail pages (e.g., `/kanji/三` → `/api/kanji-sheets?character=三`)
+- **Free resources hub**: Landing page accessible from main navigation
+- **Progress tracking**: Could integrate with existing localStorage learning progress
+
+### Performance
+- **Caching**: HTML responses cached by browser/CDN
+- **KanjiVG CDN**: External SVG fetching from jsDelivr
+- **Zero build overhead**: No static file generation needed
 
 ## User Experience Flow
 
 ### Simple Discovery Path
-1. **Main site → Free Resources → Kanji Practice Sheets**
-2. **Browse N5 character grid** - Visual overview of all available characters
-3. **Click character → Instant download** - No complex configuration
-4. **Bulk options** - Quick access to common practice sets
+1. **Main site → Free Resources → Kanji Practice Sheets** (landing page)
+2. **Select JLPT level** - Choose from N5, N4, N3, N2, or N1 cards
+3. **Browse character grid** - Visual overview of all characters for that level
+4. **Click character** → Opens HTML practice sheet in new tab
+5. **Print to PDF** - Ctrl+P / Cmd+P → Save as PDF
 
 ### Focused Practice Workflow
-1. **Download individual character sheets** - One character = One intensive practice session
-2. **Study character information** - Review meaning, readings, vocabulary
-3. **Practice stroke order** - Use guided columns 1-3 for proper technique
-4. **Independent practice** - Fill columns 4-10 with repeated writing
-5. **Multiple repetitions** - Print multiple copies for spaced repetition
+1. **Open practice sheet** - Character info, stroke order, and grid displayed
+2. **Study character information** - Review meaning, readings, and stroke count
+3. **Reference stroke order** - Check diagram and first column guides
+4. **Practice writing** - Fill 80 squares with repeated writing
+5. **Multiple sheets** - Print same character multiple times for spaced repetition
 
 ### Teacher/Student Usage
-1. **Teacher bulk download** - Get complete N5 set for classroom use
-2. **Progressive assignment** - Start with basic characters, advance by stroke complexity
-3. **Assessment sheets** - Use minimal-info format for testing
-4. **Homework packets** - Combine multiple character sheets for assignments
+1. **Assign specific characters** - Share direct links to practice sheets
+2. **Progressive learning** - Start with N5, advance through levels
+3. **Homework assignments** - Students print their own practice sheets
+4. **Assessment preparation** - Practice writing before tests
 
 ## Success Metrics
 
@@ -257,11 +255,11 @@ function BulkDownload() {
 
 ### Practice Grid Design
 **Challenge**: Creating 80 practice squares with proper proportions and stroke order guides
-**Solution**: 20mm×20mm squares in 10×8 grid with progressive stroke order fading in columns 1-3
+**Solution**: 60px height squares in 10×8 grid with crosshair guides and stroke order in first column only
 
-### N5 Data Management
-**Challenge**: Processing ~100 N5 characters with individual sheet generation
-**Solution**: Simple character-based API with efficient single-sheet HTML generation
+### Multi-Level Data Management
+**Challenge**: Supporting all JLPT levels (~2000+ total characters)
+**Solution**: Simple API route that works with any level's data structure, on-demand generation only
 
 ### Print Consistency
 **Challenge**: Ensuring consistent layout across different printers and browsers
@@ -271,94 +269,107 @@ function BulkDownload() {
 **Challenge**: Embedding KanjiVG stroke order diagrams in practice grid squares
 **Solution**: SVG cleaning pipeline with responsive sizing for small grid squares
 
-## Implementation Phases
+## Implementation Status
 
-### Phase 1: Core Generation (Week 1)
-- Simple PDF generation script (`scripts/generate-kanji-sheets.js`)
-- HTML template for standard format sheets
-- Print-optimized CSS for A4 layouts
-- Generate all 100 N5 character PDFs
-- Basic build process integration
+### ✅ Phase 1: N5 Implementation (COMPLETE)
+- Created API route `/app/api/kanji-sheets/route.ts`
+- HTML generation with embedded CSS for A4 printing
+- Stroke order fetching from KanjiVG
+- Automatic stroke count extraction
+- Landing page with level selection
+- N5 character grid page
+- Full print-to-PDF workflow
 
-### Phase 2: Frontend Interface (Week 2)
-- `/free-resources/kanji-sheets` page implementation
-- Character grid with direct download links
-- Client-side bulk download using JSZip
-- Custom character selection interface
-- Basic error handling and loading states
+### 🔄 Phase 2: Additional Levels (Future)
+To add N4, N3, N2, or N1:
+1. Create `/app/free-resources/kanji-sheets/n*-sheets/page.tsx`
+2. Import appropriate level data (e.g., `N4_KANJI`)
+3. Update landing page: set `available: true` for that level
+4. No API changes needed - already supports all characters
 
-### Phase 3: Polish & Testing (Week 3)
-- Print quality testing across browsers
-- Performance optimization for build speed
-- User experience improvements
-- Documentation and usage guidelines
-- Deploy to production
+### 🔄 Phase 3: Enhancements (Optional)
+- Bulk zip downloads for entire levels
+- Custom character selection
+- Additional sheet formats
+- Vocabulary examples integration
 
 ## Success Criteria
 
-1. **Functional**: Generate printable practice sheets for all ~100 N5 kanji characters
-2. **Quality**: Print-ready single-page layouts with clear character info and 80-square practice grids
-3. **Performance**: Instant downloads for all files (static serving), build time under 3 minutes
-4. **Usability**: One-click character selection with instant download
-5. **Integration**: Seamless connection with existing N5 kanji dataset and stroke order system
-6. **Adoption**: 100+ individual sheet downloads within first month of launch
+1. **Functional**: ✅ Generate printable practice sheets for all ~90 N5 kanji characters
+2. **Quality**: ✅ Print-ready single-page layouts with clear character info and 80-square practice grids
+3. **Performance**: ✅ On-demand HTML generation, users print to PDF client-side
+4. **Usability**: ✅ Two-click workflow (select character → print to PDF)
+5. **Integration**: ✅ Uses existing kanji datasets and KanjiVG integration
+6. **Scalability**: ✅ Architecture ready for N4-N1 implementation
+7. **Adoption**: Track individual sheet opens and print usage
 
 ## Lessons Learned from Kana Sheets
 
 ### What Worked Well
-- **Web-based approach**: More flexible than Python PDF generation
-- **KanjiVG integration**: Excellent stroke order data source
-- **HTML/CSS print**: Better than programmatic PDF creation
-- **Simple interface**: Users prefer straightforward options over complexity
-- **Real-time preview**: Users appreciate seeing results before printing
+- ✅ **Web-based approach**: More flexible than Python PDF generation
+- ✅ **KanjiVG integration**: Excellent stroke order data source
+- ✅ **HTML/CSS print**: Better than programmatic PDF creation
+- ✅ **Simple interface**: Users prefer straightforward options over complexity
+- ✅ **On-demand generation**: No build complexity, instant updates
 
-### Areas for Improvement Applied
-- **Performance optimization**: ✅ **Static pre-generation eliminates all runtime performance concerns**
-- **Mobile experience**: ✅ **Static files work perfectly on all devices**
-- **Error handling**: ✅ **Build-time validation catches all data issues**
-- **User guidance**: Clear instructions for optimal printing
-- **Accessibility**: Screen reader support for character information
+### Applied to Kanji Sheets
+- ✅ **Same architecture**: Reused kana-sheets API pattern exactly
+- ✅ **Print workflow**: Users print HTML to PDF via browser
+- ✅ **No static files**: Eliminated build process entirely
+- ✅ **User guidance**: Clear print-to-PDF instructions
+- ✅ **Responsive design**: Works on all devices and browsers
 
-### Technical Insights Applied
-- **SVG cleaning**: ✅ **Handled during build process with proper validation**
-- **Print CSS**: ✅ **Extensively tested during generation, not runtime**
-- **External dependencies**: ✅ **All data fetched and cached at build time**
-- **Static generation**: ✅ **Core architecture - maximum performance and reliability**
-- **Progressive enhancement**: ✅ **Fallback to simple file downloads always works**
+### Key Improvements
+- ✅ **Multi-level scalability**: Landing page + level-specific routes
+- ✅ **Automatic stroke count**: Extracted from KanjiVG SVG data
+- ✅ **Crosshair guides**: CSS pseudo-elements for practice grid
+- ✅ **First column guidance**: Stroke order reference at 30% opacity
 
-## Resources Required
+## Resources Used
 
-### Development
-- 1 developer × 8 weeks (following kana-sheets pattern)
-- Design review for print layouts and user interface
-- Testing across multiple browsers and print scenarios
+### Development (N5 Implementation)
+- ✅ API route: `/app/api/kanji-sheets/route.ts` - 200 lines
+- ✅ Landing page: `/app/free-resources/kanji-sheets/page.tsx` - 215 lines
+- ✅ N5 page: `/app/free-resources/kanji-sheets/n5-sheets/page.tsx` - 145 lines
+- ✅ Total: ~560 lines of code, simple and maintainable
 
-### Data
-- Existing JLPT kanji datasets (already available)
-- KanjiVG stroke order data (already integrated)
-- Radical decomposition data (enhancement needed)
-- Vocabulary examples data (enhancement needed)
+### Data Sources
+- ✅ Existing JLPT kanji datasets from `/lib/constants/n*-kanji.ts`
+- ✅ KanjiVG stroke order data via existing CDN integration
+- ✅ Stroke count extracted dynamically from SVG
+- ⏳ Vocabulary examples - optional future enhancement
 
 ### Infrastructure
-- Extend existing API routes
-- Additional caching for larger datasets
-- CDN optimization for stroke order SVGs
+- ✅ Next.js API routes (already available)
+- ✅ KanjiVG CDN (already integrated)
+- ✅ No additional infrastructure needed
 
 ## Risk Mitigation
 
 ### Data Quality
-- Implement fallback rendering for missing stroke orders
-- Manual verification of common characters
-- User reporting mechanism for data issues
+- ✅ Fallback rendering for missing stroke orders (returns null, displays without diagram)
+- ✅ SVG cleaning handles malformed data gracefully
+- ⏳ User reporting mechanism for data issues (future)
 
 ### Performance
-- Implement pagination for large character sets
-- Background processing for complex sheet generation
-- Caching strategy for frequently accessed data
+- ✅ On-demand generation - no pagination needed for grids
+- ✅ KanjiVG CDN handles stroke order caching
+- ✅ Browser-side PDF generation eliminates server load
+- ✅ Simple HTML responses are fast and cacheable
 
 ### User Experience
-- Comprehensive testing across print scenarios
-- Clear documentation and usage guidelines
-- Responsive design for mobile sheet creation
+- ✅ Print testing across browsers (Chrome, Safari, Firefox)
+- ✅ Clear print-to-PDF instructions on every page
+- ✅ Responsive design works on desktop and mobile
+- ✅ Tooltips show character meaning and readings
 
-This proposal builds directly on the proven kana-sheets architecture while addressing the increased complexity and scale required for kanji practice materials. The phased approach ensures steady progress while maintaining high quality standards.
+## Summary
+
+This implementation successfully delivers kanji practice sheets using the simple, proven kana-sheets pattern. The architecture is:
+
+- **Simple**: 560 lines of code, no build complexity
+- **Scalable**: Ready for N4-N1 with minimal work
+- **Performant**: On-demand HTML generation, zero server cost
+- **Maintainable**: Follows existing patterns, easy to extend
+
+N5 is complete and live. Adding additional JLPT levels requires only creating new page files - the API route already supports all characters.

@@ -7,14 +7,16 @@ import { FileText, Download, BookOpen } from 'lucide-react';
 
 export const metadata: Metadata = getSEOTags({
   title: 'Free Japanese Learning Resources | Printable Worksheets & Study Materials',
-  description: 'Access free Japanese learning resources including printable kana practice sheets, study guides, and educational materials. Download PDFs for hiragana, katakana practice and more.',
+  description: 'Access free Japanese learning resources including printable kana and kanji practice sheets, study guides, and educational materials. Download PDFs for hiragana, katakana, and JLPT kanji practice.',
   keywords: [
     'free Japanese resources',
     'Japanese learning materials',
     'printable worksheets',
     'kana practice sheets',
+    'kanji practice sheets',
     'hiragana worksheets',
     'katakana worksheets',
+    'JLPT kanji',
     'Japanese study materials',
     'free PDFs',
     'language learning resources',
@@ -22,7 +24,7 @@ export const metadata: Metadata = getSEOTags({
   ],
   openGraph: {
     title: 'Free Japanese Learning Resources | Printable Study Materials',
-    description: 'Download free printable Japanese learning materials including kana practice sheets and study guides.',
+    description: 'Download free printable Japanese learning materials including kana and kanji practice sheets and study guides.',
     type: 'website',
   },
   canonicalUrlRelative: '/free-resources',
@@ -44,6 +46,12 @@ export default function FreeResourcesPage() {
           name: 'Kana Practice Sheets',
           description: 'Printable hiragana and katakana practice worksheets with stroke order diagrams',
           url: 'https://www.michikanji.com/free-resources/kana-sheets'
+        },
+        {
+          '@type': 'CreativeWork',
+          name: 'Kanji Practice Sheets',
+          description: 'Printable JLPT kanji practice worksheets for all levels with stroke order diagrams',
+          url: 'https://www.michikanji.com/free-resources/kanji-sheets'
         }
       ]
     },
@@ -107,34 +115,37 @@ export default function FreeResourcesPage() {
             </Link>
           </section>
 
-          {/* Placeholder for future resources */}
-          <section className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          {/* Kanji Practice Sheets */}
+          <section className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-gray-200 rounded-lg">
-                <BookOpen className="w-6 h-6 text-gray-500" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <FileText className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-500">More Resources Coming Soon</h2>
-                <p className="text-sm text-gray-500">Additional study materials</p>
+                <h2 className="text-xl font-semibold text-gray-800">Kanji Practice Sheets</h2>
+                <p className="text-sm text-gray-600">JLPT N5-N1 Worksheets</p>
               </div>
             </div>
-            
-            <p className="text-gray-500 mb-4">
-              We are working on expanding our collection of free Japanese learning resources. 
-              Stay tuned for vocabulary cards, grammar guides, and more practice materials.
+
+            <p className="text-gray-600 mb-4">
+              Generate printable practice sheets for JLPT kanji characters with stroke order diagrams
+              and 80-square practice grids for handwriting practice.
             </p>
-            
+
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-2 py-1 bg-gray-200 text-gray-500 text-xs rounded">Coming Soon</span>
+              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">N5 Available</span>
+              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Stroke Order</span>
+              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Printable PDF</span>
+              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">80 Practice Squares</span>
             </div>
-            
-            <button 
-              disabled
-              className="inline-flex items-center gap-2 bg-gray-400 text-white font-medium py-2 px-4 rounded cursor-not-allowed"
+
+            <Link
+              href="/free-resources/kanji-sheets"
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
             >
-              <BookOpen className="w-4 h-4" />
-              Coming Soon
-            </button>
+              <Download className="w-4 h-4" />
+              Access Kanji Sheets
+            </Link>
           </section>
 
         </div>
