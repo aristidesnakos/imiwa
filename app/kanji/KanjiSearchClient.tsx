@@ -235,7 +235,7 @@ export function KanjiSearchClient() {
                 {showOnlyUnlearned ? "Show all" : "Show unlearned"}
               </Button>
               
-              <Link href="/learned-kanji">
+              <Link href="/kanji/progress">
                 <div className="bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                   <span className="text-blue-600 font-semibold">{totalLearned}</span>
                   <span className="text-blue-800 ml-1">learned</span>

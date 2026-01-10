@@ -28,9 +28,6 @@ const Header = () => {
           <Link href="/kanji" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
             Kanji
           </Link>
-          <Link href="/learned-kanji" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
-            Learned Kanji
-          </Link>
           <Link href="/free-resources" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
             Free Resources
           </Link>
