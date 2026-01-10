@@ -35,7 +35,7 @@ export function SheetCard({
           src={imageUrl}
           alt={imageAlt}
           fill
-          className="object-cover"
+          className="object-fit"
           sizes="(max-width: 768px) 100vw, 50vw"
           priority
         />
