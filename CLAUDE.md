@@ -72,3 +72,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Optimized for mobile touch interaction and offline capability
 - SEO optimized with sitemap generation and proper meta tags
 - Performance focused with lazy loading of stroke diagrams
+- ALWAYS refer to /documentation/learnings/development-guide.md for developing our project
