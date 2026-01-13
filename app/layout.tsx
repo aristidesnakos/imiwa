@@ -97,7 +97,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
           crossOrigin="anonymous"
         />
-        {/* Analytics (Ahrefs, DataFast) are now handled by AnalyticsProvider */}
+        {/* AnalyticsProvider handles consent-gated analytics (Ahrefs) */}
         <AppProviders>
           <AnalyticsProvider />
           <ClientLayout>
