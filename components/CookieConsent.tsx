@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,14 +24,10 @@ const defaultConsent: ConsentOptions = {
 };
 
 export function CookieConsent() {
-  const pathname = usePathname();
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [consent, setConsent] = useState<ConsentOptions>(defaultConsent);
   const [mounted, setMounted] = useState(false);
-  
-  // Only show on home page
-  const isHomePage = pathname === '/';
 
   // Only run on client-side to avoid hydration issues
   useEffect(() => {
@@ -123,8 +118,8 @@ export function CookieConsent() {
     setShowPreferences(false);
   };
 
-  // Don't render anything during SSR to avoid hydration issues or if not on home page
-  if (!mounted || !isHomePage) return null;
+  // Don't render anything during SSR to avoid hydration issues
+  if (!mounted) return null;
 
   if (!showBanner && !showPreferences) {
     return (

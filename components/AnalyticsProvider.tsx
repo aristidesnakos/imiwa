@@ -1,13 +1,9 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { initializeAnalytics, setupConsentListener } from '@/lib/analytics';
 
-interface AnalyticsProviderProps {
-  children: ReactNode;
-}
-
-export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
+export function AnalyticsProvider(): null {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -24,5 +20,5 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
     setupConsentListener();
   }, [mounted]);
 
-  return <>{children}</>;
+  return null; // This component doesn't render anything
 }

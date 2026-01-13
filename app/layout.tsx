@@ -90,12 +90,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         {/* Analytics (Ahrefs, DataFast) are now handled by AnalyticsProvider */}
         <AppProviders>
-          <AnalyticsProvider>
-            <ClientLayout>
-              {children}
-              <CookieConsent />
-            </ClientLayout>
-          </AnalyticsProvider>
+          <AnalyticsProvider />
+          <ClientLayout>
+            {children}
+            <CookieConsent />
+          </ClientLayout>
         </AppProviders>
       </body>
     </html>
