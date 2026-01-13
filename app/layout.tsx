@@ -36,8 +36,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="https://pbs.twimg.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://picsum.photos" />
-        
-        {/* Analytics scripts are now loaded conditionally via AnalyticsProvider */}
+
+        {/* DataFast Analytics - Privacy-friendly, loads immediately */}
+        <Script
+          defer
+          data-website-id="dfid_yWGzMf4z22IEHANBbTIqo"
+          data-domain="michikanji.com"
+          src="https://datafa.st/js/script.js"
+          strategy="afterInteractive"
+        />
+
+        {/* Other analytics (Ahrefs) loaded conditionally via AnalyticsProvider */}
         <JsonLd data={{
           '@context': 'https://schema.org',
           '@graph': [
