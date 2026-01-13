@@ -1,4 +1,5 @@
-// Analytics service to handle conditional loading of analytics scripts
+// Analytics service for DataFast tracking and consent-gated analytics (Ahrefs)
+// Note: DataFast script loads directly in layout.tsx without consent requirement
 
 // Type definitions for DataFast events
 export interface ConversionEvent {
@@ -48,13 +49,9 @@ export function getDataFastVisitorId(): string {
 }
 
 // Track conversion event via DataFast
+// Note: DataFast is privacy-friendly and doesn't require consent
 export async function trackConversion(event: ConversionEvent): Promise<void> {
   if (typeof window === 'undefined') return;
-  
-  if (!hasAnalyticsConsent()) {
-    console.log('Analytics consent not given, skipping conversion tracking');
-    return;
-  }
 
   try {
     const visitorId = event.visitor_id || getDataFastVisitorId();
