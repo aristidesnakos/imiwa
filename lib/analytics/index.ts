@@ -145,41 +145,17 @@ export function initializeAnalytics(): void {
   }
 
   try {
-    // Initialize Ahrefs
+    // DataFast is loaded directly in layout.tsx head (privacy-friendly, no consent needed)
+
+    // Initialize Ahrefs (consent-gated)
     if (!document.querySelector('script[src*="analytics.ahrefs.com"]')) {
       var ahrefs_analytics_script = document.createElement('script');
       ahrefs_analytics_script.async = true;
       ahrefs_analytics_script.src = 'https://analytics.ahrefs.com/analytics.js';
       ahrefs_analytics_script.setAttribute('data-key', 'y2KOOjqcvhiNu078UeIYyw');
       document.getElementsByTagName('head')[0].appendChild(ahrefs_analytics_script);
+      console.log('Ahrefs analytics initialized');
     }
-
-    // Initialize DataFast
-    if (!document.querySelector('script[src*="datafa.st/js/script.js"]')) {
-      // Get current domain dynamically
-      const currentDomain = window.location.hostname;
-      const isProduction = currentDomain === 'michikanji.com' || currentDomain === 'www.michikanji.com';
-      const isLocalhost = currentDomain === 'localhost' || currentDomain === '127.0.0.1';
-      
-      // Only initialize on production domain or localhost for testing
-      if (isProduction || isLocalhost) {
-        var datafast_script = document.createElement('script');
-        datafast_script.defer = true;
-        datafast_script.src = 'https://datafa.st/js/script.js';
-        datafast_script.setAttribute('data-website-id', 'dfid_yWGzMf4z22IEHANBbTIqo');
-        
-        // Use appropriate domain for DataFast
-        const datafastDomain = isProduction ? 'michikanji.com' : 'localhost';
-        datafast_script.setAttribute('data-domain', datafastDomain);
-        
-        document.getElementsByTagName('head')[0].appendChild(datafast_script);
-        console.log(`DataFast initialized for domain: ${datafastDomain}`);
-      } else {
-        console.log(`DataFast not initialized for domain: ${currentDomain}`);
-      }
-    }
-    
-    console.log('Analytics initialized');
   } catch (error) {
     console.error('Error initializing analytics:', error);
   }
@@ -195,10 +171,10 @@ export function setupConsentListener(): void {
     if (detail?.analytics) {
       initializeAnalytics();
     } else {
-      // Remove analytics scripts if consent is withdrawn
+      // Remove consent-gated analytics scripts if consent is withdrawn
+      // Note: DataFast remains as it's privacy-friendly and doesn't require consent
       const ahrefsScripts = document.querySelectorAll('script[src*="analytics.ahrefs.com"]');
-      const datafastScripts = document.querySelectorAll('script[src*="datafa.st/js/script.js"]');
-      [...ahrefsScripts, ...datafastScripts].forEach(script => script.remove());
+      ahrefsScripts.forEach(script => script.remove());
     }
   });
 }
