@@ -95,12 +95,60 @@ const Footer = () => {
               <Link 
                 href="https://theauspiciouscompany.com" 
                 target="_blank" 
-                rel="noopener"
+                rel="noopener noreferrer"
                 className="hover:text-japan-sakura-waters transition-colors underline"
               >
                 The Auspicious Company
               </Link>
             </div>
+          </div>
+        </div>
+
+        {/* Attribution & Contact */}
+        <div className="mt-6 pt-6 border-t border-japan-sakura-waters/20">
+          <div className="max-w-2xl mx-auto px-4 text-center space-y-3">
+            <p className="text-xs text-japan-mountain-mist leading-relaxed">
+              Kanji stroke diagrams are based on data from{' '}
+              <Link 
+                href="https://kanjivg.tagaini.net/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                the KanjiVG project
+              </Link>
+              , which is copyright © 2009-2012 Ulrich Apel and released under the{' '}
+              <Link 
+                href="https://creativecommons.org/licenses/by-sa/3.0/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                Creative Commons Attribution-Share Alike 3.0 license
+              </Link>
+              .
+            </p>
+            <p className="text-xs text-japan-mountain-mist leading-relaxed">
+              MichiKanji is lovingly crafted by{' '}
+              <span className="font-medium">Ari Nakos</span>{' '}
+              of{' '}
+              <Link 
+                href="https://theauspiciouscompany.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                The Auspicious Company
+              </Link>
+              . You can reach out directly by email at{' '}
+              <Link 
+                href="mailto:ari@llanai.com"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                ari@llanai.com
+              </Link>
+              .
+            </p>
           </div>
         </div>
       </div>
