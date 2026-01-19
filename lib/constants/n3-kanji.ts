@@ -383,5 +383,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "促", onyomi: "そく", kunyomi: "うなが（す）", meaning: "stimulate, urge, press, demand, incite" },
   { kanji: "債", onyomi: "さい", kunyomi: "", meaning: "bond, loan, debt" },
   { kanji: "兼", onyomi: "けん", kunyomi: "か（ねる）", meaning: "concurrently, and, beforehand, in advance" },
-  { kanji: "冒", onyomi: "ぼう", kunyomi: "おか（す）", meaning: "risk, face, defy, dare, damage, assume (a name)" }
+  { kanji: "冒", onyomi: "ぼう", kunyomi: "おか（す）", meaning: "risk, face, defy, dare, damage, assume (a name)" },
+  { kanji: "彙", onyomi: "イ", kunyomi: "はりねずみ", meaning: "same kind, collect, classify, category, hedgehog" }
 ];
