@@ -107,6 +107,5 @@ export const N5_KANJI: KanjiData[] = [
   { kanji: "右", onyomi: "う、ゆう", kunyomi: "みぎ", meaning: "right (direction)" },
   { kanji: "左", onyomi: "さ、しゃ", kunyomi: "ひだり", meaning: "left" },
   { kanji: "先", onyomi: "せん", kunyomi: "さき、ま（ず）", meaning: "before, ahead, previous, future, precedence" },
-  { kanji: "刀", onyomi: "とう", kunyomi: "かたな", meaning: "sword, saber, knife" },
-  { kanji: "刃", onyomi: "じん、にん", kunyomi: "は、やいば", meaning: "blade, sword, edge" }
+  { kanji: "刀", onyomi: "とう", kunyomi: "かたな", meaning: "sword, saber, knife" }
 ];
