@@ -173,5 +173,6 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "妹", onyomi: "まい", kunyomi: "いもうと", meaning: "younger sister" },
   { kanji: "姉", onyomi: "し", kunyomi: "あね", meaning: "elder sister" },
   { kanji: "漢", onyomi: "かん", kunyomi: "", meaning: "China" },
-  { kanji: "菜", onyomi: "さい", kunyomi: "な", meaning: "vegetable, greens" }
+  { kanji: "菜", onyomi: "さい", kunyomi: "な", meaning: "vegetable, greens" },
+  { kanji: "刃", onyomi: "じん、にん", kunyomi: "は、やいば", meaning: "blade, sword, edge" }
 ];
