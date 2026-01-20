@@ -3,6 +3,7 @@ import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
+import { KanjiN5WorkbookCTA } from '@/components/kanji/KanjiN5WorkbookCTA';
 
 export const metadata: Metadata = getSEOTags({
   title: 'N5 Kanji Practice Sheets Generator | Printable Japanese Worksheets',
@@ -89,6 +90,9 @@ export default function N5KanjiSheetsPage() {
             ))}
           </div>
         </div>
+
+        {/* CTA Banner for Premium Workbook */}
+        <KanjiN5WorkbookCTA />
 
         <section className="bg-cyan-50 p-6 rounded-md border border-cyan-200 mb-6" aria-labelledby="instructions">
           <h3 id="instructions" className="text-lg font-medium text-cyan-900 mb-4 flex items-center gap-2">
