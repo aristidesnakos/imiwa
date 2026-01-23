@@ -182,9 +182,40 @@ DATAFAST_API_KEY=your_datafast_api_key_here
 ### DataFast Dashboard Configuration
 
 - **Website ID**: `dfid_FAsFY9Wwgku8ZuScfcbZ1`
-- **Allowed Domains**: 
+- **Allowed Domains**:
   - Production: `llanai.com`
   - Development: `localhost` (for testing)
+
+### Content Security Policy Configuration
+
+**File**: [next.config.js](next.config.js)
+
+DataFast requires proper CSP configuration to allow the tracking script to execute. The `script-src` directive must include `https://datafa.st`:
+
+```javascript
+async headers() {
+  return [
+    {
+      source: '/:path*',
+      headers: [
+        {
+          key: 'Content-Security-Policy',
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' https://vercel.live https://us-assets.i.posthog.com https://app.posthog.com https://js.stripe.com https://datafa.st",
+            // ... other CSP directives
+          ].join('; '),
+        },
+      ],
+    },
+  ];
+}
+```
+
+**CSP Troubleshooting**:
+- **Symptom**: Console error like `Content-Security-Policy: The page's settings blocked a script (script-src-elem) at https://datafa.st/js/script.js`
+- **Solution**: Add `https://datafa.st` to the `script-src` directive in [next.config.js:73](next.config.js#L73)
+- **After fixing**: Restart dev server and hard refresh browser (Cmd+Shift+R / Ctrl+Shift+R)
 
 ## API Payload Formats
 
@@ -304,16 +335,23 @@ debugAnalyticsConsent();
 ### Common Issues
 
 1. **Script Not Loading**
-   - Check browser console for errors
+   - Check browser console for CSP violations
+   - Verify `https://datafa.st` is in CSP `script-src` directive ([next.config.js:73](next.config.js#L73))
    - Verify consent is granted
    - Check ad blockers aren't blocking the script
+   - Restart dev server after CSP changes
 
-2. **API 400 Errors**
+2. **Content Security Policy Violations**
+   - **Error**: `Content-Security-Policy: The page's settings blocked a script`
+   - **Fix**: Add `https://datafa.st` to `script-src` in [next.config.js](next.config.js)
+   - **After fix**: Hard refresh browser to clear cached headers
+
+3. **API 400 Errors**
    - Verify payload format matches DataFast requirements
    - Check visitor has prior pageviews
    - Ensure goal names follow naming conventions
 
-3. **Domain Issues**
+4. **Domain Issues**
    - Verify domain configuration in DataFast dashboard
    - Check environment-specific domain handling
 
@@ -355,8 +393,15 @@ localStorage.setItem('cookie-consent', '{"analytics": true}');
 - **Solution**: Added detailed logging throughout the flow
 - **Lesson**: Comprehensive logging is essential for API integrations
 
+### 5. Content Security Policy
+- **Issue**: DataFast script blocked by CSP, showing `script-src-elem` violation
+- **Solution**: Added `https://datafa.st` to `script-src` directive in [next.config.js](next.config.js)
+- **Lesson**: Always configure CSP for third-party scripts; check browser console for CSP violations
+
 ## Testing Checklist
 
+- [ ] CSP configured correctly with `https://datafa.st` in `script-src` directive
+- [ ] No CSP violations in browser console
 - [ ] DataFast script loads on production domain (`llanai.com`)
 - [ ] DataFast script loads on localhost for development
 - [ ] Analytics consent properly blocks/enables DataFast tracking
