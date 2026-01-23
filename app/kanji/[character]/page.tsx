@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
 import Header from '@/components/sections/Header';
+import { RelatedKanjiSection } from '@/components/kanji/RelatedKanjiSection';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
@@ -193,7 +194,13 @@ export default async function KanjiDetailPage({ params }: Props) {
             </div> */}
           </div>
         </div>
-        
+
+        {/* Related Kanji - BEFORE CTA */}
+        <RelatedKanjiSection
+          currentKanji={kanjiData}
+          allKanji={ALL_KANJI_DATA}
+        />
+
         {/* CTA Section */}
         <section className="mt-12 pt-8 border-t border-gray-200">
           <CTASection variant="with-image" />
