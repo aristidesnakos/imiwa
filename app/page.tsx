@@ -12,6 +12,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { ArrowRight } from 'lucide-react';
+import { trackConversion } from '@/lib/analytics';
 
 export default function LandingPage() {
   const [search] = useState('');
@@ -144,7 +145,18 @@ export default function LandingPage() {
 
             <div className="text-center mt-8">
               <Button asChild size="lg">
-                <Link href="/kanji">
+                <Link
+                  href="/kanji"
+                  onClick={async () => {
+                    await trackConversion({
+                      name: 'explore_all_kanji_clicked',
+                      properties: {
+                        kanji_count: ALL_KANJI_COUNT,
+                        source: 'homepage_hero'
+                      }
+                    });
+                  }}
+                >
                   Explore All {ALL_KANJI_COUNT} Kanji
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>

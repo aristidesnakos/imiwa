@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import { trackConversion } from '@/lib/analytics';
 
 const Header = () => {
   return (
@@ -28,7 +29,18 @@ const Header = () => {
           <Link href="/kanji" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
             Kanji
           </Link>
-          <Link href="/free-resources" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
+          <Link
+            href="/free-resources"
+            className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium"
+            onClick={async () => {
+              await trackConversion({
+                name: 'free_resources_clicked',
+                properties: {
+                  source: 'header_nav'
+                }
+              });
+            }}
+          >
             Free Resources
           </Link>
         </nav>
