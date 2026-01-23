@@ -1,10 +1,3 @@
-/**
- * Semantic Clusters for Kanji Internal Linking
- *
- * Groups kanji by conceptual meaning to create natural learning pathways
- * and strong topical signals for SEO.
- */
-
 export const SEMANTIC_CLUSTERS = {
   numbers: [
     '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
@@ -49,50 +42,18 @@ export const SEMANTIC_CLUSTERS = {
 
 export type ClusterName = keyof typeof SEMANTIC_CLUSTERS;
 
-/**
- * Find which semantic cluster a kanji belongs to
- * @param kanji - The kanji character to search for
- * @returns The cluster name if found, null otherwise
- */
 export function findCluster(kanji: string): ClusterName | null {
   for (const [clusterName, kanjiList] of Object.entries(SEMANTIC_CLUSTERS)) {
-    if (kanjiList.includes(kanji)) {
+    if ((kanjiList as readonly string[]).includes(kanji)) {
       return clusterName as ClusterName;
     }
   }
   return null;
 }
 
-/**
- * Get all kanji in the same cluster as the given kanji
- * @param kanji - The kanji character to find cluster mates for
- * @returns Array of kanji in the same cluster (excluding the input kanji)
- */
 export function getClusterMembers(kanji: string): string[] {
   const cluster = findCluster(kanji);
   if (!cluster) return [];
 
   return SEMANTIC_CLUSTERS[cluster].filter(k => k !== kanji);
-}
-
-/**
- * Get the display name for a cluster
- * @param clusterName - The cluster identifier
- * @returns Human-readable cluster name
- */
-export function getClusterDisplayName(clusterName: ClusterName): string {
-  const displayNames: Record<ClusterName, string> = {
-    numbers: 'Numbers',
-    time: 'Time',
-    family: 'Family & People',
-    nature: 'Nature',
-    actions: 'Actions & Verbs',
-    body: 'Body Parts',
-    places: 'Places & Locations',
-    directions: 'Directions',
-    education: 'Education',
-    colors: 'Colors'
-  };
-
-  return displayNames[clusterName];
 }
