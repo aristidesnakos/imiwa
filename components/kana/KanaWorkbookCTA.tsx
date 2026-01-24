@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { trackConversion } from '@/lib/analytics';
 
 interface KanaWorkbookCTAProps {
   className?: string;
@@ -31,6 +34,16 @@ export function KanaWorkbookCTA({ className = "" }: KanaWorkbookCTAProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block bg-[#7BB3D3] text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-medium hover:bg-[#6AA2C2] transition-colors text-sm md:text-base shadow-sm"
+                onClick={async () => {
+                  await trackConversion({
+                    name: 'kana_workbook_gumroad_clicked',
+                    properties: {
+                      product: 'kana_workbook_beginners',
+                      source: 'kana_sheets_page',
+                      destination: 'gumroad'
+                    }
+                  });
+                }}
               >
                 View Premium Kana Workbook
               </a>

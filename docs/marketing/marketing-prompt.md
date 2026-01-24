@@ -43,6 +43,28 @@ These goals measure engagement on the homepage ([app/page.tsx](../../app/page.ts
    - **Properties tracked**:
      - `source`: 'header_nav'
 
+### Gumroad Product CTAs
+
+3. **`kana_workbook_gumroad_clicked`**
+   - **Location**: Kana Practice Sheets page
+   - **Element**: "View Premium Kana Workbook" CTA button
+   - **Implementation**: [components/kana/KanaWorkbookCTA.tsx:30-46](../../components/kana/KanaWorkbookCTA.tsx#L30-L46)
+   - **Purpose**: Measures interest in purchasing the premium kana workbook from Gumroad
+   - **Properties tracked**:
+     - `product`: 'kana_workbook_beginners'
+     - `source`: 'kana_sheets_page'
+     - `destination`: 'gumroad'
+
+4. **`kanji_n5_workbook_gumroad_clicked`**
+   - **Location**: N5 Kanji Practice Sheets page
+   - **Element**: "View Kanji N5 Workbook" CTA button
+   - **Implementation**: [components/kanji/KanjiN5WorkbookCTA.tsx:30-46](../../components/kanji/KanjiN5WorkbookCTA.tsx#L30-L46)
+   - **Purpose**: Measures interest in purchasing the N5 kanji workbook from Gumroad
+   - **Properties tracked**:
+     - `product`: 'kanji_n5_workbook'
+     - `source`: 'n5_kanji_sheets_page'
+     - `destination`: 'gumroad'
+
 ### Recommended Funnels
 
 Based on the current tracking, here are suggested funnels to create in the DataFast dashboard:
