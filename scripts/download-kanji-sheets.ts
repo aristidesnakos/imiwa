@@ -28,7 +28,132 @@ const KANJI_LISTS = {
     '本', '国', '学', '校', '中', '上', '下', '前', '後', '間', '外',
     '名', '分', '今', '金', '電', '語', '車', '何', '毎', '右', '左', '先', '刀'
   ],
-  // Add more levels as needed (n4, n3, etc.)
+  n4: [
+    // Company/Business/Organization
+    '会', '社', '業', '場', '員', '事', '仕', '用',
+    // Self/Identity/Essence
+    '自', '身', '体', '心',
+    // People/Relationships/Family
+    '者', '兄', '弟', '姉', '妹', '親', '族',
+    // Time-Related
+    '朝', '夜', '昼', '夕', '春', '夏', '秋', '冬', '曜', '週',
+    // Quantity/Numbers
+    '多', '少', '度',
+    // Descriptive/Qualities
+    '新', '古', '明', '暗', '強', '弱', '広', '正', '悪', '安', '重', '特',
+    // Colors
+    '白', '黒', '赤', '青', '色',
+    // Body Parts
+    '手', '足', '目', '口',
+    // Motion/Action Verbs
+    '動', '行', '走', '歩', '立', '起', '転', '止', '送',
+    // Intellectual/Mental Verbs
+    '思', '考', '知', '見', '聞', '言', '話', '問',
+    // Learning/Study/Academic Verbs
+    '学', '習', '教', '研', '究', '勉',
+    // Writing/Reading/Literary Verbs
+    '読', '書', '字', '文',
+    // Creation/Making Verbs
+    '作', '開', '建',
+    // Eating/Drinking Verbs
+    '食', '飲',
+    // Wearing/Clothing Verbs
+    '着',
+    // Commerce/Buying/Selling Verbs
+    '売', '買', '貸', '借',
+    // Other Verbs
+    '注', '帰', '待', '試',
+    // Transportation/Travel
+    '駅', '旅', '運',
+    // Buildings/Places/Locations
+    '家', '店', '館', '屋', '室', '堂', '院',
+    // Geographic/Location/Spatial
+    '地', '方', '町', '京', '野', '道', '世',
+    // Physical/Nature
+    '空', '風', '海', '洋',
+    // Food/Dining
+    '飯', '肉', '菜', '茶', '魚', '牛', '鳥',
+    // Animals
+    '犬',
+    // Clothing
+    '服', '紙',
+    // Nature/Natural Things
+    '花',
+    // Entertainment/Arts
+    '楽', '歌', '映',
+    // Abstracts/Concepts
+    '意', '理', '力', '気',
+    // Condition/State Verbs
+    '病', '死', '休',
+    // Communication/Connection
+    '通', '語',
+    // Material/Items
+    '物', '品', '料',
+    // Work/Profession
+    '医', '工',
+    // Abstract Movement/Time
+    '始', '終', '切',
+    // Existence/Possession
+    '有', '無', '持', '使',
+    // Negation/Opposition
+    '不',
+    // Basics/Fundamentals
+    '元', '代', '同', '以',
+    // Names/Naming
+    '名',
+    // Education/School
+    '題',
+    // Numbers/Quantities/Measuring
+    '計',
+    // Response/Answer
+    '答',
+    // Structure/Shape
+    '図', '画',
+    // Collection/Gathering
+    '集',
+    // Separation/Division
+    '別', '分',
+    // Sound/Noise
+    '音',
+    // Verification/Testing
+    '験',
+    // Image/Photography
+    '写',
+    // Technology/Electricity
+    '電',
+    // Wealth/Gems
+    '銀',
+    // Concepts/Relations
+    '界', '質',
+    // Origin/Beginning
+    '田',
+    // Chief/Master
+    '主',
+    // Nearness
+    '近', '早',
+    // Speed
+    '急',
+    // Truth/Genuine
+    '真',
+    // Intelligence/Wit
+    '英',
+    // Distance/Removal
+    '去',
+    // Private/Personal
+    '私',
+    // Public/Official
+    '公',
+    // Flavor
+    '味',
+    // Remaining/Last
+    '台',
+    // China
+    '漢',
+    // Blade
+    '刃',
+    // Frequency/Recurrence
+    '毎'
+  ]
 };
 
 async function downloadKanjiSheet(

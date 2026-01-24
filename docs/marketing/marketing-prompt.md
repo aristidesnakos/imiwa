@@ -89,6 +89,26 @@ Based on the current tracking, here are suggested funnels to create in the DataF
 
 **What to optimize**: If step 2→3 conversion is low, check for broken links or loading issues on the resources page.
 
+#### 3. Kana Workbook Purchase Funnel
+**Purpose**: Track the journey from free kana sheets to Gumroad product page
+
+**Steps**:
+1. Page visit: URL equals `/free-resources/kana-sheets`
+2. Goal: `kana_workbook_gumroad_clicked` completed
+3. External visit: Gumroad product page (tracked via referrer in Gumroad analytics)
+
+**What to optimize**: If step 1→2 is low, improve CTA placement, copy, or visual design. If Gumroad shows low conversion from referrer, the product page may need optimization.
+
+#### 4. Kanji N5 Workbook Purchase Funnel
+**Purpose**: Track the journey from free N5 kanji sheets to Gumroad product page
+
+**Steps**:
+1. Page visit: URL equals `/free-resources/kanji-sheets/n5-sheets`
+2. Goal: `kanji_n5_workbook_gumroad_clicked` completed
+3. External visit: Gumroad product page (tracked via referrer in Gumroad analytics)
+
+**What to optimize**: Similar to kana funnel - improve on-page CTA if click-through is low, coordinate with Gumroad analytics for conversion optimization.
+
 ## DataFast Integration
 
 ### Current Setup
@@ -276,12 +296,19 @@ When analyzing funnels in DataFast dashboard:
 
 ## Change Log
 
-### 2025-01-23
+### 2025-01-23 (Initial Implementation)
 - ✅ Created marketing-prompt.md documentation
 - ✅ Implemented `explore_all_kanji_clicked` goal on homepage
 - ✅ Implemented `free_resources_clicked` goal in header navigation
 - ✅ Created [.claude/skills/track-datafast-goal.md](../../.claude/skills/track-datafast-goal.md) skill
 - ✅ Documented suggested funnels for homepage engagement
+
+### 2025-01-23 (Gumroad Conversion Tracking)
+- ✅ Implemented `kana_workbook_gumroad_clicked` goal on kana sheets page
+- ✅ Implemented `kanji_n5_workbook_gumroad_clicked` goal on N5 kanji sheets page
+- ✅ Added Gumroad purchase funnels to documentation
+- ✅ Updated KanaWorkbookCTA component with conversion tracking
+- ✅ Updated KanjiN5WorkbookCTA component with conversion tracking
 
 ### Future Tracking Roadmap
 - [ ] Add search tracking when search functionality is enhanced
