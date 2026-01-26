@@ -312,6 +312,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "耳", onyomi: "じ", kunyomi: "みみ", meaning: "ear" },
 
   // Position/Rank/Status
+  { kanji: "将", onyomi: "しょう", kunyomi: "まさ（に）", meaning: "leader, commander, general, about to" },
   { kanji: "位", onyomi: "い", kunyomi: "くらい、ぐらい", meaning: "rank, grade, about" },
   { kanji: "格", onyomi: "かく、こう、きゃく", kunyomi: "", meaning: "status, rank, capacity" },
   { kanji: "段", onyomi: "だん", kunyomi: "", meaning: "grade, steps, stairs" },
@@ -493,6 +494,7 @@ export const N3_KANJI: KanjiData[] = [
   // Age/Youth/Elderly
   { kanji: "若", onyomi: "じゃく", kunyomi: "わか（い）、も（し）", meaning: "young" },
   { kanji: "老", onyomi: "ろう", kunyomi: "お（いる）、ふ（ける）", meaning: "old" },
+  { kanji: "齢", onyomi: "れい", kunyomi: "よわい", meaning: "age, years" },
 
   // Economic/Financial
   { kanji: "貧", onyomi: "ひん、びん", kunyomi: "まず（しい）", meaning: "poverty, poor" },
