@@ -277,6 +277,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "表", onyomi: "ひょう", kunyomi: "おもて、あらわ（す）", meaning: "surface, table, chart, diagram" },
   { kanji: "演", onyomi: "えん", kunyomi: "", meaning: "performance, act, play, render, stage" },
   { kanji: "供", onyomi: "きょう、く、くう", kunyomi: "そな（える）、とも", meaning: "submit, offer, present, accompany" },
+  { kanji: "符", onyomi: "ふ", kunyomi: "", meaning: "sign, symbol, code, mark, tally" },
 
   // Physical Objects/Materials
   { kanji: "石", onyomi: "せき、しゃく、こく", kunyomi: "いし", meaning: "stone" },
