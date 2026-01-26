@@ -6,6 +6,9 @@ export interface KanjiData {
 }
 
 export const N1_KANJI: KanjiData[] = [
+  // Food/Cooking
+  { kanji: "醤", onyomi: "しょう", kunyomi: "ひしお", meaning: "soy sauce, miso, fermented condiment" },
+
   // Self/Identity/Essence
   { kanji: "侯", onyomi: "こう", kunyomi: "", meaning: "marquis, lord, daimyo" },
   { kanji: "倹", onyomi: "けん", kunyomi: "", meaning: "frugal, economy, thrifty" },
