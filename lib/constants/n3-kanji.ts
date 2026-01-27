@@ -50,6 +50,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "横", onyomi: "おう", kunyomi: "よこ", meaning: "sideways, side" },
   { kanji: "路", onyomi: "ろ、る", kunyomi: "みち", meaning: "path, route, road" },
   { kanji: "途", onyomi: "と", kunyomi: "みち", meaning: "route, way, road" },
+  { kanji: "片", onyomi: "ヘン", kunyomi: "かた", meaning: "one-sided, fragment, piece" },
 
   // Buildings/Places/Housing
   { kanji: "宅", onyomi: "たく", kunyomi: "", meaning: "home, house, residence" },
