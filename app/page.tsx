@@ -121,13 +121,13 @@ export default function LandingPage() {
                   Popular JLPT Kanji
                 </h2>
                 <p className="text-gray-600">
-                  Start with these fundamental characters from N5-N1 levels
+                  Start with these fundamental characters from N5 level
                 </p>
               </div>
               
               {/* Featured Kanji Grid - First 20 kanji from all levels */}
-              <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4 max-w-6xl mx-auto">
-                {N5_KANJI.slice(0, 20).map(kanji => (
+              <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+                {N5_KANJI.slice(0, 10).map(kanji => (
                   <Link
                     key={kanji.kanji}
                     href={`/kanji/${encodeURIComponent(kanji.kanji)}`}
@@ -136,7 +136,7 @@ export default function LandingPage() {
                     <div className="text-3xl mb-2 group-hover:scale-110 transition-transform text-japan-deep-ocean">
                       {kanji.kanji}
                     </div>
-                    <div className="text-xs text-japan-mountain-mist truncate">
+                    <div className="text-sm text-japan-mountain-mist truncate">
                       {kanji.meaning.split(',')[0]}
                     </div>
                   </Link>
