@@ -171,6 +171,7 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "魚", onyomi: "ぎょ", kunyomi: "うお、さかな", meaning: "fish" },
   { kanji: "牛", onyomi: "ぎゅう", kunyomi: "うし", meaning: "cow" },
   { kanji: "鳥", onyomi: "ちょう", kunyomi: "とり", meaning: "bird, chicken" },
+  { kanji: "卵", onyomi: "らん", kunyomi: "たまご", meaning: "egg" },
 
   // Animals
   { kanji: "犬", onyomi: "けん", kunyomi: "いぬ", meaning: "dog" },
