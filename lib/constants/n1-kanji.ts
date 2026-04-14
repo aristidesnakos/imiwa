@@ -102,6 +102,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "熊", onyomi: "くま", kunyomi: "", meaning: "bear (any mammal of family Ursidae)" },
   { kanji: "狂", onyomi: "きょう", kunyomi: "", meaning: "(some type of) enthusiast, someone possessed of a (certain kind of) mental abnormality" },
   { kanji: "璃", onyomi: "リ", kunyomi: "", meaning: "glassy, lapis lazuli" },
+  { kanji: "璧", onyomi: "ヘキ", kunyomi: "たま", meaning: "jade, jewel, perfect gem" },
   { kanji: "盆", onyomi: "ぼん", kunyomi: "", meaning: "tray, family, household" },
   { kanji: "監", onyomi: "げん", kunyomi: "", meaning: "special Nara-period administrative division for areas containing a detached palace (Yoshino and Izumi), secretary, third highest-ranking officials in the Dazaifu" },
   { kanji: "盲", onyomi: "めくら", kunyomi: "", meaning: "blindness, blind person, illiteracy" },
