@@ -13,6 +13,8 @@ interface Props {
 const DOM_REFLOW_DELAY_MS = 10;
 const FALLBACK_STROKE_DURATION_MS = 800;
 const FALLBACK_ANIMATION_BUFFER_MS = 50;
+// Highest sN index with a CSS-defined animation-delay (see globals.css)
+const MAX_CSS_STROKE_INDEX = 20;
 
 export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [svg, setSvg] = useState<string>('');
@@ -105,20 +107,21 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       const container = document.getElementById(`stroke-${kanji.charCodeAt(0)}`);
       if (!container) return;
 
-      // Find the last stroke path by ID — paths ending in s\d+ (e.g. kvg:04e00-s3)
-      // This is the path whose animationend fires last (it has the highest CSS delay)
-      let lastPath: Element | null = null;
+      // Find the highest sN stroke index present in the SVG
       let maxN = 0;
       container.querySelectorAll('path[id]').forEach(path => {
         const id = path.getAttribute('id') ?? '';
         const match = /s(\d+)$/.exec(id);
         if (!match) return;
         const n = parseInt(match[1], 10);
-        if (n > maxN) { maxN = n; lastPath = path; }
+        if (n > maxN) maxN = n;
       });
 
-      if (!lastPath) {
-        // Fallback: use a timer if no stroke IDs are found
+      // Cap at the highest stroke index with a CSS-defined animation-delay
+      const effectiveLastN = Math.min(maxN, MAX_CSS_STROKE_INDEX);
+
+      if (effectiveLastN === 0) {
+        // Fallback: use a timer if no recognisable stroke IDs are found
         animationTimerRef.current = setTimeout(() => {
           setPlaying(false);
           setFinished(true);
@@ -126,19 +129,25 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         return;
       }
 
+      // Listen on the stable container via event bubbling rather than on a specific
+      // path element — path references can become stale after React re-renders the
+      // className, whereas the container element itself always persists.
       const handleAnimationEnd = (e: Event) => {
-        if ((e as AnimationEvent).animationName !== 'draw-stroke') return;
-        // Remove listener and mark as finished
-        if (animationCleanupRef.current) {
-          animationCleanupRef.current();
-        }
+        const ae = e as AnimationEvent;
+        if (ae.animationName !== 'draw-stroke') return;
+        const targetId = (ae.target as Element)?.getAttribute('id') ?? '';
+        const match = /s(\d+)$/.exec(targetId);
+        if (!match || parseInt(match[1], 10) !== effectiveLastN) return;
+
+        container.removeEventListener('animationend', handleAnimationEnd);
+        animationCleanupRef.current = null;
         setPlaying(false);
         setFinished(true);
       };
 
-      lastPath.addEventListener('animationend', handleAnimationEnd);
+      container.addEventListener('animationend', handleAnimationEnd);
       animationCleanupRef.current = () => {
-        lastPath?.removeEventListener('animationend', handleAnimationEnd);
+        container.removeEventListener('animationend', handleAnimationEnd);
         animationCleanupRef.current = null;
       };
     }, DOM_REFLOW_DELAY_MS);
