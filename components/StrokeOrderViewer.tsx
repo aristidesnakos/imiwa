@@ -47,6 +47,17 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     loadStrokeOrder();
   }, [kanji, loadStrokeOrder]);
 
+  // Reset animation state whenever the kanji changes
+  useEffect(() => {
+    setPlaying(false);
+    setFinished(false);
+    setStrokeCount(0);
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+  }, [kanji]);
+
   useEffect(() => {
     if (svg) {
       const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
@@ -65,6 +76,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   }, []);
 
   const startAnimation = () => {
+    if (strokeCount === 0) return;
     const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
     if (element) {
       element.classList.remove('animate');
@@ -165,7 +177,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       <div className="flex justify-center">
         <Button
           onClick={handleButtonClick}
-          variant={playing ? "secondary" : "default"}
+          variant={playing ? "secondary" : "default"} {/* Replay uses same "default" style as Play */}
           size="sm"
           disabled={strokeCount === 0}
         >
