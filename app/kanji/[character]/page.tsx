@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
-import { getOptimizedKanjiMetadata } from '@/lib/seo/kanji-optimization';
+import { getOptimizedKanjiMetadata, getPrimaryMeaning } from '@/lib/seo/kanji-optimization';
 import { Badge } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
@@ -57,20 +57,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   // Use the optimized metadata function from dedicated utility
   const { title, description } = getOptimizedKanjiMetadata(kanjiData);
+  const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
   
   return getSEOTags({
     title,
     description,
     keywords: [
+      // Kanji + meaning combinations – matches "[kanji] [meaning] kanji" searches
       `${kanjiData.kanji} kanji`,
+      `${kanjiData.kanji} ${primaryMeaning} kanji`,
+      `${kanjiData.kanji} ${primaryMeaning}`,
+      // Meaning-first phrases – matches "[meaning] kanji stroke order" searches
+      `${primaryMeaning} kanji`,
+      `${primaryMeaning} kanji stroke order`,
+      `${kanjiData.kanji} ${primaryMeaning} kanji stroke order`,
+      // Stroke-order focused
       `${kanjiData.kanji} stroke order`,
+      `${kanjiData.kanji} ${primaryMeaning} stroke order`,
       `how to write ${kanjiData.kanji}`,
+      // Meaning and readings
       `${kanjiData.kanji} meaning`,
+      ...kanjiData.meaning.split(',').map(m => m.trim()),
+      // Level / generic
       `JLPT ${kanjiData.level}`,
       'Japanese kanji',
-      'kanji writing',
-      'stroke order animation',
-      kanjiData.meaning,
+      'kanji stroke order',
     ],
     openGraph: {
       title,
@@ -91,13 +102,14 @@ export default async function KanjiDetailPage({ params }: Props) {
   }
   
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
+  const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
   
   // Generate JSON-LD structured data for SEO
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${kanjiData.kanji} Kanji Stroke Order and Meaning`,
-    description: `Learn the kanji ${kanjiData.kanji} with interactive stroke order diagram, readings, and meaning.`,
+    headline: `${kanjiData.kanji} ${primaryMeaning} Kanji – Stroke Order and Meaning`,
+    description: `Learn the ${primaryMeaning} kanji ${kanjiData.kanji} with interactive stroke order diagram, readings, and meaning. JLPT ${kanjiData.level}.`,
     author: {
       '@type': 'Organization',
       name: 'Imiwa',
@@ -105,11 +117,11 @@ export default async function KanjiDetailPage({ params }: Props) {
     datePublished: new Date().toISOString(),
     mainEntity: {
       '@type': 'Thing',
-      name: `${kanjiData.kanji} Kanji`,
+      name: `${kanjiData.kanji} – ${primaryMeaning} Kanji`,
       description: kanjiData.meaning,
       alternateName: [kanjiData.onyomi, kanjiData.kunyomi],
     },
-    keywords: `${kanjiData.kanji}, kanji, stroke order, Japanese, JLPT ${kanjiData.level}`,
+    keywords: `${kanjiData.kanji}, ${primaryMeaning} kanji, ${primaryMeaning} kanji stroke order, kanji stroke order, Japanese, JLPT ${kanjiData.level}`,
   };
   
   return (
@@ -133,7 +145,8 @@ export default async function KanjiDetailPage({ params }: Props) {
         
         {/* Header */}
         <div className="text-center mb-8 space-y-4">
-          <h1 className="text-8xl font-bold mb-4">{kanjiData.kanji}</h1>
+          <h1 className="text-8xl font-bold mb-2">{kanjiData.kanji}</h1>
+          <p className="text-2xl font-semibold text-gray-700">{kanjiData.meaning}</p>
           <div className="flex justify-center space-x-2">
             <Badge variant="secondary" className="text-lg px-3 py-1">
               <BookOpen className="w-4 h-4 mr-1" />
@@ -208,7 +221,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         
         {/* SEO Content */}
         <div className="mt-16 prose prose-lg max-w-none">
-          <h2>How to Write {kanjiData.kanji}</h2>
+          <h2>How to Write the {primaryMeaning} Kanji {kanjiData.kanji} – Stroke Order</h2>
           <p>
             The kanji <strong>{kanjiData.kanji}</strong> means &quot;{kanjiData.meaning}&quot; and is part of the 
             JLPT {kanjiData.level} curriculum. This character is essential for Japanese learners 
@@ -216,7 +229,7 @@ export default async function KanjiDetailPage({ params }: Props) {
             sequence and practice until you can write it from memory.
           </p>
           
-          <h3>Readings and Usage</h3>
+          <h3>{kanjiData.kanji} {primaryMeaning} Kanji – Readings and Usage</h3>
           <p>
             <strong>{kanjiData.kanji}</strong> has multiple readings depending on context:
           </p>
@@ -225,7 +238,7 @@ export default async function KanjiDetailPage({ params }: Props) {
             <li><strong>Kunyomi</strong> (訓読み): {kanjiData.kunyomi} - This is the native Japanese reading</li>
           </ul>
           
-          <h3>Learning Tips for {kanjiData.kanji}</h3>
+          <h3>Learning Tips for {kanjiData.kanji} ({primaryMeaning})</h3>
           <ul>
             <li>Practice writing the strokes in the correct order shown in the animation on paper</li>
             <li>Pay attention to stroke direction and sequence</li>
