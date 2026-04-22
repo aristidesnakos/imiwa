@@ -10,9 +10,9 @@ interface Props {
   className?: string;
 }
 
-const STROKE_DURATION_MS = 800;
 const DOM_REFLOW_DELAY_MS = 10;
-const ANIMATION_BUFFER_MS = 50;
+const FALLBACK_STROKE_DURATION_MS = 800;
+const FALLBACK_ANIMATION_BUFFER_MS = 50;
 
 export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [svg, setSvg] = useState<string>('');
@@ -23,7 +23,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [animating, setAnimating] = useState(false);
   const [error, setError] = useState(false);
   const [strokeCount, setStrokeCount] = useState(0);
+  // Tracks the pending reflow/fallback timer so it can be cancelled
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks the cleanup function for animationend listeners on stroke paths
+  const animationCleanupRef = useRef<(() => void) | null>(null);
 
   const loadStrokeOrder = useCallback(async () => {
     setLoading(true);
@@ -52,12 +55,23 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   // Count strokes once the SVG is rendered into the DOM
   useEffect(() => {
     if (svg) {
-      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+      const element = document.getElementById(`stroke-${kanji.charCodeAt(0)}`);
       if (element) {
         setStrokeCount(element.querySelectorAll('path').length);
       }
     }
   }, [svg, kanji]);
+
+  const cancelAnimation = useCallback(() => {
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+    if (animationCleanupRef.current) {
+      animationCleanupRef.current();
+      animationCleanupRef.current = null;
+    }
+  }, []);
 
   // Reset animation state whenever the kanji changes
   useEffect(() => {
@@ -65,39 +79,70 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     setFinished(false);
     setAnimating(false);
     setStrokeCount(0);
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current);
-      animationTimerRef.current = null;
-    }
-  }, [kanji]);
+    cancelAnimation();
+  }, [kanji, cancelAnimation]);
 
   useEffect(() => {
     return () => {
-      if (animationTimerRef.current) {
-        clearTimeout(animationTimerRef.current);
-      }
+      cancelAnimation();
     };
-  }, []);
+  }, [cancelAnimation]);
 
   const startAnimation = useCallback(() => {
     if (strokeCount === 0) return;
 
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current);
-    }
+    // Cancel any in-flight timer and listener cleanup
+    cancelAnimation();
 
     // Remove 'animate' class first so CSS animation resets, then re-add after a reflow
     setAnimating(false);
-    // Brief delay ensures the browser reflows before re-adding the class
-    setTimeout(() => setAnimating(true), DOM_REFLOW_DELAY_MS);
 
-    const totalDurationMs = strokeCount * STROKE_DURATION_MS;
-    // Small buffer ensures the finished state is set after all CSS animations complete
+    // Brief delay ensures the browser reflows before re-adding the class
     animationTimerRef.current = setTimeout(() => {
-      setPlaying(false);
-      setFinished(true);
-    }, totalDurationMs + ANIMATION_BUFFER_MS);
-  }, [strokeCount]);
+      animationTimerRef.current = null;
+      setAnimating(true);
+
+      const container = document.getElementById(`stroke-${kanji.charCodeAt(0)}`);
+      if (!container) return;
+
+      // Find the last stroke path by ID — paths ending in s\d+ (e.g. kvg:04e00-s3)
+      // This is the path whose animationend fires last (it has the highest CSS delay)
+      let lastPath: Element | null = null;
+      let maxN = 0;
+      container.querySelectorAll('path[id]').forEach(path => {
+        const match = /s(\d+)$/.exec(path.getAttribute('id') ?? '');
+        if (match) {
+          const n = parseInt(match[1], 10);
+          if (n > maxN) { maxN = n; lastPath = path; }
+        }
+      });
+
+      if (!lastPath) {
+        // Fallback: use a timer if no stroke IDs are found
+        animationTimerRef.current = setTimeout(() => {
+          setPlaying(false);
+          setFinished(true);
+        }, strokeCount * FALLBACK_STROKE_DURATION_MS + FALLBACK_ANIMATION_BUFFER_MS);
+        return;
+      }
+
+      const handleAnimationEnd = (e: Event) => {
+        if ((e as AnimationEvent).animationName !== 'draw-stroke') return;
+        // Remove listener and mark as finished
+        if (animationCleanupRef.current) {
+          animationCleanupRef.current();
+        }
+        setPlaying(false);
+        setFinished(true);
+      };
+
+      lastPath.addEventListener('animationend', handleAnimationEnd);
+      animationCleanupRef.current = () => {
+        lastPath!.removeEventListener('animationend', handleAnimationEnd);
+        animationCleanupRef.current = null;
+      };
+    }, DOM_REFLOW_DELAY_MS);
+  }, [kanji, strokeCount, cancelAnimation]);
   
   const handleButtonClick = useCallback(() => {
     if (strokeCount === 0) return;
@@ -115,12 +160,9 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       // Pause
       setPlaying(false);
       setAnimating(false);
-      if (animationTimerRef.current) {
-        clearTimeout(animationTimerRef.current);
-        animationTimerRef.current = null;
-      }
+      cancelAnimation();
     }
-  }, [strokeCount, finished, playing, startAnimation]);
+  }, [strokeCount, finished, playing, startAnimation, cancelAnimation]);
 
   const getButtonContent = () => {
     if (playing) {
