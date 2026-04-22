@@ -146,7 +146,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         {/* Header */}
         <div className="text-center mb-8 space-y-4">
           <h1 className="text-8xl font-bold mb-2">{kanjiData.kanji}</h1>
-          <p className="text-2xl font-semibold text-gray-700 capitalize">{kanjiData.meaning}</p>
+          <p className="text-2xl font-semibold text-gray-700">{kanjiData.meaning}</p>
           <div className="flex justify-center space-x-2">
             <Badge variant="secondary" className="text-lg px-3 py-1">
               <BookOpen className="w-4 h-4 mr-1" />
@@ -221,7 +221,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         
         {/* SEO Content */}
         <div className="mt-16 prose prose-lg max-w-none">
-          <h2>How to Write {kanjiData.kanji} ({primaryMeaning}) – {kanjiData.kanji} Kanji Stroke Order</h2>
+          <h2>How to Write the {primaryMeaning} Kanji {kanjiData.kanji} – Stroke Order</h2>
           <p>
             The kanji <strong>{kanjiData.kanji}</strong> means &quot;{kanjiData.meaning}&quot; and is part of the 
             JLPT {kanjiData.level} curriculum. This character is essential for Japanese learners 
