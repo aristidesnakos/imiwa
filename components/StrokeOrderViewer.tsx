@@ -110,11 +110,11 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       let lastPath: Element | null = null;
       let maxN = 0;
       container.querySelectorAll('path[id]').forEach(path => {
-        const match = /s(\d+)$/.exec(path.getAttribute('id') ?? '');
-        if (match) {
-          const n = parseInt(match[1], 10);
-          if (n > maxN) { maxN = n; lastPath = path; }
-        }
+        const id = path.getAttribute('id') ?? '';
+        const match = /s(\d+)$/.exec(id);
+        if (!match) return;
+        const n = parseInt(match[1], 10);
+        if (n > maxN) { maxN = n; lastPath = path; }
       });
 
       if (!lastPath) {
@@ -138,7 +138,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
 
       lastPath.addEventListener('animationend', handleAnimationEnd);
       animationCleanupRef.current = () => {
-        lastPath!.removeEventListener('animationend', handleAnimationEnd);
+        lastPath?.removeEventListener('animationend', handleAnimationEnd);
         animationCleanupRef.current = null;
       };
     }, DOM_REFLOW_DELAY_MS);
