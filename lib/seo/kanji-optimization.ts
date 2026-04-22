@@ -6,6 +6,10 @@
  * 
  * This replaces manual curation with automated, scalable optimization
  * that covers all 1000+ kanji pages in the database.
+ *
+ * Key SEO principle: place the English meaning BEFORE the word "kanji"
+ * so titles naturally form the search phrase "[meaning] kanji [stroke order]"
+ * that learners type into Google (e.g. "heaven kanji stroke order").
  */
 
 export interface KanjiData {
@@ -48,6 +52,16 @@ const FUNDAMENTAL_KANJI_CATEGORIES = [
 ] as const;
 
 /**
+ * Returns the primary (first) meaning from a comma-separated meaning string.
+ * e.g. "heavens, sky, imperial" → "heavens"
+ * Used to build concise title slots that form the natural search phrase
+ * "[primary meaning] kanji [stroke order]".
+ */
+export function getPrimaryMeaning(meaning: string): string {
+  return meaning.split(',')[0].trim();
+}
+
+/**
  * Main function to generate optimized metadata for kanji pages
  */
 export function getOptimizedKanjiMetadata(kanjiData: KanjiData): OptimizedMetadata {
@@ -57,26 +71,28 @@ export function getOptimizedKanjiMetadata(kanjiData: KanjiData): OptimizedMetada
   }
 
   const { kanji, meaning = '', onyomi = '', kunyomi = '', level = 'N5' } = kanjiData;
+  const primaryMeaning = getPrimaryMeaning(meaning);
   const strategy = determineOptimizationStrategy(kanji, level);
   
   switch (strategy) {
     case 'stroke-order-focused':
       return {
-        title: `How to Write ${kanji} - Stroke Order & Meaning | JLPT ${level} Kanji`,
-        description: `✓ Learn ${kanji} stroke order step-by-step ✓ Meaning: "${meaning}" ✓ Readings: ${onyomi}, ${kunyomi} ✓ Interactive animation for JLPT ${level}`
+        // "[primary meaning] kanji" phrase appears naturally in the title
+        title: `${kanji} ${primaryMeaning} Kanji – Stroke Order & Meaning | JLPT ${level}`,
+        description: `Learn how to write the ${primaryMeaning} kanji ${kanji} with step-by-step stroke order animation. Readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} Japanese kanji.`
       };
       
     case 'meaning-focused':
       return {
-        title: `${kanji} Kanji: "${meaning}" | Stroke Order & Readings | JLPT ${level}`,
-        description: `Master ${kanji} kanji meaning "${meaning}" with stroke order animation. Learn readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} level.`
+        title: `${kanji} ${primaryMeaning} Kanji | Stroke Order & Readings | JLPT ${level}`,
+        description: `Learn the ${primaryMeaning} kanji ${kanji} with interactive stroke order animation. Readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). Full meaning: ${meaning}. JLPT ${level}.`
       };
       
     case 'standard':
     default:
       return {
-        title: `${kanji} Kanji: "${meaning}" | Stroke Order & Readings | JLPT ${level}`,
-        description: `Master ${kanji} kanji meaning "${meaning}" with stroke order animation. Learn readings: ${onyomi} (onyomi). JLPT ${level} level.`
+        title: `${kanji} ${primaryMeaning} Kanji | Stroke Order & Readings | JLPT ${level}`,
+        description: `Learn the ${primaryMeaning} kanji ${kanji} with interactive stroke order animation. Readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} Japanese kanji.`
       };
   }
 }
