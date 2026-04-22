@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { Loader2, Play, Pause, RotateCcw, RefreshCw } from 'lucide-react';
@@ -14,7 +14,9 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [svg, setSvg] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
+  const [finished, setFinished] = useState(false);
   const [error, setError] = useState(false);
+  const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const loadStrokeOrder = async () => {
     setLoading(true);
@@ -39,31 +41,61 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   useEffect(() => {
     loadStrokeOrder();
   }, [kanji, loadStrokeOrder]);
-  
-  const toggleAnimation = () => {
-    if (!playing) {
-      // Start animation
-      setPlaying(true);
-      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-      if (element) {
-        element.classList.remove('animate');
-        setTimeout(() => element.classList.add('animate'), 10);
+
+  useEffect(() => {
+    return () => {
+      if (animationTimerRef.current) {
+        clearTimeout(animationTimerRef.current);
       }
-    } else {
-      // Pause animation
-      setPlaying(false);
-      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-      if (element) {
-        element.classList.remove('animate');
-      }
-    }
+    };
+  }, []);
+
+  const getStrokeCount = (): number => {
+    const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+    if (!element) return 0;
+    return element.querySelectorAll('path').length;
   };
-  
-  const resetAnimation = () => {
-    setPlaying(false);
+
+  const startAnimation = () => {
     const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
     if (element) {
       element.classList.remove('animate');
+      setTimeout(() => element.classList.add('animate'), 10);
+    }
+
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+    }
+
+    const strokeCount = getStrokeCount();
+    const totalDurationMs = strokeCount > 0 ? (strokeCount - 1) * 800 + 800 : 800;
+    animationTimerRef.current = setTimeout(() => {
+      setPlaying(false);
+      setFinished(true);
+    }, totalDurationMs + 50);
+  };
+  
+  const handleButtonClick = () => {
+    if (finished) {
+      // Replay
+      setFinished(false);
+      setPlaying(true);
+      startAnimation();
+    } else if (!playing) {
+      // Play
+      setPlaying(true);
+      startAnimation();
+    } else {
+      // Pause
+      setPlaying(false);
+      if (animationTimerRef.current) {
+        clearTimeout(animationTimerRef.current);
+        animationTimerRef.current = null;
+      }
+      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+      if (element) {
+        element.classList.remove('animate');
+      }
     }
   };
   
@@ -103,9 +135,9 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       </div>
       
       {/* Controls */}
-      <div className="flex justify-center space-x-2">
-        <Button 
-          onClick={toggleAnimation} 
+      <div className="flex justify-center">
+        <Button
+          onClick={handleButtonClick}
           variant={playing ? "secondary" : "default"}
           size="sm"
         >
@@ -114,6 +146,11 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
               <Pause className="w-4 h-4 mr-2" />
               Pause
             </>
+          ) : finished ? (
+            <>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Replay
+            </>
           ) : (
             <>
               <Play className="w-4 h-4 mr-2" />
@@ -121,15 +158,11 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
             </>
           )}
         </Button>
-        <Button onClick={resetAnimation} variant="outline" size="sm">
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Reset
-        </Button>
       </div>
       
       {/* Instructions */}
       <div className="text-xs text-gray-500 text-center">
-        Click Play to see the stroke order animation
+        {finished ? 'Click Replay to watch the animation again' : playing ? 'Playing stroke order animation…' : 'Click Play to see the stroke order animation'}
       </div>
     </div>
   );
