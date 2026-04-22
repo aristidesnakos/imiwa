@@ -10,12 +10,17 @@ interface Props {
   className?: string;
 }
 
+const STROKE_DURATION_MS = 800;
+const DOM_REFLOW_DELAY_MS = 10;
+const ANIMATION_BUFFER_MS = 50;
+
 export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [svg, setSvg] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState(false);
+  const [strokeCount, setStrokeCount] = useState(0);
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const loadStrokeOrder = async () => {
@@ -43,6 +48,15 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   }, [kanji, loadStrokeOrder]);
 
   useEffect(() => {
+    if (svg) {
+      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
+      if (element) {
+        setStrokeCount(element.querySelectorAll('path').length);
+      }
+    }
+  }, [svg, kanji]);
+
+  useEffect(() => {
     return () => {
       if (animationTimerRef.current) {
         clearTimeout(animationTimerRef.current);
@@ -50,32 +64,29 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     };
   }, []);
 
-  const getStrokeCount = (): number => {
-    const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-    if (!element) return 0;
-    return element.querySelectorAll('path').length;
-  };
-
   const startAnimation = () => {
     const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
     if (element) {
       element.classList.remove('animate');
-      setTimeout(() => element.classList.add('animate'), 10);
+      // Brief delay ensures the browser reflows before re-adding the class
+      setTimeout(() => element.classList.add('animate'), DOM_REFLOW_DELAY_MS);
     }
 
     if (animationTimerRef.current) {
       clearTimeout(animationTimerRef.current);
     }
 
-    const strokeCount = getStrokeCount();
-    const totalDurationMs = strokeCount > 0 ? (strokeCount - 1) * 800 + 800 : 800;
+    const totalDurationMs = strokeCount * STROKE_DURATION_MS;
+    // Small buffer ensures the finished state is set after all CSS animations complete
     animationTimerRef.current = setTimeout(() => {
       setPlaying(false);
       setFinished(true);
-    }, totalDurationMs + 50);
+    }, totalDurationMs + ANIMATION_BUFFER_MS);
   };
   
   const handleButtonClick = () => {
+    if (strokeCount === 0) return;
+
     if (finished) {
       // Replay
       setFinished(false);
@@ -97,6 +108,22 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         element.classList.remove('animate');
       }
     }
+  };
+
+  const getButtonContent = () => {
+    if (playing) {
+      return <><Pause className="w-4 h-4 mr-2" />Pause</>;
+    }
+    if (finished) {
+      return <><RotateCcw className="w-4 h-4 mr-2" />Replay</>;
+    }
+    return <><Play className="w-4 h-4 mr-2" />Play</>;
+  };
+
+  const getInstructionText = () => {
+    if (finished) return 'Click Replay to watch the animation again';
+    if (playing) return 'Playing stroke order animation…';
+    return 'Click Play to see the stroke order animation';
   };
   
   if (loading) {
@@ -140,29 +167,15 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
           onClick={handleButtonClick}
           variant={playing ? "secondary" : "default"}
           size="sm"
+          disabled={strokeCount === 0}
         >
-          {playing ? (
-            <>
-              <Pause className="w-4 h-4 mr-2" />
-              Pause
-            </>
-          ) : finished ? (
-            <>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Replay
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4 mr-2" />
-              Play
-            </>
-          )}
+          {getButtonContent()}
         </Button>
       </div>
       
       {/* Instructions */}
       <div className="text-xs text-gray-500 text-center">
-        {finished ? 'Click Replay to watch the animation again' : playing ? 'Playing stroke order animation…' : 'Click Play to see the stroke order animation'}
+        {getInstructionText()}
       </div>
     </div>
   );
