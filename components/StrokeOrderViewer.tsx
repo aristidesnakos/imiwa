@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { strokeOrderService } from '@/lib/stroke-order';
 import { Loader2, Play, Pause, RotateCcw, RefreshCw } from 'lucide-react';
@@ -19,11 +19,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [finished, setFinished] = useState(false);
+  // Controls the CSS 'animate' class via React state to avoid conflicts with reconciliation
+  const [animating, setAnimating] = useState(false);
   const [error, setError] = useState(false);
   const [strokeCount, setStrokeCount] = useState(0);
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
-  const loadStrokeOrder = async () => {
+
+  const loadStrokeOrder = useCallback(async () => {
     setLoading(true);
     setError(false);
     
@@ -41,23 +43,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     }
     
     setLoading(false);
-  };
+  }, [kanji]);
   
   useEffect(() => {
     loadStrokeOrder();
-  }, [kanji, loadStrokeOrder]);
+  }, [loadStrokeOrder]);
 
-  // Reset animation state whenever the kanji changes
-  useEffect(() => {
-    setPlaying(false);
-    setFinished(false);
-    setStrokeCount(0);
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current);
-      animationTimerRef.current = null;
-    }
-  }, [kanji]);
-
+  // Count strokes once the SVG is rendered into the DOM
   useEffect(() => {
     if (svg) {
       const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
@@ -67,6 +59,18 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     }
   }, [svg, kanji]);
 
+  // Reset animation state whenever the kanji changes
+  useEffect(() => {
+    setPlaying(false);
+    setFinished(false);
+    setAnimating(false);
+    setStrokeCount(0);
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+  }, [kanji]);
+
   useEffect(() => {
     return () => {
       if (animationTimerRef.current) {
@@ -75,18 +79,17 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     };
   }, []);
 
-  const startAnimation = () => {
+  const startAnimation = useCallback(() => {
     if (strokeCount === 0) return;
-    const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-    if (element) {
-      element.classList.remove('animate');
-      // Brief delay ensures the browser reflows before re-adding the class
-      setTimeout(() => element.classList.add('animate'), DOM_REFLOW_DELAY_MS);
-    }
 
     if (animationTimerRef.current) {
       clearTimeout(animationTimerRef.current);
     }
+
+    // Remove 'animate' class first so CSS animation resets, then re-add after a reflow
+    setAnimating(false);
+    // Brief delay ensures the browser reflows before re-adding the class
+    setTimeout(() => setAnimating(true), DOM_REFLOW_DELAY_MS);
 
     const totalDurationMs = strokeCount * STROKE_DURATION_MS;
     // Small buffer ensures the finished state is set after all CSS animations complete
@@ -94,9 +97,9 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       setPlaying(false);
       setFinished(true);
     }, totalDurationMs + ANIMATION_BUFFER_MS);
-  };
+  }, [strokeCount]);
   
-  const handleButtonClick = () => {
+  const handleButtonClick = useCallback(() => {
     if (strokeCount === 0) return;
 
     if (finished) {
@@ -111,16 +114,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     } else {
       // Pause
       setPlaying(false);
+      setAnimating(false);
       if (animationTimerRef.current) {
         clearTimeout(animationTimerRef.current);
         animationTimerRef.current = null;
       }
-      const element = document.querySelector(`#stroke-${kanji.charCodeAt(0)}`);
-      if (element) {
-        element.classList.remove('animate');
-      }
     }
-  };
+  }, [strokeCount, finished, playing, startAnimation]);
 
   const getButtonContent = () => {
     if (playing) {
@@ -168,7 +168,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
         <div 
           id={`stroke-${kanji.charCodeAt(0)}`}
-          className="stroke-animation"
+          className={`stroke-animation${animating ? ' animate' : ''}`}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
@@ -177,7 +177,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       <div className="flex justify-center">
         <Button
           onClick={handleButtonClick}
-          variant={playing ? "secondary" : "default"} {/* Replay uses same "default" style as Play */}
+          variant={playing ? "secondary" : "default"}
           size="sm"
           disabled={strokeCount === 0}
         >
