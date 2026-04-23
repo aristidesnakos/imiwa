@@ -18,7 +18,7 @@ export function getRelatedKanji(
 
   return allKanji
     .filter(k => clusterMembers.includes(k.kanji))
-    .slice(0, 5)
+    .slice(0, 8)
     .map(k => ({
       kanji: k.kanji,
       meaning: k.meaning,
