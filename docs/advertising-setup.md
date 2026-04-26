@@ -30,10 +30,21 @@ records automatically and doesn't conflict with Resend's sending setup.
 
 ---
 
-## Part 1 — Email notifications via Resend
+## Part 1 — Notification channels (at least one required)
 
-All notifications (inquiry form submissions and daily cron alerts) go by email
-through Resend. No Slack, Discord, or webhook setup is needed.
+When someone submits the `/advertise` inquiry form the API route fires a
+notification so you know to follow up. You must configure **at least one** of
+the two options below — or both.
+
+> **TL;DR — which should I use?**  
+> Set `RESEND_API_KEY` in Vercel for email notifications (recommended).  
+> Set `INQUIRY_WEBHOOK_URL` if you also want a Slack/Discord ping.  
+> `INQUIRY_WEBHOOK_URL` is **not** related to Resend — it is a separate,
+> generic HTTP webhook.
+
+---
+
+### Option A — Email via Resend (recommended)
 
 After fixing the DNS conflict above:
 
@@ -52,10 +63,36 @@ After fixing the DNS conflict above:
    to change that address.
 8. Redeploy on Vercel.
 
-**How it works:**
-When someone submits the `/advertise` inquiry form, you receive a formatted
-email at `ari@llanai.com` with all their details and a Reply-To set to the
-advertiser's email so you can respond directly.
+When someone submits the inquiry form you will receive a formatted email at
+`ari@llanai.com` with all their details and a Reply-To set to the advertiser's
+email so you can respond directly.
+
+---
+
+### Option B — Generic webhook (Slack, Discord, Zapier, Make, n8n, …)
+
+If you want a real-time ping in a chat tool or automation platform, set:
+
+```
+INQUIRY_WEBHOOK_URL = https://hooks.slack.com/services/...
+```
+
+> **Important:** `INQUIRY_WEBHOOK_URL` is **not** the same as the Resend
+> webhook (`/api/webhook/resend`). It is a plain HTTP POST endpoint provided
+> by your chat tool or automation service — entirely unrelated to Resend.
+
+The payload is JSON and is compatible with:
+
+| Platform | How to get the URL |
+|----------|--------------------|
+| Slack    | Create an **Incoming Webhook** in your Slack workspace app settings |
+| Discord  | Server Settings → Integrations → **Webhooks → New Webhook** |
+| Zapier   | Create a **Webhooks by Zapier** "Catch Hook" trigger |
+| Make.com | Add a **Webhooks → Custom webhook** module |
+| n8n      | Use the **Webhook** trigger node |
+
+You can set both `RESEND_API_KEY` **and** `INQUIRY_WEBHOOK_URL` — both will
+fire for each submission.
 
 ---
 
@@ -329,10 +366,12 @@ The daily cron job handles all expiry notifications automatically.
 
 | Variable | Set in | Required for |
 |----------|--------|-------------|
-| `RESEND_API_KEY` | Vercel | Email notifications (inquiry form) |
-| `GITHUB_TOKEN` | Auto (GitHub Actions) | GitHub Issue creation from cron job |
+| `RESEND_API_KEY` | Vercel | Email notifications when an inquiry is submitted (Option A) |
+| `INQUIRY_WEBHOOK_URL` | Vercel | Slack/Discord/Zapier ping when an inquiry is submitted (Option B) — **not** the Resend webhook |
+| `GITHUB_TOKEN` | Auto (GitHub Actions) | GitHub Issue creation from the daily cron job |
 
-`RESEND_API_KEY` must be set in Vercel for inquiry form emails to work.
+At least one of `RESEND_API_KEY` or `INQUIRY_WEBHOOK_URL` must be set in Vercel
+for inquiry form submissions to reach you. Both can be set at the same time.
 `GITHUB_TOKEN` is provided automatically by GitHub Actions — no setup needed.
 
 
