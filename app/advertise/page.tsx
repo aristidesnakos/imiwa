@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
-import { Users, Globe, TrendingUp, Mail, CheckCircle, Megaphone } from 'lucide-react';
+import { Users, Globe, TrendingUp, Mail, CheckCircle, Megaphone, MapPin } from 'lucide-react';
 
 const AD_PACKAGES = [
   {
@@ -48,19 +48,50 @@ const AD_PACKAGES = [
 ];
 
 const AUDIENCE_STATS = [
-  { icon: Users, label: 'Monthly Visitors', value: '50K+' },
-  { icon: Globe, label: 'Countries Reached', value: '80+' },
-  { icon: TrendingUp, label: 'Kanji Pages Viewed', value: '200K+/mo' },
-  { icon: Megaphone, label: 'Avg. Session (min)', value: '4:30' },
+  { icon: Users, label: 'Visitors (YTD, growing)', value: '4K+' },
+  { icon: Globe, label: 'Avg. Session Time', value: '4m 8s' },
+  { icon: TrendingUp, label: 'Top Referrers', value: 'Google · Bing · ChatGPT' },
+  { icon: Megaphone, label: 'Top Country', value: '🇺🇸 United States' },
+];
+
+const AUDIENCE_DEMOGRAPHICS = [
+  {
+    emoji: '🎓',
+    title: 'Students & Academics',
+    description: 'College and university students studying Japanese for credit or JLPT exams. Often have part-time income and spend on study materials, textbooks, and apps.',
+  },
+  {
+    emoji: '✈️',
+    title: 'Travel Planners',
+    description: 'People planning trips to Japan who want to learn basic kanji before they go. Typically employed adults with disposable income for flights, hotels, and experiences.',
+  },
+  {
+    emoji: '💼',
+    title: 'Professionals & Business People',
+    description: 'Expats, remote workers, and business professionals who work with Japanese clients or companies. High disposable income and a need for premium language tools.',
+  },
+  {
+    emoji: '🎌',
+    title: 'Anime & Manga Fans',
+    description: 'Enthusiasts who want to read manga and watch anime without subtitles. A large and passionate segment—many spend on merchandise, streaming, and learning subscriptions.',
+  },
+];
+
+const TOP_COUNTRIES = [
+  { flag: '🇺🇸', country: 'United States', visitors: '1,200', note: 'Largest segment — high purchasing power' },
+  { flag: '🇯🇵', country: 'Japan', visitors: '301', note: 'Native context learners & expats' },
+  { flag: '🇸🇬', country: 'Singapore', visitors: '235', note: 'High-income English-speaking market' },
+  { flag: '🇮🇳', country: 'India', visitors: '197', note: 'Fast-growing tech-savvy learners' },
+  { flag: '🇬🇧', country: 'United Kingdom', visitors: '175', note: 'Strong purchasing power' },
 ];
 
 const TARGET_ADVERTISERS = [
-  { emoji: '✈️', title: 'Japan Travel & Tourism', description: 'Airlines, hotels, tour operators, and travel agencies targeting people planning trips to Japan.' },
-  { emoji: '📚', title: 'Language Learning Apps', description: 'Japanese language apps, online courses, textbooks, and tutoring services.' },
-  { emoji: '🍣', title: 'Japanese Culture & Food', description: 'Japanese restaurants, cooking kits, sake brands, anime streaming platforms, and cultural experiences.' },
-  { emoji: '🎌', title: 'Japan-Inspired Products', description: 'Stationery, calligraphy kits, clothing, and lifestyle brands with a Japanese aesthetic.' },
-  { emoji: '💻', title: 'Remote Work & Tech in Japan', description: 'Visa services, relocation consultants, and companies hiring globally with Japan offices.' },
-  { emoji: '🎓', title: 'Study Abroad Programs', description: 'Universities, exchange programs, and certification bodies for Japanese language learners.' },
+  { emoji: '📚', title: 'Japanese Language Apps & Courses', description: 'Online courses, JLPT prep tools, flashcard apps, and tutoring services. Visitors are actively learning and ready to upgrade their study toolkit.' },
+  { emoji: '✈️', title: 'Japan Travel & Tourism', description: 'Airlines, hotels, tour operators, and travel agencies. A large portion of visitors are planning a first or repeat trip to Japan.' },
+  { emoji: '🎌', title: 'Anime & Manga Platforms', description: 'Streaming services, manga subscriptions, and fan merchandise. The anime/manga community overlaps significantly with kanji learners.' },
+  { emoji: '🖊️', title: 'Stationery & Calligraphy', description: 'Japanese-style notebooks, brush pens, calligraphy kits, and premium stationery brands. A natural fit for people practicing writing.' },
+  { emoji: '💼', title: 'Japan Visa & Relocation Services', description: 'Visa consultants, job boards for Japan, and relocation agencies. Professionals in the audience are often researching life or work in Japan.' },
+  { emoji: '🎓', title: 'JLPT Prep & Certification', description: 'Test prep books, practice exams, and certification programs. Visitors studying for N5–N1 are a highly motivated, conversion-ready audience.' },
 ];
 
 export default function AdvertisePage() {
@@ -99,10 +130,10 @@ export default function AdvertisePage() {
               Advertising
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-japan-deep-ocean leading-tight">
-              Reach thousands of Japanese learners every month
+              Reach an intent-driven audience of Japanese learners
             </h1>
             <p className="text-lg text-japan-mountain-mist leading-relaxed">
-              MichiKanji attracts students, travelers, and enthusiasts who are passionate about Japan and Japanese culture — a highly engaged audience for your brand.
+              MichiKanji attracts students, travel planners, and professionals who are actively learning Japanese — people who arrive via Google, Bing, and ChatGPT with a specific goal. That intent translates into action for the right brands.
             </p>
             <a
               href="#contact"
@@ -116,12 +147,15 @@ export default function AdvertisePage() {
         {/* Audience Stats */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-10">Our audience at a glance</h2>
+            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-3">Our audience at a glance</h2>
+            <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto text-sm">
+              Real data from our analytics dashboard — no inflated numbers.
+            </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {AUDIENCE_STATS.map(({ icon: Icon, label, value }) => (
                 <div key={label} className="text-center p-6 rounded-xl border border-japan-sakura-waters/20 bg-japan-soft-mist/20">
                   <Icon className="w-8 h-8 text-japan-sakura-waters mx-auto mb-3" />
-                  <p className="text-2xl font-bold text-japan-deep-ocean">{value}</p>
+                  <p className="text-xl font-bold text-japan-deep-ocean leading-tight">{value}</p>
                   <p className="text-sm text-japan-mountain-mist mt-1">{label}</p>
                 </div>
               ))}
@@ -129,12 +163,56 @@ export default function AdvertisePage() {
           </div>
         </section>
 
-        {/* Who Should Advertise */}
+        {/* Audience Profile */}
         <section className="py-16 bg-japan-soft-mist/20">
           <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Who advertises on MichiKanji?</h2>
+            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Who visits MichiKanji?</h2>
             <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto">
-              Our readers are curious, motivated, and ready to invest in their passion for Japan. Here are the types of businesses that resonate most with our community.
+              Our traffic is <strong>intent-driven</strong> — people come here with a purpose, which correlates with willingness to spend. Here are the four main visitor segments and their purchasing profiles.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+              {AUDIENCE_DEMOGRAPHICS.map(({ emoji, title, description }) => (
+                <div key={title} className="p-5 rounded-xl border border-japan-sakura-waters/20 bg-background flex gap-4">
+                  <span className="text-3xl shrink-0">{emoji}</span>
+                  <div>
+                    <h3 className="font-semibold text-japan-deep-ocean mb-1">{title}</h3>
+                    <p className="text-sm text-japan-mountain-mist leading-relaxed">{description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Top Countries */}
+            <div className="bg-background rounded-xl border border-japan-sakura-waters/20 p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <MapPin className="w-5 h-5 text-japan-sakura-waters" />
+                <h3 className="font-semibold text-japan-deep-ocean">Top visitor countries (YTD)</h3>
+              </div>
+              <div className="space-y-3">
+                {TOP_COUNTRIES.map(({ flag, country, visitors, note }) => (
+                  <div key={country} className="flex items-center justify-between gap-4 text-sm">
+                    <span className="flex items-center gap-2 min-w-[160px]">
+                      <span className="text-lg">{flag}</span>
+                      <span className="font-medium text-japan-deep-ocean">{country}</span>
+                    </span>
+                    <span className="font-bold text-japan-deep-ocean w-14 text-right shrink-0">{visitors}</span>
+                    <span className="text-japan-mountain-mist hidden sm:block">{note}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-japan-mountain-mist mt-5 border-t border-japan-sakura-waters/10 pt-4">
+                The US audience alone (30%+ of total) represents high purchasing power. Singapore and UK visitors also index well for premium consumer spending.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Who Should Advertise */}
+        <section className="py-16 bg-background">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Best-fit advertisers</h2>
+            <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto">
+              Based on the audience profile above, these categories consistently convert well with intent-driven language learners.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {TARGET_ADVERTISERS.map(({ emoji, title, description }) => (
@@ -149,7 +227,7 @@ export default function AdvertisePage() {
         </section>
 
         {/* Ad Packages */}
-        <section className="py-16 bg-background">
+        <section className="py-16 bg-japan-soft-mist/20">
           <div className="container mx-auto px-4 max-w-5xl">
             <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Advertising packages</h2>
             <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto">
@@ -203,7 +281,7 @@ export default function AdvertisePage() {
         </section>
 
         {/* Contact Form */}
-        <section id="contact" className="py-16 bg-japan-soft-mist/20">
+        <section id="contact" className="py-16 bg-background">
           <div className="container mx-auto px-4 max-w-2xl">
             <div className="text-center mb-10">
               <Mail className="w-10 h-10 text-japan-sakura-waters mx-auto mb-4" />
