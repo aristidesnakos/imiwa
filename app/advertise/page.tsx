@@ -245,14 +245,14 @@ export default function AdvertisePage() {
               {SPONSOR_SLOTS.map((slot) => (
                 <div
                   key={slot.name}
-                  className={`rounded-xl border p-6 flex flex-col ${
+                  className={`rounded-xl border-2 p-6 flex flex-col ${
                     slot.highlighted
-                      ? 'border-japan-sakura-waters bg-japan-soft-mist/40 shadow-lg'
-                      : 'border-japan-sakura-waters/20 bg-background'
+                      ? 'border-japan-coral-sunset bg-japan-coral-sunset/5 shadow-xl shadow-japan-coral-sunset/20 animate-pulse-border'
+                      : 'border-japan-deep-ocean/20 bg-background'
                   }`}
                 >
                   {slot.highlighted && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-japan-sakura-waters mb-3">Largest audience</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-japan-coral-sunset mb-3">Largest audience</span>
                   )}
                   <h3 className="text-xl font-bold text-japan-deep-ocean">{slot.name}</h3>
                   <p className="text-xs font-medium text-japan-mountain-mist mt-1 mb-3">{slot.audience} · {slot.pages}</p>
@@ -264,7 +264,7 @@ export default function AdvertisePage() {
                   <ul className="space-y-2 flex-1 mb-6">
                     {slot.features.map((f) => (
                       <li key={f} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-japan-sakura-waters mt-0.5 shrink-0" />
+                        <CheckCircle className={`w-4 h-4 mt-0.5 shrink-0 ${slot.highlighted ? 'text-japan-coral-sunset' : 'text-japan-sakura-waters'}`} />
                         <span className="text-japan-mountain-mist">{f}</span>
                       </li>
                     ))}
@@ -275,7 +275,7 @@ export default function AdvertisePage() {
                     rel="noopener noreferrer"
                     className={`text-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
                       slot.highlighted
-                        ? 'bg-japan-deep-ocean text-white hover:bg-japan-deep-ocean/90'
+                        ? 'bg-japan-coral-sunset text-white hover:bg-japan-coral-sunset/90'
                         : 'border border-japan-deep-ocean/30 text-japan-deep-ocean hover:bg-japan-soft-mist'
                     }`}
                   >

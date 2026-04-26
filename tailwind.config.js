@@ -97,7 +97,8 @@ module.exports = {
   			popup: 'popup 0.25s ease-in-out',
   			shimmer: 'shimmer 3s ease-out infinite alternate',
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'pulse-border': 'pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
   		},
   		keyframes: {
   			opacity: {
@@ -161,6 +162,14 @@ module.exports = {
   				},
   				to: {
   					height: '0'
+  				}
+  			},
+  			'pulse-border': {
+  				'0%, 100%': {
+  					boxShadow: '0 0 0 0px rgba(255, 107, 71, 0.5)'
+  				},
+  				'50%': {
+  					boxShadow: '0 0 0 8px rgba(255, 107, 71, 0)'
   				}
   			}
   		}
