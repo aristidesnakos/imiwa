@@ -30,14 +30,12 @@ records automatically and doesn't conflict with Resend's sending setup.
 
 ---
 
-## Part 1 — Email / notification (do this first)
+## Part 1 — Email notifications via Resend
 
-You need at least **one** of the two options below. Option A is simpler since
-you already own the domain and have partially set up Resend.
+All notifications (inquiry form submissions and daily cron alerts) go by email
+through Resend. No Slack, Discord, or webhook setup is needed.
 
-### Option A — Resend (recommended, free tier available)
-
-After fixing the DNS conflict above, complete the setup:
+After fixing the DNS conflict above:
 
 1. Sign up at <https://resend.com> (free account) if you have not already.
 2. Go to **Domains → Add Domain** → enter `michikanji.com`.
@@ -49,98 +47,182 @@ After fixing the DNS conflict above, complete the setup:
    ```
    RESEND_API_KEY = re_xxxxxxxxxxxxxxxxxxxx
    ```
-7. Resend notification emails are already configured to send to `ari@llanai.com`
+7. Notification emails are already configured to send to `ari@llanai.com`
    (your existing inbox). No changes to `config.ts` are needed unless you want
-   to use a different address.
+   to change that address.
 8. Redeploy on Vercel.
 
-**How it works after setup:**
-When someone submits the `/advertise` inquiry form, you will receive a
-formatted email at `ari@llanai.com` with all their details and a Reply-To set
-to the advertiser's email so you can respond directly.
+**How it works:**
+When someone submits the `/advertise` inquiry form, you receive a formatted
+email at `ari@llanai.com` with all their details and a Reply-To set to the
+advertiser's email so you can respond directly.
 
 ---
 
-### Option B — Webhook (no Resend needed)
+## Part 2 — Understand what you are selling (read before creating Stripe products)
 
-A webhook is an HTTP endpoint that receives a JSON payload. You can use any
-free service — no email setup needed.
+### The ad inventory
 
-**Easiest: Slack DM to yourself**
+MichiKanji currently has **one ad slot**: a sponsored banner that appears on
+every individual kanji detail page (e.g. `/kanji/日`, `/kanji/月`, etc.).
+There are **2,000+ such pages** — one per kanji in the N5–N1 database — and
+all receive organic traffic from Google, Bing, and ChatGPT.
 
-1. Go to <https://api.slack.com/apps> → **Create New App → From scratch**.
-2. Name it "MichiKanji Ads", pick your Slack workspace.
-3. **Incoming Webhooks → Activate** → add a new webhook → pick a channel or
-   your own DM. Copy the webhook URL (starts with `https://hooks.slack.com/…`).
-4. In Vercel environment variables, add:
-   ```
-   INQUIRY_WEBHOOK_URL = https://hooks.slack.com/services/T.../B.../xxx
-   ```
-5. Redeploy on Vercel.
+**Only one advertiser can occupy the slot at a time.** The `getActiveAd()`
+function returns the first ad whose `startDate ≤ today ≤ endDate` and
+`active: true`. Future bookings can be queued up in the `ADS` array with
+non-overlapping date ranges.
 
-**Alternative: Discord DM to yourself**
+**What the banner shows:**
+- An optional category pill (e.g. "Travel", "Language")
+- Your headline (bold)
+- Your description (1–2 sentences)
+- A CTA button linking to your site
+- "Ad by [Advertiser Name]" attribution line
 
-1. Server Settings → Integrations → Webhooks → New Webhook. Copy the URL.
-2. Add `INQUIRY_WEBHOOK_URL` in Vercel with that URL.
+**What it does NOT include yet** (will require additional code):
+- A homepage placement (there is no banner on `/` currently)
+- Category-filtered placement (e.g. only N5 pages)
+- Multiple simultaneous slots
 
-**Alternative: Make.com → forward to your existing email**
+Planned future inventory as traffic grows:
+- Slot 2: footer banner on all kanji pages
+- Slot 3: inline card on the `/kanji` listing page
+- Slot 4: homepage sidebar
 
-1. Create a free account at <https://make.com>.
-2. New Scenario: **Webhooks → Custom Webhook → Email**.
-3. Copy the webhook URL Make gives you → set as `INQUIRY_WEBHOOK_URL`.
-4. Make will forward every inquiry to any address you configure.
-
-> You can set **both** `RESEND_API_KEY` and `INQUIRY_WEBHOOK_URL` at the same
-> time. Both notifications will fire on every inquiry.
+Be honest with advertisers: right now you are selling **one banner on
+all kanji detail pages**.
 
 ---
 
-## Part 2 — Create Stripe payment products
+## Part 3 — Create Stripe payment products
 
-Payment is collected manually before activating any slot. Create these three
-Payment Links in your Stripe dashboard:
+Create three one-time Payment Links in your Stripe dashboard. Use the exact
+Names and Descriptions below — they appear at checkout and on the customer's
+receipt.
 
-| Package | Price | Stripe product to create |
-|---------|-------|--------------------------|
-| **Starter** | $29 one-time | "MichiKanji Starter Banner – 30 days" |
-| **Growth** | $177 one-time | "MichiKanji Growth Banner – 90 days" ($59/mo × 3 months, billed upfront) |
-| **Brand Partner** | $99 one-time | "MichiKanji Brand Partner – 30 days" |
+---
 
-> **Why bill Growth upfront?** The `/advertise` page shows Growth at "$59/month",
-> which is the effective per-month rate. The Stripe product should charge the
-> full 90-day amount ($177) as a single one-time payment — this simplifies
-> payment tracking (one receipt = one booking) and avoids subscription billing
-> complexity. Make this clear to the advertiser when sending the link.
+### Product 1 — Starter (30 days)
+
+**Price:** $29 (one-time)
+
+**Name:**
+```
+MichiKanji – Sponsored Banner, 30 Days
+```
+
+**Description:**
+```
+Your brand featured in the exclusive sponsored banner on every kanji study
+page across MichiKanji.com for 30 consecutive days.
+
+Placement details:
+• Appears on 2,000+ individual kanji pages (N5–N4–N3–N2–N1)
+• Includes your custom headline, 1–2 sentence description, and CTA button
+  linking to your website
+• "Ad by [Your Brand]" attribution line
+• One advertiser at a time — your brand has the slot to itself
+
+Audience: active Japanese language learners arriving from Google, Bing, and
+ChatGPT — primarily based in the US, UK, and Singapore.
+
+After payment, email ads@michikanji.com with your headline, description, CTA
+text, destination URL, and campaign start date.
+```
+
+---
+
+### Product 2 — Growth (90 days)
+
+**Price:** $177 (one-time, equivalent to $59/month)
+
+**Name:**
+```
+MichiKanji – Sponsored Banner, 90 Days
+```
+
+**Description:**
+```
+Your brand featured in the exclusive sponsored banner on every kanji study
+page across MichiKanji.com for 90 consecutive days (3 months).
+
+Placement details:
+• Appears on 2,000+ individual kanji pages (N5–N4–N3–N2–N1)
+• Includes your custom headline, 1–2 sentence description, and CTA button
+  linking to your website
+• "Ad by [Your Brand]" attribution line
+• One advertiser at a time — your brand has the slot to itself
+• Best value: 3 months of continuous exposure
+
+Audience: active Japanese language learners arriving from Google, Bing, and
+ChatGPT — primarily based in the US, UK, and Singapore.
+
+After payment, email ads@michikanji.com with your headline, description, CTA
+text, destination URL, and campaign start date.
+```
+
+---
+
+### Product 3 — Brand Partner (30 days)
+
+**Price:** $99 (one-time)
+
+**Name:**
+```
+MichiKanji – Brand Partner Placement, 30 Days
+```
+
+**Description:**
+```
+Premium sponsorship on MichiKanji.com for 30 consecutive days.
+
+Placement details:
+• Exclusive sponsored banner on 2,000+ individual kanji pages
+• Prominent "Sponsored by [Your Brand]" label throughout the campaign
+• Custom headline, description, and CTA button
+• Priority scheduling — your dates take precedence over future bookings
+• Co-created content option: we can write a dedicated study resource,
+  vocabulary list, or tip article that features your brand naturally
+
+Audience: active Japanese language learners arriving from Google, Bing, and
+ChatGPT — primarily based in the US, UK, and Singapore.
+
+After payment, email ads@michikanji.com with your brand assets and preferred
+start date. We will reach out within 1 business day to coordinate.
+```
+
+---
+
+### Steps to create each Payment Link in Stripe
+
+1. Go to <https://dashboard.stripe.com/payment-links>.
+2. Click **New Payment Link**.
+3. Under **Products**, click **Add a product → Create a new product**.
+4. Fill in the Name and Description exactly as shown above.
+5. Set the price (one-time, no trial).
+6. Save. Stripe gives you a `https://buy.stripe.com/xxxx` link.
+7. Keep each link handy — send it directly to the advertiser once they confirm interest.
+
+When they pay, Stripe sends you a receipt by email. That is your trigger to
+activate the slot (Part 4).
 
 **Pricing rationale:** Market rate for direct sponsored banners on niche sites
 with 500–5,000 monthly visitors is $10–$50/month (flat rate, no ad network
-cut). MichiKanji earns a premium for its intent-driven audience (US-dominant,
-4m+ session, arriving from Google/Bing/ChatGPT) — currently positioned at
-$29–$99 to attract first advertisers and build a track record. Raise prices
-every time a slot sells out.
-
-**Steps to create a Stripe Payment Link:**
-1. Go to <https://dashboard.stripe.com/payment-links>.
-2. Click **New Payment Link**.
-3. Add the product with the correct price.
-4. Save the link (e.g. `https://buy.stripe.com/xxxx`).
-5. Send that link directly to the advertiser once they confirm interest.
-
-When they pay, Stripe emails you a receipt. That is your trigger to activate
-the slot.
+cut). MichiKanji earns a modest premium for its intent-driven audience —
+raise prices every time a slot sells out.
 
 ---
 
-## Part 3 — Activating a slot (after payment clears)
+## Part 4 — Activating a slot (after payment clears)
 
 All ads are managed in a single file: **`lib/constants/ads.ts`**
 
-**Important:** You do not need to remember to deactivate ads. The system
-checks `startDate` and `endDate` on every page render and shows or hides the
-banner automatically. The daily GitHub Actions workflow (Part 4) will also
-notify you when campaigns are about to end.
+The banner activates and deactivates automatically based on `startDate` and
+`endDate` — you do not need to remember to turn it off. The daily GitHub
+Actions cron job (Part 5) will also alert you when campaigns are about to end.
 
-When payment clears:
+**When payment clears (Stripe receipt in your inbox):**
 
 1. Open `lib/constants/ads.ts`.
 2. Append a new entry to the `ADS` array:
@@ -149,12 +231,12 @@ When payment clears:
 export const ADS: AdConfig[] = [
   {
     id: 'acme-jun-2025',            // unique — use advertiser + month
-    advertiser: 'Acme Japan Tours',  // shown in attribution line
+    advertiser: 'Acme Japan Tours',  // shown in "Ad by" attribution line
     headline: 'Explore Japan with a local guide',
     description: 'Curated small-group tours for Japanese language learners.',
     ctaText: 'See tours',
     ctaUrl: 'https://acmejapantours.com',
-    badge: 'Travel',                 // optional pill label
+    badge: 'Travel',                 // optional pill label (keep it short)
     startDate: '2025-06-01',         // campaign start (inclusive, UTC)
     endDate:   '2025-06-30',         // campaign end   (inclusive, UTC)
     active: true,
@@ -164,62 +246,59 @@ export const ADS: AdConfig[] = [
 
 3. Commit and push. Vercel deploys automatically.
 
-**The banner will appear on `startDate` and vanish after `endDate` — no
-further code changes needed.**
+**The banner will appear on `startDate` and vanish after `endDate`.**
 
 To pause an ad early (advertiser cancels):
 ```ts
 active: false,   // set this field and deploy
 ```
 
+To stack future bookings, append more entries with non-overlapping date ranges.
+The system picks the first one whose window covers today.
+
 ---
 
-## Part 4 — Set up the daily GitHub Actions cron job
+## Part 5 — Daily GitHub Actions cron job
 
 The workflow file `.github/workflows/ad-slot-check.yml` is already in the
-repository. It runs every day at 08:00 UTC automatically once the code is
-merged and pushed to the default branch.
+repository. It runs every day at **08:00 UTC** automatically once the branch
+is merged to the default branch.
 
 **What the cron job does (via `scripts/check-ads.ts`):**
+
 - Reads every entry in `ADS` and compares it to today's date.
-- **Creates a GitHub Issue** (goes to your GitHub notification inbox) when:
-  - A campaign starts today
-  - A campaign ends today (prompt to follow up for renewal)
-  - A campaign expires in ≤ 7 days (early-warning)
-  - A campaign starts within 3 days (reminder to double-check ad copy)
-- Posts the same summary to `INQUIRY_WEBHOOK_URL` if set.
-- Does **not** create an issue on quiet days (no notable events).
+- **Creates a GitHub Issue** (triggers a GitHub notification email to you) when:
+  - A campaign starts today → reminder that the slot is now live
+  - A campaign ends today → prompt to follow up for renewal
+  - A campaign expires in ≤ 7 days → early renewal warning
+  - A campaign starts within 3 days → reminder to verify ad copy
+- **Silent on quiet days** — no issue is created when nothing needs attention.
+- Does **not** require any secrets beyond the built-in `GITHUB_TOKEN`.
 
-**To enable GitHub Issue notifications:**
-- The workflow uses the built-in `GITHUB_TOKEN` — no setup needed.
-- Make sure you have GitHub notifications turned on for Issues in the repo
-  (Settings → Notifications on github.com).
-
-**To also get Slack / Discord pings from the cron job:**
-- Add `INQUIRY_WEBHOOK_URL` as a repository secret (not just a Vercel env var):
-  1. Go to your repo → **Settings → Secrets and variables → Actions**.
-  2. Click **New repository secret**.
-  3. Name: `INQUIRY_WEBHOOK_URL`, value: your webhook URL.
+**To receive the GitHub Issue notifications by email:**
+1. Go to github.com → profile picture → **Settings → Notifications**.
+2. Under "Participating, @mentions and custom routing", make sure Issues are
+   checked and routed to `ari@llanai.com`.
 
 **To test it manually:**
 1. Go to your repo → **Actions → Ad Slot Daily Check**.
 2. Click **Run workflow** → **Run workflow**.
-3. Check the run logs and your GitHub Issues / Slack for notifications.
+3. Check the run logs and your GitHub Issues tab for the result.
 
 **Note on the `advertising` label:**
-The script creates issues with the label `advertising`. Create this label
-once in your repo (Issues → Labels → New label) so it shows up correctly.
+The script tags issues with the label `advertising`. Create this label once in
+your repo (Issues → Labels → New label: name `advertising`, any colour) so
+it renders with a colour-coded badge.
 
 ---
 
-## Part 5 — Verify everything end-to-end
+## Part 6 — Verify everything end-to-end
 
-Run through this checklist after completing Parts 0–4:
+Run through this checklist after completing Parts 0–5:
 
 - [ ] Go to `/advertise` — page loads without errors.
-- [ ] Submit the inquiry form with your own email.
-  - [ ] Resend: check `ari@llanai.com` for a formatted inquiry email.
-  - [ ] Webhook: check Slack / Discord / Make.com run history for the payload.
+- [ ] Submit the inquiry form with your own email → check `ari@llanai.com` for
+      a formatted inquiry email with your submitted details.
 - [ ] Add a test ad to `ADS` with today's date as both `startDate` and
       `endDate`, set `active: true`, and deploy.
   - [ ] Visit any kanji page (e.g. `/kanji/日`). The sponsored banner should
@@ -228,19 +307,19 @@ Run through this checklist after completing Parts 0–4:
         and the "Advertise here" fallback should reappear.
 - [ ] Remove the test ad and deploy before going live.
 - [ ] Manually trigger the GitHub Actions workflow (**Actions → Ad Slot Daily
-      Check → Run workflow**) and confirm it runs without errors.
+      Check → Run workflow**) and confirm it completes without errors.
 
 ---
 
-## Part 6 — Ongoing operations
+## Part 7 — Ongoing operations
 
 | Task | When |
 |------|------|
-| Reply to inquiries (email / Slack) | Within 1–2 business days |
+| Reply to inquiry emails | Within 1–2 business days |
 | Send Stripe Payment Link | After agreeing on package |
-| Activate slot in `lib/constants/ads.ts` | After Stripe payment clears |
+| Activate slot in `lib/constants/ads.ts` | After Stripe receipt arrives |
 | Set `active: false` | If advertiser cancels early |
-| Raise prices | Every time you sell out a slot |
+| Raise prices | Every time a slot sells out |
 
 The daily cron job handles all expiry notifications automatically.
 
@@ -250,10 +329,10 @@ The daily cron job handles all expiry notifications automatically.
 
 | Variable | Set in | Required for |
 |----------|--------|-------------|
-| `RESEND_API_KEY` | Vercel | Email notifications via Resend |
-| `INQUIRY_WEBHOOK_URL` | Vercel + GitHub Secrets | Webhook pings (inquiry form AND cron job) |
+| `RESEND_API_KEY` | Vercel | Email notifications (inquiry form) |
 | `GITHUB_TOKEN` | Auto (GitHub Actions) | GitHub Issue creation from cron job |
 
-At least one of `RESEND_API_KEY` or `INQUIRY_WEBHOOK_URL` must be set in
-Vercel for inquiry form notifications to work.
+`RESEND_API_KEY` must be set in Vercel for inquiry form emails to work.
+`GITHUB_TOKEN` is provided automatically by GitHub Actions — no setup needed.
+
 

@@ -9,9 +9,9 @@
  *  - Reads lib/constants/ads.ts and checks each ad's status against today's date.
  *  - Prints a human-readable report to stdout.
  *  - If there are notable events (campaign starts/ends/expiring-soon/stale),
- *    creates a GitHub Issue so you get a notification in your inbox.
- *  - Optionally posts the same summary to a webhook (Slack, Discord, etc.)
- *    if INQUIRY_WEBHOOK_URL is set.
+ *    creates a GitHub Issue so you get a notification in your GitHub inbox.
+ *
+ * Notifications go exclusively via GitHub Issues — no webhooks needed.
  *
  * NOTE: lib/constants/ads.ts already handles runtime activation/deactivation
  * automatically (getActiveAd checks today's date on every page render).
@@ -210,31 +210,6 @@ async function main(): Promise<void> {
     }
   }
 
-  // ─── Webhook notification ───────────────────────────────────────────────────
-
-  const webhookUrl = process.env.INQUIRY_WEBHOOK_URL;
-
-  if (webhookUrl) {
-    console.log('Posting to webhook…');
-    const text =
-      `📢 *MichiKanji Ad Slot Check — ${today}*\n` +
-      events.map((e) => `${e.emoji} ${e.label}: ${e.advertiser} — ${e.detail}`).join('\n') +
-      (warnings.length > 0
-        ? '\n' + warnings.map((e) => `${e.emoji} ${e.label}: ${e.advertiser}`).join('\n')
-        : '');
-
-    const res = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, content: text }),
-    });
-
-    if (res.ok) {
-      console.log('✅ Webhook notification sent.');
-    } else {
-      console.error(`❌ Webhook returned ${res.status}`);
-    }
-  }
 }
 
 main().catch((err: unknown) => {

@@ -32,6 +32,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          # Optional: set this secret in your repo to also get a Slack/Discord ping
-          INQUIRY_WEBHOOK_URL: ${{ secrets.INQUIRY_WEBHOOK_URL }}
         run: npx tsx --tsconfig tsconfig.json scripts/check-ads.ts
