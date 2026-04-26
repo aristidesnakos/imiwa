@@ -316,7 +316,7 @@ export default function AdvertisePage() {
                 </div>
 
                 {status === 'error' && (
-                  <p className="text-sm text-red-600">Something went wrong. Please try again or email us at ari@llanai.com.</p>
+                  <p className="text-sm text-red-600">Something went wrong. Please try again or contact us directly at <a href="mailto:ari@llanai.com" className="underline">ari@llanai.com</a>.</p>
                 )}
 
                 <button
