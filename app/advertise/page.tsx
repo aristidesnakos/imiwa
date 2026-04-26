@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
 import { Users, Globe, Mail, CheckCircle, Megaphone, MapPin } from 'lucide-react';
@@ -98,7 +99,7 @@ export default function AdvertisePage() {
   const [form, setForm] = useState({ name: '', email: '', company: '', website: '', budget: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
     try {
@@ -114,7 +115,7 @@ export default function AdvertisePage() {
     }
   };
 
-  const handleChange = (e: { target: { name: string; value: string } }) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
