@@ -15,6 +15,7 @@ import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 // import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
+import { AdBanner } from '@/components/AdBanner';
 
 // Combine all kanji data with levels
 const ALL_KANJI_DATA = [
@@ -208,11 +209,16 @@ export default async function KanjiDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Related Kanji - BEFORE CTA */}
+          {/* Related Kanji - BEFORE CTA */}
         <RelatedKanjiSection
           currentKanji={kanjiData}
           allKanji={ALL_KANJI_DATA}
         />
+
+        {/* Sponsor Ad */}
+        <section className="mt-10">
+          <AdBanner />
+        </section>
 
         {/* CTA Section */}
         <section className="mt-12 pt-8 border-t border-gray-200">

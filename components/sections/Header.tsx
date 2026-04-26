@@ -43,6 +43,9 @@ const Header = () => {
           >
             Free Resources
           </Link>
+          <Link href="/advertise" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
+            Advertise
+          </Link>
         </nav>
 
         {/* Mobile menu button */}
