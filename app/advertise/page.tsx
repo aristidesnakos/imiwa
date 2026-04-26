@@ -6,44 +6,52 @@ import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
 import { Users, Globe, Mail, CheckCircle, Megaphone, MapPin } from 'lucide-react';
 
-const AD_PACKAGES = [
+const SPONSOR_SLOTS = [
   {
-    name: 'Starter',
-    price: '$29',
-    period: '/month',
-    description: 'Perfect for indie creators, language tutors, and small Japan-focused businesses.',
-    features: [
-      'Banner ad on all kanji pages',
-      'Your headline & description',
-      'Link to your website',
-      '30-day campaign',
-    ],
-  },
-  {
-    name: 'Growth',
+    name: 'N5 — Japan Explorer',
+    audience: 'Beginners',
+    pages: '~88 pages',
     price: '$59',
     period: '/month',
-    description: 'Ideal for language apps, travel companies, and Japan-focused brands wanting more reach.',
+    description: 'Reach motivated beginners studying the 88 most essential kanji — a high-intent audience just starting their Japanese journey.',
     features: [
-      'Everything in Starter',
-      'Priority placement',
-      'Click-through tracking',
-      '90-day campaign (best value)',
+      'Exclusive banner on all N5 kanji pages',
+      'Your headline, description & CTA',
+      'Link to your website',
+      'One sponsor per slot — no competition',
     ],
-    highlighted: true,
+    stripeUrl: 'https://buy.stripe.com/3cIbJ3a2IcjUa0j3ms6Vq00',
   },
   {
-    name: 'Brand Partner',
+    name: 'N4–N3 — Serious Learner',
+    audience: 'Intermediate',
+    pages: '~540 pages',
+    price: '$79',
+    period: '/month',
+    description: 'The largest audience segment: committed learners who have moved past the basics and are actively preparing for JLPT exams.',
+    features: [
+      'Exclusive banner on all N4 & N3 kanji pages',
+      'Your headline, description & CTA',
+      'Link to your website',
+      'One sponsor per slot — no competition',
+    ],
+    highlighted: true,
+    stripeUrl: 'https://buy.stripe.com/9B68wR8YE97I8Wf0ag6Vq01',
+  },
+  {
+    name: 'N2–N1 — Deep Immersion',
+    audience: 'Advanced',
+    pages: '~1,370 pages',
     price: '$99',
     period: '/month',
-    description: 'Maximum visibility for established brands that want deep integration across the site.',
+    description: 'The broadest reach on the site: advanced learners, professionals, and near-native readers who engage deeply with the material.',
     features: [
-      'Everything in Growth',
-      'Featured placement on homepage',
-      'Dedicated "Sponsored by" label',
-      'Co-created content option',
-      'Flexible campaign duration',
+      'Exclusive banner on all N2 & N1 kanji pages',
+      'Your headline, description & CTA',
+      'Link to your website',
+      'One sponsor per slot — no competition',
     ],
+    stripeUrl: 'https://buy.stripe.com/28E28tdeU1Fg0pJbSY6Vq02',
   },
 ];
 
@@ -136,10 +144,10 @@ export default function AdvertisePage() {
               MichiKanji attracts students, travel planners, and professionals who are actively learning Japanese — people who arrive via Google, Bing, and ChatGPT with a specific goal. That intent translates into action for the right brands.
             </p>
             <a
-              href="#contact"
+              href="#slots"
               className="inline-block bg-japan-deep-ocean text-white px-8 py-3 rounded-lg font-medium hover:bg-japan-deep-ocean/90 transition-colors"
             >
-              Get in touch
+              View sponsor slots
             </a>
           </div>
         </section>
@@ -226,34 +234,35 @@ export default function AdvertisePage() {
           </div>
         </section>
 
-        {/* Ad Packages */}
-        <section className="py-16 bg-japan-soft-mist/20">
+        {/* Sponsor Slots */}
+        <section id="slots" className="py-16 bg-japan-soft-mist/20">
           <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Advertising packages</h2>
+            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Sponsor slots</h2>
             <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto">
-              Choose a plan that fits your goals. All packages include a banner placement on our kanji reference pages where visitors spend most of their time.
+              Each slot is exclusive — one sponsor per JLPT tier at a time. Your banner appears on every page in that tier, giving you a clean, uncluttered presence with a highly targeted audience.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {AD_PACKAGES.map((pkg) => (
+              {SPONSOR_SLOTS.map((slot) => (
                 <div
-                  key={pkg.name}
+                  key={slot.name}
                   className={`rounded-xl border p-6 flex flex-col ${
-                    pkg.highlighted
+                    slot.highlighted
                       ? 'border-japan-sakura-waters bg-japan-soft-mist/40 shadow-lg'
                       : 'border-japan-sakura-waters/20 bg-background'
                   }`}
                 >
-                  {pkg.highlighted && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-japan-sakura-waters mb-3">Most popular</span>
+                  {slot.highlighted && (
+                    <span className="text-xs font-semibold uppercase tracking-wider text-japan-sakura-waters mb-3">Largest audience</span>
                   )}
-                  <h3 className="text-xl font-bold text-japan-deep-ocean">{pkg.name}</h3>
-                  <div className="mt-2 mb-4">
-                    <span className="text-3xl font-bold text-japan-deep-ocean">{pkg.price}</span>
-                    {pkg.period && <span className="text-japan-mountain-mist">{pkg.period}</span>}
+                  <h3 className="text-xl font-bold text-japan-deep-ocean">{slot.name}</h3>
+                  <p className="text-xs font-medium text-japan-mountain-mist mt-1 mb-3">{slot.audience} · {slot.pages}</p>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-japan-deep-ocean">{slot.price}</span>
+                    <span className="text-japan-mountain-mist">{slot.period}</span>
                   </div>
-                  <p className="text-sm text-japan-mountain-mist mb-5 leading-relaxed">{pkg.description}</p>
+                  <p className="text-sm text-japan-mountain-mist mb-5 leading-relaxed">{slot.description}</p>
                   <ul className="space-y-2 flex-1 mb-6">
-                    {pkg.features.map((f) => (
+                    {slot.features.map((f) => (
                       <li key={f} className="flex items-start gap-2 text-sm">
                         <CheckCircle className="w-4 h-4 text-japan-sakura-waters mt-0.5 shrink-0" />
                         <span className="text-japan-mountain-mist">{f}</span>
@@ -261,21 +270,23 @@ export default function AdvertisePage() {
                     ))}
                   </ul>
                   <a
-                    href="#contact"
+                    href={slot.stripeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`text-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-                      pkg.highlighted
+                      slot.highlighted
                         ? 'bg-japan-deep-ocean text-white hover:bg-japan-deep-ocean/90'
                         : 'border border-japan-deep-ocean/30 text-japan-deep-ocean hover:bg-japan-soft-mist'
                     }`}
                   >
-                    Get started
+                    Book this slot
                   </a>
                 </div>
               ))}
             </div>
             <p className="text-center text-sm text-japan-mountain-mist mt-8">
-              Not sure which package is right for you?{' '}
-              <a href="#contact" className="underline hover:text-japan-deep-ocean">Send us a message</a> and we&apos;ll help you decide.
+              Questions before booking?{' '}
+              <a href="#contact" className="underline hover:text-japan-deep-ocean">Send us a message</a> and we&apos;ll get back to you promptly.
             </p>
           </div>
         </section>
@@ -285,7 +296,7 @@ export default function AdvertisePage() {
           <div className="container mx-auto px-4 max-w-2xl">
             <div className="text-center mb-10">
               <Mail className="w-10 h-10 text-japan-sakura-waters mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-japan-deep-ocean mb-3">Start your campaign</h2>
+              <h2 className="text-2xl font-bold text-japan-deep-ocean mb-3">Have a question before booking?</h2>
               <p className="text-japan-mountain-mist">
                 Fill out the form below and we&apos;ll get back to you within 1–2 business days.
               </p>
