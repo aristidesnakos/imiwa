@@ -11,9 +11,10 @@ When setting up Resend you may have received a warning:
 > "Conflicting MX records: These records may prevent receiving."
 
 **You do not need the MX record.** The MX record
-(`inbound-smtp.us-east-1.amazonaws.com`, priority 9) is for receiving email
-at `@michikanji.com`. You only need to *send* from `@michikanji.com`, which
-requires only three **TXT** records — not an MX record.
+(`inbound-smtp.us-east-1.amazonaws.com`, priority 9) is for *receiving*
+email at `@michikanji.com` via Amazon SES. Resend only needs to *send* from
+your domain, which requires three **TXT** records (SPF, DKIM, DMARC) — no MX
+record is necessary for sending.
 
 **Action:**
 1. Open your domain registrar's DNS panel.
@@ -21,14 +22,11 @@ requires only three **TXT** records — not an MX record.
 3. Keep only the three TXT records Resend asked you to add (SPF, DKIM, DMARC).
 4. Return to Resend → Domains → click **Verify**. The warning will clear.
 
-If you later want to receive email at `ads@michikanji.com` (so advertisers
-can reply directly), set up **Cloudflare Email Routing** (free):
-
-1. Add your domain to Cloudflare (or just enable Email Routing if it's
-   already there).
-2. Go to **Email → Email Routing → Routing Rules**.
-3. Add a rule: `ads@michikanji.com` → forwards to `ari@llanai.com`.
-4. Cloudflare will add the correct MX records without conflicting with Resend.
+**If you want to receive replies at `ads@michikanji.com` later** (optional —
+not required for the inquiry notifications):
+Set up **Cloudflare Email Routing** (free) to forward
+`ads@michikanji.com` → `ari@llanai.com`. Cloudflare manages its own MX
+records automatically and doesn't conflict with Resend's sending setup.
 
 ---
 
@@ -105,8 +103,14 @@ Payment Links in your Stripe dashboard:
 | Package | Price | Stripe product to create |
 |---------|-------|--------------------------|
 | **Starter** | $29 one-time | "MichiKanji Starter Banner – 30 days" |
-| **Growth** | $177 one-time | "MichiKanji Growth Banner – 90 days" ($59/mo × 3) |
+| **Growth** | $177 one-time | "MichiKanji Growth Banner – 90 days" ($59/mo × 3 months, billed upfront) |
 | **Brand Partner** | $99 one-time | "MichiKanji Brand Partner – 30 days" |
+
+> **Why bill Growth upfront?** The `/advertise` page shows Growth at "$59/month",
+> which is the effective per-month rate. The Stripe product should charge the
+> full 90-day amount ($177) as a single one-time payment — this simplifies
+> payment tracking (one receipt = one booking) and avoids subscription billing
+> complexity. Make this clear to the advertiser when sending the link.
 
 **Pricing rationale:** Market rate for direct sponsored banners on niche sites
 with 500–5,000 monthly visitors is $10–$50/month (flat rate, no ad network
