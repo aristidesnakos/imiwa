@@ -1,0 +1,37 @@
+name: Ad Slot Daily Check
+
+on:
+  # Runs every day at 08:00 UTC
+  schedule:
+    - cron: '0 8 * * *'
+  # Also allows manual triggering from the Actions tab (useful for testing)
+  workflow_dispatch:
+
+jobs:
+  check-ads:
+    name: Check ad slot statuses
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed so the script can open GitHub Issues as notifications
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --prefer-offline 2>/dev/null || npm install --ignore-scripts
+
+      - name: Run ad slot check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          # Optional: set this secret in your repo to also get a Slack/Discord ping
+          INQUIRY_WEBHOOK_URL: ${{ secrets.INQUIRY_WEBHOOK_URL }}
+        run: npx tsx --tsconfig tsconfig.json scripts/check-ads.ts
