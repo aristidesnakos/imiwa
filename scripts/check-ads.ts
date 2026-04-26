@@ -21,18 +21,6 @@
 
 import { ADS, getAdStatus } from '../lib/constants/ads';
 
-const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function daysUntilDate(dateStr: string): number {
-  const target = new Date(dateStr + 'T00:00:00Z').getTime();
-  const now = new Date(today + 'T00:00:00Z').getTime();
-  return Math.round((target - now) / (1000 * 60 * 60 * 24));
-}
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface AdEvent {
   emoji: string;
   label: string;
@@ -41,9 +29,15 @@ interface AdEvent {
   detail: string;
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
 async function main(): Promise<void> {
+  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" — computed at execution time
+
+  function daysUntilDate(dateStr: string): number {
+    const target = new Date(dateStr + 'T00:00:00Z').getTime();
+    const now = new Date(today + 'T00:00:00Z').getTime();
+    return Math.round((target - now) / (1000 * 60 * 60 * 24));
+  }
+
   const events: AdEvent[] = [];
   const warnings: AdEvent[] = [];
   const info: AdEvent[] = [];
@@ -196,7 +190,7 @@ async function main(): Promise<void> {
     const response = await fetch(`https://api.github.com/repos/${githubRepo}/issues`, {
       method: 'POST',
       headers: {
-        Authorization: `token ${githubToken}`,
+        Authorization: `Bearer ${githubToken}`,
         'Content-Type': 'application/json',
         'User-Agent': 'ad-slot-check-script',
       },
