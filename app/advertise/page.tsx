@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
-import { Users, Globe, TrendingUp, Mail, CheckCircle, Megaphone, MapPin } from 'lucide-react';
+import { Users, Globe, Mail, CheckCircle, Megaphone, MapPin } from 'lucide-react';
 
 const AD_PACKAGES = [
   {
@@ -50,8 +50,8 @@ const AD_PACKAGES = [
 const AUDIENCE_STATS = [
   { icon: Users, label: 'Visitors (YTD, growing)', value: '4K+' },
   { icon: Globe, label: 'Avg. Session Time', value: '4m 8s' },
-  { icon: TrendingUp, label: 'Top Referrers', value: 'Google · Bing · ChatGPT' },
-  { icon: Megaphone, label: 'Top Country', value: '🇺🇸 United States' },
+  { icon: Megaphone, label: 'Top Referrers', value: 'Google · Bing · ChatGPT' },
+  { icon: MapPin, label: 'Top Country', value: '🇺🇸 United States' },
 ];
 
 const AUDIENCE_DEMOGRAPHICS = [
@@ -98,7 +98,7 @@ export default function AdvertisePage() {
   const [form, setForm] = useState({ name: '', email: '', company: '', website: '', budget: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setStatus('sending');
     try {
@@ -114,7 +114,7 @@ export default function AdvertisePage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: { target: { name: string; value: string } }) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -275,7 +275,7 @@ export default function AdvertisePage() {
             </div>
             <p className="text-center text-sm text-japan-mountain-mist mt-8">
               Not sure which package is right for you?{' '}
-              <a href="#contact" className="underline hover:text-japan-deep-ocean">Send us a message</a> and we'll help you decide.
+              <a href="#contact" className="underline hover:text-japan-deep-ocean">Send us a message</a> and we&apos;ll help you decide.
             </p>
           </div>
         </section>
@@ -287,7 +287,7 @@ export default function AdvertisePage() {
               <Mail className="w-10 h-10 text-japan-sakura-waters mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-japan-deep-ocean mb-3">Start your campaign</h2>
               <p className="text-japan-mountain-mist">
-                Fill out the form below and we'll get back to you within 1–2 business days.
+                Fill out the form below and we&apos;ll get back to you within 1–2 business days.
               </p>
             </div>
 
@@ -295,7 +295,7 @@ export default function AdvertisePage() {
               <div className="text-center p-10 rounded-xl border border-japan-sakura-waters/30 bg-japan-soft-mist/40">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-japan-deep-ocean mb-2">Inquiry received!</h3>
-                <p className="text-japan-mountain-mist">Thanks for reaching out. We'll be in touch shortly.</p>
+                <p className="text-japan-mountain-mist">Thanks for reaching out. We&apos;ll be in touch shortly.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5 bg-background rounded-xl border border-japan-sakura-waters/20 p-8">
