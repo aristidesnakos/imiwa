@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BookOpen, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import { ExternalLink } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -9,7 +10,13 @@ const Footer = () => {
           {/* Brand section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-japan-sakura-waters" />
+              <Image
+                src="/assets/tan-head.png"
+                alt="Tan the tanuki mascot"
+                width={32}
+                height={32}
+                className="w-8 h-8"
+              />
               <h2 className="text-xl font-bold text-japan-deep-ocean">MichiKanji</h2>
             </div>
             <p className="text-sm text-japan-mountain-mist">

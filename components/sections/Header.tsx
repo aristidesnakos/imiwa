@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 import { trackConversion } from '@/lib/analytics';
 
 const Header = () => {
@@ -15,7 +15,13 @@ const Header = () => {
             href="/"
             title="MichiKanji homepage"
           >
-            <BookOpen className="w-8 h-8 text-japan-sakura-waters" />
+            <Image
+              src="/assets/tan-head.png"
+              alt="Tan the tanuki mascot"
+              width={40}
+              height={40}
+              className="w-10 h-10"
+            />
             <span className="font-bold text-2xl text-japan-deep-ocean">
               MichiKanji
             </span>
