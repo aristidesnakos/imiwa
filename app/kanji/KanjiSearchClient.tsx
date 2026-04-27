@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/sections/Header';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -343,8 +344,17 @@ export function KanjiSearchClient() {
         {/* No results */}
         {filtered.length === 0 && search && (
           <div className="text-center text-gray-500 py-12">
-            <div className="text-lg mb-2">No kanji found</div>
-            <div className="text-sm">Try searching for a different term</div>
+            <div className="flex justify-center mb-4">
+              <Image
+                src="/assets/tan-confused.png"
+                alt="Tan the tanuki mascot looking confused"
+                width={120}
+                height={120}
+                className="w-28 md:w-32 drop-shadow-sm"
+              />
+            </div>
+            <div className="text-lg mb-2 font-medium">No kanji found</div>
+            <div className="text-sm">Tan couldn&apos;t find that one. Try a different reading or meaning.</div>
           </div>
         )}
         

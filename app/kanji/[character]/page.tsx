@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getSEOTags } from '@/lib/seo';
 import { getOptimizedKanjiMetadata, getPrimaryMeaning } from '@/lib/seo/kanji-optimization';
 import { Badge } from '@/components/ui/badge';
@@ -207,6 +208,18 @@ export default async function KanjiDetailPage({ params }: Props) {
               </div>
             </div> */}
           </div>
+        </div>
+
+        {/* Tan thumbs-up accent – between kanji content and related kanji */}
+        <div className="flex flex-col items-center gap-2 mt-10">
+          <Image
+            src="/assets/tan-thumbsup.png"
+            alt="Tan the tanuki mascot giving a thumbs up"
+            width={160}
+            height={160}
+            className="w-32 md:w-40 drop-shadow-sm"
+          />
+          <p className="text-sm text-gray-500">Nice — one more kanji learned!</p>
         </div>
 
           {/* Related Kanji - BEFORE CTA */}
