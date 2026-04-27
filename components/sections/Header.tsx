@@ -18,9 +18,9 @@ const Header = () => {
             <Image
               src="/assets/tan-head.png"
               alt="Tan the tanuki mascot"
-              width={40}
+              width={80}
               height={40}
-              className="w-10 h-10"
+              className="h-10 w-auto"
             />
             <span className="font-bold text-2xl text-japan-deep-ocean">
               MichiKanji
