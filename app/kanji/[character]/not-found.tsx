@@ -1,14 +1,21 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 
 export default function KanjiNotFound() {
   return (
     <div className="container mx-auto p-8 text-center">
       <div className="max-w-md mx-auto space-y-6">
-        {/* Icon */}
-        <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
-          <Search className="w-12 h-12 text-gray-400" />
+        {/* Tan confused mascot */}
+        <div className="flex justify-center">
+          <Image
+            src="/assets/tan-confused.png"
+            alt="Tan the tanuki mascot looking confused"
+            width={160}
+            height={160}
+            className="w-32 md:w-40 drop-shadow-md"
+          />
         </div>
         
         {/* Title */}
@@ -17,7 +24,7 @@ export default function KanjiNotFound() {
         {/* Description */}
         <div className="space-y-2 text-gray-600">
           <p>
-            The kanji you&apos;re looking for is not in our database yet.
+            Tan couldn&apos;t find that one. The kanji you&apos;re looking for is not in our database yet.
           </p>
           <p className="text-sm">
             We currently support JLPT N5, N4, N3, N2, and N1 kanji characters.
@@ -42,7 +49,6 @@ export default function KanjiNotFound() {
         
         {/* Additional Info */}
         <div className="mt-8 text-sm text-gray-500">
-          <p>Can&apos;t find what you&apos;re looking for?</p>
           <p>Try searching for a different kanji character.</p>
         </div>
       </div>

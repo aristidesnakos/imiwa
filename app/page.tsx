@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Suspense } from "react";
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,18 @@ export default function LandingPage() {
           </div>
           
           <div className="relative container mx-auto px-4 text-center space-y-8 z-10">
+            {/* Tan mascot - waving hello */}
+            <div className="flex justify-center">
+              <Image
+                src="/assets/tan-wave.png"
+                alt="Tan the tanuki mascot waving hello"
+                width={220}
+                height={220}
+                className="w-36 md:w-56 drop-shadow-md"
+                priority
+              />
+            </div>
+
             {/* Hero Header */}
             <div className="space-y-4">
               <h1 className="text-4xl md:text-6xl font-bold text-japan-deep-ocean">
