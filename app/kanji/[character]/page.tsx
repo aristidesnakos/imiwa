@@ -210,6 +210,18 @@ export default async function KanjiDetailPage({ params }: Props) {
           </div>
         </div>
 
+        {/* Tan thumbs-up accent – between kanji content and related kanji */}
+        <div className="flex flex-col items-center gap-2 mt-10">
+          <Image
+            src="/assets/tan-thumbsup.png"
+            alt="Tan the tanuki mascot giving a thumbs up"
+            width={160}
+            height={160}
+            className="w-32 md:w-40 drop-shadow-sm"
+          />
+          <p className="text-sm text-gray-500">Nice — one more kanji learned!</p>
+        </div>
+
           {/* Related Kanji - BEFORE CTA */}
         <RelatedKanjiSection
           currentKanji={kanjiData}
@@ -223,18 +235,6 @@ export default async function KanjiDetailPage({ params }: Props) {
 
         {/* CTA Section */}
         <section className="mt-12 pt-8 border-t border-gray-200">
-          <div className="flex justify-center mb-4">
-            <div className="flex flex-col items-center gap-2">
-              <Image
-                src="/assets/tan-thumbsup.png"
-                alt="Tan the tanuki mascot giving a thumbs up"
-                width={100}
-                height={100}
-                className="w-20 md:w-24 drop-shadow-sm"
-              />
-              <p className="text-sm text-gray-500">Nice — one more kanji learned!</p>
-            </div>
-          </div>
           <CTASection variant="with-image" />
         </section>
         

@@ -13,9 +13,9 @@ const Footer = () => {
               <Image
                 src="/assets/tan-head.png"
                 alt="Tan the tanuki mascot"
-                width={32}
+                width={64}
                 height={32}
-                className="w-8 h-8"
+                className="h-8 w-auto"
               />
               <h2 className="text-xl font-bold text-japan-deep-ocean">MichiKanji</h2>
             </div>
