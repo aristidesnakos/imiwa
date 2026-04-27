@@ -20,7 +20,6 @@ export default function NotFound() {
                 width={200}
                 height={200}
                 className="w-40 md:w-48 drop-shadow-md"
-                priority
               />
             </div>
 
