@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import config from '@/config';
 import rateLimit from '@/middlewares/rateLimiter';
 
-// 5 submissions per 10 minutes per IP
-const limiter = rateLimit(5, 10 * 60 * 1000);
+// 2 submissions per 10 minutes per IP
+const limiter = rateLimit(2, 10 * 60 * 1000);
 
 // Maximum field lengths to prevent large-payload abuse
-const MAX_NAME_LEN = 100;
-const MAX_EMAIL_LEN = 254; // RFC 5321 limit
-const MAX_COMPANY_LEN = 100;
-const MAX_WEBSITE_LEN = 255;
-const MAX_MESSAGE_LEN = 2000;
+const MAX_NAME_LEN = 40;
+const MAX_EMAIL_LEN = 30;
+const MAX_COMPANY_LEN = 60;
+const MAX_WEBSITE_LEN = 100;
+const MAX_BUDGET_LEN = 50;
+const MAX_MESSAGE_LEN = 500;
 
 function escapeHtml(value: string): string {
   return value
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
     }
     if (website && String(website).length > MAX_WEBSITE_LEN) {
       return NextResponse.json({ error: `Website URL must be ${MAX_WEBSITE_LEN} characters or fewer.` }, { status: 400 });
+    }
+    if (budget && String(budget).length > MAX_BUDGET_LEN) {
+      return NextResponse.json({ error: `Budget must be ${MAX_BUDGET_LEN} characters or fewer.` }, { status: 400 });
     }
     if (String(message).length > MAX_MESSAGE_LEN) {
       return NextResponse.json({ error: `Message must be ${MAX_MESSAGE_LEN} characters or fewer.` }, { status: 400 });
