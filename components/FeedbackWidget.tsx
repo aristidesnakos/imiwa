@@ -155,6 +155,7 @@ export function FeedbackWidget() {
                       name="message"
                       required
                       rows={3}
+                      maxLength={500}
                       value={form.message}
                       onChange={handleChange}
                       placeholder="Tell us what you think…"
@@ -171,6 +172,7 @@ export function FeedbackWidget() {
                       id="fb-features"
                       name="features"
                       rows={2}
+                      maxLength={200}
                       value={form.features}
                       onChange={handleChange}
                       placeholder="Any features you'd love to see added?"
@@ -186,6 +188,7 @@ export function FeedbackWidget() {
                         id="fb-name"
                         name="name"
                         type="text"
+                        maxLength={40}
                         value={form.name}
                         onChange={handleChange}
                         placeholder="Optional"
@@ -198,6 +201,7 @@ export function FeedbackWidget() {
                         id="fb-email"
                         name="email"
                         type="email"
+                        maxLength={30}
                         value={form.email}
                         onChange={handleChange}
                         placeholder="Optional"

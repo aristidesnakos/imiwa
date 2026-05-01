@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import config from '@/config';
 import rateLimit from '@/middlewares/rateLimiter';
 
-// 5 submissions per 10 minutes per IP
-const limiter = rateLimit(5, 10 * 60 * 1000);
+// 2 submissions per 10 minutes per IP
+const limiter = rateLimit(2, 10 * 60 * 1000);
 
 // Maximum field lengths to prevent large-payload abuse
-const MAX_MESSAGE_LEN = 2000;
-const MAX_FEATURES_LEN = 1000;
-const MAX_NAME_LEN = 100;
-const MAX_EMAIL_LEN = 254; // RFC 5321 limit
+const MAX_MESSAGE_LEN = 500;
+const MAX_FEATURES_LEN = 200;
+const MAX_NAME_LEN = 40;
+const MAX_EMAIL_LEN = 30;
 
 function escapeHtml(value: string): string {
   return value
