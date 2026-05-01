@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * Extract the real client IP from the request.
+ * `x-forwarded-for` can be a comma-separated list (client, proxy1, proxy2 …);
+ * we always want the first entry (the original caller).
+ * Fall back to `x-real-ip` which Vercel also populates.
+ */
+function getClientIp(req: NextRequest): string | null {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const first = forwarded.split(',')[0].trim();
+    if (first) return first;
+  }
+  return req.headers.get('x-real-ip');
+}
+
 const rateLimit = (limit: number, windowMs: number) => {
   const requests = new Map<string, { count: number; timestamp: number }>();
 
   const check = async (req: NextRequest): Promise<NextResponse | null> => {
-    const ip = req.headers.get('x-forwarded-for');
+    const ip = getClientIp(req);
     const now = Date.now();
 
     if (!ip) {
