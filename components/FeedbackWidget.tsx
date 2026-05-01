@@ -12,6 +12,7 @@ export function FeedbackWidget() {
   const [form, setForm] = useState({ message: '', features: '', name: '', email: '' });
   const [status, setStatus] = useState<Status>('idle');
   const [ratingError, setRatingError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('Something went wrong. Please try again.');
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,7 +32,11 @@ export function FeedbackWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, ...form }),
       });
-      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErrorMessage(data?.error ?? 'Something went wrong. Please try again.');
+        throw new Error(`Server responded with ${res.status}`);
+      }
       setStatus('success');
     } catch {
       setStatus('error');
@@ -202,7 +207,7 @@ export function FeedbackWidget() {
                   </div>
 
                   {status === 'error' && (
-                    <p className="text-sm text-red-600">Something went wrong. Please try again.</p>
+                    <p className="text-sm text-red-600">{errorMessage}</p>
                   )}
 
                   <button

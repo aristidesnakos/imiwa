@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import config from '@/config';
+import rateLimit from '@/middlewares/rateLimiter';
+
+// 5 submissions per 10 minutes per IP
+const limiter = rateLimit(5, 10 * 60 * 1000);
+
+// Maximum field lengths to prevent large-payload abuse
+const MAX_NAME_LEN = 100;
+const MAX_EMAIL_LEN = 254; // RFC 5321 limit
+const MAX_COMPANY_LEN = 100;
+const MAX_WEBSITE_LEN = 255;
+const MAX_MESSAGE_LEN = 2000;
 
 function escapeHtml(value: string): string {
   return value
@@ -73,6 +84,9 @@ async function notifyViaWebhook(payload: InquiryPayload): Promise<void> {
 }
 
 export async function POST(req: NextRequest) {
+  const rateLimitResponse = await limiter.check(req);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json();
     const { name, email, company, website, budget, message } = body;
@@ -82,6 +96,23 @@ export async function POST(req: NextRequest) {
         { error: 'Name, email, and message are required.' },
         { status: 400 }
       );
+    }
+
+    // Field length caps to prevent large-payload abuse
+    if (String(name).length > MAX_NAME_LEN) {
+      return NextResponse.json({ error: `Name must be ${MAX_NAME_LEN} characters or fewer.` }, { status: 400 });
+    }
+    if (String(email).length > MAX_EMAIL_LEN) {
+      return NextResponse.json({ error: `Email address must be ${MAX_EMAIL_LEN} characters or fewer.` }, { status: 400 });
+    }
+    if (company && String(company).length > MAX_COMPANY_LEN) {
+      return NextResponse.json({ error: `Company must be ${MAX_COMPANY_LEN} characters or fewer.` }, { status: 400 });
+    }
+    if (website && String(website).length > MAX_WEBSITE_LEN) {
+      return NextResponse.json({ error: `Website URL must be ${MAX_WEBSITE_LEN} characters or fewer.` }, { status: 400 });
+    }
+    if (String(message).length > MAX_MESSAGE_LEN) {
+      return NextResponse.json({ error: `Message must be ${MAX_MESSAGE_LEN} characters or fewer.` }, { status: 400 });
     }
 
     // Validate email — simple structural check without catastrophic backtracking.
