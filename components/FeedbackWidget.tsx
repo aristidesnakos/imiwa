@@ -11,6 +11,7 @@ export function FeedbackWidget() {
   const [hovered, setHovered] = useState(0);
   const [form, setForm] = useState({ message: '', features: '', name: '', email: '' });
   const [status, setStatus] = useState<Status>('idle');
+  const [ratingError, setRatingError] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -18,7 +19,11 @@ export function FeedbackWidget() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (rating === 0) return;
+    if (rating === 0) {
+      setRatingError(true);
+      return;
+    }
+    setRatingError(false);
     setStatus('sending');
     try {
       const res = await fetch('/api/feedback', {
@@ -26,7 +31,7 @@ export function FeedbackWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, ...form }),
       });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
       setStatus('success');
     } catch {
       setStatus('error');
@@ -41,6 +46,7 @@ export function FeedbackWidget() {
       setHovered(0);
       setForm({ message: '', features: '', name: '', email: '' });
       setStatus('idle');
+      setRatingError(false);
     }, 300);
   };
 
@@ -114,7 +120,7 @@ export function FeedbackWidget() {
                           role="radio"
                           aria-checked={rating === star}
                           aria-label={`${star} star${star > 1 ? 's' : ''}`}
-                          onClick={() => setRating(star)}
+                          onClick={() => { setRating(star); setRatingError(false); }}
                           onMouseEnter={() => setHovered(star)}
                           onMouseLeave={() => setHovered(0)}
                           className="focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/60 rounded"
@@ -129,6 +135,9 @@ export function FeedbackWidget() {
                         </button>
                       ))}
                     </div>
+                    {ratingError && (
+                      <p className="text-sm text-red-600 mt-1">Please select a rating before submitting.</p>
+                    )}
                   </div>
 
                   {/* Message */}
@@ -198,7 +207,7 @@ export function FeedbackWidget() {
 
                   <button
                     type="submit"
-                    disabled={status === 'sending' || rating === 0}
+                    disabled={status === 'sending'}
                     className="w-full bg-japan-deep-ocean text-white rounded-lg px-6 py-2.5 text-sm font-medium hover:bg-japan-deep-ocean/90 transition-colors disabled:opacity-60"
                   >
                     {status === 'sending' ? 'Sending…' : 'Send feedback'}
