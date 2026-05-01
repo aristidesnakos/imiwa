@@ -7,6 +7,7 @@ import ClientLayout from "@/components/LayoutClient";
 // Import JsonLd component
 import { JsonLd } from "@/lib/jsonld";
 import { CookieConsent } from "@/components/CookieConsent";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import "./globals.css";
 
@@ -101,6 +102,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <ClientLayout>
             {children}
             <CookieConsent />
+            <FeedbackWidget />
           </ClientLayout>
         </AppProviders>
       </body>
