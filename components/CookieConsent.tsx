@@ -122,21 +122,12 @@ export function CookieConsent() {
   if (!mounted) return null;
 
   if (!showBanner && !showPreferences) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed bottom-4 right-4 z-50 text-xs"
-        onClick={() => setShowPreferences(true)}
-      >
-        Cookie Settings
-      </Button>
-    );
+    return null;
   }
 
   if (showPreferences) {
     return (
-      <Card className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:max-w-md z-50 shadow-lg">
+      <Card className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 md:bottom-4 md:max-w-md z-50 shadow-lg">
         <CardHeader>
           <CardTitle>Cookie Preferences</CardTitle>
         </CardHeader>
