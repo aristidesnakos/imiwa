@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
       </Link>
 
       <h1 className="text-3xl font-extrabold mb-8">Privacy Policy for {config.appName}</h1>
-      <p className="text-sm text-gray-600 mb-8">Last Updated: January 15, 2025</p>
+      <p className="text-sm text-gray-600 mb-8">Last Updated: May 2, 2026</p>
 
       <div className="prose prose-slate max-w-none space-y-8">
         <section>
@@ -101,7 +101,32 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">5. DATA RETENTION</h2>
+          <h2 className="text-xl font-semibold">5. ADVERTISING</h2>
+          <p>
+            Our Services display sponsorship and advertising placements to help support the platform. Here is how we handle data in the context of advertising:
+          </p>
+          <ul className="list-disc list-inside space-y-2 ml-4 mt-4">
+            <li>
+              <strong>We do not sell advertiser or user data to third parties.</strong> Information collected in connection with ad placements is kept strictly within our platform.
+            </li>
+            <li>
+              Data associated with advertising — such as information provided by sponsors when purchasing a placement — is used solely for the purpose of managing, delivering, and improving the ads displayed on our pages.
+            </li>
+            <li>
+              We do not share advertiser contact or payment information with other advertisers or unrelated third parties.
+            </li>
+            <li>
+              Aggregate, anonymized analytics (e.g., page view counts or audience demographics) may be shared with current or prospective sponsors to help them evaluate the value of a placement, but this information does not identify individual users.
+            </li>
+          </ul>
+          <p className="mt-4">
+            If you are a sponsor or advertiser and have questions about how your data is handled, please contact us at{' '}
+            <a href="mailto:ari@llanai.com" className="text-blue-600 hover:underline">ari@llanai.com</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold">6. DATA RETENTION</h2>
           <p>
             We store the information we collect about you for as long as is necessary for the purposes for which we 
             originally collected it, or for other legitimate business purposes, including to meet our legal, regulatory, 
@@ -110,7 +135,7 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">6. CHILDREN&apos;S PRIVACY</h2>
+          <h2 className="text-xl font-semibold">7. CHILDREN&apos;S PRIVACY</h2>
           <p>
             Our Services are not intended for children under 13 years of age. We do not knowingly collect or solicit 
             personal information from children under 13. If we learn we have collected personal information from a child 
@@ -119,7 +144,7 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">7. UPDATES TO THIS POLICY</h2>
+          <h2 className="text-xl font-semibold">8. UPDATES TO THIS POLICY</h2>
           <p>
             We may update this Privacy Policy from time to time. If we make material changes, we will notify you by email 
             or through the Services prior to the change becoming effective. Your continued use of our Services after any 
@@ -128,7 +153,7 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">8. CONTACT US</h2>
+          <h2 className="text-xl font-semibold">9. CONTACT US</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact us at: {' '}
             <a href="mailto:ari@llanai.com" className="text-blue-600 hover:underline">ari@llanai.com</a>
