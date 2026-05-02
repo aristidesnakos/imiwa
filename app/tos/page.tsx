@@ -27,7 +27,7 @@ export default function TermsOfService() {
       </Link>
 
       <h1 className="text-3xl font-extrabold mb-8">Terms and Conditions for {config.appName}</h1>
-      <p className="text-sm text-gray-600 mb-8">Last Updated: January 15, 2025</p>
+      <p className="text-sm text-gray-600 mb-8">Last Updated: May 2, 2026</p>
 
       <div className="prose prose-slate max-w-none space-y-8">
         <section>
@@ -140,6 +140,31 @@ export default function TermsOfService() {
             <li>download or print a copy of any portion of the Content to which you have properly gained access</li>
           </ul>
           <p>solely for your personal, non-commercial use.</p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold">ADVERTISING &amp; SPONSORSHIPS</h2>
+          <p>
+            Our Services may display sponsorship banners and advertising placements. By using the Services, you acknowledge that:
+          </p>
+          <ul className="list-disc list-inside space-y-2 ml-4 mt-4">
+            <li>
+              We display ads and sponsored content from third-party advertisers and sponsors on our pages.
+            </li>
+            <li>
+              <strong>We do not sell advertiser or user data to third parties.</strong> Data provided by or collected in connection with advertising is used solely to manage and deliver ads on our platform.
+            </li>
+            <li>
+              Advertisers and sponsors who purchase placements through our platform agree that their submitted information (business name, ad copy, contact details, payment details) will only be used to fulfill their advertising placement and will not be sold or shared with other third parties outside of our payment processor.
+            </li>
+            <li>
+              Aggregate, anonymized audience analytics may be shared with sponsors to help them assess the value of their placement. This data does not personally identify individual users.
+            </li>
+          </ul>
+          <p className="mt-4">
+            For advertising-related inquiries, please contact us at{' '}
+            <a href="mailto:ari@llanai.com" className="text-blue-600 hover:underline">ari@llanai.com</a>.
+          </p>
         </section>
 
         <section className="mt-8">
