@@ -210,8 +210,8 @@ export function KanjiSearchClient() {
         </div>
 
         {/* Unified Control Bar */}
-        <div className="bg-white border rounded-lg p-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="bg-white border rounded-xl p-3 shadow-sm w-full sm:w-fit mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             {/* Search Input */}
             <div className="relative sm:w-52 shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -228,7 +228,7 @@ export function KanjiSearchClient() {
 
             {/* JLPT Level Tabs */}
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)}>
-              <TabsList className="grid grid-cols-6 w-full sm:w-auto">
+              <TabsList className="grid grid-cols-6 w-full sm:w-auto bg-gray-100">
                 <TabsTrigger value="ALL" className="text-xs sm:text-sm">All</TabsTrigger>
                 <TabsTrigger value="N5" className="text-xs sm:text-sm">N5</TabsTrigger>
                 <TabsTrigger value="N4" className="text-xs sm:text-sm">N4</TabsTrigger>
@@ -242,7 +242,7 @@ export function KanjiSearchClient() {
             <div className="hidden sm:block h-6 w-px bg-gray-200 shrink-0" />
 
             {/* Filter and Progress Controls */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant={showOnlyUnlearned ? "default" : "outline"}
                 size="sm"
