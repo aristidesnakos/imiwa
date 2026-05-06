@@ -210,34 +210,39 @@ export function KanjiSearchClient() {
         </div>
 
         {/* Unified Control Bar */}
-        <div className="bg-white border rounded-lg p-4 shadow-sm space-y-3">
-          {/* Row 1: Search Input (full width) */}
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search kanji, meaning, or reading..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 w-full"
-            />
-          </div>
+        <div className="bg-white border rounded-lg p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Search Input */}
+            <div className="relative sm:w-52 shrink-0">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search kanji, meaning, or reading..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 w-full"
+              />
+            </div>
 
-          {/* Row 2: JLPT Level Tabs (left) + Filter Controls (right) */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            {/* JLPT Tabs */}
+            {/* Divider (desktop only) */}
+            <div className="hidden sm:block h-6 w-px bg-gray-200 shrink-0" />
+
+            {/* JLPT Level Tabs */}
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)}>
-              <TabsList className="grid grid-cols-6">
-                <TabsTrigger value="ALL" className="text-xs sm:text-sm px-3">All</TabsTrigger>
-                <TabsTrigger value="N5" className="text-xs sm:text-sm px-3">N5</TabsTrigger>
-                <TabsTrigger value="N4" className="text-xs sm:text-sm px-3">N4</TabsTrigger>
-                <TabsTrigger value="N3" className="text-xs sm:text-sm px-3">N3</TabsTrigger>
-                <TabsTrigger value="N2" className="text-xs sm:text-sm px-3">N2</TabsTrigger>
-                <TabsTrigger value="N1" className="text-xs sm:text-sm px-3">N1</TabsTrigger>
+              <TabsList className="grid grid-cols-6 w-full sm:w-auto">
+                <TabsTrigger value="ALL" className="text-xs sm:text-sm">All</TabsTrigger>
+                <TabsTrigger value="N5" className="text-xs sm:text-sm">N5</TabsTrigger>
+                <TabsTrigger value="N4" className="text-xs sm:text-sm">N4</TabsTrigger>
+                <TabsTrigger value="N3" className="text-xs sm:text-sm">N3</TabsTrigger>
+                <TabsTrigger value="N2" className="text-xs sm:text-sm">N2</TabsTrigger>
+                <TabsTrigger value="N1" className="text-xs sm:text-sm">N1</TabsTrigger>
               </TabsList>
             </Tabs>
 
+            {/* Divider (desktop only) */}
+            <div className="hidden sm:block h-6 w-px bg-gray-200 shrink-0" />
+
             {/* Filter and Progress Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <Button
                 variant={showOnlyUnlearned ? "default" : "outline"}
                 size="sm"
