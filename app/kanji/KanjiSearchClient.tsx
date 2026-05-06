@@ -210,19 +210,31 @@ export function KanjiSearchClient() {
         </div>
 
         {/* Unified Control Bar */}
-        <div className="bg-white border rounded-lg p-6 shadow-sm space-y-4">
-          {/* Top Row: Search, Filter, and Progress Stats */}
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search kanji, meaning, or reading..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="bg-white border rounded-lg p-4 shadow-sm space-y-3">
+          {/* Row 1: Search Input (full width) */}
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search kanji, meaning, or reading..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+
+          {/* Row 2: JLPT Level Tabs (left) + Filter Controls (right) */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            {/* JLPT Tabs */}
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)}>
+              <TabsList className="grid grid-cols-6">
+                <TabsTrigger value="ALL" className="text-xs sm:text-sm px-3">All</TabsTrigger>
+                <TabsTrigger value="N5" className="text-xs sm:text-sm px-3">N5</TabsTrigger>
+                <TabsTrigger value="N4" className="text-xs sm:text-sm px-3">N4</TabsTrigger>
+                <TabsTrigger value="N3" className="text-xs sm:text-sm px-3">N3</TabsTrigger>
+                <TabsTrigger value="N2" className="text-xs sm:text-sm px-3">N2</TabsTrigger>
+                <TabsTrigger value="N1" className="text-xs sm:text-sm px-3">N1</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
             {/* Filter and Progress Controls */}
             <div className="flex items-center gap-3">
@@ -235,7 +247,7 @@ export function KanjiSearchClient() {
                 <Filter className="w-4 h-4" />
                 {showOnlyUnlearned ? "Show all" : "Show unlearned"}
               </Button>
-              
+
               <Link href="/kanji/progress">
                 <div className="bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                   <span className="text-blue-600 font-semibold">{totalLearned}</span>
@@ -243,20 +255,6 @@ export function KanjiSearchClient() {
                 </div>
               </Link>
             </div>
-          </div>
-
-          {/* JLPT Level Tabs */}
-          <div className="flex justify-center">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as JLPTLevel)}>
-              <TabsList className="grid grid-cols-6 w-full max-w-2xl">
-                <TabsTrigger value="ALL" className="text-xs sm:text-sm">All</TabsTrigger>
-                <TabsTrigger value="N5" className="text-xs sm:text-sm">N5</TabsTrigger>
-                <TabsTrigger value="N4" className="text-xs sm:text-sm">N4</TabsTrigger>
-                <TabsTrigger value="N3" className="text-xs sm:text-sm">N3</TabsTrigger>
-                <TabsTrigger value="N2" className="text-xs sm:text-sm">N2</TabsTrigger>
-                <TabsTrigger value="N1" className="text-xs sm:text-sm">N1</TabsTrigger>
-              </TabsList>
-            </Tabs>
           </div>
         </div>
         
