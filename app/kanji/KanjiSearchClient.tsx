@@ -213,10 +213,10 @@ export function KanjiSearchClient() {
         <div className="bg-white border rounded-xl p-3 shadow-sm w-full sm:w-fit mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             {/* Search Input */}
-            <div className="relative sm:w-52 shrink-0">
+            <div className="relative sm:w-64 shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search kanji, meaning, or reading..."
+                placeholder='e.g. 水, "water", くだ...'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 w-full"
