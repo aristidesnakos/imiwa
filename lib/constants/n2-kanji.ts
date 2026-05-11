@@ -342,6 +342,7 @@ export const N2_KANJI: KanjiData[] = [
   // Animals/Creatures
   { kanji: "獣", onyomi: "じゅう", kunyomi: "けもの", meaning: "animal, beast" },
   { kanji: "亀", onyomi: "き", kunyomi: "かめ", meaning: "tortoise, turtle" },
+  { kanji: "羽", onyomi: "う、わ", kunyomi: "はね、は", meaning: "feather, wing, counter for birds and rabbits" },
 
   // Plants/Nature
   { kanji: "咲", onyomi: "しょう", kunyomi: "さ（く）", meaning: "blossom, bloom" },
