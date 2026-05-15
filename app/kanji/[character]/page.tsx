@@ -161,14 +161,18 @@ export default async function KanjiDetailPage({ params }: Props) {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Stroke Order */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Stroke Order Animation</h2>
+            <h2 className="text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight pb-2 border-b border-gray-200">
+              Stroke Order Animation
+            </h2>
             <StrokeOrderViewer kanji={kanjiData.kanji} />
           </div>
           
           {/* Kanji Information */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-semibold mb-4">Meaning & Readings</h2>
+              <h2 className="text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight pb-2 border-b border-gray-200 mb-4">
+                Meaning & Readings
+              </h2>
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-medium text-gray-700 mb-2">Meaning</h3>
