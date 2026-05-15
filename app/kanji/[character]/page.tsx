@@ -105,6 +105,7 @@ export default async function KanjiDetailPage({ params }: Props) {
   
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
+  const sectionHeadingClass = 'text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight pb-2 border-b border-gray-200';
   
   // Generate JSON-LD structured data for SEO
   const jsonLd = {
@@ -161,7 +162,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Stroke Order */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight pb-2 border-b border-gray-200">
+            <h2 className={sectionHeadingClass}>
               Stroke Order Animation
             </h2>
             <StrokeOrderViewer kanji={kanjiData.kanji} />
@@ -170,7 +171,7 @@ export default async function KanjiDetailPage({ params }: Props) {
           {/* Kanji Information */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight pb-2 border-b border-gray-200 mb-4">
+              <h2 className={`${sectionHeadingClass} mb-4`}>
                 Meaning & Readings
               </h2>
               <div className="space-y-4">
