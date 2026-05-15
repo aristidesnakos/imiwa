@@ -105,7 +105,7 @@ export default async function KanjiDetailPage({ params }: Props) {
   
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
-  const sectionHeadingClass = 'text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight pb-2 border-b border-gray-200';
+  const sectionHeadingClass = 'text-2xl font-semibold font-sans text-japan-deep-ocean leading-tight';
   
   // Generate JSON-LD structured data for SEO
   const jsonLd = {
