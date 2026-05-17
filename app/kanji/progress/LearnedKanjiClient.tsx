@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CTASection } from '@/components/CTASection';
 import { ProgressChart } from '@/components/progress/ProgressChart';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
-import { ArrowLeft, BookOpen, TrendingUp } from 'lucide-react';
+import { useKanjiSRS } from '@/hooks/useKanjiSRS';
+import { ArrowLeft, BookOpen, TrendingUp, Brain } from 'lucide-react';
 
 type TimePeriod = '24h' | '7d' | '30d' | '12m';
 
 export function LearnedKanjiClient() {
-  const { totalLearned, getProgressOverTime, resetProgress } = useKanjiProgress();
+  const { totalLearned, getProgressOverTime, resetProgress, learnedKanji } = useKanjiProgress();
+  const { getDueCount } = useKanjiSRS();
+  const dueCount = getDueCount(learnedKanji);
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('30d');
 
   const periodLabels = {
@@ -127,7 +130,7 @@ export function LearnedKanjiClient() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Learned</CardTitle>
@@ -151,6 +154,27 @@ export function LearnedKanjiClient() {
               <p className="text-sm text-gray-600">kanji learned</p>
             </CardContent>
           </Card>
+
+          <Card className={dueCount > 0 ? 'border-purple-300' : ''}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Due for Review</CardTitle>
+              <Brain className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${dueCount > 0 ? 'text-purple-600' : 'text-gray-400'}`}>
+                {dueCount}
+              </div>
+              <p className="text-sm text-gray-600">
+                {dueCount > 0 ? (
+                  <Link href="/kanji/review" className="text-purple-600 hover:underline font-medium">
+                    Start SRS review →
+                  </Link>
+                ) : (
+                  'all caught up!'
+                )}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="mb-8">
@@ -166,11 +190,23 @@ export function LearnedKanjiClient() {
 
 
         {/* Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
           <Link href="/kanji" className="w-full">
             <Button variant="default" size="lg" className="w-full">
               <BookOpen className="w-4 h-4 mr-2" />
               Continue Learning
+            </Button>
+          </Link>
+
+          <Link href="/kanji/review" className="w-full">
+            <Button variant="outline" size="lg" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50">
+              <Brain className="w-4 h-4 mr-2" />
+              SRS Review
+              {dueCount > 0 && (
+                <span className="ml-1 bg-purple-600 text-white text-xs rounded-full px-1.5 py-0.5">
+                  {dueCount}
+                </span>
+              )}
             </Button>
           </Link>
           
