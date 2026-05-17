@@ -236,7 +236,7 @@ export function ReviewClient() {
   }
 
   // ─── Reviewing State ───────────────────────────────────────────────────────
-  const progress = Math.round(((currentIndex) / queue.length) * 100);
+  const progress = Math.round(((currentIndex + 1) / queue.length) * 100);
 
   return (
     <>
@@ -258,7 +258,7 @@ export function ReviewClient() {
               SRS Review
             </span>
             <span>
-              {currentIndex}/{queue.length}
+              {currentIndex + 1}/{queue.length}
             </span>
           </div>
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
