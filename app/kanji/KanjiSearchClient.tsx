@@ -14,8 +14,9 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { Search, Check, Filter } from 'lucide-react';
+import { Search, Check, Filter, Brain } from 'lucide-react';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
+import { useKanjiSRS } from '@/hooks/useKanjiSRS';
 
 type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'ALL';
 
@@ -120,7 +121,9 @@ export function KanjiSearchClient() {
   const [activeTab, setActiveTab] = useState<JLPTLevel>('ALL');
   const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
   const searchParams = useSearchParams();
-  const { isKanjiLearned, getLearnedCountForLevel, totalLearned, toggleKanjiLearned } = useKanjiProgress();
+  const { isKanjiLearned, getLearnedCountForLevel, totalLearned, toggleKanjiLearned, learnedKanji } = useKanjiProgress();
+  const { getDueCount } = useKanjiSRS();
+  const dueCount = getDueCount(learnedKanji);
   
   // Combine all kanji data with level information, removing duplicates
   const ALL_KANJI: KanjiWithLevel[] = (() => {
@@ -259,6 +262,20 @@ export function KanjiSearchClient() {
                   <span className="text-blue-800 ml-1">learned</span>
                 </div>
               </Link>
+
+              {totalLearned > 0 && (
+                <Link href="/kanji/review">
+                  <div className="relative bg-purple-50 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer flex items-center gap-1">
+                    <Brain className="w-4 h-4 text-purple-600" />
+                    <span className="text-purple-800">Review</span>
+                    {dueCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                        {dueCount}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
         </div>
