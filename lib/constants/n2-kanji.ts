@@ -270,6 +270,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "伸", onyomi: "しん", kunyomi: "の（びる）、の（ばす）", meaning: "expand, stretch, extend, lengthen, increase" },
   { kanji: "拡", onyomi: "かく", kunyomi: "", meaning: "broaden, extend, expand, enlarge" },
   { kanji: "展", onyomi: "てん", kunyomi: "", meaning: "unfold, expand" },
+  { kanji: "超", onyomi: "ちょう", kunyomi: "こ（える）、こ（す）", meaning: "super-, transcend, exceed, go beyond" },
   { kanji: "縮", onyomi: "しゅく", kunyomi: "ちぢ（む）、ちぢ（まる）", meaning: "shrink, contract, shrivel, wrinkle, reduce" },
 
   // Raising/Lifting/Behavior
