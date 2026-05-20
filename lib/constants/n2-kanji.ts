@@ -335,6 +335,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "液", onyomi: "えき", kunyomi: "", meaning: "fluid, liquid, juice, sap, secretion" },
 
   // Vitality/Gender
+  { kanji: "栄", onyomi: "えい", kunyomi: "さか（える）、は（える）", meaning: "prosperity, glory, flourish" },
   { kanji: "盛", onyomi: "せい、じょう", kunyomi: "も（る）、さか（る）", meaning: "boom, prosper, copulate" },
   { kanji: "雄", onyomi: "ゆう", kunyomi: "お-、おす", meaning: "masculine, male, hero, leader, superiority, excellence" },
   { kanji: "雌", onyomi: "し", kunyomi: "めす、め-", meaning: "feminine, female" },
