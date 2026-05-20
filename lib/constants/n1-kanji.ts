@@ -1069,7 +1069,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "詢", onyomi: "", kunyomi: "", meaning: "" },
   { kanji: "諄", onyomi: "", kunyomi: "", meaning: "" },
   { kanji: "謹", onyomi: "", kunyomi: "", meaning: "" },
-  { kanji: "譲", onyomi: "", kunyomi: "", meaning: "" },
+  { kanji: "譲", onyomi: "じょう", kunyomi: "ゆず（る）", meaning: "defer, hand over, transfer, yield, concede" },
   { kanji: "豪", onyomi: "ごう", kunyomi: "", meaning: "Australia" },
   { kanji: "輔", onyomi: "", kunyomi: "", meaning: "" },
   { kanji: "輝", onyomi: "", kunyomi: "", meaning: "" },
