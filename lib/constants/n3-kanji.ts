@@ -315,6 +315,7 @@ export const N3_KANJI: KanjiData[] = [
   // Position/Rank/Status
   { kanji: "将", onyomi: "しょう", kunyomi: "まさ（に）", meaning: "leader, commander, general, about to" },
   { kanji: "位", onyomi: "い", kunyomi: "くらい、ぐらい", meaning: "rank, grade, about" },
+  { kanji: "級", onyomi: "きゅう", kunyomi: "", meaning: "class, grade, rank" },
   { kanji: "格", onyomi: "かく、こう、きゃく", kunyomi: "", meaning: "status, rank, capacity" },
   { kanji: "段", onyomi: "だん", kunyomi: "", meaning: "grade, steps, stairs" },
 
