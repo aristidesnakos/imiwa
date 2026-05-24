@@ -4,7 +4,13 @@ import { useState } from 'react';
 import type { FormEvent, ChangeEvent } from 'react';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
-import { Users, Globe, Mail, CheckCircle, Megaphone, MapPin } from 'lucide-react';
+import { Mail, CheckCircle, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 
 const SPONSOR_SLOTS = [
   {
@@ -55,13 +61,6 @@ const SPONSOR_SLOTS = [
   },
 ];
 
-const AUDIENCE_STATS = [
-  { icon: Users, label: 'Visitors (YTD, growing)', value: '4K+' },
-  { icon: Globe, label: 'Avg. Session Time', value: '4m 8s' },
-  { icon: Megaphone, label: 'Top Referrers', value: 'Google · Bing · ChatGPT' },
-  { icon: MapPin, label: 'Top Country', value: '🇺🇸 United States' },
-];
-
 const AUDIENCE_DEMOGRAPHICS = [
   {
     emoji: '🎓',
@@ -102,9 +101,27 @@ const TARGET_ADVERTISERS = [
   { emoji: '🎓', title: 'JLPT Prep & Certification', description: 'Test prep books, practice exams, and certification programs. Visitors studying for N5–N1 are a highly motivated, conversion-ready audience.' },
 ];
 
+interface FormData {
+  name: string;
+  email: string;
+  company: string;
+  website: string;
+  budget: string;
+  message: string;
+}
+
+type FormStatus = 'idle' | 'sending' | 'success' | 'error';
+
 export default function AdvertisePage() {
-  const [form, setForm] = useState({ name: '', email: '', company: '', website: '', budget: '', message: '' });
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [form, setForm] = useState<FormData>({ 
+    name: '', 
+    email: '', 
+    company: '', 
+    website: '', 
+    budget: '', 
+    message: '' 
+  });
+  const [status, setStatus] = useState<FormStatus>('idle');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -117,13 +134,19 @@ export default function AdvertisePage() {
       });
       if (!res.ok) throw new Error('Failed');
       setStatus('success');
+      setForm({ name: '', email: '', company: '', website: '', budget: '', message: '' });
     } catch {
       setStatus('error');
     }
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setForm(prev => ({ ...prev, budget: value }));
   };
 
   return (
@@ -134,39 +157,48 @@ export default function AdvertisePage() {
         {/* Hero */}
         <section className="bg-gradient-to-b from-japan-soft-mist via-background to-muted/20 pt-20 pb-16">
           <div className="container mx-auto px-4 text-center space-y-6 max-w-3xl">
-            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-japan-sakura-waters border border-japan-sakura-waters/30 bg-japan-sakura-waters/10 rounded-full px-4 py-1.5">
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-japan-sakura-waters border border-japan-sakura-waters/30 bg-japan-sakura-waters/10 rounded-full px-4 py-2">
               Advertising
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-japan-deep-ocean leading-tight">
               Reach an intent-driven audience of Japanese learners
             </h1>
             <p className="text-lg text-japan-mountain-mist leading-relaxed">
-              MichiKanji attracts students, travel planners, and professionals who are actively learning Japanese — people who arrive via Google, Bing, and ChatGPT with a specific goal. That intent translates into action for the right brands.
+              MichiKanji attracts students, travel planners, and professionals who are actively learning Japanese — people who arrive via Google, Bing, and ChatGPT with a specific goal. That intent translates to engagement and conversions.
             </p>
-            <a
-              href="#slots"
-              className="inline-block bg-japan-deep-ocean text-white px-8 py-3 rounded-lg font-medium hover:bg-japan-deep-ocean/90 transition-colors"
+            <Button 
+              asChild 
+              className="bg-japan-deep-ocean hover:bg-japan-deep-ocean/90"
             >
-              View sponsor slots
-            </a>
+              <a href="#slots">View sponsor slots</a>
+            </Button>
           </div>
         </section>
 
-        {/* Audience Stats */}
+        {/* Analytics Widget Section */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-3">Our audience at a glance</h2>
-            <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto text-sm">
-              Real data from our analytics dashboard — no inflated numbers.
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {AUDIENCE_STATS.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="text-center p-6 rounded-xl border border-japan-sakura-waters/20 bg-japan-soft-mist/20">
-                  <Icon className="w-8 h-8 text-japan-sakura-waters mx-auto mb-3" />
-                  <p className="text-xl font-bold text-japan-deep-ocean leading-tight">{value}</p>
-                  <p className="text-sm text-japan-mountain-mist mt-1">{label}</p>
-                </div>
-              ))}
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-bold text-japan-deep-ocean mb-3">Our audience at a glance</h2>
+              <p className="text-japan-mountain-mist max-w-2xl mx-auto text-sm">
+                Real data from our analytics dashboard — live metrics updated automatically.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <iframe
+                src="https://datafa.st/widgets/695c3143ed2abc9092737a33/analytics?mainTextSize=16&primaryColor=%23e78468&secondaryColor=%238dcdff"
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  width: '100%', 
+                  maxWidth: '800px', 
+                  height: '180px' 
+                }}
+                frameBorder={0}
+                allowTransparency={true}
+                title="MichiKanji Analytics Widget"
+                loading="lazy"
+              />
             </div>
           </div>
         </section>
@@ -176,27 +208,33 @@ export default function AdvertisePage() {
           <div className="container mx-auto px-4 max-w-5xl">
             <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Who visits MichiKanji?</h2>
             <p className="text-center text-japan-mountain-mist mb-10 max-w-2xl mx-auto">
-              Our traffic is <strong>intent-driven</strong> — people come here with a purpose, which correlates with willingness to spend. Here are the four main visitor segments and their purchasing profiles.
+              Our traffic is <strong>intent-driven</strong> — people come here with a purpose, which correlates with willingness to spend. Here are the four main visitor segments and their purchasing patterns.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               {AUDIENCE_DEMOGRAPHICS.map(({ emoji, title, description }) => (
-                <div key={title} className="p-5 rounded-xl border border-japan-sakura-waters/20 bg-background flex gap-4">
-                  <span className="text-3xl shrink-0">{emoji}</span>
-                  <div>
-                    <h3 className="font-semibold text-japan-deep-ocean mb-1">{title}</h3>
+                <Card key={title} className="border-japan-sakura-waters/20 bg-background">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-4">
+                      <span className="text-3xl shrink-0">{emoji}</span>
+                      <CardTitle className="text-lg">{title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
                     <p className="text-sm text-japan-mountain-mist leading-relaxed">{description}</p>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
 
             {/* Top Countries */}
-            <div className="bg-background rounded-xl border border-japan-sakura-waters/20 p-6">
-              <div className="flex items-center gap-2 mb-5">
-                <MapPin className="w-5 h-5 text-japan-sakura-waters" />
-                <h3 className="font-semibold text-japan-deep-ocean">Top visitor countries (YTD)</h3>
-              </div>
-              <div className="space-y-3">
+            <Card className="border-japan-sakura-waters/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-japan-sakura-waters" />
+                  <CardTitle>Top visitor countries (YTD)</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 {TOP_COUNTRIES.map(({ flag, country, visitors, note }) => (
                   <div key={country} className="flex items-center justify-between gap-4 text-sm">
                     <span className="flex items-center gap-2 min-w-[160px]">
@@ -207,15 +245,15 @@ export default function AdvertisePage() {
                     <span className="text-japan-mountain-mist hidden sm:block">{note}</span>
                   </div>
                 ))}
-              </div>
-              <p className="text-xs text-japan-mountain-mist mt-5 border-t border-japan-sakura-waters/10 pt-4">
-                The US audience alone (30%+ of total) represents high purchasing power. Singapore and UK visitors also index well for premium consumer spending.
-              </p>
-            </div>
+                <p className="text-xs text-japan-mountain-mist mt-5 pt-4 border-t border-japan-sakura-waters/10">
+                  The US audience alone (30%+ of total) represents high purchasing power. Singapore and UK visitors also index well for premium consumer spending.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
-        {/* Who Should Advertise */}
+        {/* Best-fit Advertisers */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4 max-w-5xl">
             <h2 className="text-2xl font-bold text-center text-japan-deep-ocean mb-4">Best-fit advertisers</h2>
@@ -224,11 +262,15 @@ export default function AdvertisePage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {TARGET_ADVERTISERS.map(({ emoji, title, description }) => (
-                <div key={title} className="p-5 rounded-xl border border-japan-sakura-waters/20 bg-background">
-                  <div className="text-3xl mb-3">{emoji}</div>
-                  <h3 className="font-semibold text-japan-deep-ocean mb-2">{title}</h3>
-                  <p className="text-sm text-japan-mountain-mist leading-relaxed">{description}</p>
-                </div>
+                <Card key={title} className="border-japan-sakura-waters/20 bg-background flex flex-col">
+                  <CardHeader className="pb-3">
+                    <div className="text-3xl mb-2">{emoji}</div>
+                    <CardTitle className="text-base">{title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <p className="text-sm text-japan-mountain-mist leading-relaxed">{description}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
@@ -243,45 +285,58 @@ export default function AdvertisePage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {SPONSOR_SLOTS.map((slot) => (
-                <div
+                <Card 
                   key={slot.name}
-                  className={`rounded-xl border-2 p-6 flex flex-col ${
+                  className={`flex flex-col border-2 ${
                     slot.highlighted
                       ? 'border-japan-coral-sunset bg-japan-coral-sunset/5 shadow-xl shadow-japan-coral-sunset/20 animate-pulse-border'
-                      : 'border-japan-deep-ocean/20 bg-background'
+                      : 'border-japan-deep-ocean/20'
                   }`}
                 >
                   {slot.highlighted && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-japan-coral-sunset mb-3">Largest audience</span>
+                    <div className="px-6 pt-4">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-japan-coral-sunset">
+                        Largest audience
+                      </span>
+                    </div>
                   )}
-                  <h3 className="text-xl font-bold text-japan-deep-ocean">{slot.name}</h3>
-                  <p className="text-xs font-medium text-japan-mountain-mist mt-1 mb-3">{slot.audience} · {slot.pages}</p>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-japan-deep-ocean">{slot.price}</span>
-                    <span className="text-japan-mountain-mist">{slot.period}</span>
+                  <CardHeader>
+                    <CardTitle>{slot.name}</CardTitle>
+                    <CardDescription>{slot.audience} · {slot.pages}</CardDescription>
+                    <div className="mt-4">
+                      <span className="text-3xl font-bold text-japan-deep-ocean">{slot.price}</span>
+                      <span className="text-japan-mountain-mist ml-1">{slot.period}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 space-y-4">
+                    <p className="text-sm text-japan-mountain-mist leading-relaxed">{slot.description}</p>
+                    <ul className="space-y-2">
+                      {slot.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm">
+                          <span className={`mt-0.5 shrink-0 ${slot.highlighted ? 'text-japan-coral-sunset' : 'text-japan-sakura-waters'}`}>
+                            ✓
+                          </span>
+                          <span className="text-japan-mountain-mist">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <div className="px-6 pb-6">
+                    <Button 
+                      asChild 
+                      className={`w-full ${
+                        slot.highlighted
+                          ? 'bg-japan-coral-sunset hover:bg-japan-coral-sunset/90'
+                          : 'border border-japan-deep-ocean/30 text-japan-deep-ocean hover:bg-japan-soft-mist'
+                      }`}
+                      variant={slot.highlighted ? 'default' : 'outline'}
+                    >
+                      <a href={slot.stripeUrl} target="_blank" rel="noopener noreferrer">
+                        Book this slot
+                      </a>
+                    </Button>
                   </div>
-                  <p className="text-sm text-japan-mountain-mist mb-5 leading-relaxed">{slot.description}</p>
-                  <ul className="space-y-2 flex-1 mb-6">
-                    {slot.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className={`w-4 h-4 mt-0.5 shrink-0 ${slot.highlighted ? 'text-japan-coral-sunset' : 'text-japan-sakura-waters'}`} />
-                        <span className="text-japan-mountain-mist">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={slot.stripeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-                      slot.highlighted
-                        ? 'bg-japan-coral-sunset text-white hover:bg-japan-coral-sunset/90'
-                        : 'border border-japan-deep-ocean/30 text-japan-deep-ocean hover:bg-japan-soft-mist'
-                    }`}
-                  >
-                    Book this slot
-                  </a>
-                </div>
+                </Card>
               ))}
             </div>
             <p className="text-center text-sm text-japan-mountain-mist mt-8">
@@ -303,119 +358,123 @@ export default function AdvertisePage() {
             </div>
 
             {status === 'success' ? (
-              <div className="text-center p-10 rounded-xl border border-japan-sakura-waters/30 bg-japan-soft-mist/40">
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-japan-deep-ocean mb-2">Inquiry received!</h3>
-                <p className="text-japan-mountain-mist">Thanks for reaching out. We&apos;ll be in touch shortly.</p>
-              </div>
+              <Card className="border-japan-sakura-waters/30 bg-japan-soft-mist/40">
+                <CardContent className="flex flex-col items-center justify-center pt-10">
+                  <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
+                  <h3 className="text-xl font-semibold text-japan-deep-ocean mb-2">Inquiry received!</h3>
+                  <p className="text-japan-mountain-mist">Thanks for reaching out. We&apos;ll be in touch shortly.</p>
+                </CardContent>
+              </Card>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5 bg-background rounded-xl border border-japan-sakura-waters/20 p-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-japan-deep-ocean mb-1.5">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      value={form.name}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-japan-deep-ocean mb-1.5">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                </div>
+              <Card className="border-japan-sakura-waters/20">
+                <CardContent className="pt-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name *</Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          type="text"
+                          required
+                          value={form.name}
+                          onChange={handleChange}
+                          placeholder="Your name"
+                          className="border-japan-sakura-waters/30 bg-japan-soft-mist/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          required
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder="you@example.com"
+                          className="border-japan-sakura-waters/30 bg-japan-soft-mist/20"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label htmlFor="company" className="block text-sm font-medium text-japan-deep-ocean mb-1.5">Company / Brand</label>
-                    <input
-                      id="company"
-                      name="company"
-                      type="text"
-                      value={form.company}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
-                      placeholder="Acme Corp"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="website" className="block text-sm font-medium text-japan-deep-ocean mb-1.5">Website</label>
-                    <input
-                      id="website"
-                      name="website"
-                      type="url"
-                      value={form.website}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
-                      placeholder="https://example.com"
-                    />
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="company">Company / Brand</Label>
+                        <Input
+                          id="company"
+                          name="company"
+                          type="text"
+                          value={form.company}
+                          onChange={handleChange}
+                          placeholder="Acme Corp"
+                          className="border-japan-sakura-waters/30 bg-japan-soft-mist/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="website">Website</Label>
+                        <Input
+                          id="website"
+                          name="website"
+                          type="url"
+                          value={form.website}
+                          onChange={handleChange}
+                          placeholder="https://example.com"
+                          className="border-japan-sakura-waters/30 bg-japan-soft-mist/20"
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <label htmlFor="budget" className="block text-sm font-medium text-japan-deep-ocean mb-1.5">Monthly Budget</label>
-                  <select
-                    id="budget"
-                    name="budget"
-                    value={form.budget}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
-                  >
-                    <option value="">Select a range…</option>
-                    <option value="Under $100">Under $100</option>
-                    <option value="$100–$250">$100–$250</option>
-                    <option value="$250–$500">$250–$500</option>
-                    <option value="$500–$1000">$500–$1,000</option>
-                    <option value="$1000+">$1,000+</option>
-                  </select>
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="budget">Monthly Budget</Label>
+                      <Select value={form.budget} onValueChange={handleSelectChange}>
+                        <SelectTrigger id="budget" className="border-japan-sakura-waters/30 bg-japan-soft-mist/20">
+                          <SelectValue placeholder="Select a range…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Under $100">Under $100</SelectItem>
+                          <SelectItem value="$100–$250">$100–$250</SelectItem>
+                          <SelectItem value="$250–$500">$250–$500</SelectItem>
+                          <SelectItem value="$500–$1000">$500–$1,000</SelectItem>
+                          <SelectItem value="$1000+">$1,000+</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-japan-deep-ocean mb-1.5">
-                    Tell us about your campaign <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    required
-                    rows={5}
-                    value={form.message}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40 resize-none"
-                    placeholder="What product or service would you like to promote? What is your goal?"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Tell us about your campaign *</Label>
+                      <Textarea
+                        id="message"
+                        name="message"
+                        required
+                        value={form.message}
+                        onChange={handleChange}
+                        placeholder="What product or service would you like to promote? What is your goal?"
+                        rows={5}
+                        className="border-japan-sakura-waters/30 bg-japan-soft-mist/20"
+                      />
+                    </div>
 
-                {status === 'error' && (
-                  <p className="text-sm text-red-600">Something went wrong. Please try again or contact us directly at <a href="mailto:ari@llanai.com" className="underline">ari@llanai.com</a>.</p>
-                )}
+                    {status === 'error' && (
+                      <p className="text-sm text-red-600">
+                        Something went wrong. Please try again or contact us directly at{' '}
+                        <a href="mailto:ari@llanai.com" className="underline">
+                          ari@llanai.com
+                        </a>
+                        .
+                      </p>
+                    )}
 
-                <button
-                  type="submit"
-                  disabled={status === 'sending'}
-                  className="w-full bg-japan-deep-ocean text-white rounded-lg px-6 py-3 font-medium hover:bg-japan-deep-ocean/90 transition-colors disabled:opacity-60"
-                >
-                  {status === 'sending' ? 'Sending…' : 'Send inquiry'}
-                </button>
-              </form>
+                    <Button 
+                      type="submit" 
+                      disabled={status === 'sending'}
+                      className="w-full bg-japan-deep-ocean hover:bg-japan-deep-ocean/90"
+                    >
+                      {status === 'sending' ? 'Sending…' : 'Send inquiry'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
             )}
           </div>
         </section>
