@@ -179,24 +179,24 @@ export default function AdvertisePage() {
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4 max-w-5xl">
             <div className="text-center mb-10">
-              <h2 className="text-2xl font-bold text-japan-deep-ocean mb-3">Our audience at a glance</h2>
+              <h2 className="text-2xl font-bold text-japan-deep-ocean mb-3">Recent visitors on MichiKanji</h2>
               <p className="text-japan-mountain-mist max-w-2xl mx-auto text-sm">
-                Real data from our analytics dashboard — live metrics updated automatically.
+                A live feed of the latest learners landing on the site — updated automatically.
               </p>
             </div>
             <div className="flex justify-center">
               <iframe
-                src="https://datafa.st/widgets/695c3143ed2abc9092737a33/analytics?mainTextSize=16&primaryColor=%23e78468&secondaryColor=%238dcdff"
-                style={{ 
-                  background: 'transparent', 
-                  border: 'none', 
-                  width: '100%', 
-                  maxWidth: '800px', 
-                  height: '180px' 
+                src="https://datafa.st/widgets/695c3143ed2abc9092737a33/recent?mainTextSize=20&primaryColor=%23e78468"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  width: '100%',
+                  maxWidth: '448px',
+                  height: '400px',
                 }}
                 frameBorder={0}
                 allowTransparency={true}
-                title="MichiKanji Analytics Widget"
+                title="MichiKanji recent visitors"
                 loading="lazy"
               />
             </div>
