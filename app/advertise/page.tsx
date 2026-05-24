@@ -3,7 +3,7 @@ import Footer from '@/components/sections/Footer';
 import AdvertiseContactForm from '@/components/sections/advertise/AdvertiseContactForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, Plane, Briefcase, BookOpen, MapPin, Check, Users } from 'lucide-react';
+import { GraduationCap, Plane, Briefcase, BookOpen, Check, Users } from 'lucide-react';
 import { getMonthlyVisitors } from '@/lib/datafast/getMonthlyVisitors';
 
 const SPONSOR_SLOTS = [
@@ -45,14 +45,6 @@ const AUDIENCE = [
   { Icon: Plane, title: 'Travelers', description: 'Adults learning enough kanji before a trip to Japan.' },
   { Icon: Briefcase, title: 'Professionals', description: 'Expats and people working with Japanese clients or teams.' },
   { Icon: BookOpen, title: 'Anime & manga readers', description: 'Fans reading the source without subtitles.' },
-];
-
-const TOP_COUNTRIES = [
-  { code: 'us', country: 'United States', visitors: '1,200' },
-  { code: 'jp', country: 'Japan', visitors: '301' },
-  { code: 'sg', country: 'Singapore', visitors: '235' },
-  { code: 'in', country: 'India', visitors: '197' },
-  { code: 'gb', country: 'United Kingdom', visitors: '175' },
 ];
 
 function formatVisitors(count: number | null): string {
@@ -134,35 +126,7 @@ export default async function AdvertisePage() {
               ))}
             </div>
 
-            <Card className="border-japan-sakura-waters/20">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-japan-sakura-waters" />
-                  <CardTitle className="text-base">Where they read from</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {TOP_COUNTRIES.map(({ code, country, visitors }) => (
-                  <div key={country} className="flex items-center justify-between gap-4 text-sm">
-                    <span className="flex items-center gap-3 min-w-[180px]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`https://flagcdn.com/${code}.svg`}
-                        alt=""
-                        width={22}
-                        height={16}
-                        className="rounded-sm shadow-sm"
-                        loading="lazy"
-                      />
-                      <span className="font-medium text-japan-deep-ocean">{country}</span>
-                    </span>
-                    <span className="font-semibold text-japan-deep-ocean tabular-nums">{visitors}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <p className="text-center text-sm text-japan-mountain-mist mt-8 max-w-2xl mx-auto">
+            <p className="text-center text-sm text-japan-mountain-mist max-w-2xl mx-auto">
               The fits that work: language apps, JLPT prep, Japan travel, stationery and writing tools, relocation and visa services.
             </p>
           </div>
