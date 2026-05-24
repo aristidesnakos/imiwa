@@ -186,7 +186,7 @@ export default function AdvertisePage() {
             </div>
             <div className="flex justify-center">
               <iframe
-                src="/api/datafast-proxy?id=695c3143ed2abc9092737a33"
+                src="https://datafa.st/widgets/695c3143ed2abc9092737a33/analytics?mainTextSize=16&primaryColor=%23e78468&secondaryColor=%238dcdff"
                 style={{ 
                   background: 'transparent', 
                   border: 'none', 

@@ -79,7 +79,7 @@ const nextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'self'",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://datafa.st",
               "connect-src 'self' https://api.stripe.com https://us-assets.i.posthog.com https://app.posthog.com https://api.openai.com https://upload.uploadthing.com wss: https:"
             ].join('; '),
           },
