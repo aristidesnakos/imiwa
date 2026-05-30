@@ -23,6 +23,7 @@ export async function GET(
         'Accept': 'image/svg+xml,text/xml,application/xml,*/*',
         'Referer': 'https://github.com/KanjiVG/kanjivg',
       },
+      next: { revalidate: 86400 },
     });
     
     if (!response.ok) {

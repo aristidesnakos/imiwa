@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,6 +20,8 @@ import { useKanjiSRS } from '@/hooks/useKanjiSRS';
 
 type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'ALL';
 
+const PAGE_SIZE = 200;
+
 interface KanjiWithLevel {
   kanji: string;
   onyomi: string;
@@ -27,6 +29,17 @@ interface KanjiWithLevel {
   meaning: string;
   level: JLPTLevel;
 }
+
+// Built once at module load — never recomputed on re-renders
+const ALL_KANJI: KanjiWithLevel[] = (() => {
+  const kanjiMap = new Map<string, KanjiWithLevel>();
+  N5_KANJI.forEach(k => kanjiMap.set(k.kanji, { ...k, level: 'N5' }));
+  N4_KANJI.forEach(k => { if (!kanjiMap.has(k.kanji)) kanjiMap.set(k.kanji, { ...k, level: 'N4' }); });
+  N3_KANJI.forEach(k => { if (!kanjiMap.has(k.kanji)) kanjiMap.set(k.kanji, { ...k, level: 'N3' }); });
+  N2_KANJI.forEach(k => { if (!kanjiMap.has(k.kanji)) kanjiMap.set(k.kanji, { ...k, level: 'N2' }); });
+  N1_KANJI.forEach(k => { if (!kanjiMap.has(k.kanji)) kanjiMap.set(k.kanji, { ...k, level: 'N1' }); });
+  return Array.from(kanjiMap.values());
+})();
 
 interface KanjiSectionProps {
   title: string;
@@ -120,85 +133,48 @@ export function KanjiSearchClient() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<JLPTLevel>('ALL');
   const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const searchParams = useSearchParams();
   const { isKanjiLearned, getLearnedCountForLevel, totalLearned, toggleKanjiLearned, learnedKanji } = useKanjiProgress();
   const { getDueCount } = useKanjiSRS();
   const dueCount = getDueCount(learnedKanji);
-  
-  // Combine all kanji data with level information, removing duplicates
-  const ALL_KANJI: KanjiWithLevel[] = (() => {
-    const kanjiMap = new Map<string, KanjiWithLevel>();
-    
-    // Add N5 first (highest priority)
-    N5_KANJI.forEach(k => kanjiMap.set(k.kanji, { ...k, level: 'N5' as JLPTLevel }));
-    // Add N4, but don't overwrite N5
-    N4_KANJI.forEach(k => {
-      if (!kanjiMap.has(k.kanji)) {
-        kanjiMap.set(k.kanji, { ...k, level: 'N4' as JLPTLevel });
-      }
-    });
-    // Add N3, but don't overwrite N5/N4
-    N3_KANJI.forEach(k => {
-      if (!kanjiMap.has(k.kanji)) {
-        kanjiMap.set(k.kanji, { ...k, level: 'N3' as JLPTLevel });
-      }
-    });
-    // Add N2, but don't overwrite N5/N4/N3
-    N2_KANJI.forEach(k => {
-      if (!kanjiMap.has(k.kanji)) {
-        kanjiMap.set(k.kanji, { ...k, level: 'N2' as JLPTLevel });
-      }
-    });
-    // Add N1, but don't overwrite N5/N4/N3/N2
-    N1_KANJI.forEach(k => {
-      if (!kanjiMap.has(k.kanji)) {
-        kanjiMap.set(k.kanji, { ...k, level: 'N1' as JLPTLevel });
-      }
-    });
-    
-    return Array.from(kanjiMap.values());
-  })();
-  
+
   useEffect(() => {
     const searchParam = searchParams.get('search');
     if (searchParam) {
       setSearch(searchParam);
     }
   }, [searchParams]);
-  
-  // Filter by search term and level
-  const getFilteredKanji = (level: JLPTLevel) => {
-    let kanjiSet = level === 'ALL' ? ALL_KANJI : ALL_KANJI.filter(k => k.level === level);
-    
-    // Apply search filter
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search, activeTab, showOnlyUnlearned]);
+
+  const filtered = useMemo(() => {
+    let kanjiSet = activeTab === 'ALL' ? ALL_KANJI : ALL_KANJI.filter(k => k.level === activeTab);
     if (search) {
-      kanjiSet = kanjiSet.filter(k => 
-        k.kanji.includes(search) || 
-        k.meaning.toLowerCase().includes(search.toLowerCase()) ||
-        k.onyomi.toLowerCase().includes(search.toLowerCase()) ||
-        k.kunyomi.toLowerCase().includes(search.toLowerCase())
+      const lower = search.toLowerCase();
+      kanjiSet = kanjiSet.filter(k =>
+        k.kanji.includes(search) ||
+        k.meaning.toLowerCase().includes(lower) ||
+        k.onyomi.toLowerCase().includes(lower) ||
+        k.kunyomi.toLowerCase().includes(lower)
       );
     }
-    
-    // Apply unlearned filter
     if (showOnlyUnlearned) {
       kanjiSet = kanjiSet.filter(k => !isKanjiLearned(k.kanji));
     }
-    
     return kanjiSet;
-  };
+  }, [search, activeTab, showOnlyUnlearned, isKanjiLearned]);
 
-  // Get counts for progress display
-  const getLevelCounts = (level: JLPTLevel) => {
+  const getLevelCounts = useMemo(() => (level: JLPTLevel) => {
     const levelKanji = level === 'ALL' ? ALL_KANJI : ALL_KANJI.filter(k => k.level === level);
-    const levelKanjiChars = levelKanji.map(k => k.kanji);
     return {
-      learned: getLearnedCountForLevel(levelKanjiChars),
-      total: levelKanji.length
+      learned: getLearnedCountForLevel(levelKanji.map(k => k.kanji)),
+      total: levelKanji.length,
     };
-  };
-  
-  const filtered = getFilteredKanji(activeTab);
+  }, [getLearnedCountForLevel]);
   
   return (
     <>
@@ -284,7 +260,7 @@ export function KanjiSearchClient() {
           <TabsContent value="ALL" className="space-y-6">
             <KanjiSection 
               title="All JLPT Kanji" 
-              kanji={filtered} 
+              kanji={filtered.slice(0, visibleCount)}
               search={search}
               description="Browse all available kanji from N5, N4, N3, N2, and N1 levels"
               isKanjiLearned={isKanjiLearned}
@@ -297,7 +273,7 @@ export function KanjiSearchClient() {
           <TabsContent value="N5" className="space-y-6">
             <KanjiSection 
               title="JLPT N5 Kanji" 
-              kanji={filtered} 
+              kanji={filtered.slice(0, visibleCount)}
               search={search}
               description="Fundamental kanji for beginners - most essential characters"
               isKanjiLearned={isKanjiLearned}
@@ -310,7 +286,7 @@ export function KanjiSearchClient() {
           <TabsContent value="N4" className="space-y-6">
             <KanjiSection 
               title="JLPT N4 Kanji" 
-              kanji={filtered} 
+              kanji={filtered.slice(0, visibleCount)}
               search={search}
               description="Intermediate kanji building on N5 foundation"
               isKanjiLearned={isKanjiLearned}
@@ -323,7 +299,7 @@ export function KanjiSearchClient() {
           <TabsContent value="N3" className="space-y-6">
             <KanjiSection 
               title="JLPT N3 Kanji" 
-              kanji={filtered} 
+              kanji={filtered.slice(0, visibleCount)}
               search={search}
               description="Advanced intermediate kanji for complex expressions and formal contexts"
               isKanjiLearned={isKanjiLearned}
@@ -336,7 +312,7 @@ export function KanjiSearchClient() {
           <TabsContent value="N2" className="space-y-6">
             <KanjiSection 
               title="JLPT N2 Kanji" 
-              kanji={filtered} 
+              kanji={filtered.slice(0, visibleCount)}
               search={search}
               description="Advanced kanji for professional and academic contexts"
               isKanjiLearned={isKanjiLearned}
@@ -349,7 +325,7 @@ export function KanjiSearchClient() {
           <TabsContent value="N1" className="space-y-6">
             <KanjiSection 
               title="JLPT N1 Kanji" 
-              kanji={filtered} 
+              kanji={filtered.slice(0, visibleCount)}
               search={search}
               description="Expert-level kanji for advanced academic, professional, and literary contexts"
               isKanjiLearned={isKanjiLearned}
@@ -360,7 +336,22 @@ export function KanjiSearchClient() {
           </TabsContent>
           
         </Tabs>
-        
+
+        {/* Load more */}
+        {visibleCount < filtered.length && (
+          <div className="flex flex-col items-center gap-2 pt-4">
+            <p className="text-sm text-gray-500">
+              Showing {visibleCount} of {filtered.length} kanji
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+            >
+              Show {Math.min(PAGE_SIZE, filtered.length - visibleCount)} more
+            </Button>
+          </div>
+        )}
+
         {/* No results */}
         {filtered.length === 0 && search && (
           <div className="text-center text-gray-500 py-12">
