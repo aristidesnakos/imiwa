@@ -45,7 +45,14 @@ export const getSEOTags = ({
       description: openGraph?.description || pageDescription,
       url: openGraph?.url || `https://${config.domainName}${canonicalUrlRelative || ''}`,
       siteName: config.appName,
-      images: openGraph?.images,
+      images: openGraph?.images || [
+        {
+          url: `https://${config.domainName}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: config.appName,
+        },
+      ],
       locale: openGraph?.locale || 'en_US',
     },
 
@@ -53,6 +60,9 @@ export const getSEOTags = ({
       title: openGraph?.title || pageTitle,
       description: openGraph?.description || pageDescription,
       card: "summary_large_image",
+      images: openGraph?.images
+        ? undefined
+        : [`https://${config.domainName}/opengraph-image`],
     },
 
     alternates: {
