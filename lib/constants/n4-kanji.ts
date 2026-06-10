@@ -63,7 +63,6 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "特", onyomi: "とく", kunyomi: "", meaning: "special" },
 
   // Colors
-  { kanji: "白", onyomi: "はく、びゃく", kunyomi: "しろ（い）", meaning: "white" },
   { kanji: "黒", onyomi: "こく", kunyomi: "くろ", meaning: "black" },
   { kanji: "赤", onyomi: "せき、しゃく", kunyomi: "あか（い）", meaning: "red" },
   { kanji: "青", onyomi: "せい、しょう", kunyomi: "あお（い）", meaning: "blue" },
@@ -77,7 +76,6 @@ export const N4_KANJI: KanjiData[] = [
 
   // Motion/Action Verbs
   { kanji: "動", onyomi: "どう", kunyomi: "うご（く）", meaning: "move, motion, change" },
-  { kanji: "行", onyomi: "こう、ぎょう", kunyomi: "い（く）、ゆ（く）、おこな（う）", meaning: "going, journey, carry out, line, row" },
   { kanji: "走", onyomi: "そう", kunyomi: "はし（る）", meaning: "Run" },
   { kanji: "歩", onyomi: "ほ、ぶ", kunyomi: "ある（く）、あゆ（む）", meaning: "walk, counter for steps" },
   { kanji: "立", onyomi: "りつ", kunyomi: "た（つ）", meaning: "stand up, rise" },
@@ -90,14 +88,10 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "思", onyomi: "し", kunyomi: "おも（う）", meaning: "think" },
   { kanji: "考", onyomi: "こう", kunyomi: "かんが（える）", meaning: "consider, think over" },
   { kanji: "知", onyomi: "ち", kunyomi: "し（る）", meaning: "know, wisdom" },
-  { kanji: "見", onyomi: "けん", kunyomi: "み（る）、み（せる）", meaning: "see, hopes, chances, idea, opinion, visible" },
-  { kanji: "聞", onyomi: "ぶん、もん", kunyomi: "き（く）", meaning: "to hear; to listen; to ask" },
   { kanji: "言", onyomi: "げん、ごん", kunyomi: "い（う）、こと", meaning: "say, word" },
-  { kanji: "話", onyomi: "わ", kunyomi: "はな（す）、はなし", meaning: "tale, talk" },
   { kanji: "問", onyomi: "もん", kunyomi: "と（う）", meaning: "question, ask, problem" },
 
   // Learning/Study/Academic Verbs
-  { kanji: "学", onyomi: "がく", kunyomi: "まな（ぶ）", meaning: "study, learning, science" },
   { kanji: "習", onyomi: "しゅう", kunyomi: "なら（う）", meaning: "learn" },
   { kanji: "教", onyomi: "きょう", kunyomi: "おし（える）、おそ（わる）", meaning: "teach, faith, doctrine" },
   { kanji: "研", onyomi: "けん", kunyomi: "と（ぐ）", meaning: "polish, study of, sharpen" },
@@ -105,8 +99,6 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "勉", onyomi: "べん", kunyomi: "つと（める）", meaning: "exertion, endeavor, effort" },
 
   // Writing/Reading/Literary Verbs
-  { kanji: "読", onyomi: "どく、とく、とう", kunyomi: "よ（む）", meaning: "to read" },
-  { kanji: "書", onyomi: "しょ", kunyomi: "かく", meaning: "write" },
   { kanji: "字", onyomi: "じ", kunyomi: "", meaning: "character, letter, word" },
   { kanji: "文", onyomi: "ぶん、もん", kunyomi: "ふみ", meaning: "sentence, literature, style, art" },
 
@@ -116,7 +108,6 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "建", onyomi: "けん、こん", kunyomi: "た（てる）", meaning: "build" },
 
   // Eating/Drinking Verbs
-  { kanji: "食", onyomi: "しょく、じき", kunyomi: "く（う）、た（べる）", meaning: "eat, food" },
   { kanji: "飲", onyomi: "いん", kunyomi: "の（む）", meaning: "drink" },
 
   // Wearing/Clothing Verbs
@@ -192,16 +183,13 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "意", onyomi: "い", kunyomi: "", meaning: "idea, mind, heart, taste, thought" },
   { kanji: "理", onyomi: "り", kunyomi: "", meaning: "logic, arrangement, reason, justice, truth" },
   { kanji: "力", onyomi: "りょく、りき", kunyomi: "ちから", meaning: "power, strength, strong, strain, bear up, exert" },
-  { kanji: "気", onyomi: "き、け", kunyomi: "いき", meaning: "spirit, mind, air, atmosphere, mood" },
 
   // Condition/State Verbs
   { kanji: "病", onyomi: "びょう", kunyomi: "や（む）", meaning: "ill, sick" },
   { kanji: "死", onyomi: "し", kunyomi: "し（ぬ）", meaning: "death, die" },
-  { kanji: "休", onyomi: "きゅう", kunyomi: "やす（む）", meaning: "rest, day off, retire, sleep" },
 
   // Communication/Connection
   { kanji: "通", onyomi: "つう", kunyomi: "とお（る）、かよ（う）", meaning: "traffic, pass through, avenue, commute" },
-  { kanji: "語", onyomi: "ご", kunyomi: "かた（る）", meaning: "word, speech, language" },
 
   // Material/Items
   { kanji: "物", onyomi: "ぶつ、もつ", kunyomi: "もの", meaning: "thing, object, matter" },
@@ -233,7 +221,6 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "以", onyomi: "い", kunyomi: "も（って）", meaning: "by means of, because, in view of, compared with" },
 
   // Names/Naming
-  { kanji: "名", onyomi: "めい、みょう", kunyomi: "な", meaning: "name, noted, distinguished, reputation" },
 
   // Education/School
   { kanji: "題", onyomi: "だい", kunyomi: "", meaning: "topic, subject" },
@@ -253,7 +240,6 @@ export const N4_KANJI: KanjiData[] = [
 
   // Separation/Division
   { kanji: "別", onyomi: "べつ", kunyomi: "わか（れる）、わ（ける）", meaning: "separate, branch off, diverge" },
-  { kanji: "分", onyomi: "ぶん、ふん、ぶ", kunyomi: "わ（ける）", meaning: "part, minute of time, understand" },
 
   // Sound/Noise
   { kanji: "音", onyomi: "おん", kunyomi: "おと、ね", meaning: "sound, noise" },
@@ -265,7 +251,6 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "写", onyomi: "しゃ", kunyomi: "うつる", meaning: "copy, be photographed, describe" },
 
   // Technology/Electricity
-  { kanji: "電", onyomi: "でん", kunyomi: "", meaning: "electricity; electric powered" },
 
   // Wealth/Gems
   { kanji: "銀", onyomi: "ぎん", kunyomi: "", meaning: "silver" },
@@ -315,5 +300,4 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "刃", onyomi: "じん、にん", kunyomi: "は、やいば", meaning: "blade, sword, edge" },
 
   // Frequency/Recurrence
-  { kanji: "毎", onyomi: "まい", kunyomi: "ごと（に）", meaning: "every" }
 ];
