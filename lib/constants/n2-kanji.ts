@@ -62,7 +62,6 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "率", onyomi: "りつ、そつ", kunyomi: "ひき（いる）", meaning: "ratio, rate, proportion, percentage, coefficient, factor" },
   { kanji: "量", onyomi: "りょう", kunyomi: "はか（る）", meaning: "quantity, measure, weight, amount, consider, estimate, surmise" },
   { kanji: "秒", onyomi: "びょう", kunyomi: "", meaning: "second, moment" },
-  { kanji: "度", onyomi: "ど、たく", kunyomi: "たび、た（い）", meaning: "degrees, occurrence, time, counter for occurrences" },
   { kanji: "額", onyomi: "がく", kunyomi: "ひたい", meaning: "forehead, tablet, plaque, framed picture, sum, amount, volume" },
   { kanji: "繁", onyomi: "はん", kunyomi: "しげ（る）", meaning: "luxuriant, thick, overgrown, frequency, complexity, trouble" },
   { kanji: "頻", onyomi: "ひん", kunyomi: "しき（り）", meaning: "repeatedly, recur" },
@@ -384,7 +383,6 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "扱", onyomi: "あつ", kunyomi: "あつ（かう）", meaning: "handle, deal with, dispose of, treat, entertain, receive guests" },
 
   // Weakness/Frailty
-  { kanji: "弱", onyomi: "じゃく", kunyomi: "よわ（い）", meaning: "weak, frail" },
 
   // Employment/Work
   { kanji: "雇", onyomi: "こ", kunyomi: "やと（う）", meaning: "employ, hire" },

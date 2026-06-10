@@ -17,7 +17,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "権", onyomi: "けん", kunyomi: "", meaning: "authority, power, rights" },
 
   // People/Relationships/Family
-  { kanji: "身", onyomi: "しん", kunyomi: "み", meaning: "somebody, person" },
   { kanji: "夫", onyomi: "ふ", kunyomi: "おっと", meaning: "husband, man" },
   { kanji: "妻", onyomi: "さい", kunyomi: "つま", meaning: "wife, spouse" },
   { kanji: "婦", onyomi: "ふ", kunyomi: "よめ", meaning: "lady, woman, wife" },
@@ -140,8 +139,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "付", onyomi: "ふ", kunyomi: "つ（ける）", meaning: "adhere, attach, refer to" },
   { kanji: "返", onyomi: "へん", kunyomi: "かえ（す）", meaning: "return, answer" },
   { kanji: "払", onyomi: "", kunyomi: "はら（う）", meaning: "pay" },
-  { kanji: "貸", onyomi: "たい", kunyomi: "か（す）、かし", meaning: "lend" },
-  { kanji: "借", onyomi: "しゃく", kunyomi: "か（りる）", meaning: "borrow, rent" },
   { kanji: "交", onyomi: "こう", kunyomi: "まじ（わる）、ま（ぜる）、か（わす）", meaning: "mingle, mixing, association" },
 
   // Production/Creation Verbs
@@ -232,7 +229,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "最", onyomi: "さい", kunyomi: "もっと（も）", meaning: "utmost, most, extreme" },
   { kanji: "当", onyomi: "とう", kunyomi: "あ（たる）", meaning: "hit, right, appropriate" },
   { kanji: "直", onyomi: "ちょく、じき", kunyomi: "ただ（ちに）、す（ぐ）", meaning: "straightaway, honesty, frankness, fix, repair" },
-  { kanji: "正", onyomi: "せい、しょう", kunyomi: "ただ（しい）、まさ（に）", meaning: "correct, justice, righteous" },
   { kanji: "良", onyomi: "りょう", kunyomi: "よ（い）、い（い）", meaning: "good" },
   { kanji: "優", onyomi: "ゆう、う", kunyomi: "やさ（しい）、すぐ（れる）", meaning: "tenderness, kind, actor" },
   { kanji: "偉", onyomi: "い", kunyomi: "えら（い）", meaning: "admirable, greatness" },
@@ -241,7 +237,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "易", onyomi: "えき、い", kunyomi: "やさ（しい）、やす（い）", meaning: "easy, ready to, simple" },
   { kanji: "単", onyomi: "たん", kunyomi: "ひとえ", meaning: "simple, single" },
   { kanji: "常", onyomi: "じょう", kunyomi: "つね", meaning: "usual, ordinary, normal" },
-  { kanji: "特", onyomi: "とく", kunyomi: "", meaning: "special" },
   { kanji: "適", onyomi: "てき", kunyomi: "かな（う）", meaning: "suitable, occasional, rare" },
   { kanji: "雑", onyomi: "ざつ、ぞう", kunyomi: "まじ（る）", meaning: "miscellaneous" },
 
@@ -396,7 +391,6 @@ export const N3_KANJI: KanjiData[] = [
   // Speed/Timing
   { kanji: "速", onyomi: "そく", kunyomi: "はや（い）", meaning: "quick, fast" },
   { kanji: "遅", onyomi: "ち", kunyomi: "おく（れる）、おそ（い）", meaning: "slow, late, back, later" },
-  { kanji: "急", onyomi: "きゅう", kunyomi: "いそ（ぐ）", meaning: "hurry, emergency, sudden, steep" },
 
   // Life/Living/Death
   { kanji: "活", onyomi: "かつ", kunyomi: "い（きる）", meaning: "living" },
@@ -427,7 +421,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "熱", onyomi: "ねつ", kunyomi: "あつ（い）", meaning: "heat, fever, passion" },
   { kanji: "冷", onyomi: "れい", kunyomi: "つめ（たい）、ひ（える）、さ（める）", meaning: "cool, cold, chill" },
   { kanji: "寒", onyomi: "かん", kunyomi: "さむ（い）", meaning: "cold" },
-  { kanji: "暗", onyomi: "あん", kunyomi: "くら（い）", meaning: "darkness, disappear, shade, informal" },
   { kanji: "晴", onyomi: "せい", kunyomi: "は（れる）", meaning: "clear up" },
 
   // Peace/Harmony/Blessing
@@ -442,7 +435,6 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "冒", onyomi: "ぼう", kunyomi: "おか（す）", meaning: "risk, face, defy, dare, damage, assume (a name)" },
 
   // Truth/Reality/Accuracy
-  { kanji: "真", onyomi: "しん", kunyomi: "ま、まこと", meaning: "true, reality, Buddhist sect" },
 
   // Medicine/Health/Body Care
   { kanji: "薬", onyomi: "やく", kunyomi: "くすり", meaning: "medicine, chemical" },
