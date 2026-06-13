@@ -1,5 +1,23 @@
 # Faster Stroke Order Loading - MVP Optimization Strategies
 
+**Status**: 📋 Proposed roadmap — none of the optimizations below are implemented yet
+**Reconciled with code**: June 14, 2026
+**Related**: `docs/mvp/stroke-order-tbs.md` (animation debugging),
+`docs/mvp/simplified-architecture.md` (current baseline architecture)
+
+> **Current implementation (baseline as of June 2026)**
+> The live path still goes through the API proxy:
+> `StrokeOrderViewer` → `lib/stroke-order.ts` → `/api/kanji-svg/[hex]` → KanjiVG CDN (jsDelivr).
+> - ✅ API proxy with 24-hour HTTP cache header (`app/api/kanji-svg/[hex]/route.ts`)
+> - ✅ In-memory `Map` cache in `StrokeOrderService` (helps return visits only)
+> - ❌ Direct CDN access (proxy still in place)
+> - ❌ Build-time static SVGs in `public/stroke-order/`
+> - ❌ Intersection-observer predictive loading
+> - ❌ IndexedDB persistent cache / service worker
+>
+> Everything below is the prioritized plan to close that gap — it has **not**
+> shipped. Treat this as a backlog, not a description of current behavior.
+
 ## Problem Statement
 Random visitors cannot afford to wait 2+ seconds for stroke order loading. Need solutions optimized for **first-time visitors** with no cached data.
 
