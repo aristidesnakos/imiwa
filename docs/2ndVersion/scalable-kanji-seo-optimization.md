@@ -1,9 +1,17 @@
 # Scalable Kanji SEO Optimization System
 
-**Version**: 2.0  
-**Date**: January 9, 2026  
-**Author**: Claude Code  
-**Status**: Implemented and Active  
+**Version**: 2.1 (as-built)
+**Date**: January 9, 2026
+**Reconciled with code**: June 14, 2026
+**Author**: Claude Code
+**Status**: ✅ Implemented and Active
+**Code**: `lib/seo/kanji-optimization.ts`, used by `app/kanji/[character]/page.tsx`
+
+> **Key SEO principle (as implemented)**: the English meaning is placed **before**
+> the word "Kanji" in the title so it naturally forms the search phrase learners
+> type — e.g. "heaven kanji stroke order". Titles use the *primary* (first) meaning
+> via `getPrimaryMeaning()`. The meta-pattern examples below reflect the live
+> templates in `getOptimizedKanjiMetadata()`.
 
 ## Overview
 
@@ -63,9 +71,9 @@ export function determineOptimizationStrategy(kanji: string, level: string): Opt
 - Character Type: Single character (not compound)
 - Concept Category: Numbers, basic actions, family, nature, body parts, directions
 
-**Meta Pattern**:
-- Title: `How to Write 止 - Stroke Order & Meaning | JLPT N4 Kanji`
-- Description: `✓ Learn 止 stroke order step-by-step ✓ Meaning: "stop" ✓ Readings: し, とまる ✓ Interactive animation for JLPT N4`
+**Meta Pattern** (live template):
+- Title: `止 stop Kanji – Stroke Order & Meaning | JLPT N4`
+- Description: `Learn how to write the stop kanji 止 with step-by-step stroke order animation. Readings: し (onyomi), とまる (kunyomi). JLPT N4 Japanese kanji.`
 
 **Examples**: 止, 日, 大, 十, 人, 水, 火, 木
 
@@ -77,9 +85,9 @@ export function determineOptimizationStrategy(kanji: string, level: string): Opt
 - Any character type
 - Focus on semantic understanding
 
-**Meta Pattern**:
-- Title: `愛 Kanji: "love" | Stroke Order & Readings | JLPT N3`
-- Description: `Master 愛 kanji meaning "love" with stroke order animation. Learn readings: アイ (onyomi), あい (kunyomi). JLPT N3 level.`
+**Meta Pattern** (live template):
+- Title: `愛 love Kanji | Stroke Order & Readings | JLPT N3`
+- Description: `Learn the love kanji 愛 with interactive stroke order animation. Readings: アイ (onyomi), あい (kunyomi). Full meaning: love, affection. JLPT N3.`
 
 **Examples**: 愛, 勇, 希望, 平和
 
@@ -91,9 +99,9 @@ export function determineOptimizationStrategy(kanji: string, level: string): Opt
 - Compound characters
 - Specialized vocabulary
 
-**Meta Pattern**:
-- Title: `複雑 Kanji: "complex" | Stroke Order & Readings | JLPT N1`
-- Description: `Master 複雑 kanji meaning "complex" with stroke order animation. Learn readings: フクザツ (onyomi). JLPT N1 level.`
+**Meta Pattern** (live template):
+- Title: `複雑 complex Kanji | Stroke Order & Readings | JLPT N1`
+- Description: `Learn the complex kanji 複雑 with interactive stroke order animation. Readings: フクザツ (onyomi),  (kunyomi). JLPT N1 Japanese kanji.`
 
 ### Fundamental Kanji Categories
 

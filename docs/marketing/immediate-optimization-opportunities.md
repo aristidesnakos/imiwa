@@ -2,6 +2,14 @@
 
 **STATUS: Phase 1 COMPLETED ✅** (January 10, 2026)
 
+> **Reconciliation note (June 14, 2026)**: This is the strategic *charter*. The
+> authoritative as-built technical references now live in `docs/2ndVersion/`:
+> - SEO meta system → `docs/2ndVersion/scalable-kanji-seo-optimization.md`
+> - Internal linking → `docs/2ndVersion/internal-linking-system.md` (✅ shipped)
+>
+> The separate `docs/marketing/phase-2-internal-linking-strategy.md` has been
+> retired and folded into the internal-linking reference above.
+
 ## Executive Summary
 
 Based on Search Console data analysis, we have 50+ kanji pages with significant search impressions (2000+ for top performers) but 0% click-through rates. This represents the highest-impact, quickest-win optimization opportunity available. This charter outlines a scalable technical approach to transform these underperforming pages into high-converting search assets.
@@ -87,10 +95,13 @@ const enhancedContent = {
 };
 ```
 
-### Phase 3: Internal Linking Optimization (Week 3-4) 📋 PLANNED
+### Phase 3: Internal Linking Optimization (Week 3-4) ✅ COMPLETED
 **Impact**: Improved page authority + user journey
-**Technical Approach**: Automated relationship mapping
-**Status**: Ready for implementation after Phase 2 results
+**Technical Approach**: Automated relationship mapping via semantic clusters
+**Status**: Shipped — 22 semantic clusters live on every kanji page.
+See `docs/2ndVersion/internal-linking-system.md` for the as-built reference.
+(Note: the implementation used static semantic clustering, not the
+stroke-complexity/compound algorithms sketched below.)
 
 #### Smart Linking Strategy:
 ```typescript

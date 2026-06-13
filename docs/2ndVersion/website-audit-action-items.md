@@ -1,8 +1,20 @@
-# Website Assessment & Action Items
+# Website Audit Action Items
 
-**Date**: January 13, 2026
+**Status**: 🚧 Open backlog — most items still pending
+**Audit Date**: January 13, 2026
 **Audit Source**: Foresight AI Website Audit
 **Website**: michikanji.com
+**Reconciled with code**: June 14, 2026
+
+> **Progress snapshot (June 2026)** — verified against the codebase:
+> - ✅ Scalable kanji-page meta optimization — live (see `scalable-kanji-seo-optimization.md`).
+> - ✅ Internal linking / related kanji — live (see `internal-linking-system.md`).
+> - ✅ Japan-inspired visual redesign — live (see `japan-inspired-redesign.md`).
+> - ❌ Still **not** built: About, Pricing, Contact, and Case Studies pages;
+>   testimonials/social proof; Google Analytics / GTM; header & footer CTAs;
+>   FAQ schema (FAQ accordion exists but emits no `FAQPage` JSON-LD).
+>
+> The checkboxes below remain the working backlog for the unbuilt items.
 
 ---
 
@@ -234,6 +246,8 @@ The audit identified improvements across multiple areas:
 ### Already Completed
 - ✅ Kanji page meta optimization (Phase 1 - January 10, 2026)
 - ✅ Algorithmic SEO for 1000+ kanji pages
+- ✅ Internal linking / related-kanji system (22 semantic clusters, live)
+- ✅ Japan-inspired visual redesign (coral-sunset palette, live)
 - ✅ Interactive stroke order animations
 - ✅ JLPT level organization
 
