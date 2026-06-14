@@ -239,6 +239,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "常", onyomi: "じょう", kunyomi: "つね", meaning: "usual, ordinary, normal" },
   { kanji: "適", onyomi: "てき", kunyomi: "かな（う）", meaning: "suitable, occasional, rare" },
   { kanji: "雑", onyomi: "ざつ、ぞう", kunyomi: "まじ（る）", meaning: "miscellaneous" },
+  { kanji: "甘", onyomi: "かん", kunyomi: "あま（い）、あま（える）", meaning: "sweet, coax, indulge, be content" },
 
   // Abstraction/Characteristics
   { kanji: "性", onyomi: "せい、しょう", kunyomi: "", meaning: "sex, gender, nature" },
