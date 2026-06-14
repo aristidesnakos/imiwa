@@ -1,9 +1,10 @@
 # Product Requirements Document: Phase 0 — Growth & Monetization Validation
 
 ## Document Info
-- **Version**: 1.0
+- **Version**: 1.1
 - **Created**: 2026-06-14
-- **Status**: Planning
+- **Updated**: 2026-06-14 — ESP decision changed to **Kit**; PR #1 (F1, F2, S1–S3) merged.
+- **Status**: In progress — PR #1 merged; SG1/SG2/SG3/SG4/SG5 pending
 - **Owner**: Ari Nakos
 - **Source brief**: "Michikanji — Phase 0 Implementation Brief" (14 Jun 2026)
 
@@ -15,7 +16,7 @@ Phase 0 captures the search demand MichiKanji already earns, starts building an 
 
 The plan resequences the original four-workstream brief around three realities found in the codebase:
 
-1. **Email capture is the keystone, not a peer workstream.** The site is 100% localStorage with no accounts (`app/kanji/review/`, `app/kanji/progress/`). "Own the audience," "cross-device sync" (the Pro pitch), and "pre-seed the waitlist" all collapse onto one primitive: capturing an email. Partial infra already exists — `lib/resend.ts` has a dormant `sendSubConfirmEmail` (double opt-in) with no UI wired to it. Build the capture component **once**, deploy it in three places.
+1. **Email capture is the keystone, not a peer workstream.** The site is 100% localStorage with no accounts (`app/kanji/review/`, `app/kanji/progress/`). "Own the audience," "cross-device sync" (the Pro pitch), and "pre-seed the waitlist" all collapse onto one primitive: capturing an email. We built the capture component **once** (`<EmailCapture>`) and route everything through **one in-repo pipeline** to **Kit** (see *Stack & data flow* below); each surface just passes a different `source` tag.
 
 2. **The Pro fake-door must not advertise a free feature.** `app/kanji/review/` already ships working spaced-repetition. The real Pro wedge, given the no-auth architecture, is **cross-device sync + all-levels unlock + AI writing feedback** — lead with sync, demote SRS.
 
@@ -29,6 +30,37 @@ The plan resequences the original four-workstream brief around three realities f
 - No keyword stuffing; keep copy natural. Keep pages fast (they are SEO assets).
 - Everything additive and reversible; ship behind small, measurable changes.
 - No real checkout, no charge in Phase 0 — instrument intent only.
+
+---
+
+## Stack & data flow (decisions)
+
+Three services, each with one job. **We own all the UI in-repo; the services are only backends.** No Kit-hosted/embedded forms — this avoids lock-in and keeps the UX, styling, and analytics ours.
+
+| Concern | Service | Owns |
+|---|---|---|
+| **Marketing list / audience** | **Kit** (formerly ConvertKit) | Contact store, double opt-in, confirmation + incentive (magnet) email, tags/segments, broadcasts, future nurture sequences |
+| **Transactional email** | **Resend** | Contact-form + feedback mail only. Kept separate so bulk marketing never touches the transactional sender's reputation |
+| **Analytics / conversion goals** | **DataFast** | `email_signup`, `pro_cta_click`, `pro_waitlist_signup`, payments |
+
+**The one capture pipeline (reuse everywhere):**
+
+```
+<EmailCapture source="…"/>  →  POST /api/subscribe  →  Kit v4 (/forms/{KIT_FORM_ID}/subscribers)
+   (in-repo React UI)            (in-repo proxy)          + fires DataFast email_signup
+```
+
+**Conventions for all downstream tasks (SG1, SG2, SG4):**
+- Every email capture uses the **same `<EmailCapture>` component** with a unique `source` (e.g. `free-resources-pack`, `progress-sync`, `pro-waitlist`, `ad-slot`). Never build a second capture path.
+- `source` reaches Kit as the subscriber `referrer`; promote high-value sources to **Kit tags** for segmentation/automation.
+- **Segmentation decision (the only new downstream choice Kit adds):** lead-magnet intent (SG1) and Pro-waitlist intent (SG2) are different audiences. Give the Pro waitlist a distinct **Kit tag** (or a separate Kit form configured *without* a magnet incentive). Dashboard config, not code.
+- Survey answers (SG2) are not list data — send them to **DataFast goal metadata** (and optionally Kit custom fields if we want them on the contact).
+
+**External setup (ops, one-time, outside the repo):**
+- [ ] Create Kit account → one **Form** for the lead magnet; double opt-in ON; attach the practice pack as the incentive.
+- [ ] (SG2) Add a `pro-waitlist` **tag**, or a second form with no incentive.
+- [ ] Set `KIT_API_KEY` + `KIT_FORM_ID` in Vercel; **verify opt-in mode with one live test signup** (Kit's API can create subscribers as `active`/single opt-in depending on account settings).
+- [ ] Connect DataFast payment attribution (SG3).
 
 ---
 
@@ -128,12 +160,12 @@ Status legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⏸️ Blocked
 - **Goal**: Capture high-intent visitors at the moments we already have them.
 - **Why**: ~2,000 visitors/mo, no list. Free downloads + progress are natural capture points.
 - **Do**:
-  - [ ] Free-resources: keep direct download visible (don't hurt SEO/UX); add soft "get the complete N5 pack + future sheets by email" → deliver full pack.
-  - [ ] Progress page: "save your progress across devices & get review reminders — add your email" (pre-seeds Pro waitlist).
-  - [ ] Use F2 component with distinct source tags per placement.
-- **Acceptance**: Both placements live; source-tagged; `email_signup` fires; free download never gated.
-- **Depends on**: F2.
-- **Files**: `app/free-resources/`, `app/kanji/progress/`.
+  - [ ] Free-resources: keep direct download visible (don't hurt SEO/UX); add soft "get the complete N5 pack + future sheets by email". The **pack is delivered by Kit's incentive email**, not by repo code.
+  - [ ] Progress page: "save your progress across devices & get review reminders — add your email" (pre-seeds Pro waitlist). *Note: actual "review reminders" need a Kit automation/sequence — a later (paid-tier) step, not Phase 0.*
+  - [ ] Drop in `<EmailCapture source="…">` with distinct sources (`free-resources-pack`, `progress-sync`) — same pipeline, no new code path.
+- **Acceptance**: Both placements live; source-tagged in Kit; `email_signup` fires; free download never gated.
+- **Depends on**: F2 + Kit form configured (see *Stack & data flow → External setup*).
+- **Files**: `app/free-resources/`, `app/kanji/progress/` (mount existing `components/EmailCapture.tsx`).
 
 #### SG2 — Pro fake-door `⬜`
 - **Goal**: Measure real demand + price sensitivity for a paid study tier. No product, no charge.
@@ -142,12 +174,12 @@ Status legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⏸️ Blocked
   - [ ] Add "Go Pro" entry points: nav, review page, milestone prompt ("you've learned 50 kanji — unlock cross-device review with Pro").
   - [ ] Pro page/modal with **sharpened, sync-first value prop** (sync + all-levels + AI feedback lead; SRS demoted since it's already free).
   - [ ] Price probe: **$6.99/mo or $49/yr · 7-day free trial** (deliberately below Llanai's $10; movable).
-  - [ ] CTA captures email for waitlist (F2), **not** checkout → "you're on the list" confirmation.
-  - [ ] Optional 1-tap survey: "#1 thing that would make it worth paying for?" + "what are you studying for?" [JLPT · travel · work · anime/manga · curiosity].
-  - [ ] Fire `pro_cta_click` and `pro_waitlist_signup` (F1).
-- **Acceptance**: Goals fire; price shown; emails captured with source + survey answers; **no payment taken.**
-- **Depends on**: F1, F2.
-- **Files**: new `app/pro/` or modal component, nav, `app/kanji/review/`, milestone logic.
+  - [ ] CTA captures email via `<EmailCapture source="pro-waitlist">` (same pipeline → Kit), **not** checkout → on-page "you're on the list" confirmation. Tag these in Kit as `pro-waitlist` (distinct audience; configure that path **without** the lead-magnet incentive).
+  - [ ] Optional 1-tap survey: "#1 thing that would make it worth paying for?" + "what are you studying for?" [JLPT · travel · work · anime/manga · curiosity]. Send answers to **DataFast `pro_waitlist_signup` metadata** (and optionally Kit custom fields). *Small build note: `/api/subscribe` currently forwards only email+source; if we want survey answers on the Kit contact, extend it to pass `fields` — otherwise keep survey in DataFast only.*
+  - [ ] Fire `pro_cta_click` (on entry-point click) and `pro_waitlist_signup` (on submit) — wrappers already exist (F1).
+- **Acceptance**: Goals fire; price shown; emails captured with `pro-waitlist` source/tag + survey answers; **no payment taken.**
+- **Depends on**: F1, F2 + Kit `pro-waitlist` tag/form (see *Stack & data flow*).
+- **Files**: new `app/pro/` or modal component, nav, `app/kanji/review/`, milestone logic (mount existing `components/EmailCapture.tsx`).
 
 ### Attribution & cleanup
 
@@ -163,7 +195,7 @@ Status legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⏸️ Blocked
 - **Goal**: Stop wasting inventory until external ads make sense (~10x traffic).
 - **Why**: `components/AdBanner.tsx` fallback renders generic "Your Ad Here".
 - **Do**:
-  - [ ] Replace fallback with an owned-offer CTA (Pro waitlist / email capture / Llanai).
+  - [ ] Replace fallback with an owned-offer CTA — reuse `<EmailCapture>` (source `ad-slot`) or link to the Pro waitlist (SG2); same pipeline, no new capture path.
 - **Acceptance**: Open slot promotes an owned offer.
 - **Depends on**: F2, SG2.
 - **Files**: `components/AdBanner.tsx`.
@@ -181,9 +213,10 @@ Status legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⏸️ Blocked
 
 ## Sequencing
 
-- **PR #1 (compounding + keystone, low-risk):** F1 + F2 + S1 + S2.
-- **PR #2 (validation surfaces, once capture is proven):** S3 + SG1 + SG2 + SG3 + SG4 (+ SG5 verification).
-- SEO tasks (S1–S3) can proceed fully in parallel — they share no dependency with F1/F2.
+- **PR #1 (compounding + keystone, low-risk):** F1 + F2 + S1 + S2 + S3 — **merged**.
+- **Ops gate before SG1/SG2 go live:** the Kit account + form + env vars must be set and the opt-in mode verified (see *Stack & data flow → External setup*). The code is done; this is dashboard/config only.
+- **PR #2 (validation surfaces, once capture is proven):** SG1 + SG2 + SG3 + SG4 (+ SG5 verification).
+- SEO tasks (S1–S3) proceeded fully in parallel — no dependency on F1/F2.
 
 ## Dependency graph
 
