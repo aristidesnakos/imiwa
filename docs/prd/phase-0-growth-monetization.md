@@ -73,14 +73,15 @@ Status legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⏸️ Blocked
 - **Goal**: One capture primitive serving free-resources, progress, and the Pro waitlist.
 - **Why**: Keystone of Phase 0; no accounts exist, so email is how we start owning identity.
 - **Do**:
-  - [x] ESP decision: **extended Resend** (no new dependency). Subscribers stored via Resend Audiences/Contacts when `RESEND_AUDIENCE_ID` set; admin notification email as durable fallback record.
+  - [x] ESP decision: **Kit (formerly ConvertKit)**. Rationale: the list's job is marketing automation (capture → confirm → deliver magnet → tag → broadcast → nurture), which is Kit's category, not Resend's (transactional). Choosing Kit also *removed* code — the custom HMAC double-opt-in machinery is gone. Resend stays for transactional mail only, which protects its deliverability. Kit free covers Phase 0 (10k subs, double opt-in, tagging, broadcasts, magnet delivery); automated drip sequences are a later paid step.
   - [x] Built `<EmailCapture source="..." />` (`components/EmailCapture.tsx`) with required `source` prop, status machine, consent microcopy.
-  - [x] Stateless double opt-in (no DB): HMAC-signed token (`lib/subscribe/token.ts`, 24h expiry) → `POST /api/subscribe` sends branded confirm email → `GET /api/subscribe/confirm` verifies + redirects to `/subscribed`.
-  - [x] Source tag carried through token → contact/admin record; consent + privacy copy on the form.
+  - [x] `POST /api/subscribe` is a thin proxy to Kit's v4 API (`/forms/{KIT_FORM_ID}/subscribers`, `X-Kit-Api-Key`), with a create-subscriber fallback for new emails. Double opt-in, the confirmation email, and incentive (pack) delivery are configured on the **Kit form in the dashboard**, not in code.
+  - [x] Source passed to Kit as the subscriber `referrer` (segmentable; can be promoted to tags later).
   - [x] Fires F1's `email_signup` (with source) on successful submit.
-- **Acceptance**: ✅ Signup → double opt-in → confirm email; source tags recorded; `email_signup` fires; consent copy present. *Note: needs `EMAIL_TOKEN_SECRET` (and optional `RESEND_AUDIENCE_ID`) set in env; component not yet mounted on pages — that's SG1.*
+  - [x] Removed the Resend DOI files (`lib/subscribe/token.ts`, `app/api/subscribe/confirm/route.ts`, `lib/emails/templates/michikanji-confirm.html`); `/subscribed` simplified to a static thank-you (optional Kit confirmation redirect target).
+- **Acceptance**: ✅ Signup → Kit form opt-in flow → magnet; source recorded; `email_signup` fires; consent copy present. *Note: needs `KIT_API_KEY` + `KIT_FORM_ID` in env and the Kit form configured (double opt-in ON, pack attached as incentive). Verify opt-in mode with a live test signup. Component not yet mounted on pages — that's SG1.*
 - **Depends on**: F1.
-- **Files**: `components/EmailCapture.tsx`, `lib/subscribe/token.ts`, `app/api/subscribe/route.ts`, `app/api/subscribe/confirm/route.ts`, `app/subscribed/page.tsx`, `lib/emails/templates/michikanji-confirm.html`, `.env.example`.
+- **Files**: `components/EmailCapture.tsx`, `app/api/subscribe/route.ts`, `app/subscribed/page.tsx`, `.env.example`.
 
 ### SEO / CTR capture (fully parallel — no dependency on F1/F2)
 

@@ -117,7 +117,8 @@ export function EmailCapture({
       )}
 
       <p className="mt-3 text-xs text-japan-mountain-mist">
-        Double opt-in. We&apos;ll only email you the pack and new sheets. Unsubscribe anytime.
+        One quick confirmation email, then your pack. We&apos;ll only send study
+        material — unsubscribe anytime.
       </p>
     </div>
   );
