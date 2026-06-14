@@ -175,3 +175,26 @@ export function setupConsentListener(): void {
     }
   });
 }
+
+// Named DataFast goal-event wrappers
+// These keep raw goal-name strings out of call sites so callers use typed helpers
+
+// Generic goal passthrough to trackConversion
+export async function trackGoal(name: string, properties?: Record<string, any>): Promise<void> {
+  await trackConversion({ name, properties });
+}
+
+// Track an email signup; source identifies which page/offer the signup came from
+export async function trackEmailSignup(source: string, properties?: Record<string, any>): Promise<void> {
+  await trackGoal('email_signup', { source, ...properties });
+}
+
+// Track a click on a Pro call-to-action
+export async function trackProCtaClick(properties?: Record<string, any>): Promise<void> {
+  await trackGoal('pro_cta_click', properties);
+}
+
+// Track a signup for the Pro waitlist
+export async function trackProWaitlistSignup(properties?: Record<string, any>): Promise<void> {
+  await trackGoal('pro_waitlist_signup', properties);
+}
