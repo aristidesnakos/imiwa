@@ -105,9 +105,7 @@ export default async function KanjiDetailPage({ params }: Props) {
   
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
-  // First available reading, for the reverse-intent intro sentence.
-  const firstReading = kanjiData.onyomi || kanjiData.kunyomi || '';
-  
+
   const baseUrl = 'https://www.michikanji.com';
   const pageUrl = `${baseUrl}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
 
@@ -243,22 +241,6 @@ export default async function KanjiDetailPage({ params }: Props) {
             </span>
           </h1>
 
-          {/* Above-the-fold intro targeting reverse intent
-              ("kanji for X" / "X in Japanese"). */}
-          <p className="text-base text-gray-600 max-w-2xl mx-auto">
-            The Japanese kanji for &ldquo;{primaryMeaning}&rdquo; is{' '}
-            <strong>{kanjiData.kanji}</strong>
-            {firstReading && (
-              <> (<span className="font-mono">{firstReading}</span>)</>
-            )}
-            . It&rsquo;s a JLPT {kanjiData.level} character — follow the animated
-            stroke order below to learn how to write it, along with its readings
-            and full meaning.
-          </p>
-
-          {/* Full comma-separated meaning */}
-          <p className="text-lg text-gray-700">{kanjiData.meaning}</p>
-
           <div className="flex justify-center space-x-2">
             <Badge variant="secondary" className="text-lg px-3 py-1">
               <BookOpen className="w-4 h-4 mr-1" />
@@ -347,35 +329,6 @@ export default async function KanjiDetailPage({ params }: Props) {
         <section className="mt-12 pt-8 border-t border-gray-200">
           <CTASection variant="with-image" />
         </section>
-        
-        {/* SEO Content */}
-        <div className="mt-16 prose prose-lg max-w-none">
-          <h2>How to Write the {primaryMeaning} Kanji {kanjiData.kanji} – Stroke Order</h2>
-          <p>
-            The kanji <strong>{kanjiData.kanji}</strong> means &quot;{kanjiData.meaning}&quot; and is part of the 
-            JLPT {kanjiData.level} curriculum. This character is essential for Japanese learners 
-            to master. Use the interactive stroke order diagram above to learn the correct writing 
-            sequence and practice until you can write it from memory.
-          </p>
-          
-          <h3>{kanjiData.kanji} {primaryMeaning} Kanji – Readings and Usage</h3>
-          <p>
-            <strong>{kanjiData.kanji}</strong> has multiple readings depending on context:
-          </p>
-          <ul>
-            <li><strong>Onyomi</strong> (音読み): {kanjiData.onyomi} - This is the Chinese-derived reading</li>
-            <li><strong>Kunyomi</strong> (訓読み): {kanjiData.kunyomi} - This is the native Japanese reading</li>
-          </ul>
-          
-          <h3>Learning Tips for {kanjiData.kanji} ({primaryMeaning})</h3>
-          <ul>
-            <li>Practice writing the strokes in the correct order shown in the animation on paper</li>
-            <li>Pay attention to stroke direction and sequence</li>
-            <li>Start slowly and build up speed as you become more comfortable</li>
-            <li>Use spaced repetition to review this kanji regularly</li>
-            <li>Watch captioned YouTube videos such as Speak Japanese Naturally</li>
-          </ul>
-        </div>
       </div>
     </>
   );
