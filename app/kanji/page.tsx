@@ -79,7 +79,7 @@ export default function KanjiPage() {
             stroke-order page.
           </p>
           {LEVEL_GROUPS.map((group) => (
-            <div key={group.level} className="mb-6">
+            <div key={group.level} id={`level-${group.level}`} className="mb-6 scroll-mt-24">
               <h2 className="text-base font-semibold text-gray-700 mb-2">
                 JLPT {group.level} Kanji ({group.kanji.length})
               </h2>
