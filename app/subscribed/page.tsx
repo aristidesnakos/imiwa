@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { CheckCircle, XCircle, Mail } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
 
@@ -9,37 +9,25 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function SubscribedPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string; source?: string }>;
-}) {
-  const { status } = await searchParams;
-
-  let icon = <Mail className="w-12 h-12 text-blue-600" />;
-  let heading = 'Thanks!';
-  let message = 'We received your request.';
-
-  if (status === 'confirmed') {
-    icon = <CheckCircle className="w-12 h-12 text-green-600" />;
-    heading = "You're in!";
-    message = 'Check your inbox for your free pack.';
-  } else if (status === 'invalid') {
-    icon = <XCircle className="w-12 h-12 text-red-500" />;
-    heading = 'Link expired';
-    message = 'This link is invalid or expired — please sign up again.';
-  }
-
+// Static thank-you page. Kit owns the opt-in flow; set this URL as the form's
+// confirmation/success redirect in the Kit dashboard if you want subscribers to
+// land here after confirming.
+export default function SubscribedPage() {
   return (
     <>
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 py-16 min-h-[60vh] flex items-center justify-center">
         <div className="w-full max-w-md bg-white p-8 rounded-lg border border-gray-200 shadow-sm text-center">
-          <div className="flex justify-center mb-5">{icon}</div>
+          <div className="flex justify-center mb-5">
+            <CheckCircle className="w-12 h-12 text-green-600" />
+          </div>
 
-          <h1 className="text-2xl font-bold text-gray-800 mb-3">{heading}</h1>
-          <p className="text-gray-600 leading-relaxed mb-8">{message}</p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-3">You&apos;re in!</h1>
+          <p className="text-gray-600 leading-relaxed mb-8">
+            Check your inbox for your free pack. If you don&apos;t see it, look in your
+            promotions or spam folder.
+          </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

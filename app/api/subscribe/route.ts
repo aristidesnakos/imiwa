@@ -1,11 +1,31 @@
 import { NextResponse } from 'next/server';
-import config from '@/config';
-import { signToken } from '@/lib/subscribe/token';
-import { sendSubConfirmEmail } from '@/lib/resend';
 
 export const runtime = 'nodejs';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const KIT_API = 'https://api.kit.com/v4';
+
+/**
+ * POST /api/subscribe
+ *
+ * Thin proxy to Kit (formerly ConvertKit). The Kit form owns the opt-in flow:
+ * double opt-in (confirmation email) and incentive delivery (the practice pack)
+ * are configured on the form in the Kit dashboard, not here. We just hand Kit the
+ * email + a `source` tag (sent as the Kit `referrer` so it's segmentable).
+ *
+ * Resend stays for transactional mail only (contact form, feedback). Keeping the
+ * marketing list on Kit protects the transactional sender's deliverability.
+ */
+function kitPost(path: string, body: Record<string, unknown>) {
+  return fetch(`${KIT_API}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Kit-Api-Key': process.env.KIT_API_KEY as string,
+    },
+    body: JSON.stringify(body),
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,20 +40,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing source.' }, { status: 400 });
     }
 
-    const token = signToken({ email, source });
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.michikanji.com';
-    const confirmUrl = `${baseUrl}/api/subscribe/confirm?token=${encodeURIComponent(token)}`;
+    const formId = process.env.KIT_FORM_ID;
+    if (!process.env.KIT_API_KEY || !formId) {
+      console.error('[api/subscribe] Kit not configured (KIT_API_KEY / KIT_FORM_ID missing)');
+      return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
+    }
 
-    await sendSubConfirmEmail({
-      to: email,
-      subject: 'Confirm your email — MichiKanji',
-      htmlTemplate: 'michikanji-confirm',
-      replyTo: config.resend.supportEmail,
-      emailVariables: {
-        confirmation_url: confirmUrl,
-        source,
-      },
+    // Adding to the form runs the form's opt-in flow (DOI + incentive email).
+    // `referrer` carries the source tag for segmentation in Kit.
+    let res = await kitPost(`/forms/${formId}/subscribers`, {
+      email_address: email,
+      referrer: source,
     });
+
+    // Some Kit accounts require the subscriber to exist before a form add.
+    // If the first call fails, upsert the subscriber, then retry the form add.
+    if (!res.ok) {
+      const createRes = await kitPost('/subscribers', { email_address: email });
+      // 422 == already exists; that's fine for our upsert intent.
+      if (!createRes.ok && createRes.status !== 422) {
+        const detail = await createRes.text();
+        console.error('[api/subscribe] Kit create-subscriber failed:', createRes.status, detail);
+        throw new Error('Kit create-subscriber failed');
+      }
+      res = await kitPost(`/forms/${formId}/subscribers`, {
+        email_address: email,
+        referrer: source,
+      });
+    }
+
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error('[api/subscribe] Kit form-subscribe failed:', res.status, detail);
+      throw new Error('Kit form-subscribe failed');
+    }
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
