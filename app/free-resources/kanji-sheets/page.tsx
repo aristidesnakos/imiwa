@@ -3,6 +3,7 @@ import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
 import Link from 'next/link';
+import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
 
 export const metadata: Metadata = getSEOTags({
   title: 'Kanji Practice Sheets Generator | JLPT N5-N1 Printable Worksheets',
@@ -207,6 +208,12 @@ export default function KanjiSheetsLandingPage() {
             <li>Click <strong>&quot;Save&quot;</strong> to download your practice sheet</li>
           </ol>
         </section>
+
+        {/* Internal links to high-priority kanji pages (S3) */}
+        <PopularKanjiLinks
+          title="Study These Kanji Online"
+          description="Prefer interactive practice? Open the animated stroke-order page for any of these popular kanji:"
+        />
       </main>
 
       <Footer />
