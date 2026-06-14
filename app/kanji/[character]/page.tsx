@@ -105,9 +105,23 @@ export default async function KanjiDetailPage({ params }: Props) {
   
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
+  // First available reading, for the reverse-intent intro sentence.
+  const firstReading = kanjiData.onyomi || kanjiData.kunyomi || '';
   
-  // Generate JSON-LD structured data for SEO
-  const jsonLd = {
+  const baseUrl = 'https://www.michikanji.com';
+  const pageUrl = `${baseUrl}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
+
+  // Build a human-readable readings string used in FAQ answers.
+  const readingsAnswer = [
+    kanjiData.onyomi && `onyomi (Chinese-derived) ${kanjiData.onyomi}`,
+    kanjiData.kunyomi && `kunyomi (native Japanese) ${kanjiData.kunyomi}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  // Generate JSON-LD structured data for SEO. We emit three linked types:
+  // Article (kept), FAQPage (expandable rich result), and BreadcrumbList.
+  const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: `${kanjiData.kanji} ${primaryMeaning} Kanji – Stroke Order and Meaning`,
@@ -116,16 +130,76 @@ export default async function KanjiDetailPage({ params }: Props) {
       '@type': 'Organization',
       name: 'Imiwa',
     },
-    datePublished: new Date().toISOString(),
     mainEntity: {
       '@type': 'Thing',
       name: `${kanjiData.kanji} – ${primaryMeaning} Kanji`,
       description: kanjiData.meaning,
-      alternateName: [kanjiData.onyomi, kanjiData.kunyomi],
+      // Skip empty reading fields so we don't emit blank alternate names.
+      alternateName: [kanjiData.onyomi, kanjiData.kunyomi].filter(Boolean),
     },
     keywords: `${kanjiData.kanji}, ${primaryMeaning} kanji, ${primaryMeaning} kanji stroke order, kanji stroke order, Japanese, JLPT ${kanjiData.level}`,
   };
-  
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `What does the kanji ${kanjiData.kanji} mean?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `The kanji ${kanjiData.kanji} means "${kanjiData.meaning}". It is a JLPT ${kanjiData.level} character.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `How do you write the kanji ${kanjiData.kanji}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Write ${kanjiData.kanji} ("${primaryMeaning}") by following the correct stroke order. Use the interactive, step-by-step stroke order animation on this page to practise each stroke in sequence and build muscle memory.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `What are the readings of ${kanjiData.kanji}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: readingsAnswer
+            ? `${kanjiData.kanji} has these readings: ${readingsAnswer}.`
+            : `${kanjiData.kanji} is the "${primaryMeaning}" kanji. See its onyomi and kunyomi readings on this page.`,
+        },
+      },
+    ],
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Kanji Dictionary',
+        item: `${baseUrl}/kanji`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `${kanjiData.kanji} — ${primaryMeaning}`,
+        item: pageUrl,
+      },
+    ],
+  };
+
+  const jsonLd = [articleJsonLd, faqJsonLd, breadcrumbJsonLd];
+
   return (
     <>
       {/* JSON-LD */}
@@ -137,18 +211,54 @@ export default async function KanjiDetailPage({ params }: Props) {
       <Header />
       
       <div className="container mx-auto p-8 max-w-4xl">
-        {/* Breadcrumbs */}
-        <nav className="text-sm text-gray-600 mb-6">
-          <Link href="/kanji" className="hover:text-blue-600 flex items-center">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Kanji Dictionary
-          </Link>
+        {/* Breadcrumbs (mirror the BreadcrumbList JSON-LD) */}
+        <nav className="text-sm text-gray-600 mb-6" aria-label="Breadcrumb">
+          <ol className="flex items-center flex-wrap gap-1">
+            <li className="flex items-center">
+              <Link href="/" className="hover:text-blue-600 flex items-center">
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Home
+              </Link>
+            </li>
+            <li aria-hidden className="text-gray-400">/</li>
+            <li>
+              <Link href="/kanji" className="hover:text-blue-600">
+                Kanji Dictionary
+              </Link>
+            </li>
+            <li aria-hidden className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium" aria-current="page">
+              {kanjiData.kanji} — {primaryMeaning}
+            </li>
+          </ol>
         </nav>
         
-        {/* Header */}
+        {/* Header — meaning-bearing H1: big character stays visual, the
+            English meaning is real, indexable text for "[meaning] kanji" queries. */}
         <div className="text-center mb-8 space-y-4">
-          <h1 className="text-8xl font-bold mb-2">{kanjiData.kanji}</h1>
-          <p className="text-2xl font-semibold text-gray-700">{kanjiData.meaning}</p>
+          <h1 className="space-y-1">
+            <span className="block text-8xl font-bold">{kanjiData.kanji}</span>
+            <span className="block text-2xl font-semibold text-gray-700">
+              &ldquo;{primaryMeaning}&rdquo; Kanji
+            </span>
+          </h1>
+
+          {/* Above-the-fold intro targeting reverse intent
+              ("kanji for X" / "X in Japanese"). */}
+          <p className="text-base text-gray-600 max-w-2xl mx-auto">
+            The Japanese kanji for &ldquo;{primaryMeaning}&rdquo; is{' '}
+            <strong>{kanjiData.kanji}</strong>
+            {firstReading && (
+              <> (<span className="font-mono">{firstReading}</span>)</>
+            )}
+            . It&rsquo;s a JLPT {kanjiData.level} character — follow the animated
+            stroke order below to learn how to write it, along with its readings
+            and full meaning.
+          </p>
+
+          {/* Full comma-separated meaning */}
+          <p className="text-lg text-gray-700">{kanjiData.meaning}</p>
+
           <div className="flex justify-center space-x-2">
             <Badge variant="secondary" className="text-lg px-3 py-1">
               <BookOpen className="w-4 h-4 mr-1" />

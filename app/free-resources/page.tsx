@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
 import Footer from '@/components/sections/Footer';
-import { FileText, Download, BookOpen } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
+import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
 
 export const metadata: Metadata = getSEOTags({
   title: 'Free Japanese Learning Resources | Printable Worksheets & Study Materials',
@@ -149,6 +150,11 @@ export default function FreeResourcesPage() {
           </section>
 
         </div>
+
+        {/* Internal links to high-priority kanji pages (S3) */}
+        <PopularKanjiLinks
+          description="Beyond the printables, study any of these frequently searched kanji with an interactive stroke-order animation:"
+        />
 
         <section className="mt-12 bg-blue-50 p-6 rounded-lg border border-blue-200">
           <h3 className="text-lg font-semibold text-blue-900 mb-3">

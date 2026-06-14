@@ -27,6 +27,13 @@ export interface OptimizedMetadata {
 
 export type OptimizationStrategy = 'stroke-order-focused' | 'meaning-focused' | 'standard';
 
+/**
+ * Target max length for meta descriptions. Google typically truncates SERP
+ * snippets around 155–160 chars; we budget to 155 so the trailing
+ * free-practice CTA always survives.
+ */
+const MAX_DESC_LENGTH = 155;
+
 // Fundamental kanji categories (moved outside function for performance)
 const FUNDAMENTAL_KANJI_CATEGORIES = [
   // Numbers (most common beginner searches)
@@ -74,25 +81,47 @@ export function getOptimizedKanjiMetadata(kanjiData: KanjiData): OptimizedMetada
   const primaryMeaning = getPrimaryMeaning(meaning);
   const strategy = determineOptimizationStrategy(kanji, level);
   
+  // Site-wide title template (option A from the Phase 0 brief). The quoted
+  // meaning placed directly before "Kanji" forms the reverse-intent search
+  // phrase learners type ("\"heaven\" kanji") while staying natural to read.
+  const title = `${kanji} — "${primaryMeaning}" Kanji: Stroke Order & Readings (JLPT ${level})`;
+
+  // Readings clause uses only the FIRST onyomi/kunyomi to stay compact (many
+  // kanji list several readings, which blows past the SERP snippet limit).
+  const firstReading = (r: string) => r.split(/[、,]/)[0].trim();
+  const readingBits = [
+    onyomi && `${firstReading(onyomi)} (onyomi)`,
+    kunyomi && `${firstReading(kunyomi)} (kunyomi)`,
+  ].filter(Boolean);
+  const readingsClause = readingBits.length ? ` Readings: ${readingBits.join(', ')}.` : '';
+
+  // The free-practice CTA is the CTR lever, so it must always survive Google's
+  // ~155-char truncation. Build core + CTA first; insert the readings clause
+  // only when the whole thing still fits the budget — never drop the CTA.
+  const cta = ` Practice writing it free — JLPT ${level}.`;
+  const compose = (core: string): string => {
+    const withReadings = `${core}${readingsClause}${cta}`;
+    return withReadings.length <= MAX_DESC_LENGTH ? withReadings : `${core}${cta}`;
+  };
+
   switch (strategy) {
     case 'stroke-order-focused':
       return {
-        // "[primary meaning] kanji" phrase appears naturally in the title
-        title: `${kanji} ${primaryMeaning} Kanji – Stroke Order & Meaning | JLPT ${level}`,
-        description: `Learn how to write the ${primaryMeaning} kanji ${kanji} with step-by-step stroke order animation. Readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} Japanese kanji.`
+        title,
+        description: compose(`How to write ${kanji}, the "${primaryMeaning}" kanji, with a step-by-step stroke order animation.`),
       };
-      
+
     case 'meaning-focused':
       return {
-        title: `${kanji} ${primaryMeaning} Kanji | Stroke Order & Readings | JLPT ${level}`,
-        description: `Learn the ${primaryMeaning} kanji ${kanji} with interactive stroke order animation. Readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). Full meaning: ${meaning}. JLPT ${level}.`
+        title,
+        description: compose(`${kanji} is the kanji for "${primaryMeaning}". Learn its stroke order and readings.`),
       };
-      
+
     case 'standard':
     default:
       return {
-        title: `${kanji} ${primaryMeaning} Kanji | Stroke Order & Readings | JLPT ${level}`,
-        description: `Learn the ${primaryMeaning} kanji ${kanji} with interactive stroke order animation. Readings: ${onyomi} (onyomi), ${kunyomi} (kunyomi). JLPT ${level} Japanese kanji.`
+        title,
+        description: compose(`Learn the "${primaryMeaning}" kanji ${kanji} with an interactive stroke order animation.`),
       };
   }
 }

@@ -11,6 +11,15 @@ export async function GET() {
   const staticUrls = [
     '',
     '/kanji',
+    '/free-resources',
+    '/free-resources/kana-sheets',
+    '/free-resources/kanji-sheets',
+    '/free-resources/kanji-sheets/n5-sheets',
+    '/free-resources/kanji-sheets/n4-sheets',
+    '/free-resources/kanji-sheets/n3-sheets',
+    '/free-resources/kanji-sheets/n2-sheets',
+    '/free-resources/kanji-sheets/n1-sheets',
+    '/advertise',
     '/privacy-policy',
     '/tos',
   ];
