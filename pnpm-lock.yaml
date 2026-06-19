@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@datafast/ai-crawl':
+        specifier: ^1.0.5
+        version: 1.0.5
       '@headlessui/react':
         specifier: ^1.7.19
         version: 1.7.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -308,6 +311,9 @@ packages:
   '@csstools/css-tokenizer@3.0.4':
     resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
     engines: {node: '>=18'}
+
+  '@datafast/ai-crawl@1.0.5':
+    resolution: {integrity: sha512-y0rieHoij585C8raLYJ4eB8DBzj36nBCT3o28BBbbTy8kEjA3JzwmndKbh4mZlyjY4IKSKBzR3RLfWSZT+Gdew==}
 
   '@discoveryjs/json-ext@0.5.7':
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
@@ -6271,6 +6277,8 @@ snapshots:
 
   '@csstools/css-tokenizer@3.0.4': {}
 
+  '@datafast/ai-crawl@1.0.5': {}
+
   '@discoveryjs/json-ext@0.5.7': {}
 
   '@edge-runtime/format@2.2.1': {}
@@ -9246,7 +9254,7 @@ snapshots:
       eslint: 8.47.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@8.47.0))(eslint@8.47.0)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.47.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.47.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.47.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.47.0))(eslint@8.47.0))(eslint@8.47.0)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.47.0)
       eslint-plugin-react: 7.37.5(eslint@8.47.0)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.47.0)
@@ -9276,7 +9284,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.47.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.47.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.47.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.47.0))(eslint@8.47.0))(eslint@8.47.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -9291,7 +9299,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.47.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.47.0):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.47.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.47.0))(eslint@8.47.0))(eslint@8.47.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9

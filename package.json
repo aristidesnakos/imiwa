@@ -10,6 +10,7 @@
     "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
+    "@datafast/ai-crawl": "^1.0.5",
     "@headlessui/react": "^1.7.19",
     "@hookform/resolvers": "^3.10.0",
     "@mdx-js/loader": "^2.3.0",
