@@ -11,7 +11,10 @@ const KIT_API = 'https://api.kit.com/v4';
  * Thin proxy to Kit (formerly ConvertKit). The Kit form owns the opt-in flow:
  * double opt-in (confirmation email) and incentive delivery (the practice pack)
  * are configured on the form in the Kit dashboard, not here. We just hand Kit the
- * email + a `source` tag (sent as the Kit `referrer` so it's segmentable).
+ * email + the `source`, sent as the Kit `referrer`. NOTE: `referrer` is NOT a
+ * tag — this code applies no tags. Segment audiences in Kit by filtering on
+ * `referrer` (e.g. referrer = "pro-waitlist"). If you need true tags for
+ * automations, apply them in Kit by a referrer-based rule, not from here.
  *
  * Resend stays for transactional mail only (contact form, feedback). Keeping the
  * marketing list on Kit protects the transactional sender's deliverability.
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     // Adding to the form runs the form's opt-in flow (DOI + incentive email).
-    // `referrer` carries the source tag for segmentation in Kit.
+    // `referrer` carries the source for referrer-based segmentation in Kit (not a tag).
     let res = await kitPost(`/forms/${formId}/subscribers`, {
       email_address: email,
       referrer: source,
