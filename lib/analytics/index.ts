@@ -48,42 +48,84 @@ export function getDataFastVisitorId(): string {
   }
 }
 
+// Wait for the DataFast visitor cookie to appear.
+//
+// The DataFast script loads with `defer` (see app/layout.tsx), so its cookie is
+// set *after* the page parses. A conversion fired early — e.g. an email signup
+// or Pro CTA click in the first moments on a page — would read an empty cookie
+// and be dropped. That biased every conversion rate downward by an unknown,
+// device-dependent amount, which broke the Phase 0 decision gate. We now poll
+// briefly for the cookie before giving up so timing no longer loses goals.
+async function waitForVisitorId(timeoutMs = 5000, intervalMs = 250): Promise<string> {
+  let id = getDataFastVisitorId();
+  const deadline = Date.now() + timeoutMs;
+  while (!id && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    id = getDataFastVisitorId();
+  }
+  return id;
+}
+
+// POST a goal to our DataFast proxy. Pulled out so both the fast (cookie ready)
+// and deferred (cookie pending) paths share one body.
+async function sendGoal(visitorId: string, event: ConversionEvent): Promise<void> {
+  await fetch('/api/datafast', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      type: 'goal',
+      datafast_visitor_id: visitorId,
+      name: event.name,
+      metadata: {
+        ...event.properties,
+        page_url: window.location.href,
+        page_title: document.title,
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+      },
+    }),
+  });
+}
+
 // Track conversion event via DataFast
 // Note: DataFast is privacy-friendly and doesn't require consent
 export async function trackConversion(event: ConversionEvent): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  try {
-    const visitorId = event.visitor_id || getDataFastVisitorId();
-    
-    // If no visitor ID is available, skip server-side tracking
-    // DataFast client-side script will handle it when it loads
-    if (!visitorId) {
-      console.log('DataFast visitor ID not available, skipping server-side tracking');
-      return;
+  const immediateId = event.visitor_id || getDataFastVisitorId();
+
+  // Fast path: cookie is already set, so send now and let the caller await
+  // delivery — useful when the goal is fired right before a navigation.
+  if (immediateId) {
+    try {
+      await sendGoal(immediateId, event);
+    } catch (error) {
+      console.error('Error tracking conversion:', error);
     }
-    
-    await fetch('/api/datafast', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'goal',
-        datafast_visitor_id: visitorId,
-        name: event.name,
-        metadata: {
-          ...event.properties,
-          page_url: window.location.href,
-          page_title: document.title,
-          user_agent: navigator.userAgent,
-          timestamp: new Date().toISOString(),
-        },
-      }),
-    });
-  } catch (error) {
-    console.error('Error tracking conversion:', error);
+    return;
   }
+
+  // Slow path: the DataFast script loads `defer`, so on early clicks the cookie
+  // isn't set yet. Poll for it in the BACKGROUND and resolve immediately — many
+  // callers `await` this inside click handlers (incl. external target="_blank"
+  // CTAs), so blocking here would hang the UI for up to 5s. Backgrounding still
+  // recovers goals that previously dropped, without the UX cost.
+  void (async () => {
+    try {
+      const visitorId = await waitForVisitorId();
+      // Cookie never appeared (ad-blocker, privacy browser, or script blocked).
+      // Warn distinctly so genuine drops are countable, not confused with timing.
+      if (!visitorId) {
+        console.warn(`DataFast goal "${event.name}" dropped: no visitor ID after wait`);
+        return;
+      }
+      await sendGoal(visitorId, event);
+    } catch (error) {
+      console.error('Error tracking conversion (deferred):', error);
+    }
+  })();
 }
 
 // Get visitor data from DataFast
@@ -184,17 +226,26 @@ export async function trackGoal(name: string, properties?: Record<string, any>):
   await trackConversion({ name, properties });
 }
 
+// Where a Pro CTA was shown/clicked. The decision gate compares conversion by
+// location ("if milestone prompts out-convert the nav CTA, retention anxiety is
+// the buying trigger"), so every Pro event MUST carry its location — otherwise
+// that comparison can't be run at all.
+export type ProCtaLocation = 'nav' | 'review' | 'milestone' | 'pro_page';
+
 // Track an email signup; source identifies which page/offer the signup came from
 export async function trackEmailSignup(source: string, properties?: Record<string, any>): Promise<void> {
   await trackGoal('email_signup', { source, ...properties });
 }
 
-// Track a click on a Pro call-to-action
-export async function trackProCtaClick(properties?: Record<string, any>): Promise<void> {
-  await trackGoal('pro_cta_click', properties);
+// Track a click on a Pro call-to-action. `location` is required so clicks from
+// the nav (every page) are never conflated with clicks on the review page when
+// computing the gate's rate.
+export async function trackProCtaClick(location: ProCtaLocation, properties?: Record<string, any>): Promise<void> {
+  await trackGoal('pro_cta_click', { location, ...properties });
 }
 
-// Track a signup for the Pro waitlist
-export async function trackProWaitlistSignup(properties?: Record<string, any>): Promise<void> {
-  await trackGoal('pro_waitlist_signup', properties);
+// Track a signup for the Pro waitlist. `location` ties the conversion back to
+// the CTA that drove it, mirroring trackProCtaClick.
+export async function trackProWaitlistSignup(location: ProCtaLocation, properties?: Record<string, any>): Promise<void> {
+  await trackGoal('pro_waitlist_signup', { location, ...properties });
 }
