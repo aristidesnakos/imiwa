@@ -31,23 +31,35 @@ interface Props {
   params: Promise<{ character: string }>;
 }
 
-// Force dynamic rendering to bypass any static generation issues
-export const dynamic = 'force-dynamic';
-
-// Generate static paths for all kanji
-export async function generateStaticParams(): Promise<{ character: string }[]> {
-  // Return empty array to force all pages to be dynamic
-  return [];
+// Malformed percent-encoding (e.g. a crawler hitting /kanji/%E6) makes
+// decodeURIComponent throw. Fall back to the raw segment so we serve a 404
+// instead of a 500.
+function safeDecode(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
 }
 
-// Enable ISR for missing pages
+// Kanji data is compiled into the bundle from lib/constants, so every page can be
+// prerendered at build time and served from the CDN. Revalidate daily so a content
+// change ships without a full rebuild.
+export const revalidate = 86400;
+
+// Prerender every kanji we have data for.
+export async function generateStaticParams(): Promise<{ character: string }[]> {
+  return ALL_KANJI_DATA.map(k => ({ character: k.kanji }));
+}
+
+// Anything outside that set still renders on demand (and 404s if unknown).
 export const dynamicParams = true;
 
 
 // SEO metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { character } = await params;
-  const decodedCharacter = decodeURIComponent(character);
+  const decodedCharacter = safeDecode(character);
   const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === decodedCharacter);
   
   if (!kanjiData) {
@@ -96,7 +108,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function KanjiDetailPage({ params }: Props) {
   const { character } = await params;
-  const decodedCharacter = decodeURIComponent(character);
+  const decodedCharacter = safeDecode(character);
   const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === decodedCharacter);
   
   if (!kanjiData) {

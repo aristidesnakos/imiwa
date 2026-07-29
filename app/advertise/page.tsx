@@ -5,6 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap, Plane, Briefcase, BookOpen, Check, Users } from 'lucide-react';
 import { getMonthlyVisitors } from '@/lib/datafast/getMonthlyVisitors';
+import { getSEOTags } from '@/lib/seo';
+
+// Without its own metadata this page inherited the root layout's canonical and
+// pointed at the homepage, which tells Google to drop it as a duplicate.
+export const metadata = getSEOTags({
+  title: 'Advertise on MichiKanji - Reach Japanese Language Learners',
+  description:
+    'Sponsor a JLPT level on MichiKanji and reach motivated Japanese learners studying kanji stroke order. One advertiser per level, no rotation.',
+  canonicalUrlRelative: '/advertise',
+});
 
 const SPONSOR_SLOTS = [
   {
