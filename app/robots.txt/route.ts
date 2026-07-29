@@ -8,16 +8,12 @@ Allow: /kanji/*
 Allow: /blog
 Allow: /blog/*
 
-# High-value content
-Crawl-delay: 1
-
 # Sitemap location
 Sitemap: ${baseUrl}/sitemap.xml
 
 # Block admin/private areas
 Disallow: /api/
 Disallow: /settings/
-Disallow: /_next/
 Disallow: /favicon.ico`;
 
   return new Response(robots, {

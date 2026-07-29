@@ -91,11 +91,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         }} />
       </head>
       <body>
-        <Script
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-        />
+        {/* react-scan render profiler - dev only, never shipped to production */}
+        {process.env.NODE_ENV !== 'production' && (
+          <Script
+            src="//unpkg.com/react-scan/dist/auto.global.js"
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+          />
+        )}
         {/* AnalyticsProvider handles consent-gated analytics (Ahrefs) */}
         <AppProviders>
           <AnalyticsProvider />
