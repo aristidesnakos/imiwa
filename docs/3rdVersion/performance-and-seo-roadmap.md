@@ -536,6 +536,23 @@ sat in production undetected. This section is what stops the next one.
       **Bootstrap behaviour**: the state file starts absent, so the **first run submits all
       ~1,906 URLs in a single POST**. That is intended and within IndexNow's 10,000-URL
       per-request limit.
+
+      **✅ Verified working in production — July 30, 2026.** First run **failed with 403**
+      ("key not valid") *even though the preflight had just confirmed the key file returned
+      200 with matching contents from the same runner*. Diagnosed rather than retried blindly:
+      IndexNow's single-URL GET endpoint returned **200** for the same key moments later, both
+      with and without an explicit `keyLocation` — proving the key was valid and the file
+      correctly served. The cause was **key-validation propagation lag**: the key file had
+      only become publicly reachable ~50 minutes earlier (it was absent from production
+      between the P2-8 back-out and its restoration), and IndexNow had not yet validated it.
+      Re-running unchanged succeeded: **`Response: 200 — OK — URLs accepted`, 1,906 URLs**.
+      *Operational takeaway*: after any change to the key file, expect a validation lag and
+      treat a single 403 as retryable rather than as a misconfiguration. The design already
+      handles this correctly — 403 throws without recording state, so the next run retries
+      the full set automatically.
+      **Idempotency confirmed end-to-end in production**, not just in review: the bot commit
+      `f80fde1` recorded all 1,906 entries to `main`, so the next daily run diffs to zero and
+      no-ops. This is the property that makes a daily cron safe rather than spammy.
       ⚠️ **Latent limit — no batching.** A single request carries the whole changed set. At
       1,906 URLs there is ~5× headroom, but if the sitemap ever passes 10,000 this needs
       chunking. Tied to **P4-4** (sitemap index), which triggers at a lower number anyway.
