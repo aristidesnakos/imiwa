@@ -457,7 +457,18 @@ sat in production undetected. This section is what stops the next one.
       quiet after four. That is deliberate — permanent silence was the worse failure — but it
       trades toward alarm fatigue. It comments on the existing open issue rather than opening
       new ones, so the noise is bounded.
-      **Still pending: the first actual run**, so the `Indexed pages` baseline row is blank.
+      **First run attempted July 30, 2026 — failed on an owner-side prerequisite, not a bug.**
+      The Search Console **API was never enabled** on Cloud project `130306809947`
+      (`SERVICE_DISABLED` / `accessNotConfigured`), which is step 1 of setup and the easiest
+      to skip. The **H1 fix earned itself immediately**: rather than the old misleading
+      "the service account has not been added as a user on the property", the run reported
+      *"The Google Search Console API is not enabled on this Cloud project — this is NOT a
+      Search Console permissions problem"* with the activation link. **No reading was
+      written** ("nothing to commit"), confirming the fail-closed behaviour and the H3 guard.
+      **To unblock**: enable the API at
+      `https://console.cloud.google.com/apis/library/searchconsole.googleapis.com?project=130306809947`,
+      wait ~1 min for propagation, then re-run the workflow. The `Indexed pages` baseline row
+      stays blank until then.
 - [x] **P2-8 · Bing Webmaster Tools + IndexNow — adopted July 30, 2026 on owner approval.**
       *History worth keeping:* this was **not** in the agreed scope for the cycle (P2-1,
       P2-6, P2-7) and was built as unasked-for scope, then committed and pushed to `main`
@@ -478,6 +489,43 @@ sat in production undetected. This section is what stops the next one.
       `scripts/check-index-status.ts` reports actual per-URL index status on demand via
       `urlInspection.index.inspect`, so you know which handful of priority URLs deserve a
       manual "Request Indexing" click in Search Console.
+      **✅ Adversarially reviewed — July 30, 2026.** The headline question was whether it
+      could re-submit ~1,900 URLs every day (spam, 429, reputation damage). **It cannot** —
+      the state round-trip was verified end to end: `__dirname` resolves correctly under
+      `tsx` (the repo is CJS, no `"type": "module"`), the script writes exactly the path the
+      workflow's `git status` checks, run 1 recorded 1,906 entries and run 2 on an unchanged
+      sitemap submitted nothing, and the commit/rebase/push step was exercised against a real
+      shallow clone with a concurrent human push. No branch protection blocks the push.
+      All failure paths fail closed: sitemap 503, an HTML error page, POST 403 and POST 429
+      each throw **without** writing state.
+      **Four defects fixed:**
+      - **D3** — `res.ok` is true for **202**, which means key validation is still *pending*,
+        not accepted. State was recorded anyway, so URLs IndexNow later dropped would be
+        permanently marked done and never retried. This is the mirror image of the runaway
+        risk and much harder to spot: submissions just quietly stop. Now records state only
+        on a literal `200`.
+      - **D1** — added a **preflight** that GETs the key file and asserts both `200` and
+        exact content match before submitting. Not hypothetical: the key file was absent
+        from production for part of today (added, reverted, re-added), and during that window
+        every run would have failed with a generic error.
+      - **D5** — neither `fetch` had a timeout, so a stalled endpoint burned ~10 min of
+        runner time on undici's defaults. Both now `AbortSignal.timeout`.
+      - **D8** — a host-mismatch guard. IndexNow 422s the **entire batch** if any URL is not
+        under `host`, and the sitemap's base is `NEXT_PUBLIC_APP_URL || SITE_URL` — so
+        setting that env var to a preview or apex host would break every run silently.
+        Verified currently clean: 0 foreign-host URLs out of 1,906.
+      - **D4** — corrected a comment that was **factually wrong**: it claimed a missing
+        `<lastmod>` makes an entry "always changed". It does not — `''` is stored like any
+        value and compares equal thereafter, so such a URL is submitted once and then frozen.
+        Latent only: all 1,906 live entries carry a `<lastmod>`.
+
+      **One review finding rejected.** The review claimed Vercel ignores `[skip ci]` without
+      an `ignoreCommand` in `vercel.json`, and recommended adding one. **That is wrong, and
+      this repo disproved it the same day**: commit `2f7dfe9` carried the token in its message
+      body and Vercel skipped the deployment outright — no deployment record, no commit
+      status, production kept serving the previous commit. Vercel honours the marker. The
+      workflow comment is accurate and no `ignoreCommand` was added.
+
       **Two properties of the design that make a daily cron safe**, both reviewed before
       activation: it can only submit URLs it read from **our own live sitemap** (never an
       arbitrary list), and it **does not record state on failure**, so a failed URL retries
