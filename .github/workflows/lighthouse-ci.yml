@@ -1,0 +1,76 @@
+name: Lighthouse CI
+
+on:
+  # Gate every PR into main: a perf regression should fail here, not in prod.
+  pull_request:
+    branches:
+      - main
+  # Also allows manual triggering from the Actions tab (useful when
+  # recalibrating the thresholds in lighthouserc.js)
+  workflow_dispatch:
+
+# Nine Lighthouse runs plus a ~1,900-page static build is not cheap. If a PR
+# gets a new push, abandon the in-flight run for the superseded commit.
+concurrency:
+  group: lighthouse-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Assert Core Web Vitals and JS budget
+    runs-on: ubuntu-latest
+    # The build prerenders ~1,900 kanji pages before Lighthouse even starts.
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      # No `version:` input on purpose — pnpm/action-setup@v4 reads
+      # `packageManager` from package.json (pnpm@9.15.4) and errors out if a
+      # version is specified in both places.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Lighthouse must measure the real production bundle, so build first and
+      # let LHCI serve it with `pnpm start` (see startServerCommand in
+      # lighthouserc.js). Never `next dev` — dev builds are unminified and
+      # would make every threshold meaningless.
+      - name: Build production bundle
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      # @lhci/cli is deliberately NOT a devDependency: it drags in ~290
+      # transitive packages (Lighthouse + Puppeteer tooling) that no other part
+      # of this repo needs, so it is fetched on demand and pinned by exact
+      # version instead. Bump the pin here to upgrade Lighthouse.
+      #
+      # `autorun` = collect -> assert -> upload. Upload runs even when the
+      # assertions fail, so a failing PR still gets a report URL printed in
+      # this log (search the output for "storage.googleapis.com").
+      - name: Run Lighthouse CI
+        run: pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.js
+
+      # The raw LHRs, kept so a failure can be diffed against a later run even
+      # after the temporary-public-storage report expires.
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+          retention-days: 14
+          if-no-files-found: warn

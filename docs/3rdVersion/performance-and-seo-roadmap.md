@@ -415,9 +415,15 @@ sat in production undetected. This section is what stops the next one.
       restricted to JobPosting/Livestream by Google's own terms); for Google,
       `scripts/check-index-status.ts` reports actual per-URL index status on demand via
       `urlInspection.index.inspect`, so you know which handful of priority URLs deserve a
-      manual "Request Indexing" click in Search Console. See
-      `docs/learnings/search-indexing-automation.md` for the full playbook, including how
-      to port this pair of scripts to another project.
+      manual "Request Indexing" click in Search Console.
+      **Held in the working tree, not committed**: `scripts/submit-indexnow.ts`,
+      `.github/workflows/indexnow-submit.yml`, `lib/seo/indexnow.ts`,
+      `public/<key>.txt`, and `docs/learnings/search-indexing-automation.md` (the full
+      playbook, including how to port the scripts to another project). If P2-8 is declined,
+      delete those five. **`scripts/check-index-status.ts` was kept and committed** even
+      though it arrived with this batch — it is manual-only, makes no scheduled external
+      calls, and directly addresses P2-7's central weakness by reporting *true* per-URL
+      index status rather than the impression-based proxy.
 
 ### Baseline to track
 
@@ -428,11 +434,21 @@ Record these on each review so the trend is legible:
 | Kanji pages prerendered | 1,894 | build output |
 | Total static pages | 1,924 | build output |
 | Sitemap URLs | 1,906 (1,893 kanji + 13 static) | `/sitemap.xml` |
-| Indexed pages | **not yet recorded** | Search Console |
+| Indexed pages | **not yet recorded** — P2-7 fills this on its first run | Search Console |
 | Kanji page `x-vercel-cache` | `MISS` → **`HIT` confirmed Jul 30** | `curl -I` |
 | Kanji page First Load JS | 123 kB | build output |
-| Heaviest route | `/kanji/progress`, 231 kB | build output |
+| Heaviest route *(by build weight)* | `/kanji/progress`, 231 kB | build output |
 | Shared chunk baseline | 102 kB | build output |
+| **Worst route *(by measured perf)*** | **`/kanji`, Lighthouse 66** — see P3-8 | Lighthouse 12.1.0 |
+| Lab CWV `/` | LCP 2.6s · CLS 0.058 · TBT ~50ms · perf 96 | Lighthouse, median of 3 |
+| Lab CWV `/kanji` | LCP 2.9s · **CLS 0.157** · **TBT ~1.1s** · perf 66 | Lighthouse, median of 3 |
+| Lab CWV `/kanji/<char>` | LCP 2.4–3.3s · CLS 0.026 · TBT ~10–50ms · perf 92–98 | Lighthouse, median of 3 |
+| Field CWV | **none — no field source.** P2-2 declined; free route is the CrUX API | — |
+
+Two cautions on this table. The build's "First Load JS" and Lighthouse's transferred-script
+figure are **different metrics** — `/kanji` reports 184 kB in the build but transfers 340 kB,
+because prefetches and the search chunk are not counted in the former. And every performance
+row here is **lab, measured on Apple-silicon hardware**; none of it is real-user data.
 
 ---
 
@@ -465,6 +481,31 @@ Surfaced by the P0 build and audit. None are urgent; all are real.
       fixes P1-4 structurally.
 - [ ] **P3-7 · `CLAUDE.md` claims `pnpm build` runs postbuild sitemap generation.** There is
       no `postbuild` script. Fix the doc or add the script.
+- [ ] **P3-8 · `/kanji` is our worst-performing route — newly measured, not previously
+      known.** The P2-1 baselines (Lighthouse 12.1.0, mobile emulation, median of 3 runs,
+      real `pnpm build` + `pnpm start`) put it well behind everything else:
+
+      | route | perf | LCP | CLS | TBT | script transferred |
+      |---|---|---|---|---|---|
+      | `/` | 96 | 2.6s | 0.058 | ~50ms | 222 kB |
+      | `/kanji/<char>` | 92–98 | 2.4–3.3s | 0.026 | ~10–50ms | 228 kB |
+      | **`/kanji`** | **66** | 2.9s | **0.157** | **~1.1s** | **340 kB** |
+
+      CLS 0.157 is in Google's "needs improvement" band and TBT ~1.1s is the worst number
+      anywhere in the app — and since P2-2 was declined, TBT is our only interaction-cost
+      signal, so this is unmonitored in the field. The 340 kB of transferred script is
+      roughly double the 184 kB the build reports as "First Load JS", because the page also
+      pulls a ~104 kB search chunk plus Next.js `<Link>` **prefetches** for
+      `/kanji/progress` and `/kanji/[character]`.
+      This matters more than `/kanji/progress` (P3-4): `/kanji` is indexable, is the entry
+      point to the ~1,900 detail pages, and its CLS is a page-experience signal, whereas
+      `/kanji/progress` is now `noindex`.
+      Likely wins: narrow the `<Link>` prefetching, code-split the search chunk, and reserve
+      layout space for whatever shifts (0.157 on a search page is usually results rendering
+      into unreserved height).
+      ⚠️ P2-1's ceilings for this route (CLS 0.25, TBT 3500ms) **freeze this debt rather
+      than endorse it** — they are set at the "poor" boundary purely so the gate passes on
+      today's `main`. Ratchet them down as this is fixed.
 
 ---
 
@@ -517,9 +558,16 @@ remains valid and is captured as **P4-2**. The branch is not the only way to get
 
 1. ~~**Confirm P0**~~ — ✅ done July 30, 2026. The CDN is serving prerendered HTML.
 2. ~~**P1 as one batch**~~ — ✅ done July 30, 2026. Six fixes, one commit.
-3. **P2-1, P2-2, P2-7** — Lighthouse CI, Speed Insights, and the indexation alarm. Do
-   these *before* P3/P4 so later work is measured rather than assumed.
-4. **P3** opportunistically, **P4-1** as the next real project.
+3. ~~**P2-1, P2-2, P2-7**~~ — ✅ done July 30, 2026, **plus P2-6**. Lighthouse CI and the
+   schema validator gate PRs; the indexation alarm runs weekly. **P2-2 was reverted** —
+   see its entry. The guard rails are up, so later work is measured rather than assumed.
+4. **Two calibration steps before these guard rails can be trusted**, both needing one real
+   CI run: ratchet the Lighthouse TBT/LCP ceilings to the runner baseline (P2-1), and
+   provision `GSC_SERVICE_ACCOUNT_KEY` so the indexation alarm records its first reading
+   (P2-7). Until then P2-1 may be loose and P2-7 is inert.
+5. **Decide P2-8** (built, not merged — starts daily third-party submissions).
+6. **P3** opportunistically — note **P3-8** is now the largest measured perf problem —
+   **P4-1** as the next real project.
 
 **Principle for this cycle**: P0-1 was invisible for months because nothing was watching.
 Ship the guard rails (P2) before the next round of improvements, so the next regression

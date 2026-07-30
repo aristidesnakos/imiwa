@@ -1,0 +1,96 @@
+name: Structured Data Check
+
+# Guards the JSON-LD that Google reads. Two structured-data bugs shipped to
+# production and stayed live for months — `author.name: "Imiwa"` (the git repo
+# name, not the brand) on ~1,900 kanji pages, and an Organization logo pointing
+# at a `/logo.png` that 404'd. Both were invisible to code review and to any
+# check that reads the source instead of the build output.
+#
+# scripts/validate-schema.ts parses the prerendered HTML in `.next/server/app`,
+# so it sees exactly what a crawler sees. It is fully offline — no Google Rich
+# Results Test call, which would be rate-limited and would make this job flaky.
+# Run the hosted tool by hand when you want Google's own verdict.
+
+on:
+  # Gate every PR into main: bad structured data should fail here, not in prod.
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'components/**'
+      - 'public/**'
+      - 'config.ts'
+      - 'next.config.js'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'scripts/validate-schema.ts'
+      - '.github/workflows/schema-check.yml'
+  # Catch anything that reaches main through a route other than a PR.
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'components/**'
+      - 'public/**'
+      - 'config.ts'
+      - 'next.config.js'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'scripts/validate-schema.ts'
+      - '.github/workflows/schema-check.yml'
+  # Also allows manual triggering from the Actions tab (useful after adding an
+  # assertion to the validator).
+  workflow_dispatch:
+
+# The validator needs a full ~1,900-page production build. If a PR gets a new
+# push, abandon the in-flight run for the superseded commit.
+concurrency:
+  group: schema-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-schema:
+    name: Validate JSON-LD in the build output
+    runs-on: ubuntu-latest
+    # The build prerenders ~1,900 kanji pages; the validator itself takes ~5s.
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      # No `version:` input on purpose — pnpm/action-setup@v4 reads
+      # `packageManager` from package.json (pnpm@9.15.4) and errors out if a
+      # version is specified in both places.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The validator reads `.next/server/app`, so the build is not optional —
+      # it is the artefact under test. Metadata that silently fails to reach the
+      # HTML is the whole bug class this job exists to catch.
+      - name: Build production bundle
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      # `--all` deep-checks every prerendered kanji page rather than a sample.
+      # Full coverage costs about five seconds once the build exists, so there is
+      # no reason for CI to sample.
+      - name: Validate structured data
+        run: npx tsx --tsconfig tsconfig.json scripts/validate-schema.ts --all
