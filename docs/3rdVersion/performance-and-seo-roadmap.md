@@ -1,6 +1,6 @@
 # Performance & SEO Roadmap (3rd Version)
 
-**Status**: 🚧 Active — P0 shipped, P1–P4 open
+**Status**: 🚧 Active — P0 shipped and verified in production, P1–P4 open
 **Started**: July 29, 2026
 **Baseline audit**: July 29, 2026, against `seoroast.com/nomadlist` as a reference teardown
 **Website**: michikanji.com
@@ -112,16 +112,47 @@ threw console errors. Gated on `NODE_ENV !== 'production'`.
 `decodeURIComponent` throws on input like `/kanji/%E6`. Added a `safeDecode` guard so
 crawlers hitting malformed paths get a clean 404.
 
-### ⏳ Remaining P0 verification
+### ✅ P0 verified in production — July 30, 2026
 
-Not yet confirmed — requires the Vercel deploy to land:
-
-```bash
-curl -sSI https://www.michikanji.com/kanji/%E6%97%A5 | grep -iE 'x-vercel-cache|cache-control'
+```
+before:  x-vercel-cache: MISS
+         cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+after:   x-vercel-cache: HIT
+         cache-control: public, max-age=0, must-revalidate
+         x-nextjs-prerender: 1
+         x-nextjs-stale-time: 300
 ```
 
-**Expect**: `x-vercel-cache: HIT` from the second request onward, and a public `s-maxage`
-in place of `private, no-cache, no-store`. **Until this is confirmed, P0 is not closed.**
+`x-nextjs-prerender: 1` is the direct confirmation that the HTML is served from the
+build-time prerender rather than a per-request render. `age` values in the tens of
+thousands of seconds confirm pages are persisting in the edge cache.
+
+**Reading the cache states.** Testing kanji that had never been requested showed a
+consistent pattern:
+
+```
+req1 → BYPASS or MISS    ← first request at a given edge PoP fills the cache
+req2 → HIT
+req3 → HIT
+```
+
+Vercel's CDN is per-location, so the first visitor to each PoP populates that node. A
+lone `MISS`/`BYPASS` on a cold page is **not** a regression — only a sustained `MISS`
+across repeat requests to the same PoP would be. Verified identical for Googlebot and
+browser user-agents, so there is no differential treatment or cloaking risk.
+
+**On `cache-control: public, max-age=0, must-revalidate`** — this looks like "don't cache"
+but is correct. `public` (previously `private`) is what permits shared/CDN caching at all;
+`max-age=0, must-revalidate` applies to the **browser**, so users always revalidate and
+never see stale HTML while the edge absorbs the load. The edge TTL is managed separately
+by Vercel from our `revalidate = 86400` — that is what `x-nextjs-stale-time` reports. Two
+caches, deliberately different rules.
+
+**Re-verification command** (expect `HIT` on the second request onward):
+
+```bash
+curl -sSI https://www.michikanji.com/kanji/%E6%97%A5 | grep -iE 'x-vercel-cache|cache-control|prerender'
+```
 
 ---
 
@@ -205,7 +236,7 @@ Record these on each review so the trend is legible:
 | Total static pages | 1,924 | build output |
 | Sitemap URLs | 1,906 (1,893 kanji + 13 static) | `/sitemap.xml` |
 | Indexed pages | **not yet recorded** | Search Console |
-| Kanji page `x-vercel-cache` | `MISS` → expect `HIT` | `curl -I` |
+| Kanji page `x-vercel-cache` | `MISS` → **`HIT` confirmed Jul 30** | `curl -I` |
 | Kanji page First Load JS | 123 kB | build output |
 | Heaviest route | `/kanji/progress`, 231 kB | build output |
 | Shared chunk baseline | 102 kB | build output |
@@ -291,8 +322,7 @@ remains valid and is captured as **P4-2**. The branch is not the only way to get
 
 ## Sequencing
 
-1. **Confirm P0** — check `x-vercel-cache: HIT` after deploy. Nothing else matters until
-   the CDN is actually serving those 1,894 pages.
+1. ~~**Confirm P0**~~ — ✅ done July 30, 2026. The CDN is serving prerendered HTML.
 2. **P1 as one batch** — six small, mechanical, related fixes. One commit.
 3. **P2-1, P2-2, P2-7** — Lighthouse CI, Speed Insights, and the indexation alarm. Do
    these *before* P3/P4 so later work is measured rather than assumed.
