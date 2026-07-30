@@ -30,6 +30,9 @@ jobs:
   check-indexation:
     name: Check indexed-page trend
     runs-on: ubuntu-latest
+    # The script talks to a rate-limited external API in a paginated loop. Bound
+    # the job so a fault cannot burn Actions minutes up to GitHub's 6h default.
+    timeout-minutes: 10
     permissions:
       # Open / comment on GitHub Issues as the alarm notification.
       issues: write

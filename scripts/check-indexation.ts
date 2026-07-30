@@ -107,6 +107,8 @@ export interface Thresholds {
   trendReadings: number;
   /** Below this baseline page count, percentages are noise; suppress alarms. */
   minBaseline: number;
+  /** Drop (%) from the all-time peak that trips the alarm (catches slow bleeds). */
+  longTermDropPct: number;
 }
 
 export type AlarmSeverity = 'none' | 'warn' | 'alarm';
@@ -165,6 +167,14 @@ function readThresholds(): Thresholds {
     // With a handful of impression-bearing pages, "−50%" is one page going
     // quiet. Suppressing below this is what keeps the alarm from being muted.
     minBaseline: intFromEnv('INDEXATION_MIN_BASELINE', 25),
+    // Third check, and the reason it exists: the trailing-peak window is only
+    // `trendReadings` long, so a decline slow enough to stay inside BOTH other
+    // thresholds every single week is invisible to them. At a steady rate r the
+    // drop vs. a 4-back peak converges to 1-(1-r)^4, which stays under 30% for
+    // any r <= 8.56%/week. Measured: a steady 8.4%/week bleed takes the metric
+    // 1000 -> 10 over a year (-99%) and fires NOTHING. Comparing against the
+    // all-time peak closes that hole — at 5%/week it trips in ~13 weeks.
+    longTermDropPct: intFromEnv('INDEXATION_LONG_TERM_DROP_PCT', 50),
   };
 }
 
@@ -272,12 +282,26 @@ async function fetchPageMetrics(
   window: { start: string; end: string }
 ): Promise<{ pages: number; impressions: number; clicks: number }> {
   const ROW_LIMIT = 25_000;
+  // Hard cap on pagination. The loop otherwise only exits when a page returns
+  // fewer rows than requested, so any API misbehaviour that keeps returning full
+  // pages spins forever — verified: a stub returning 25,000 rows every time ran
+  // to startRow=1,475,000 without stopping. 20 pages = 500k rows, ~260x the
+  // current sitemap, so this can only trip on a genuine fault.
+  const MAX_PAGES = 20;
+  let iterations = 0;
   let startRow = 0;
   let pages = 0;
   let impressions = 0;
   let clicks = 0;
 
   for (;;) {
+    if (++iterations > MAX_PAGES) {
+      throw new Error(
+        `searchAnalytics pagination exceeded ${MAX_PAGES} pages ` +
+          `(${MAX_PAGES * ROW_LIMIT} rows) for ${property}. Aborting rather than ` +
+          'looping — this indicates an API fault, not a large site.'
+      );
+    }
     const res = await fetch(
       `${WEBMASTERS_BASE}/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
       {
@@ -430,15 +454,26 @@ export function evaluateAlarm(
   // old, the peak scrolls out and the alarm goes quiet at the new level. That is
   // deliberate: the open GitHub Issue is the durable record, and an alarm that
   // re-fires forever on a level change (including an intentional one) gets muted.
-  const trailing = prior.slice(-t.trendReadings);
+  const trailing = prior.slice(-Math.max(1, Math.trunc(t.trendReadings)));
   const trailingPeak = Math.max(...trailing.map((r) => r.pagesWithImpressions));
   const sustained = round1(pctDrop(trailingPeak, count));
 
+  // Unwindowed peak. Deliberately NOT scrolled, unlike the trailing peak.
+  const allTimePeak = Math.max(...prior.map((r) => r.pagesWithImpressions));
+  const longTerm = round1(pctDrop(allTimePeak, count));
+
   // Guard rail against crying wolf: on a tiny baseline, one page going quiet is
   // a double-digit percentage. Report the movement, but do not alarm.
-  if (previous.pagesWithImpressions < t.minBaseline) {
+  //
+  // Gated on the trailing PEAK, not on the previous reading. Gating on
+  // `previous` meant that once a collapse pushed the count under minBaseline the
+  // monitor was dead forever: it fired once, then every later reading — however
+  // catastrophic — reported "Below alarm baseline". Measured: 1900 -> 20 alarms,
+  // then 20 -> 10 -> 5 -> 1 -> 0 all report "none". The peak is the honest
+  // question ("was this ever a real site?"), not the most recent trough.
+  if (trailingPeak < t.minBaseline) {
     details.push(
-      `Baseline is only ${previous.pagesWithImpressions} pages (< minBaseline ` +
+      `Trailing peak is only ${trailingPeak} pages (< minBaseline ` +
         `${t.minBaseline}). Percentage moves are noise at this scale, so alarms ` +
         `are suppressed. Week-over-week move: ${wow > 0 ? `-${wow}` : `+${round1(-wow)}`}%.`
     );
@@ -454,6 +489,7 @@ export function evaluateAlarm(
 
   const wowTripped = wow > t.wowDropPct;
   const sustainedTripped = sustained > t.sustainedDropPct;
+  const longTermTripped = longTerm > t.longTermDropPct;
 
   details.push(
     `Week-over-week: ${previous.pagesWithImpressions} -> ${count} ` +
@@ -465,6 +501,11 @@ export function evaluateAlarm(
       `${count} (${sustained > 0 ? `-${sustained}` : `+${round1(-sustained)}`}%), ` +
       `threshold -${t.sustainedDropPct}% — ${sustainedTripped ? 'TRIPPED' : 'ok'}.`
   );
+  details.push(
+    `Vs. all-time peak of ${prior.length} reading(s): ${allTimePeak} -> ${count} ` +
+      `(${longTerm > 0 ? `-${longTerm}` : `+${round1(-longTerm)}`}%), ` +
+      `threshold -${t.longTermDropPct}% — ${longTermTripped ? 'TRIPPED' : 'ok'}.`
+  );
 
   // Crawlability vs. demand: impressions-per-page separates the two.
   const ipp = count > 0 ? current.impressions / count : 0;
@@ -472,7 +513,7 @@ export function evaluateAlarm(
     previous.pagesWithImpressions > 0
       ? previous.impressions / previous.pagesWithImpressions
       : 0;
-  if (wowTripped || sustainedTripped) {
+  if (wowTripped || sustainedTripped || longTermTripped) {
     details.push(
       `Impressions/page: ${round1(prevIpp)} -> ${round1(ipp)}. If this held roughly ` +
         'steady while the page count fell, suspect crawlability/indexing (check ' +
@@ -489,7 +530,7 @@ export function evaluateAlarm(
     );
   }
 
-  if (!wowTripped && !sustainedTripped) {
+  if (!wowTripped && !sustainedTripped && !longTermTripped) {
     return {
       severity: 'none',
       headline: `Stable: ${count} pages with impressions`,
@@ -500,10 +541,12 @@ export function evaluateAlarm(
     };
   }
 
-  const worst = Math.max(wow, sustained);
+  const worst = Math.max(wow, sustained, longTerm);
   const headline = wowTripped
     ? `Indexation proxy dropped ${wow}% week-over-week (${previous.pagesWithImpressions} -> ${count} pages)`
-    : `Indexation proxy is ${sustained}% below its ${trailing.length}-reading peak (${trailingPeak} -> ${count} pages)`;
+    : sustainedTripped
+      ? `Indexation proxy is ${sustained}% below its ${trailing.length}-reading peak (${trailingPeak} -> ${count} pages)`
+      : `Indexation proxy is ${longTerm}% below its all-time peak (${allTimePeak} -> ${count} pages) — slow sustained decline`;
 
   return {
     // A >60% move is the nomadlist-class signature; escalate the wording so the
@@ -711,6 +754,22 @@ export async function main(): Promise<void> {
     try {
       metrics = await fetchPageMetrics(token, property, window);
     } catch (err2) {
+      // Distinguish "API not turned on" from "no access to this property". Both
+      // surface as 403, but they send you to completely different consoles, and
+      // enabling the API is step 1 of setup — the easiest step to skip. Reporting
+      // this as a permissions problem sends the owner hunting in Search Console
+      // for a setting that is actually in Google Cloud.
+      const msg2 = err2 instanceof Error ? err2.message : String(err2);
+      if (/SERVICE_DISABLED|has not been used in project|is disabled|accessTokenScopeInsufficient/i.test(msg2)) {
+        throw new Error(
+          'The Google Search Console API is not enabled on this Cloud project (or ' +
+            'the key lacks the required scope). This is NOT a Search Console ' +
+            'permissions problem — enable the API here:\n' +
+            '  https://console.cloud.google.com/apis/library/searchconsole.googleapis.com\n' +
+            'then re-run. It can take a minute to propagate after enabling.\n\n' +
+            `Underlying error: ${msg2}`
+        );
+      }
       throw new Error(
         `Neither "${primary}" nor "${fallback}" is accessible to ` +
           `${key.client_email}.\n\n` +
@@ -737,6 +796,25 @@ export async function main(): Promise<void> {
     clicks: Math.round(metrics.clicks),
     sitemapUrlsSubmitted,
   };
+
+  // Refuse to persist a zero/garbage reading. A 200 OK whose body has no `rows`
+  // key — exactly what Search Console returns for a window with no data — would
+  // otherwise be recorded as a legitimate "0 pages" observation. That is the one
+  // failure mode that silently DISABLES this alarm instead of breaking it:
+  // the reading is append-only and committed to main, so it permanently poisons
+  // the baseline, and because the minBaseline gate reads the previous reading,
+  // the following run is suppressed too. Failing loudly is strictly better —
+  // the workflow's commit step then finds nothing to commit and the job goes red.
+  if (!Number.isInteger(metrics.pages) || metrics.pages <= 0) {
+    throw new Error(
+      `searchAnalytics returned ${metrics.pages} page(s) for ${property} over ` +
+        `${window.start}..${window.end}. Refusing to record a reading that would ` +
+        `poison the baseline for every future comparison.\n` +
+        `If the site genuinely has zero impressions this is correct behaviour and ` +
+        `you can ignore it; otherwise check the property identifier (currently ` +
+        `"${property}") and that the window is not entirely in the future.`
+    );
+  }
 
   const history = loadHistory(HISTORY_PATH);
   const verdict = evaluateAlarm(history.readings, current, thresholds);

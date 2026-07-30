@@ -433,13 +433,31 @@ sat in production undetected. This section is what stops the next one.
       `gh variable list`. `domain` means the property is registered as a DNS/domain
       property, so the script targets `sc-domain:michikanji.com` rather than the
       `https://www.…` URL-prefix form.
-      **Still pending: the first actual run**, so the `Indexed pages` baseline row below is
-      still blank. Deliberately held until the adversarial review of this script lands — it
-      has **never made a real API call**, and the specific risk being checked is whether a
-      failed or partial response can write a **bogus reading** into the history file. That
-      would silently poison the baseline for every later comparison, which is worse than
-      crashing: it disables the alarm without anyone noticing. Filling a table cell a few
-      minutes sooner is not worth that.
+      **✅ Adversarially reviewed before the first run — July 30, 2026, and the hold paid
+      for itself.** Wire-level correctness checked against the live Google docs and verified
+      empirically (the JWT was signed with a throwaway RSA key and confirmed to
+      *cryptographically verify*; request bodies, scopes, property encodings and pagination
+      limits all match the documented API). **Five real defects were found and fixed:**
+
+      | # | Defect | Why it mattered |
+      |---|---|---|
+      | **H3** | A `200 OK` with an empty body wrote a **bogus `0` reading** | This is the exact failure the run was held for. GSC returns `{}` for a window with no data; that was accepted as truth, appended, and committed. Because the baseline gate read the *previous* reading, one transient empty response blinded the alarm for **two more weeks** — silently. Now refuses to persist a non-positive count and fails loudly instead. |
+      | **H2** | A steady decline of **≤8.5%/week never fired anything** | The trailing peak is only 4 readings, so at rate `r` the drop converges to `1−(1−r)⁴`, under 30% for all `r ≤ 8.56%`. Measured: 8.4%/week takes the metric **1000 → 10 over a year (−99%) with zero notifications**. A slow deindexing — precisely what a *sustained* check exists for — walked straight through it. Added a third check against the **all-time** peak (>50%); the same bleed now fires at week 8. |
+      | **M3** | Once below `minBaseline` the alarm **could never fire again** | The gate read `previous`, so after a collapse pushed the count under 25 it reported "Below alarm baseline" forever: 1900→20 alarmed, then 20→10→5→1→0 were all silent. Now gated on the trailing **peak** — the honest question is "was this ever a real site?", not "was it small last week?". |
+      | **H1** | A disabled Cloud API was misreported as a **permissions** problem | `SERVICE_DISABLED` returns 403, which the fallback logic read as a wrong-property error, ending in "the service account has not been added as a user…". Enabling the API is step 1 of setup and the easiest to skip, so this sent the owner hunting in the wrong console. Now detected and reported with the Cloud Console link. |
+      | **M1** | Unbounded pagination loop | Exits only when a page returns fewer rows than requested; a stub returning full pages ran to `startRow=1,475,000` without stopping. Capped at 20 pages, and the workflow gained `timeout-minutes: 10` (it had none, so GitHub's 6-hour default applied). |
+
+      Regressions re-verified after the changes: normal week-to-week wobble stays silent, the
+      NomadList 3,540→262 collapse still alarms, and a 20→8 tiny-site move is still suppressed.
+      **Confirmed sound and left alone**: there is **no partial-write path** — 403, 429,
+      HTML-body-with-200, token-exchange failure and a mid-pagination 500 were all stubbed
+      and none wrote anything; and the evaluate-then-append ordering is correct, so a reading
+      is never compared against itself.
+      **Known and accepted**: a sustained collapse now notifies every week rather than going
+      quiet after four. That is deliberate — permanent silence was the worse failure — but it
+      trades toward alarm fatigue. It comments on the existing open issue rather than opening
+      new ones, so the noise is bounded.
+      **Still pending: the first actual run**, so the `Indexed pages` baseline row is blank.
 - [x] **P2-8 · Bing Webmaster Tools + IndexNow — adopted July 30, 2026 on owner approval.**
       *History worth keeping:* this was **not** in the agreed scope for the cycle (P2-1,
       P2-6, P2-7) and was built as unasked-for scope, then committed and pushed to `main`
