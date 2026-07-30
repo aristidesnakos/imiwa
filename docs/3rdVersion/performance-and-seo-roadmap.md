@@ -399,20 +399,16 @@ sat in production undetected. This section is what stops the next one.
       their disaster in time. `scripts/check-indexation.ts` +
       `.github/workflows/indexation-alarm.yml`, Mondays 07:00 UTC. Opens/comments on a
       GitHub Issue when the proxy count drops >20% WoW or >30% off its trailing peak.
-- [⏸] **P2-8 · Bing Webmaster Tools + IndexNow — BUILT, BRIEFLY MERGED, THEN BACKED OUT.
-      Awaiting owner decision.** This was **not requested** in this cycle (agreed scope was
-      P2-1, P2-6, P2-7). It was built as unasked-for scope and — through an agent error —
-      committed and pushed to `main` in [`94843bc`](https://github.com/aristidesnakos/imiwa/commit/94843bc)
-      without approval, then removed in the following commit.
-      **Why it was backed out rather than left in place**: merging it activates a **daily
-      cron that submits URLs to third-party services** (Bing, Yandex, Naver, Seznam) on the
-      owner's behalf. Recurring outward-facing automation is the owner's call, not an
-      implementation detail. **No submission ever fired** — the workflow was removed the
-      same day, before its first 06:00 UTC schedule.
-      *Nothing about the code is suspect* — IndexNow is a legitimate, widely-adopted
-      protocol and the committed key is genuinely not a credential (same trust model as a
-      Search Console HTML verification file). The objection is purely to activating it
-      unasked. To adopt it, restore the five files listed below.
+- [x] **P2-8 · Bing Webmaster Tools + IndexNow — adopted July 30, 2026 on owner approval.**
+      *History worth keeping:* this was **not** in the agreed scope for the cycle (P2-1,
+      P2-6, P2-7) and was built as unasked-for scope, then committed and pushed to `main`
+      in [`94843bc`](https://github.com/aristidesnakos/imiwa/commit/94843bc) through an
+      agent error **before** anyone approved activating a daily third-party submission. It
+      was backed out the same day, before its first 06:00 UTC schedule (no submission ever
+      fired), and then restored once the owner explicitly said yes. The code was never the
+      concern — IndexNow is a legitimate open protocol and the committed key is genuinely
+      not a credential, same trust model as a Search Console HTML verification file. The
+      concern was activating recurring outward-facing automation unasked.
       `scripts/submit-indexnow.ts` +
       `.github/workflows/indexnow-submit.yml`, daily 06:00 UTC. Diffs the live sitemap
       against `data/indexnow-state.json` and bulk-pushes only new/changed URLs to
@@ -423,15 +419,20 @@ sat in production undetected. This section is what stops the next one.
       `scripts/check-index-status.ts` reports actual per-URL index status on demand via
       `urlInspection.index.inspect`, so you know which handful of priority URLs deserve a
       manual "Request Indexing" click in Search Console.
-      **The five files removed from `main`**, recoverable in full from `94843bc`:
-      `scripts/submit-indexnow.ts`, `.github/workflows/indexnow-submit.yml`,
-      `lib/seo/indexnow.ts`, `public/<key>.txt`, and
-      `docs/learnings/search-indexing-automation.md` (the full playbook, including how to
-      port the scripts to another project). To adopt P2-8:
-      `git checkout 94843bc -- <those five paths>` and re-add the `submit-indexnow`
-      package.json script. If declined permanently, no action needed — they are gone from
-      the working tree and history keeps the record.
-      **`scripts/check-index-status.ts` was deliberately kept** even
+      **Two properties of the design that make a daily cron safe**, both reviewed before
+      activation: it can only submit URLs it read from **our own live sitemap** (never an
+      arbitrary list), and it **does not record state on failure**, so a failed URL retries
+      next run rather than being silently marked done. State lives in a committed
+      `data/indexnow-state.json`, so most days the diff is empty and the job is a no-op —
+      `lastmod` values are hand-bumped constants, not `new Date()`. The bot commit carries
+      `[skip ci]` so it triggers neither other workflows nor a redundant Vercel deploy.
+      **Bootstrap behaviour**: the state file starts absent, so the **first run submits all
+      ~1,906 URLs in a single POST**. That is intended and within IndexNow's 10,000-URL
+      per-request limit.
+      ⚠️ **Latent limit — no batching.** A single request carries the whole changed set. At
+      1,906 URLs there is ~5× headroom, but if the sitemap ever passes 10,000 this needs
+      chunking. Tied to **P4-4** (sitemap index), which triggers at a lower number anyway.
+      **`scripts/check-index-status.ts` is the Google-side counterpart** — kept even
       though it arrived with this batch — it is manual-only, makes no scheduled external
       calls, and directly addresses P2-7's central weakness by reporting *true* per-URL
       index status rather than the impression-based proxy.
