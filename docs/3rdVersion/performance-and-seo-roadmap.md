@@ -4,7 +4,7 @@
 **Started**: July 29, 2026
 **Baseline audit**: July 29, 2026, against `seoroast.com/nomadlist` as a reference teardown
 **Website**: michikanji.com
-**Last verified against code**: July 30, 2026 (P1 batch on `main`)
+**Last verified against code**: July 30, 2026 (P1 batch, [`b8a98fc`](https://github.com/aristidesnakos/imiwa/commit/b8a98fc), live in production)
 
 > **Purpose of this folder** — `docs/3rdVersion/` tracks how michikanji.com improves
 > along two axes at once:
@@ -229,6 +229,49 @@ robots.txt.body:   no /blog rules
 should adopt `SITE_URL` opportunistically): the seven `app/free-resources/**/page.tsx`
 JSON-LD blocks and `app/kanji/progress/page.tsx:10`.
 
+### ✅ P1 verified in production — July 30, 2026
+
+Commit [`b8a98fc`](https://github.com/aristidesnakos/imiwa/commit/b8a98fc) deployed. Every
+build-artefact assertion above reproduced against the live site, which is the check that
+matters — build output proves what we compiled, not what Vercel serves.
+
+```
+GET /kanji/日 — live JSON-LD
+  Organization.url            https://www.michikanji.com                 ← was apex
+  Organization.logo.url       …/assets/web-app-manifest-512x512.png      ← was 404
+  Article.author              MichiKanji  (+ url)                        ← was "Imiwa"
+  Article.datePublished       2025-10-20                                 ← was absent
+  Article.dateModified        2026-06-14                                 ← was absent
+  Article.image               ImageObject /opengraph-image 1200×630      ← was absent
+  Article.publisher           MichiKanji + logo ImageObject              ← was absent
+  Article.mainEntityOfPage    …/kanji/%E6%97%A5                          ← was absent
+  FAQPage                     3 questions        (unchanged, was already correct)
+  BreadcrumbList              3 items, all www   (unchanged, was already correct)
+
+apex (non-www) URL occurrences in served HTML:  none
+/assets/web-app-manifest-512x512.png            200 image/png
+/opengraph-image                                200 image/png
+
+GET /sitemap.xml   1906 <loc>  ← unchanged from the P0 baseline
+  distinct <lastmod>: 6 — 2026-01-10, 01-20, 01-24, 05-02, 06-14, 07-29
+GET /robots.txt    200, no /blog rules, no /_next/ block, no Crawl-delay
+```
+
+**Reproduction commands**, if any of this needs re-checking later:
+
+```bash
+curl -sS https://www.michikanji.com/sitemap.xml | grep -o '<lastmod>[^<]*' | sort -u
+curl -sS https://www.michikanji.com/robots.txt
+# apex leak check — expect no output
+curl -sS https://www.michikanji.com/kanji/%E6%97%A5 \
+  | grep -o 'https://michikanji\.com[^"'"'"' ]*' | grep -v 'www\.'
+```
+
+**Not yet done for P1**: the JSON-LD has not been through Google's hosted Rich Results
+Test. That is a manual, browser-based step. It is worth doing once — but see the caveat
+under P2-6 about whether `Article` is even the right type for a dictionary entry, because
+a "no rich results detected" verdict there would be a *modelling* finding, not a bug.
+
 ---
 
 ## P2 — Measurement & regression guards
@@ -257,6 +300,19 @@ sat in production undetected. This section is what stops the next one.
       orphan pages, redirect chains, and duplicate detection.
 - [ ] **P2-6 · Schema validation in CI** — Google Rich Results Test / Schema Markup
       Validator against one sampled kanji page. Would have caught P1-1 and P1-3.
+      *Implementation note:* the hosted Google validator is rate-limited and would make CI
+      flaky, so the CI check should be a **local structural validator** parsing the
+      prerendered `.next/server/app/kanji/<char>.html` — the technique used to verify P1.
+      Run the hosted tool manually instead. Two gotchas worth carrying over: the ld+json
+      blocks are not uniformly objects (one is a bare array, one uses `@graph`), and logo
+      URLs must be resolved to real files rather than string-matched, since P1-3 was a
+      *valid-looking URL that 404'd*.
+      *Open modelling question, distinct from validity:* `Article` rich results target
+      news/blog content, so a dictionary entry may never win one however complete the
+      markup is. P1-5 made the block valid and eligible, which was the right move
+      regardless. But if the Rich Results Test reports nothing for a kanji page, the answer
+      is probably to model these as `DefinedTerm` / `DefinedTermSet` rather than to add
+      more `Article` fields. Needs post-deploy data, not more code reading.
 
 ### Indexation alarm
 
