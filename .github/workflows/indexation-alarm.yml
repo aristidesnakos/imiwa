@@ -1,0 +1,102 @@
+name: Indexation Alarm
+
+# Weekly indexation-trend check against the Google Search Console API.
+#
+# Tracks the number of distinct pages that earned at least one Google Search
+# impression in a rolling 28-day window. That is a PROXY for the indexed-page
+# count, not the coverage-report figure — no Search Console API exposes the real
+# one. See the header of scripts/check-indexation.ts for the full rationale.
+#
+# Each reading is appended to data/indexation-history.json and committed back to
+# the repo, which is what makes the trend legible over time. A single
+# instantaneous number cannot detect a collapse; the previous reading is the
+# whole point.
+
+on:
+  # Mondays at 07:00 UTC. Weekly rather than daily because the underlying metric
+  # uses a 28-day window and Search Console data settles slowly — a daily run
+  # would just re-read almost the same number and add commit noise.
+  schedule:
+    - cron: '0 7 * * 1'
+  # Manual trigger for testing and for taking the very first baseline reading.
+  workflow_dispatch:
+
+# Serialise runs so two overlapping jobs can never race on the history file.
+concurrency:
+  group: indexation-alarm
+  cancel-in-progress: false
+
+jobs:
+  check-indexation:
+    name: Check indexed-page trend
+    runs-on: ubuntu-latest
+    permissions:
+      # Open / comment on GitHub Issues as the alarm notification.
+      issues: write
+      # Commit the updated data/indexation-history.json back to the repo.
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run indexation check
+        env:
+          # REQUIRED, provisioned by the repo owner. Full JSON service-account
+          # key (or that JSON base64-encoded). The script prints step-by-step
+          # setup instructions and fails the job if this is absent.
+          GSC_SERVICE_ACCOUNT_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_KEY }}
+
+          # Optional. Set GSC_PROPERTY_TYPE to "domain" if the Search Console
+          # property is a DNS/domain property (sc-domain:michikanji.com) rather
+          # than a URL-prefix property (https://www.michikanji.com/). Default is
+          # url-prefix. Or set GSC_PROPERTY to override the identifier outright.
+          # The script auto-retries the other form on 403/404 and tells you which
+          # one worked, so a wrong guess degrades to a warning, not a failure.
+          GSC_PROPERTY_TYPE: ${{ vars.GSC_PROPERTY_TYPE }}
+          GSC_PROPERTY: ${{ vars.GSC_PROPERTY }}
+
+          # Optional tuning. Defaults: 20 / 30 / 4 / 25 / 28 / 3.
+          INDEXATION_DROP_THRESHOLD_PCT: ${{ vars.INDEXATION_DROP_THRESHOLD_PCT }}
+          INDEXATION_SUSTAINED_DROP_PCT: ${{ vars.INDEXATION_SUSTAINED_DROP_PCT }}
+          INDEXATION_TREND_READINGS: ${{ vars.INDEXATION_TREND_READINGS }}
+          INDEXATION_MIN_BASELINE: ${{ vars.INDEXATION_MIN_BASELINE }}
+          INDEXATION_WINDOW_DAYS: ${{ vars.INDEXATION_WINDOW_DAYS }}
+          INDEXATION_LAG_DAYS: ${{ vars.INDEXATION_LAG_DAYS }}
+
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: pnpm exec tsx --tsconfig tsconfig.json scripts/check-indexation.ts
+
+      # Runs even if the check step failed, so a partial reading is never lost.
+      # `if: always()` is deliberate: the credential-missing path exits before
+      # writing anything, so there is simply nothing to commit in that case.
+      - name: Commit updated indexation history
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain data/indexation-history.json)" ]; then
+            echo "No change to data/indexation-history.json — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/indexation-history.json
+          # [skip ci] so this bot commit does not trigger other workflows or a
+          # redundant Vercel production deploy — the file ships no runtime code.
+          git commit -m "chore(seo): record weekly indexation reading [skip ci]"
+          # Rebase before pushing in case a human pushed while the job ran.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
