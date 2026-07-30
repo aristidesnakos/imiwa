@@ -399,6 +399,47 @@ sat in production undetected. This section is what stops the next one.
       their disaster in time. `scripts/check-indexation.ts` +
       `.github/workflows/indexation-alarm.yml`, Mondays 07:00 UTC. Opens/comments on a
       GitHub Issue when the proxy count drops >20% WoW or >30% off its trailing peak.
+      Zero new dependencies — the service-account JWT is signed with `node:crypto` and every
+      call is plain `fetch` (`scripts/lib/google-service-account-auth.ts`).
+
+      **⚠️ Read this before trusting the number — it is a proxy, not the real figure.** It
+      counts **distinct pages receiving ≥1 Google impression in a rolling 28-day window**
+      (`searchanalytics.query`, `dimensions: ['page']`). That is **not** the coverage
+      report's "indexed pages", and no Search Console API exposes that figure:
+      `searchanalytics.query` is *performance* data, so an indexed-but-never-served page is
+      invisible and this count runs structurally **lower** than true indexed count;
+      `urlInspection.index.inspect` gives true status but is capped at ~2,000 queries/day
+      per site, so one 1,906-URL sweep would burn the whole daily quota; and
+      `sitemaps.get`'s `contents[].indexed` is documented verbatim as *"Deprecated; do not
+      use"* (the script reads `submitted` as a denominator and ignores `indexed`).
+      **The limitation that matters: it moves with demand, not only crawlability.** Made
+      diagnosable rather than merely disclaimed — each reading also stores impressions and
+      clicks, and alarms report **impressions-per-page**: steady IPP with a falling page
+      count points at crawlability; both falling together points at demand.
+
+      **Thresholds**: >20% week-over-week, *and* >30% off the trailing 4-reading peak (a
+      15%/week bleed never trips the first check but compounds to −56% in a month), with a
+      25-page floor so "−50%" isn't one page going quiet. The 20% is reasoned from window
+      overlap — consecutive 28-day windows 7 days apart share 21 of 28 days, so the series
+      is heavily autocorrelated and a >20% move cannot be noise. **Not fitted to our own
+      data**; revisit after ~6 readings and tighten if it never fires.
+      **State lives in a committed `data/indexation-history.json`**, not the Actions cache —
+      cache entries are evicted after 7 days without access and the cadence is weekly, which
+      puts eviction exactly at the boundary and would silently degrade the alarm to "first
+      run, no baseline" forever.
+
+      **✅ Owner setup complete — July 30, 2026.** Secret `GSC_SERVICE_ACCOUNT_KEY` and repo
+      variable `GSC_PROPERTY_TYPE=domain` both set, verified present via `gh secret list` /
+      `gh variable list`. `domain` means the property is registered as a DNS/domain
+      property, so the script targets `sc-domain:michikanji.com` rather than the
+      `https://www.…` URL-prefix form.
+      **Still pending: the first actual run**, so the `Indexed pages` baseline row below is
+      still blank. Deliberately held until the adversarial review of this script lands — it
+      has **never made a real API call**, and the specific risk being checked is whether a
+      failed or partial response can write a **bogus reading** into the history file. That
+      would silently poison the baseline for every later comparison, which is worse than
+      crashing: it disables the alarm without anyone noticing. Filling a table cell a few
+      minutes sooner is not worth that.
 - [x] **P2-8 · Bing Webmaster Tools + IndexNow — adopted July 30, 2026 on owner approval.**
       *History worth keeping:* this was **not** in the agreed scope for the cycle (P2-1,
       P2-6, P2-7) and was built as unasked-for scope, then committed and pushed to `main`
