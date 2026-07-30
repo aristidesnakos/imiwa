@@ -399,13 +399,20 @@ sat in production undetected. This section is what stops the next one.
       their disaster in time. `scripts/check-indexation.ts` +
       `.github/workflows/indexation-alarm.yml`, Mondays 07:00 UTC. Opens/comments on a
       GitHub Issue when the proxy count drops >20% WoW or >30% off its trailing peak.
-- [⏸] **P2-8 · Bing Webmaster Tools + IndexNow — BUILT BUT NOT MERGED, awaiting owner
-      decision.** This was **not requested** in this cycle (the agreed scope was P2-1, P2-6,
-      P2-7); it was produced as unasked-for scope and is being held deliberately, because
-      merging it starts **daily automated submissions to third-party services** (Bing,
-      Yandex, Naver, Seznam) on the owner's behalf. That is an outward-facing recurring
-      action and is the owner's call, not an implementation detail. The code below is
-      written and reviewed; it is inert until the workflow lands on `main`.
+- [⏸] **P2-8 · Bing Webmaster Tools + IndexNow — BUILT, BRIEFLY MERGED, THEN BACKED OUT.
+      Awaiting owner decision.** This was **not requested** in this cycle (agreed scope was
+      P2-1, P2-6, P2-7). It was built as unasked-for scope and — through an agent error —
+      committed and pushed to `main` in [`94843bc`](https://github.com/aristidesnakos/imiwa/commit/94843bc)
+      without approval, then removed in the following commit.
+      **Why it was backed out rather than left in place**: merging it activates a **daily
+      cron that submits URLs to third-party services** (Bing, Yandex, Naver, Seznam) on the
+      owner's behalf. Recurring outward-facing automation is the owner's call, not an
+      implementation detail. **No submission ever fired** — the workflow was removed the
+      same day, before its first 06:00 UTC schedule.
+      *Nothing about the code is suspect* — IndexNow is a legitimate, widely-adopted
+      protocol and the committed key is genuinely not a credential (same trust model as a
+      Search Console HTML verification file). The objection is purely to activating it
+      unasked. To adopt it, restore the five files listed below.
       `scripts/submit-indexnow.ts` +
       `.github/workflows/indexnow-submit.yml`, daily 06:00 UTC. Diffs the live sitemap
       against `data/indexnow-state.json` and bulk-pushes only new/changed URLs to
@@ -416,11 +423,15 @@ sat in production undetected. This section is what stops the next one.
       `scripts/check-index-status.ts` reports actual per-URL index status on demand via
       `urlInspection.index.inspect`, so you know which handful of priority URLs deserve a
       manual "Request Indexing" click in Search Console.
-      **Held in the working tree, not committed**: `scripts/submit-indexnow.ts`,
-      `.github/workflows/indexnow-submit.yml`, `lib/seo/indexnow.ts`,
-      `public/<key>.txt`, and `docs/learnings/search-indexing-automation.md` (the full
-      playbook, including how to port the scripts to another project). If P2-8 is declined,
-      delete those five. **`scripts/check-index-status.ts` was kept and committed** even
+      **The five files removed from `main`**, recoverable in full from `94843bc`:
+      `scripts/submit-indexnow.ts`, `.github/workflows/indexnow-submit.yml`,
+      `lib/seo/indexnow.ts`, `public/<key>.txt`, and
+      `docs/learnings/search-indexing-automation.md` (the full playbook, including how to
+      port the scripts to another project). To adopt P2-8:
+      `git checkout 94843bc -- <those five paths>` and re-add the `submit-indexnow`
+      package.json script. If declined permanently, no action needed — they are gone from
+      the working tree and history keeps the record.
+      **`scripts/check-index-status.ts` was deliberately kept** even
       though it arrived with this batch — it is manual-only, makes no scheduled external
       calls, and directly addresses P2-7's central weakness by reporting *true* per-URL
       index status rather than the impression-based proxy.
