@@ -53,7 +53,7 @@
  * week-over-week move is meaningful rather than noise.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { SITE_URL } from '../lib/seo/site';
@@ -405,7 +405,18 @@ export function saveHistory(path: string, history: History): void {
   mkdirSync(dirname(path), { recursive: true });
   // Refresh the note so an old file can never carry a stale metric definition.
   const out: History = { ...history, metricNote: METRIC_NOTE };
-  writeFileSync(path, `${JSON.stringify(out, null, 2)}\n`, 'utf8');
+  // Write-then-rename rather than writing in place. A bare writeFileSync that is
+  // interrupted mid-write (Actions job cancellation, the 10-minute timeout, a
+  // runner dying) leaves a truncated file, which makes loadHistory's JSON.parse
+  // throw on EVERY subsequent weekly run until a human notices and repairs it by
+  // hand. An alarm that quietly stays broken is worse than no alarm, and this is
+  // an append-only file whose whole value is the history it already holds.
+  // renameSync is atomic on POSIX, so a reader sees either the old file or the
+  // new one and never a half-written one; the temp file is a sibling so the
+  // rename stays within one filesystem (across devices it would fail with EXDEV).
+  const tmp = `${path}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(out, null, 2)}\n`, 'utf8');
+  renameSync(tmp, path);
 }
 
 // ─── Alarm logic (pure — unit-testable without credentials) ──────────────────

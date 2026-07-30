@@ -35,6 +35,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Temp files from the atomic write-then-rename in scripts/submit-indexnow.ts and
+# scripts/check-indexation.ts. Only ever exist if a run was killed between the
+# write and the rename; the state file itself IS committed, the scratch is not.
+/data/*.json.tmp
+
 # reports
 /reports
 /lighthouse-report.html

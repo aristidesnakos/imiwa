@@ -94,11 +94,17 @@
  * budgets alone — they are already tight and provably stable.
  *
  * Some of these freeze known debt rather than endorse a healthy state:
- *   - /kanji CLS 0.157 (Google: "needs improvement") and TBT ~1.1s are both
- *     bad. The gate stops them getting worse; fixing them is separate work.
+ *   - /kanji TBT ~1.1s is bad, and unlike CLS it reproduces everywhere — the
+ *     runner measured 2305ms, worse still. Confirmed debt. The gate stops it
+ *     getting worse; fixing it is separate work.
  *   - /kanji/<char> LCP ~3s is "needs improvement" on the template that
  *     carries essentially all organic traffic.
- *   When those are fixed, ratchet the corresponding numbers DOWN.
+ *   NOT on that list: /kanji CLS. The 0.157 laptop figure did not reproduce on
+ *   the runner (0.000), so it is environment- or timing-dependent and remains
+ *   UNCONFIRMED — see the runner-baseline section above. Its 0.25 ceiling is a
+ *   loose guard against a real regression, not an admission of debt, so do not
+ *   go chasing a layout shift on the strength of this file.
+ *   When the confirmed ones are fixed, ratchet the corresponding numbers DOWN.
  *
  * RECALIBRATING: run `pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.js`
  * locally after a `pnpm build`, or read the medians off the temporary-public-storage
@@ -196,7 +202,10 @@ module.exports = {
           matchingUrlPattern: '^http://localhost:3000/kanji$',
           lcp: 4000, // ~2.88s baseline, ~1.4x
           fcp: 2200, // ~1.21s baseline
-          cls: 0.25, // 0.157 baseline — KNOWN DEBT; ceiling is the "poor" line
+          // 0.157 on the laptop but 0.000 on the runner: environment-dependent
+          // and UNCONFIRMED, NOT known debt. Ceiling sits on the "poor" line so
+          // whichever environment the gate runs in, it cannot flake.
+          cls: 0.25,
           tbt: 3500, // ~1.1s baseline, 1581ms worst run — KNOWN DEBT, x4 CPU noise
           scriptKb: 384, // 340 kB baseline, +13% — the real gate for this route
           totalKb: 660, // 573 kB baseline, +15%

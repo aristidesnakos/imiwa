@@ -83,6 +83,99 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: pnpm exec tsx --tsconfig tsconfig.json scripts/check-indexation.ts
 
+      # ── The alarm's own dead-man's switch ────────────────────────────────
+      # The script opens an Issue when indexation DROPS, but a thrown error just
+      # goes to main().catch -> exit 1, and a red run in the Actions tab is not a
+      # notification — nobody reads that tab on a Monday morning. So the failure
+      # modes that actually rot a monitor over time (service-account key expired,
+      # the service account removed from Search Console, the Search Console API
+      # disabled on the Cloud project, a quota change) would leave zero trace in
+      # the repo, and the alarm would sit dead for months looking fine.
+      #
+      # This lives in the workflow rather than in the script on purpose: a
+      # script-level handler cannot report failures that happen BEFORE the script
+      # runs — `pnpm install --frozen-lockfile` failing on a lockfile drift, tsx
+      # failing to resolve, checkout or setup-node failing on the runner. Those
+      # are exactly the slow-rot failures this guards against, and they are
+      # unreachable from inside the process that never started.
+      - name: Report that the alarm itself failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Explicit, rather than letting gh infer the repo from the git remote.
+          # This step must survive a failure in `Checkout repository` — that is
+          # one of the pre-script failures it exists to report — and in that case
+          # there is no local repo for gh to infer from.
+          GH_REPO: ${{ github.repository }}
+          # Distinct from the script's "[Indexation]" titles. An "alarm is broken"
+          # issue and an "indexation dropped" issue call for completely different
+          # triage, so they must never be mistaken for one another — but they
+          # share the indexation-alarm label so both surface in one filter.
+          ISSUE_TITLE: '🔧 [Indexation] Weekly indexation alarm failed to run'
+          ISSUE_LABEL: indexation-alarm
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # `gh issue create --label X` hard-fails if the label does not exist in
+          # the repo, which would make this step swallow the very alert it exists
+          # to raise. Create it on demand and ignore the "already exists" error.
+          gh label create "$ISSUE_LABEL" \
+            --color B60205 \
+            --description "Automated SEO indexation monitoring" \
+            >/dev/null 2>&1 || true
+
+          BODY=$(cat <<EOF
+          The weekly indexation alarm did not complete. **No reading was taken this week**, so
+          a real indexation collapse would currently go undetected.
+
+          **Failed run:** ${RUN_URL}
+
+          This issue means the monitor is broken, *not* that indexation dropped — a drop is
+          reported separately by \`scripts/check-indexation.ts\` under a different title.
+
+          ### Likely causes, cheapest to check first
+
+          1. \`GSC_SERVICE_ACCOUNT_KEY\` expired, was rotated, or was deleted from repo secrets.
+          2. The service account lost access to the Search Console property, or was downgraded
+             from "Full" to "Restricted" (Search Console > Settings > Users and permissions).
+          3. The Google Search Console API was disabled on the Cloud project, or its quota changed.
+          4. The job failed before the script ran at all — dependency install, tsx resolution, or
+             runner setup. Check which step is red in the run log above.
+
+          Re-run the workflow manually (Actions > Indexation Alarm > Run workflow) once fixed,
+          then close this issue.
+
+          _Opened automatically by \`.github/workflows/indexation-alarm.yml\`._
+          EOF
+          )
+
+          # Comment on the open issue instead of stacking a fresh one every Monday.
+          # A weekly duplicate pile is the fastest way to get an alarm muted — the
+          # same reasoning as notifyGitHub() in the script, kept consistent here.
+          #
+          # Matched on exact title, not on the label alone: the label is shared
+          # with the script's drop reports, so a label-only match would append
+          # "the alarm is broken" comments onto an open "indexation dropped"
+          # issue. `|| EXISTING=` keeps a transient API hiccup here from failing
+          # the step and swallowing the alert — worst case we open a duplicate.
+          EXISTING=$(gh issue list \
+            --state open \
+            --label "$ISSUE_LABEL" \
+            --limit 100 \
+            --json number,title \
+            --jq 'map(select(.title == $ENV.ISSUE_TITLE)) | .[0].number // empty') || EXISTING=
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "Commented on existing failure issue #${EXISTING}."
+          else
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label "$ISSUE_LABEL" \
+              --body "$BODY"
+          fi
+
       # Runs even if the check step failed, so a partial reading is never lost.
       # `if: always()` is deliberate: the credential-missing path exits before
       # writing anything, so there is simply nothing to commit in that case.

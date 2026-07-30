@@ -1,16 +1,89 @@
 name: Lighthouse CI
 
+# The `paths` filters below are not tidiness, they are what makes the push
+# trigger affordable. Unlike schema-check.yml, one run here is a ~1,900-page
+# production build plus nine Lighthouse collections (~30 min ceiling), so the
+# job must not fire on commits that cannot possibly move a metric. The list is
+# an allowlist of everything that ends up in the served bundle or in the
+# measurement itself; anything not named — docs/**, README.md, CLAUDE.md,
+# scripts/**, types/**, data/**, the other workflow files — is silently skipped.
+# Keep it that way: a gate that burns half an hour on a typo fix gets deleted.
+#
+# The list is spelled out twice rather than shared. That is not an oversight:
+# GitHub's workflow parser rejects YAML anchors and aliases, so schema-check.yml
+# duplicates its filter for the same reason. Edit both copies together — if they
+# drift, whether a commit gets measured depends on how it reached main.
 on:
   # Gate every PR into main: a perf regression should fail here, not in prod.
   pull_request:
     branches:
       - main
+    paths:
+      # Everything that is compiled into a shipped route: pages, client
+      # components, shared modules, and the hooks they pull in.
+      - 'app/**'
+      - 'components/**'
+      - 'lib/**'
+      - 'hooks/**'
+      # Runs on every request in front of the pages Lighthouse loads, so it
+      # lands directly on TTFB and therefore on LCP.
+      - 'middleware.ts'
+      - 'middlewares/**'
+      # Static assets are LCP candidates and CLS causes — an unoptimised image
+      # or a swapped font shows up in the scores with no code change at all.
+      - 'public/**'
+      # Build and styling config: these decide what the bundler emits and how
+      # much CSS ships, so a one-line change here can move the byte budgets.
+      - 'next.config.js'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - 'config.ts'
+      # Dependency changes are the single most common source of a silent
+      # bundle-size regression, and the lockfile is where a transitive bump
+      # actually becomes visible.
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      # The thresholds themselves, and this runner. Changing either changes the
+      # verdict, so both must be able to fail their own change.
+      - 'lighthouserc.js'
+      - '.github/workflows/lighthouse-ci.yml'
+  # Catch anything that reaches main through a route other than a PR. `main` is
+  # unprotected and this repo's actual habit is committing straight to it, so
+  # without this the gate would sit idle: the last fifteen commits of SEO and
+  # perf work landed with no PR at all, which is exactly the work this job is
+  # meant to be watching. Same allowlist as the PR trigger above, kept in sync
+  # by hand.
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'lib/**'
+      - 'hooks/**'
+      - 'middleware.ts'
+      - 'middlewares/**'
+      - 'public/**'
+      - 'next.config.js'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - 'config.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'lighthouserc.js'
+      - '.github/workflows/lighthouse-ci.yml'
   # Also allows manual triggering from the Actions tab (useful when
-  # recalibrating the thresholds in lighthouserc.js)
+  # recalibrating the thresholds in lighthouserc.js). Deliberately unfiltered:
+  # a hand-started run is someone asking for a measurement regardless of what
+  # changed, and `paths` does not apply to workflow_dispatch anyway.
   workflow_dispatch:
 
-# Nine Lighthouse runs plus a ~1,900-page static build is not cheap. If a PR
-# gets a new push, abandon the in-flight run for the superseded commit.
+# Nine Lighthouse runs plus a ~1,900-page static build is not cheap. Keyed on
+# github.ref, which is the PR's merge ref for pull_request and refs/heads/main
+# for push — so a new push to a PR abandons the in-flight run for the superseded
+# commit, and two commits landing on main in quick succession keep only the
+# later one. That second case is the point: on a branch that gets direct pushes,
+# the older run is measuring code that is already gone.
 concurrency:
   group: lighthouse-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
