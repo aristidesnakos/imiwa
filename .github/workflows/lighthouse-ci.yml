@@ -66,11 +66,21 @@ jobs:
 
       # The raw LHRs, kept so a failure can be diffed against a later run even
       # after the temporary-public-storage report expires.
+      #
+      # include-hidden-files IS REQUIRED and is not optional tidiness:
+      # upload-artifact@v4 treats any dot-prefixed path as hidden and silently
+      # excludes it. Without this the step "succeeds" with only a warning
+      # ("No files were found with the provided path") and uploads NOTHING —
+      # which is exactly when you need it, on a failing PR. Verified: run
+      # 30534096642 uploaded an empty artifact before this was added.
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-results
           path: .lighthouseci/
+          include-hidden-files: true
           retention-days: 14
-          if-no-files-found: warn
+          # `error`, not `warn`: a silently-empty artifact is worse than a
+          # failed step, because it looks like it worked until you need it.
+          if-no-files-found: error
