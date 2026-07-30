@@ -450,16 +450,19 @@ Record these on each review so the trend is legible:
 | Kanji page First Load JS | 123 kB | build output |
 | Heaviest route *(by build weight)* | `/kanji/progress`, 231 kB | build output |
 | Shared chunk baseline | 102 kB | build output |
-| **Worst route *(by measured perf)*** | **`/kanji`, Lighthouse 66** — see P3-8 | Lighthouse 12.1.0 |
-| Lab CWV `/` | LCP 2.6s · CLS 0.058 · TBT ~50ms · perf 96 | Lighthouse, median of 3 |
-| Lab CWV `/kanji` | LCP 2.9s · **CLS 0.157** · **TBT ~1.1s** · perf 66 | Lighthouse, median of 3 |
-| Lab CWV `/kanji/<char>` | LCP 2.4–3.3s · CLS 0.026 · TBT ~10–50ms · perf 92–98 | Lighthouse, median of 3 |
+| **Worst route *(by measured perf)*** | **`/kanji`, Lighthouse 65** — see P3-8 | LHCI run `30534096642` |
+| Lab CWV `/` | LCP 2.7s · CLS 0.000 · TBT 42ms · perf 96 | LHCI on `ubuntu-latest`, median of 3 |
+| Lab CWV `/kanji` | LCP 3.1s · CLS 0.000 · **TBT 2305ms** · perf 65 | LHCI on `ubuntu-latest`, median of 3 |
+| Lab CWV `/kanji/<char>` | LCP 2.4s · CLS 0.025 · TBT 57ms · perf 98 | LHCI on `ubuntu-latest`, median of 3 |
 | Field CWV | **none — no field source.** P2-2 declined; free route is the CrUX API | — |
 
-Two cautions on this table. The build's "First Load JS" and Lighthouse's transferred-script
+Three cautions on this table. The build's "First Load JS" and Lighthouse's transferred-script
 figure are **different metrics** — `/kanji` reports 184 kB in the build but transfers 340 kB,
-because prefetches and the search chunk are not counted in the former. And every performance
-row here is **lab, measured on Apple-silicon hardware**; none of it is real-user data.
+because prefetches and the search chunk are not counted in the former. Every performance row
+is **lab**, not real-user data, and there is now no field source at all. And CWV rows are
+quoted from the **CI runner**, not a laptop, deliberately: byte counts matched exactly across
+both, but **TBT roughly doubled and CLS disagreed entirely** (`/kanji` 0.157 local vs 0.000
+on the runner), so laptop CWV figures are not comparable — always re-measure in CI.
 
 ---
 
@@ -496,27 +499,36 @@ Surfaced by the P0 build and audit. None are urgent; all are real.
       known.** The P2-1 baselines (Lighthouse 12.1.0, mobile emulation, median of 3 runs,
       real `pnpm build` + `pnpm start`) put it well behind everything else:
 
-      | route | perf | LCP | CLS | TBT | script transferred |
-      |---|---|---|---|---|---|
-      | `/` | 96 | 2.6s | 0.058 | ~50ms | 222 kB |
-      | `/kanji/<char>` | 92–98 | 2.4–3.3s | 0.026 | ~10–50ms | 228 kB |
-      | **`/kanji`** | **66** | 2.9s | **0.157** | **~1.1s** | **340 kB** |
+      Confirmed on a **real GitHub runner** (run `30534096642`), which corrected part of the
+      initial local reading:
 
-      CLS 0.157 is in Google's "needs improvement" band and TBT ~1.1s is the worst number
-      anywhere in the app — and since P2-2 was declined, TBT is our only interaction-cost
-      signal, so this is unmonitored in the field. The 340 kB of transferred script is
-      roughly double the 184 kB the build reports as "First Load JS", because the page also
-      pulls a ~104 kB search chunk plus Next.js `<Link>` **prefetches** for
-      `/kanji/progress` and `/kanji/[character]`.
+      | route | perf | LCP | CLS *(runner / laptop)* | TBT *(runner / laptop)* | script |
+      |---|---|---|---|---|---|
+      | `/` | 96 | 2.7s | 0.000 / 0.058 | 42ms / ~50ms | 222 kB |
+      | `/kanji/<char>` | 98 | 2.4s | 0.025 / 0.026 | 57ms / ~10–50ms | 228 kB |
+      | **`/kanji`** | **65** | 3.1s | 0.000 / 0.157 | **2305ms** / ~1.1s | **340 kB** |
+
+      **The confirmed problem is TBT, and it is worse than local measurement suggested**:
+      2305 ms on the runner, roughly 2× the laptop figure and by far the worst number
+      anywhere in the app. Since P2-2 was declined, TBT is our **only** interaction-cost
+      signal, so this is entirely unmonitored in the field.
+      **Correction — CLS is *not* confirmed debt.** An earlier draft of this item called
+      CLS 0.157 "needs improvement" debt based on the laptop run. The runner measured
+      **0.000** for the same route (and 0.000 vs 0.058 on `/`), so the shift is
+      environment- or timing-dependent, not an established defect. Investigate before
+      "fixing" it; do not cite 0.157 as a known number.
+      The 340 kB of transferred script is roughly double the 184 kB the build reports as
+      "First Load JS" — the page also pulls a ~104 kB search chunk plus Next.js `<Link>`
+      **prefetches** for `/kanji/progress` and `/kanji/[character]`. Byte figures were
+      **identical on runner and laptop**, so this one is solid.
       This matters more than `/kanji/progress` (P3-4): `/kanji` is indexable, is the entry
       point to the ~1,900 detail pages, and its CLS is a page-experience signal, whereas
       `/kanji/progress` is now `noindex`.
-      Likely wins: narrow the `<Link>` prefetching, code-split the search chunk, and reserve
-      layout space for whatever shifts (0.157 on a search page is usually results rendering
-      into unreserved height).
-      ⚠️ P2-1's ceilings for this route (CLS 0.25, TBT 3500ms) **freeze this debt rather
-      than endorse it** — they are set at the "poor" boundary purely so the gate passes on
-      today's `main`. Ratchet them down as this is fixed.
+      Likely wins, in order: narrow the `<Link>` prefetching and code-split the search chunk
+      — both attack the 340 kB, which is the most plausible cause of a 2.3s TBT.
+      ⚠️ P2-1's TBT ceiling for this route (3500 ms) **freezes this debt rather than endorses
+      it**, and the runner baseline of 2305 ms leaves only ~1.5× headroom, so it is not much
+      of a gate. Ratchet it down as the script weight comes down.
 
 ---
 

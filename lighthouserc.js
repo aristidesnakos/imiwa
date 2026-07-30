@@ -58,12 +58,40 @@
  *     not a precision instrument. The byte budget is what catches the subtle
  *     stuff.
  *
- * !! FIRST-RUN CALIBRATION: the TBT and LCP ceilings assume a GitHub-hosted
- * runner is up to ~2.5x slower than the laptop these baselines came from,
- * which could not be measured locally. After the first handful of real CI
- * runs, read the actual medians out of the uploaded report and RATCHET THESE
- * DOWN to runner-baseline + ~40%. Until then they are deliberately generous,
- * because a flaky gate is worse than a loose one.
+ * ---------------------------------------------------------------------------
+ * ACTUAL GITHUB RUNNER BASELINE — measured, run 30534096642, 2026-07-30
+ * ---------------------------------------------------------------------------
+ * ubuntu-latest, workflow_dispatch on main, median LHR of 3 runs per URL:
+ *
+ *              perf   LCP     FCP    CLS     TBT     script  total
+ *   /          96     2747    917    0.000   42      222 kB  372 kB
+ *   /kanji     65     3056    1219   0.000   2305    340 kB  572 kB
+ *   /kanji/日  98     2422    915    0.025   57      228 kB  362 kB
+ *
+ * What this told us, versus the laptop numbers above:
+ *
+ *   - BYTE BUDGETS ARE EXACTLY IDENTICAL on runner and laptop (222/340/228 kB
+ *     script). That settles it: they are fully deterministic and are the gate
+ *     to trust.
+ *   - LCP barely moved (2747 vs 2603, 3056 vs 2874, 2422 vs 2432). The 4x CPU
+ *     multiplier does not dominate LCP here, so the ~1.4x ceilings have far
+ *     more headroom than they need.
+ *   - TBT on /kanji DOUBLED: 2305ms on the runner vs ~1100ms locally (~2.1x,
+ *     close to the assumed 2.5x). It passed the 3500ms ceiling with ~1.5x
+ *     headroom. A tighter ceiling picked from laptop data alone WOULD have
+ *     failed this run. The generous choice was correct.
+ *   - CLS DISAGREES BETWEEN ENVIRONMENTS: /kanji measured 0.157 locally but
+ *     0.000 on the runner, and / measured 0.058 locally but 0.000. So the
+ *     /kanji layout shift is NOT confirmed debt — it is environment- or
+ *     timing-dependent. Do not treat 0.157 as a known defect (P3-8 is
+ *     corrected accordingly).
+ *
+ * !! STILL NOT CALIBRATED, deliberately. The above is a SINGLE runner sample
+ * (n=1). Ratcheting the noisiest metric on one observation is precisely how a
+ * gate becomes flaky, so nothing was tightened yet. After ~5 real runs, read
+ * the spread and THEN ratchet LCP toward runner-baseline + ~40% (roughly
+ * 3900/4300/3400) and TBT once its true variance is known. Leave the byte
+ * budgets alone — they are already tight and provably stable.
  *
  * Some of these freeze known debt rather than endorse a healthy state:
  *   - /kanji CLS 0.157 (Google: "needs improvement") and TBT ~1.1s are both
