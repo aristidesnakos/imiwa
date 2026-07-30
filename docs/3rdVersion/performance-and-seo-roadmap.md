@@ -1,10 +1,10 @@
 # Performance & SEO Roadmap (3rd Version)
 
-**Status**: 🚧 Active — P0 shipped and verified in production, P1–P4 open
+**Status**: 🚧 Active — P0 and P1 shipped and verified, P2–P4 open
 **Started**: July 29, 2026
 **Baseline audit**: July 29, 2026, against `seoroast.com/nomadlist` as a reference teardown
 **Website**: michikanji.com
-**Last verified against code**: July 29, 2026 (commit `07cc952` on `main`)
+**Last verified against code**: July 30, 2026 (P1 batch on `main`)
 
 > **Purpose of this folder** — `docs/3rdVersion/` tracks how michikanji.com improves
 > along two axes at once:
@@ -31,7 +31,7 @@ migration. We audited michikanji.com against every failure mode it identified.
 | Broken / looping 301s | ✅ Clean — apex → `www` in one absolute permanent hop |
 | Missing robots.txt | ✅ Present |
 | Title in `<body>`, JS-swapped, or duplicated | ✅ Clean — one SSR `<title>` in `<head>`, one `<h1>` |
-| Brand / entity inconsistency | ❌ **We had this** — see P1-1, P1-2 |
+| Brand / entity inconsistency | ❌ **We had this** — fixed in P1-1, P1-2, P1-3 |
 | Indexation collapse | ⚠️ Different cause, same risk — see P0-1 |
 
 The rate limiter (`middlewares/rateLimiter.ts`) is scoped to two form endpoints only
@@ -156,37 +156,78 @@ curl -sSI https://www.michikanji.com/kanji/%E6%97%A5 | grep -iE 'x-vercel-cache|
 
 ---
 
-## P1 — Brand entity & crawl signals
+## P1 — Brand entity & crawl signals — Shipped ✅
 
 This is the cluster that maps directly onto NomadList's brand-perception failure. Cheap
 to fix, and it is what makes Google treat us as one coherent entity.
 
-- [ ] **P1-1 · Article schema credits the wrong brand.** `app/kanji/[character]/page.tsx:141`
-      sets `author.name: 'Imiwa'` on all ~1,900 pages. Should be `MichiKanji`.
-      *(`Imiwa` is the git repo name — it leaked into the schema.)*
-- [ ] **P1-2 · JSON-LD entity URLs use the apex, canonicals use `www`.**
-      `app/layout.tsx` hardcodes `https://michikanji.com` at lines **56, 57, 66, 71, 74,
-      79, 87** — `Organization.url`, `logo`, `WebSite.url`, `publisher.url`,
-      `publisher.logo`, the `SearchAction` target, and `EducationalOrganization.url`.
-      All of those 301 to `www`. Derive from `config.domainName` instead of hardcoding.
-- [ ] **P1-3 · `logo.png` does not exist.** Every `Organization` / `publisher` logo in the
-      JSON-LD points at `https://michikanji.com/logo.png`, which **404s** (no
-      `public/logo.png` in the repo). A publisher logo is required for several rich
-      results and feeds knowledge-panel eligibility. Either ship the asset or drop the
-      property — a 404 is worse than absent.
-- [ ] **P1-4 · Sitemap `lastmod` is untrustworthy.** `app/sitemap.xml/route.ts:33,40` stamp
-      `new Date().toISOString()` onto **every** URL, so all ~1,900 claim to have changed
-      at the same instant. Google demotes and eventually ignores unreliable `lastmod`,
-      which works directly against the crawl-efficiency goal of P0-1. Use a build-time
-      constant or a content-derived timestamp.
-      *(Note: the route builds as `○ Static`, so this is baked per-deploy rather than
-      per-request — less bad than it first appeared, but still one identical value for
-      every URL.)*
-- [ ] **P1-5 · Article schema is not rich-result eligible.** Missing `datePublished`,
-      `dateModified`, `image`, and `publisher`. As written it earns nothing. The sibling
-      `FAQPage` and `BreadcrumbList` blocks are correct — leave them alone.
-- [ ] **P1-6 · Dead `/blog` rules in robots.txt.** Lines 8–9 `Allow: /blog`, `/blog/*`
-      reference routes that do not exist. Remove them, or build the blog (see P4-1).
+Shipped July 30, 2026 as one commit. All six items verified against the build output
+(see "P1 verified" below).
+
+New in this batch: **`lib/seo/site.ts`** — the single source of truth for absolute URLs,
+brand assets, and content timestamps in structured data. Every value below derives from
+`config.domainName` or a hand-maintained date constant, so the apex/`www` split and the
+moving-`lastmod` problem cannot recur by copy-paste.
+
+- [x] **P1-1 · Article schema credited the wrong brand.** `app/kanji/[character]/page.tsx`
+      set `author.name: 'Imiwa'` on all ~1,900 pages. *(`Imiwa` is the git repo name — it
+      leaked into the schema.)* Now `SITE_NAME` (`MichiKanji`) with a `url`.
+- [x] **P1-2 · JSON-LD entity URLs used the apex while canonicals used `www`.**
+      `app/layout.tsx` hardcoded `https://michikanji.com` in seven places —
+      `Organization.url`, `logo`, `WebSite.url`, `publisher.url`, `publisher.logo`, the
+      `SearchAction` target, and `EducationalOrganization.url`. All of them 301 to `www`,
+      so we were asserting our own entity at a redirecting hostname. All now derive from
+      `SITE_URL`. The kanji page's own hardcoded `baseUrl` (used by `BreadcrumbList`) was
+      already on `www` but is now derived too.
+- [x] **P1-3 · `logo.png` did not exist.** Every `Organization` / `publisher` logo pointed
+      at `/logo.png`, which **404'd** — there is no `public/logo.png`. Repointed at
+      `public/assets/web-app-manifest-512x512.png` (the Tan brand mark, verified `200` in
+      production) and upgraded from a bare string to a full `ImageObject` with
+      `width`/`height`. A 404 logo is worse than an absent one.
+- [x] **P1-4 · Sitemap `lastmod` was untrustworthy.** `app/sitemap.xml/route.ts` stamped
+      `new Date().toISOString()` onto **every** URL, so all ~1,900 claimed to have changed
+      at the same instant *and the instant moved on every deploy*. Google ignores `lastmod`
+      it cannot trust, which works directly against the crawl-efficiency goal of P0-1.
+      Replaced with hand-maintained dates taken from git history: a `STATIC_PAGES` table
+      carrying each page's real last-changed date, and `KANJI_CONTENT_LAST_MODIFIED`
+      (`2026-06-14`, commit `ba5c8fd`, the last kanji-data edit) for the kanji pages.
+      *Known limitation:* the 1,893 kanji URLs still share one date. That is accurate —
+      the data genuinely changed once, on that date — and the important property is that
+      it no longer moves per deploy. Per-kanji dates would need per-kanji provenance in
+      `lib/constants/*`, which we do not have.
+- [x] **P1-5 · Article schema was not rich-result eligible.** Added `datePublished`
+      (`2025-10-20`, commit `dab4476` — dictionary launch), `dateModified`, `image` (the
+      1200×630 `/opengraph-image`, verified `200 image/png`), `publisher` with the logo
+      `ImageObject`, and `mainEntityOfPage`. The sibling `FAQPage` and `BreadcrumbList`
+      blocks were already correct and were left alone.
+- [x] **P1-6 · Dead `/blog` rules in robots.txt.** `Allow: /blog`, `/blog/*` referenced
+      routes that do not exist. Removed. *(Note: this means P4-1 must add them back when
+      the blog ships — `Allow` under a permissive `User-agent: *` was a no-op anyway.)*
+
+### ✅ P1 verified — July 30, 2026
+
+Typecheck clean, `pnpm build` exit 0, **1,924 static pages / 1,894 prerendered kanji paths
+— unchanged from the P0 baseline.** Verified in the build artefacts, not just the source:
+
+```
+prerendered /kanji/日 JSON-LD:
+  Organization.url            https://www.michikanji.com          ← was apex
+  Organization.logo.url       .../assets/web-app-manifest-512x512.png  ← was 404
+  Article.author.name         MichiKanji                          ← was "Imiwa"
+  Article.datePublished       2025-10-20                          ← was absent
+  Article.dateModified        2026-06-14                          ← was absent
+  Article.image / publisher   present                             ← were absent
+
+grep for apex-only or logo.png references across .next/server/app/:  none
+
+sitemap.xml.body:  1906 <loc>  (unchanged)
+  distinct <lastmod> values: 6   ← was 1, and it moved every deploy
+robots.txt.body:   no /blog rules
+```
+
+**Still hardcoding `https://www.michikanji.com`** (correct host, so not a bug — but they
+should adopt `SITE_URL` opportunistically): the seven `app/free-resources/**/page.tsx`
+JSON-LD blocks and `app/kanji/progress/page.tsx:10`.
 
 ---
 
@@ -323,7 +364,7 @@ remains valid and is captured as **P4-2**. The branch is not the only way to get
 ## Sequencing
 
 1. ~~**Confirm P0**~~ — ✅ done July 30, 2026. The CDN is serving prerendered HTML.
-2. **P1 as one batch** — six small, mechanical, related fixes. One commit.
+2. ~~**P1 as one batch**~~ — ✅ done July 30, 2026. Six fixes, one commit.
 3. **P2-1, P2-2, P2-7** — Lighthouse CI, Speed Insights, and the indexation alarm. Do
    these *before* P3/P4 so later work is measured rather than assumed.
 4. **P3** opportunistically, **P4-1** as the next real project.

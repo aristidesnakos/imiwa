@@ -4,6 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getSEOTags } from '@/lib/seo';
 import { getOptimizedKanjiMetadata, getPrimaryMeaning } from '@/lib/seo/kanji-optimization';
+import {
+  SITE_URL,
+  SITE_NAME,
+  SITE_LOGO,
+  SITE_OG_IMAGE,
+  KANJI_CONTENT_PUBLISHED,
+  KANJI_CONTENT_LAST_MODIFIED,
+} from '@/lib/seo/site';
 import { Badge } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
@@ -118,8 +126,7 @@ export default async function KanjiDetailPage({ params }: Props) {
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
 
-  const baseUrl = 'https://www.michikanji.com';
-  const pageUrl = `${baseUrl}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
+  const pageUrl = `${SITE_URL}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
 
   // Build a human-readable readings string used in FAQ answers.
   const readingsAnswer = [
@@ -136,9 +143,35 @@ export default async function KanjiDetailPage({ params }: Props) {
     '@type': 'Article',
     headline: `${kanjiData.kanji} ${primaryMeaning} Kanji – Stroke Order and Meaning`,
     description: `Learn the ${primaryMeaning} kanji ${kanjiData.kanji} with interactive stroke order diagram, readings, and meaning. JLPT ${kanjiData.level}.`,
+    // Google requires all four of these for Article to be rich-result eligible;
+    // without them the block is inert markup.
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': pageUrl,
+    },
+    datePublished: KANJI_CONTENT_PUBLISHED,
+    dateModified: KANJI_CONTENT_LAST_MODIFIED,
+    image: {
+      '@type': 'ImageObject',
+      url: SITE_OG_IMAGE.url,
+      width: SITE_OG_IMAGE.width,
+      height: SITE_OG_IMAGE.height,
+    },
     author: {
       '@type': 'Organization',
-      name: 'Imiwa',
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: SITE_LOGO.url,
+        width: SITE_LOGO.width,
+        height: SITE_LOGO.height,
+      },
     },
     mainEntity: {
       '@type': 'Thing',
@@ -191,13 +224,13 @@ export default async function KanjiDetailPage({ params }: Props) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: baseUrl,
+        item: SITE_URL,
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Kanji Dictionary',
-        item: `${baseUrl}/kanji`,
+        item: `${SITE_URL}/kanji`,
       },
       {
         '@type': 'ListItem',
