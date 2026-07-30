@@ -93,8 +93,13 @@ export function parseSitemap(xml: string): SitemapEntry[] {
     if (!locMatch) continue;
     entries.push({
       loc: locMatch[1].trim(),
-      // A sitemap entry missing <lastmod> is still valid; treat it as always-changed
-      // (empty string never matches a previously-recorded value) rather than skip it.
+      // A sitemap entry missing <lastmod> is still valid, so keep it rather than
+      // skip it. NOTE: an earlier comment here claimed the empty string makes such
+      // an entry "always changed" — that is FALSE, and was verified false: '' is
+      // recorded into state like any other value and thereafter compares equal, so
+      // the URL is submitted exactly once and then never again however much it
+      // changes. Currently latent — all 1,906 live sitemap entries carry a
+      // <lastmod>, and app/sitemap.xml/route.ts always emits one.
       lastmod: lastmodMatch ? lastmodMatch[1].trim() : '',
     });
   }
@@ -178,8 +183,45 @@ async function submitToIndexNow(payload: IndexNowPayload): Promise<{ ok: boolean
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify(payload),
+    // Without this, a stalled endpoint blocks on undici's ~300s header +
+    // ~300s body defaults and burns ten minutes of runner time.
+    signal: AbortSignal.timeout(30_000),
   });
   return { ok: res.ok, status: res.status };
+}
+
+/**
+ * Confirm the key file is actually reachable and correct BEFORE submitting.
+ *
+ * IndexNow authenticates by fetching `keyLocation` and comparing its contents to
+ * `key`. If that 404s the whole batch is rejected. This is not hypothetical: the
+ * key file was already absent from production once (added, reverted, re-added),
+ * and during that window every run would have failed with a generic error. A
+ * two-second GET converts that into an unmistakable message.
+ */
+async function preflightKeyFile(siteUrl: string, key: string): Promise<void> {
+  const url = `${siteUrl}/${key}.txt`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+  } catch (err) {
+    throw new Error(`Could not fetch the IndexNow key file at ${url}: ${err instanceof Error ? err.message : err}`);
+  }
+  if (!res.ok) {
+    throw new Error(
+      `IndexNow key file ${url} returned ${res.status}, so IndexNow would reject ` +
+        `this submission with 403.\nIt must be deployed and publicly reachable. ` +
+        `Confirm public/${key}.txt exists on the deployed commit — a production ` +
+        `deploy that predates the file will 404 here.`
+    );
+  }
+  const body = (await res.text()).trim();
+  if (body !== key) {
+    throw new Error(
+      `IndexNow key file ${url} is reachable but its contents do not match the key.\n` +
+        `  expected: ${key}\n  actual:   ${body.slice(0, 120)}`
+    );
+  }
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -188,7 +230,10 @@ async function main(): Promise<void> {
   console.log('\n═══ MichiKanji IndexNow Submit ═══');
   console.log(`Sitemap: ${SITE_URL}/sitemap.xml`);
 
-  const res = await fetch(`${SITE_URL}/sitemap.xml`);
+  await preflightKeyFile(SITE_URL, INDEXNOW_KEY);
+  console.log(`Key file: ${SITE_URL}/${INDEXNOW_KEY}.txt — 200, contents match.`);
+
+  const res = await fetch(`${SITE_URL}/sitemap.xml`, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) {
     throw new Error(`Failed to fetch sitemap (${res.status}). Is the site up?`);
   }
@@ -211,6 +256,19 @@ async function main(): Promise<void> {
     return;
   }
 
+  // IndexNow 422s the ENTIRE batch if any URL is not under `host`. The sitemap's
+  // base is `process.env.NEXT_PUBLIC_APP_URL || SITE_URL`, so if that env var is
+  // ever set to a preview or apex host the two silently diverge and every run
+  // fails. Catch it here with a precise message instead.
+  const foreign = changed.filter((e) => !e.loc.startsWith(`${SITE_URL}/`) && e.loc !== SITE_URL);
+  if (foreign.length > 0) {
+    throw new Error(
+      `${foreign.length} sitemap URL(s) are not under ${SITE_URL}, which would make ` +
+        `IndexNow reject the whole batch with 422. First: ${foreign[0].loc}\n` +
+        'Most likely NEXT_PUBLIC_APP_URL is set to a different host than config.domainName.'
+    );
+  }
+
   const payload = buildIndexNowPayload(SITE_URL, INDEXNOW_KEY, changed.map((e) => e.loc));
   console.log(`\nSubmitting ${payload.urlList.length} URL(s) to ${INDEXNOW_ENDPOINT}...`);
   changed.slice(0, 10).forEach((e) => console.log(`  • ${e.loc} (lastmod ${e.lastmod || '—'})`));
@@ -226,6 +284,21 @@ async function main(): Promise<void> {
       `IndexNow submission failed (${status}). Verify ${SITE_URL}/${INDEXNOW_KEY}.txt ` +
         `is publicly reachable and returns exactly "${INDEXNOW_KEY}".`
     );
+  }
+
+  // Only 200 means "accepted". 202 means key validation is still PENDING, and
+  // `res.ok` is true for both — so recording state on 202 would permanently mark
+  // URLs as submitted that IndexNow may then silently drop when validation
+  // fails. That is the mirror image of the runaway-resubmission risk and far
+  // harder to notice: submissions just quietly stop happening. Retry next run.
+  if (status !== 200) {
+    console.warn(
+      `\n⚠️  Status ${status} means the submission was queued but key validation is ` +
+        'still pending, so acceptance is unconfirmed. Deliberately NOT recording ' +
+        'state — these URLs will be retried on the next run. If this persists, the ' +
+        `key file at ${SITE_URL}/${INDEXNOW_KEY}.txt is likely not validating.`
+    );
+    return;
   }
 
   const nextState: IndexNowState = { ...state };
