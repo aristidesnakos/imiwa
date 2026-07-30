@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "metricNote": "pagesWithImpressions = distinct pages with >=1 Google Search impression in the window, from searchanalytics.query (dimensions: [page]). This is a PROXY for indexed pages and is structurally lower than the Search Console coverage report figure, which no Search Console API exposes. See scripts/check-indexation.ts.",
+  "readings": []
+}

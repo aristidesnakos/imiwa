@@ -281,12 +281,63 @@ sat in production undetected. This section is what stops the next one.
 
 ### Continuous — runs on every PR
 
-- [ ] **P2-1 · Lighthouse CI** (`@lhci/cli`) as a GitHub Action, with assertions on LCP /
+- [x] **P2-1 · Lighthouse CI** (`@lhci/cli`) as a GitHub Action, with assertions on LCP /
       INP / CLS and a JS bundle budget. Fails the PR *before* a regression ships. This is
-      the single highest-value item in P2.
-- [ ] **P2-2 · Vercel Speed Insights** for **field** Core Web Vitals. DataFast gives us
-      traffic; this gives us real-user performance data, which is what actually feeds
-      page-experience signals. Different datasets — we need both.
+      the single highest-value item in P2. **Shipped July 30, 2026** —
+      `.github/workflows/lighthouse-ci.yml` + `lighthouserc.js`, on `pull_request` → `main`
+      plus `workflow_dispatch`. `@lhci/cli@0.14.0` via pinned `pnpm dlx`, so **no
+      devDependency** (it pulls ~290 transitive packages nothing else here needs).
+      Verified with **27 real Lighthouse runs** locally (3 URLs × 3 runs × 3 collections),
+      plus a negative test with impossible thresholds confirming every assertion can
+      actually fail and that each `assertMatrix` pattern matches only its intended route.
+      **Two implementation details that were load-bearing, worth not re-discovering:**
+      `aggregationMethod: 'median'` is set explicitly on every assertion — LHCI's default
+      is `optimistic`, which for a `maxNumericValue` assertion takes the **fastest** of the
+      3 runs and would wave regressions through. And `startServerReadyPattern: 'Ready in'`
+      is required, because `next start` prints `✓ Ready in 354ms` while LHCI's default
+      pattern is lowercase `/listen|ready/` and never matches.
+      **On INP**: lab Lighthouse cannot measure it — there is no such audit. TBT is the
+      proxy, and since P2-2 was reverted it is now our *only* interaction-cost signal.
+      ⚠️ **Thresholds need one calibration pass.** They were measured on Apple-silicon
+      hardware; mobile emulation applies a 4× CPU multiplier, so runner/laptop differences
+      are amplified 4×. LCP and TBT ceilings assume a runner up to ~2.5× slower and are
+      deliberately generous — **a flaky gate gets switched off and stops guarding.** The
+      byte budgets (~13% headroom) are the tight, non-flaky gate; they came out
+      **byte-identical across all 27 runs**. After a few real CI runs, ratchet TBT/LCP down
+      to runner-baseline + ~40%. Run via `workflow_dispatch` once before relying on it.
+- [~] **P2-2 · Vercel Speed Insights — implemented, then deliberately reverted.**
+      **Decision (July 30, 2026): not adopted.** Owner does not want a paid add-on. Recorded
+      here rather than deleted, because the *goal* (field Core Web Vitals) is still open and
+      the next person will otherwise re-propose the same tool.
+
+      *First, a correction to how this item was originally justified.* It read "DataFast
+      gives traffic; this gives real-user CWV — we need both", which understated the overlap.
+      Accurate picture:
+      - **DataFast is not part of this tradeoff at all** — revenue/traffic attribution,
+        cookieless, <1 kB, and **no CWV whatsoever**.
+      - **Search Console genuinely overlaps.** Its Core Web Vitals report *is* real field
+        data. The case for a paid tool on top has to rest on CrUX's limits, not on DataFast.
+
+      **Cost, for the record**: free on Hobby (one project, 10,000 data points/month, then
+      recording pauses until the next day); **$10/project/month on Pro**, plus $0.65 per
+      additional 10,000 events. So this is only a spend decision on Pro.
+
+      **Why Lighthouse CI (P2-1) is a defensible substitute.** P2 exists to *catch
+      regressions*, and for that purpose lab beats field: LHCI gates the PR **before** the
+      regression ships, whereas field data surfaces it weeks later, after users already
+      absorbed it. LHCI covers LCP, CLS, TBT and bundle budgets deterministically.
+      **The honest gap**: lab cannot measure **INP** — interaction latency needs real
+      users, and TBT is only a proxy. We also lose real device/network/geographic diversity.
+      Mitigating that loss: at ~2k monthly visitors a p75 INP across ~1,900 routes would
+      have been statistically thin anyway, so less was given up than it appears.
+
+      **Free path to field CWV if we want it later** — the **CrUX API** is free (150
+      queries/minute, no paid tier, API key only) and returns origin- and URL-level field
+      LCP/INP/CLS. It could be queried from the same scheduled workflow as P2-7 at zero
+      cost. Same caveat as GSC: it **404s when an origin has insufficient data**, so it may
+      return nothing until traffic grows — but it costs nothing to attempt and starts
+      working on its own as the site grows. This is the recommended way to close P2-2
+      without spending.
 - [ ] **P2-3 · A pre-push hook** checking that every changed `page.tsx` exports
       `generateMetadata` or `metadata` **and** resolves a self-canonical. This is exactly
       the class of bug that produced P0-4 and P0-5, and it is mechanically detectable.
@@ -298,8 +349,34 @@ sat in production undetected. This section is what stops the next one.
 - [ ] **P2-5 · Full-site crawl** — Screaming Frog (free to 500 URLs) or Ahrefs Webmaster
       Tools (free site audit; we already load Ahrefs analytics, so setup is near-zero) for
       orphan pages, redirect chains, and duplicate detection.
-- [ ] **P2-6 · Schema validation in CI** — Google Rich Results Test / Schema Markup
-      Validator against one sampled kanji page. Would have caught P1-1 and P1-3.
+- [x] **P2-6 · Schema validation in CI** — **Shipped July 30, 2026.**
+      `scripts/validate-schema.ts` + `.github/workflows/schema-check.yml`, zero new
+      dependencies (Node built-ins, run via the established `npx tsx` pattern). Checks
+      **all 1,893** kanji pages in ~5s, so CI does not sample. Every expected value is
+      *imported* from `lib/seo/site.ts` rather than re-hardcoded, so the validator cannot
+      itself become the next place the brand drifts; `SITE_HOST`/`APEX_HOST` derive from
+      `SITE_URL`, so it re-targets automatically if the canonical host changes.
+      **Proven in both directions** — passes on unmodified `main`, and each regression was
+      injected into a prerendered artefact and confirmed to fail with an actionable message:
+      `author.name: 'Imiwa'` (P1-1), a `/logo.png` reference (P1-3, caught 6 ways — as both
+      an equality mismatch and a file-resolution failure), an apex `Organization.url`
+      (P1-2, caught by field check, equality check *and* a whole-build scan of 5,803
+      artefacts), plus stripped Article dates, a broken breadcrumb `position` sequence,
+      corrupt/absent `ld+json`, and apex URLs in `robots.txt`/`sitemap.xml`. All mutations
+      restored and checksum-verified afterwards.
+      **The check that actually catches P1-3**: every `logo`/`image`/`thumbnailUrl`/
+      `contentUrl` URL is **resolved to a real file** — `public/`, then a built route
+      handler, then an `app/` file convention — rather than string-matched. That is what
+      lets `/opengraph-image` (a route handler) pass while `/logo.png` fails. A
+      valid-*looking* URL that 404s is exactly the P1-3 failure.
+      Failures are grouped by (type, field, expected, actual) with ≤3 example files and a
+      `+N more`, so one systemic bug reports once instead of 1,893 times.
+      *Two notes:* `tsconfig.json` **excludes `scripts/`**, so neither `next lint` nor the
+      repo's `tsc` type-checks this file — it was verified under a separate tsconfig.
+      And `app/learned-kanji.html` carries no JSON-LD at all, which is **correct, not a
+      gap**: `app/learned-kanji/page.tsx` is a four-line bare `redirect()` with no rendered
+      output. Its exclusion from `PAGES_REQUIRING_SITE_GRAPH` is right for the right reason
+      — do not "fix" it.
       *Implementation note:* the hosted Google validator is rate-limited and would make CI
       flaky, so the CI check should be a **local structural validator** parsing the
       prerendered `.next/server/app/kanji/<char>.html` — the technique used to verify P1.
@@ -316,12 +393,31 @@ sat in production undetected. This section is what stops the next one.
 
 ### Indexation alarm
 
-- [ ] **P2-7 · Search Console API → weekly indexed-page-count report.** NomadList's
+- [x] **P2-7 · Search Console API → weekly indexed-page-count report.** NomadList's
       collapse was 3,540 → 262 pages. A count that moves sharply is the earliest possible
       warning of a crawlability failure, and it is the one metric that would have caught
-      their disaster in time.
-- [ ] **P2-8 · Bing Webmaster Tools + IndexNow.** Trivial on Vercel, and the fastest route
-      to getting new pages discovered.
+      their disaster in time. `scripts/check-indexation.ts` +
+      `.github/workflows/indexation-alarm.yml`, Mondays 07:00 UTC. Opens/comments on a
+      GitHub Issue when the proxy count drops >20% WoW or >30% off its trailing peak.
+- [⏸] **P2-8 · Bing Webmaster Tools + IndexNow — BUILT BUT NOT MERGED, awaiting owner
+      decision.** This was **not requested** in this cycle (the agreed scope was P2-1, P2-6,
+      P2-7); it was produced as unasked-for scope and is being held deliberately, because
+      merging it starts **daily automated submissions to third-party services** (Bing,
+      Yandex, Naver, Seznam) on the owner's behalf. That is an outward-facing recurring
+      action and is the owner's call, not an implementation detail. The code below is
+      written and reviewed; it is inert until the workflow lands on `main`.
+      `scripts/submit-indexnow.ts` +
+      `.github/workflows/indexnow-submit.yml`, daily 06:00 UTC. Diffs the live sitemap
+      against `data/indexnow-state.json` and bulk-pushes only new/changed URLs to
+      `https://api.indexnow.org` (fans out to Bing, Yandex, Naver, Seznam). No secret
+      needed — the verification key (`lib/seo/indexnow.ts`) is committed, not a
+      credential. Google has no equivalent push API for ordinary pages (Indexing API is
+      restricted to JobPosting/Livestream by Google's own terms); for Google,
+      `scripts/check-index-status.ts` reports actual per-URL index status on demand via
+      `urlInspection.index.inspect`, so you know which handful of priority URLs deserve a
+      manual "Request Indexing" click in Search Console. See
+      `docs/learnings/search-indexing-automation.md` for the full playbook, including how
+      to port this pair of scripts to another project.
 
 ### Baseline to track
 
