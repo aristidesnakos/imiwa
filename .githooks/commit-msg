@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# commit-msg — reject a CI-skip marker that appears BELOW the subject line.
+#
+# WHY THIS EXISTS
+# ---------------
+# A commit whose BODY described CI behaviour, and in doing so spelled the
+# CI-skip token literally in prose, took production down. Vercel scans the
+# WHOLE commit message, not just the subject, so it skipped the build outright:
+# no deployment record, no commit status, nothing that looks like a failure.
+# Four commits sat undeployed and the only symptom was a 404 on a verification
+# key file. GitHub Actions honours the same markers, so that commit also
+# silently skipped the repo's structured-data gate.
+#
+# The subject line is left alone on purpose. Putting the marker there is the
+# legitimate, intentional usage, and two bot workflows in this repo depend on
+# it (.github/workflows/indexnow-submit.yml and indexation-alarm.yml commit
+# state files back to main with the marker in the subject to avoid a redundant
+# deploy). Blocking those would break working automation.
+#
+# ACTIVATE (once per clone; hooks in .git/hooks are not tracked, this is):
+#   git config core.hooksPath .githooks
+#
+# Bypass for a single commit: git commit --no-verify
+
+set -u
+
+MSG_FILE="${1:-}"
+[ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
+
+# git strips comment lines before storing the message. Honour core.commentChar
+# so a repo configured with a non-default char still gets comments ignored.
+COMMENT_CHAR="$(git config --get core.commentChar 2>/dev/null || true)"
+case "$COMMENT_CHAR" in
+	'' | auto) COMMENT_CHAR='#' ;;
+esac
+
+# Walk the message the way git does, and report only BODY lines that carry a
+# marker:
+#   1. stop at the `git commit -v` scissors line (and at a raw `diff --git`
+#      header, as a belt-and-braces fallback) — everything after it is the
+#      staged diff, which git discards. This repo's workflow files literally
+#      contain the token, so scanning the diff would reject `git commit -v`
+#      on those files for no reason.
+#   2. drop comment lines.
+#   3. drop leading blank lines, then treat the first surviving line as the
+#      subject and ALLOW anything in it.
+#   4. everything after that is body — scan it.
+OFFENDING="$(
+	awk -v cc="$COMMENT_CHAR" '
+		# --- 1. end of the message proper ---------------------------------
+		/(^|[^-])--+[ \t]*>8[ \t]*--+/ { exit }
+		/^diff --git /                 { exit }
+
+		# --- 2. comments --------------------------------------------------
+		substr($0, 1, length(cc)) == cc { next }
+
+		# --- 3. subject ---------------------------------------------------
+		!seen_subject {
+			if ($0 ~ /^[ \t]*$/) next
+			seen_subject = 1
+			next
+		}
+
+		# --- 4. body ------------------------------------------------------
+		{
+			line = tolower($0)
+			# The documented CI-skip tokens honoured by GitHub Actions and by
+			# Vercel: the bracketed two-word directive in either order, with a
+			# space, hyphen or underscore between the words, plus the Actions
+			# "no ci" / "skip actions" spellings and the ***NO_CI*** form.
+			if (line ~ /\[[ \t]*(skip[ \t_-]*ci|ci[ \t_-]*skip|no[ \t_-]*ci|skip[ \t_-]*actions|actions[ \t_-]*skip)[ \t]*\]/ ||
+			    line ~ /\*\*\*[ \t]*no[ \t_-]*ci[ \t]*\*\*\*/) {
+				printf "  line %d: %s\n", NR, $0
+			}
+		}
+	' "$MSG_FILE"
+)"
+
+[ -n "$OFFENDING" ] || exit 0
+
+cat >&2 <<EOF
+
+commit-msg: CI-skip marker found in the commit BODY. Commit rejected.
+
+$OFFENDING
+
+Vercel and GitHub Actions scan the ENTIRE commit message, not just the subject.
+A marker down here silently skips the deploy and the CI gates with no failure
+to notice — this exact mistake left four commits undeployed in production.
+
+How to proceed:
+  * Prose about CI: rephrase so the token is not spelled literally, e.g. write
+    "the CI-skip marker" or break it up ("[skip" + " ci]").
+  * Genuinely want to skip CI: move the marker into the SUBJECT line, which is
+    allowed and is what the bot workflows in .github/workflows/ do.
+  * Really mean it as written: git commit --no-verify
+
+EOF
+exit 1
