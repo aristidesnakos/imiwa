@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 - `pnpm dev` - Start development server  
-- `pnpm build` - Build for production (includes postbuild sitemap generation)
+- `pnpm build` - Build for production. There is no postbuild step: the sitemap is
+  served dynamically by `app/sitemap.xml/route.ts`, not generated as a build artifact.
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint
 - `pnpm analyze` - Build with bundle analyzer
@@ -72,4 +73,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Optimized for mobile touch interaction and offline capability
 - SEO optimized with sitemap generation and proper meta tags
 - Performance focused with lazy loading of stroke diagrams
-- ALWAYS refer to /documentation/learnings/development-guide.md for developing our project
+- ALWAYS refer to docs/learnings/development-guide.md for developing our project

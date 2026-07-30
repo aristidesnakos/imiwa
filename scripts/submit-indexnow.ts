@@ -41,7 +41,7 @@
  * ~1,900 URLs every run.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { SITE_URL } from '../lib/seo/site';
@@ -135,7 +135,21 @@ export function loadState(path: string): IndexNowState {
 
 export function saveState(path: string, state: IndexNowState): void {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
+  // Write to a temp file and rename over the target rather than writing the
+  // target directly. The state file is ~118 kB, which is large enough that a
+  // write is genuinely interruptible, and this runs on a GitHub-hosted runner
+  // where the job can be cancelled or hit its step timeout at any instant. A
+  // bare writeFileSync that loses that race leaves a truncated file behind, and
+  // the damage is not confined to that run: loadState's JSON.parse then throws
+  // on EVERY subsequent daily run, so submission stays dead until a human
+  // notices and repairs the file by hand. renameSync is atomic on POSIX, so the
+  // next reader sees either the previous state or the complete new one and
+  // never a half-written one. The temp file is a sibling on purpose — rename is
+  // only atomic within a filesystem, and os.tmpdir() is a different mount on
+  // most runners, which would turn this into a copy that can tear again.
+  const tmpPath = `${path}.tmp`;
+  writeFileSync(tmpPath, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
+  renameSync(tmpPath, path);
 }
 
 // ─── IndexNow submission ─────────────────────────────────────────────────────
