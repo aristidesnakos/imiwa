@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Viewport } from "next";
 import Script from "next/script";
 import { getSEOTags } from "@/lib/seo";
+import { SITE_URL, SITE_NAME, SITE_LOGO } from "@/lib/seo/site";
 import { AppProviders } from './providers';
 import ClientLayout from "@/components/LayoutClient";
 // Import JsonLd component
@@ -46,15 +47,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           src="https://datafa.st/js/script.js"
         />
 
+        {/* Site-wide entity graph. Every URL derives from config.domainName so the
+            entity resolves to the canonical host rather than the redirecting apex. */}
         <JsonLd data={{
           '@context': 'https://schema.org',
           '@graph': [
             {
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'MichiKanji',
-              url: 'https://michikanji.com',
-              logo: 'https://michikanji.com/logo.png',
+              name: SITE_NAME,
+              url: SITE_URL,
+              logo: {
+                '@type': 'ImageObject',
+                url: SITE_LOGO.url,
+                width: SITE_LOGO.width,
+                height: SITE_LOGO.height
+              },
               sameAs: [
                 'https://twitter.com/just_aristides',
               ]
@@ -62,29 +70,31 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'MichiKanji - Japanese Kanji Stroke Order Dictionary',
-              url: 'https://michikanji.com',
+              name: `${SITE_NAME} - Japanese Kanji Stroke Order Dictionary`,
+              url: SITE_URL,
               description: 'Learn Japanese kanji with interactive stroke order diagrams. Master the correct way to write JLPT kanji characters with animated guides.',
               publisher: {
                 '@type': 'Organization',
-                name: 'MichiKanji',
-                url: 'https://michikanji.com',
+                name: SITE_NAME,
+                url: SITE_URL,
                 logo: {
                   '@type': 'ImageObject',
-                  url: 'https://michikanji.com/logo.png'
+                  url: SITE_LOGO.url,
+                  width: SITE_LOGO.width,
+                  height: SITE_LOGO.height
                 }
               },
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://michikanji.com/kanji?search={search_term_string}',
+                target: `${SITE_URL}/kanji?search={search_term_string}`,
                 'query-input': 'required name=search_term_string'
               }
             },
             {
               '@context': 'https://schema.org',
               '@type': 'EducationalOrganization',
-              name: 'MichiKanji Dictionary',
-              url: 'https://michikanji.com',
+              name: `${SITE_NAME} Dictionary`,
+              url: SITE_URL,
               description: 'Interactive Japanese kanji learning platform with stroke order animations for JLPT exam preparation.'
             }
           ]

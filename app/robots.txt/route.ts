@@ -1,12 +1,12 @@
+import { SITE_URL } from '@/lib/seo/site';
+
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.michikanji.com';
-  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || SITE_URL;
+
   const robots = `User-agent: *
 Allow: /
 Allow: /kanji
 Allow: /kanji/*
-Allow: /blog
-Allow: /blog/*
 
 # Sitemap location
 Sitemap: ${baseUrl}/sitemap.xml

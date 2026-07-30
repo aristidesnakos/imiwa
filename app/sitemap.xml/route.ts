@@ -3,41 +3,47 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
+import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
+
+// Static pages, each with the date its content actually last changed.
+//
+// These are hardcoded rather than derived from `new Date()` on purpose. A
+// per-deploy timestamp claims every URL changed at the same instant, which
+// makes `lastmod` untrustworthy and gets it ignored. Bump a date here when you
+// meaningfully change that page.
+const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
+  { path: '', lastmod: '2026-06-14', priority: '1.0' },
+  { path: '/kanji', lastmod: '2026-06-14', priority: '0.9' },
+  { path: '/free-resources', lastmod: '2026-06-14', priority: '0.7' },
+  { path: '/free-resources/kana-sheets', lastmod: '2026-01-10', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets', lastmod: '2026-06-14', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets/n5-sheets', lastmod: '2026-01-20', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets/n4-sheets', lastmod: '2026-01-24', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets/n3-sheets', lastmod: '2026-01-24', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets/n2-sheets', lastmod: '2026-01-24', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets/n1-sheets', lastmod: '2026-01-24', priority: '0.7' },
+  { path: '/advertise', lastmod: '2026-07-29', priority: '0.7' },
+  { path: '/privacy-policy', lastmod: '2026-05-02', priority: '0.7' },
+  { path: '/tos', lastmod: '2026-05-02', priority: '0.7' },
+];
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.michikanji.com';
-  
-  // Static pages
-  const staticUrls = [
-    '',
-    '/kanji',
-    '/free-resources',
-    '/free-resources/kana-sheets',
-    '/free-resources/kanji-sheets',
-    '/free-resources/kanji-sheets/n5-sheets',
-    '/free-resources/kanji-sheets/n4-sheets',
-    '/free-resources/kanji-sheets/n3-sheets',
-    '/free-resources/kanji-sheets/n2-sheets',
-    '/free-resources/kanji-sheets/n1-sheets',
-    '/advertise',
-    '/privacy-policy',
-    '/tos',
-  ];
-  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || SITE_URL;
+
   // Generate sitemap XML
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${staticUrls.map(url => `
+  ${STATIC_PAGES.map(({ path, lastmod, priority }) => `
   <url>
-    <loc>${baseUrl}${url}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
+    <loc>${baseUrl}${path}</loc>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>${url === '' ? '1.0' : url === '/kanji' ? '0.9' : '0.7'}</priority>
+    <priority>${priority}</priority>
   </url>`).join('')}
   ${[...N5_KANJI, ...N4_KANJI, ...N3_KANJI, ...N2_KANJI, ...N1_KANJI].map(kanji => `
   <url>
     <loc>${baseUrl}/kanji/${encodeURIComponent(kanji.kanji)}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
+    <lastmod>${KANJI_CONTENT_LAST_MODIFIED}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`).join('')}
