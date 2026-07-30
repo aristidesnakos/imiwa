@@ -9,8 +9,8 @@
     "lint": "next lint",
     "analyze": "ANALYZE=true next build",
     "check-indexation": "tsx --tsconfig tsconfig.json scripts/check-indexation.ts",
-    "submit-indexnow": "tsx --tsconfig tsconfig.json scripts/submit-indexnow.ts",
-    "check-index-status": "tsx --tsconfig tsconfig.json scripts/check-index-status.ts"
+    "check-index-status": "tsx --tsconfig tsconfig.json scripts/check-index-status.ts",
+    "validate:schema": "tsx --tsconfig tsconfig.json scripts/validate-schema.ts --all"
   },
   "dependencies": {
     "@datafast/ai-crawl": "^1.0.5",

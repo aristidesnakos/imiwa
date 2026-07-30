@@ -38,6 +38,8 @@ next-env.d.ts
 # reports
 /reports
 /lighthouse-report.html
+# Lighthouse CI run output (P2-1) — regenerated per run, never committed
+/.lighthouseci/
 
 # ide
 .idea
