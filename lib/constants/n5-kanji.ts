@@ -50,6 +50,7 @@ export const N5_KANJI: KanjiData[] = [
   { kanji: "高", onyomi: "こう", kunyomi: "たか（い）", meaning: "tall, high, expensive" },
   { kanji: "長", onyomi: "ちょう", kunyomi: "なが（い）、おさ", meaning: "long, leader, superior, senior" },
   { kanji: "白", onyomi: "はく、びゃく", kunyomi: "しろ（い）", meaning: "white" },
+  { kanji: "暑", onyomi: "しょ", kunyomi: "あつ（い）", meaning: "hot (weather)" },
 
   // Nature/Elements
   { kanji: "天", onyomi: "てん", kunyomi: "あまつ", meaning: "heavens, sky, imperial" },
