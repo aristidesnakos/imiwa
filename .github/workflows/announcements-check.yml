@@ -1,0 +1,89 @@
+name: Announcement Queue Check
+
+# Guards the returning-user announcement bar (lib/announcements/).
+#
+# The bar is the one component that renders to users we have no other channel
+# to. There is no staging cohort and no kill switch short of a deploy, so the
+# review of an announcement PR happens here rather than after the fact.
+#
+# `pnpm validate:announcements` checks two things:
+#
+#   1. The queue is well-formed — unique stable ids, real dates, non-overlapping
+#      runs, copy that fits the bar, and CTA links that resolve to routes that
+#      actually exist in app/. A dead CTA is worse than no banner: it teaches
+#      people our announcements are not worth clicking.
+#
+#   2. The acknowledgement model still holds — dismiss-once-and-it's-gone,
+#      first-time visitors see nothing, dismissing one entry never suppresses
+#      the next, the impression cap retires an ignored bar on its own. Those
+#      are promises to users, the repo has no test runner, and this is the only
+#      place they are asserted.
+#
+# It reads TypeScript directly and needs no build, so it runs in seconds.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'lib/announcements/**'
+      - 'components/AnnouncementBanner.tsx'
+      - 'scripts/announcements/**'
+      - '.github/workflows/announcements-check.yml'
+      # The audience gate reads these hooks' private storage keys. A rename
+      # there silently stops the banner targeting anyone, which is exactly the
+      # kind of failure nobody notices for a month.
+      - 'hooks/useKanjiProgress.ts'
+      - 'hooks/useKanjiSRS.ts'
+      - 'components/CookieConsent.tsx'
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/announcements/**'
+      - 'components/AnnouncementBanner.tsx'
+      - 'scripts/announcements/**'
+      - '.github/workflows/announcements-check.yml'
+      - 'hooks/useKanjiProgress.ts'
+      - 'hooks/useKanjiSRS.ts'
+      - 'components/CookieConsent.tsx'
+  workflow_dispatch:
+
+concurrency:
+  group: announcements-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-announcements:
+    name: Validate the announcement queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate queue contract and acknowledgement model
+        run: pnpm validate:announcements
+
+      # Informational: puts the queue as it will stand after this merge on the
+      # PR's summary page, so a reviewer sees the dates without checking out
+      # the branch. Never fails the job.
+      - name: Show queue status after this change
+        if: always()
+        run: pnpm announcements:status

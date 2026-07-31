@@ -9,6 +9,7 @@ import ClientLayout from "@/components/LayoutClient";
 import { JsonLd } from "@/lib/jsonld";
 import { CookieConsent } from "@/components/CookieConsent";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import Footer from "@/components/sections/Footer";
 import "./globals.css";
@@ -114,6 +115,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <AppProviders>
           <AnalyticsProvider />
           <ClientLayout>
+            {/* Above {children} and in normal document flow, NOT fixed: every
+                page imports its own <Header />, which is sticky top-0 z-50, so
+                a fixed bar would tie it on stacking order and get buried on
+                scroll. In flow, the header simply sticks below the bar.
+                Renders null for everyone except returning learners inside an
+                active announcement window — see lib/announcements/. */}
+            <AnnouncementBanner />
             {children}
             {/* Site-wide, NOT per-page. The footer carries the KanjiVG
                 (CC BY-SA 3.0) attribution, and will carry the EDRDG and Tatoeba
