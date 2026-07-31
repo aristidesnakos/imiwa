@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { CheckCircle } from 'lucide-react';
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 
 export const metadata: Metadata = {
   title: 'Subscription | MichiKanji',
@@ -46,7 +45,6 @@ export default function SubscribedPage() {
         </div>
       </main>
 
-      <Footer />
     </>
   );
 }

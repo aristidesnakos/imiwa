@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 import { FileText, Download } from 'lucide-react';
 import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
 
@@ -181,7 +180,6 @@ export default function FreeResourcesPage() {
         </section>
       </main>
 
-      <Footer />
     </>
   );
 }

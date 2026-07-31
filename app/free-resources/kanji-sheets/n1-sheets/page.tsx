@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { KanjiN5WorkbookCTA } from '@/components/kanji/KanjiN5WorkbookCTA';
 
@@ -143,7 +142,6 @@ export default function N1KanjiSheetsPage() {
         </section>
       </main>
 
-      <Footer />
     </>
   );
 }
