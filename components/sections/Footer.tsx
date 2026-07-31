@@ -143,6 +143,33 @@ const Footer = () => {
               </Link>
               .
             </p>
+            {/* Tatoeba, per PRD blocker B4. Project-level credit only — the
+                individual contributor and the per-sentence licence are credited
+                on each sentence itself, because Tatoeba does not own the
+                sentences and cannot waive its contributors' attribution right
+                on their behalf. This line does not replace that; it sits
+                alongside it. */}
+            <p className="text-xs text-japan-mountain-mist leading-relaxed">
+              Example sentences come from{' '}
+              <Link
+                href="https://tatoeba.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                the Tatoeba Project
+              </Link>
+              , used under{' '}
+              <Link
+                href="https://creativecommons.org/licenses/by/2.0/fr/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                CC BY 2.0 FR
+              </Link>
+              . Individual contributors are credited on each sentence.
+            </p>
             <p className="text-xs text-japan-mountain-mist leading-relaxed">
               MichiKanji is lovingly crafted by{' '}
               <span className="font-medium">Ari Nakos</span>{' '}

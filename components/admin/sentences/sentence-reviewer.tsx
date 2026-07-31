@@ -42,8 +42,8 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Attribution } from './attribution';
-import { Furigana, HAS_KANJI } from './furigana';
+import { Attribution } from '@/components/sentences/attribution';
+import { Furigana, HAS_KANJI } from '@/components/sentences/furigana';
 import { REJECT_REASONS, REJECT_REASON_LABELS } from '@/lib/sentences/reject-reasons';
 import type {
   CandidateId,
