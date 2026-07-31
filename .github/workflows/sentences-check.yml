@@ -1,0 +1,73 @@
+name: Sentence Data Check
+
+# Guards the example-sentence content contract in lib/sentences/types.ts.
+#
+# scripts/sentences/publish.ts already refuses to write output that fails
+# validation, so in the normal flow this job never fires. It exists for the
+# paths that bypass publish: a hand-edit of data/sentences/published/*.json, a
+# bad merge, or a publish run against a stale queue.
+#
+# Every check it makes catches a SILENT failure — one that renders as a page
+# which looks entirely correct to a reader who cannot already read Japanese,
+# which is exactly our audience. A token with an unresolved reading becomes
+# confident wrong furigana; a corrupted verbatim sentence renders fine while
+# making its per-sentence attribution a lie.
+#
+# Unlike schema-check.yml this needs no build: it reads the committed JSON
+# directly, so it runs in seconds.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'data/sentences/**'
+      - 'lib/sentences/**'
+      - 'lib/constants/*-kanji.ts'
+      - 'scripts/sentences/**'
+      - '.github/workflows/sentences-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/sentences/**'
+      - 'lib/sentences/**'
+      - 'lib/constants/*-kanji.ts'
+      - 'scripts/sentences/**'
+      - '.github/workflows/sentences-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: sentences-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-sentences:
+    name: Validate published sentence data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Passes when nothing is published yet — that is the normal state until a
+      # level has been through review, and a red CI for "the content does not
+      # exist yet" trains people to ignore the signal.
+      - name: Validate published sentences
+        run: pnpm validate:sentences
