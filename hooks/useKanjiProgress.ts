@@ -7,13 +7,22 @@ interface KanjiProgressData {
   timestamps: Record<string, number>;
 }
 
+type TimePeriod = '24h' | '7d' | '30d' | '12m';
+
+interface TimeBucket {
+  start: number;
+  label: string;
+}
+
 const STORAGE_KEY = 'kanji-progress';
 
-// Helper function to generate date keys for different periods
-function getDateKey(date: Date, period: '24h' | '7d' | '30d' | '12m'): string {
+// Labels are display-only. They are never used as bucket identity: two buckets
+// may legitimately render the same label, and a label built from a timestamp
+// would not match a pre-seeded one anyway.
+function getBucketLabel(date: Date, period: TimePeriod): string {
   switch (period) {
     case '24h':
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
     case '7d':
       return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     case '30d':
@@ -23,6 +32,66 @@ function getDateKey(date: Date, period: '24h' | '7d' | '30d' | '12m'): string {
     default:
       return date.toISOString().split('T')[0];
   }
+}
+
+// Ordered bucket boundaries for a period, oldest first, ending with the bucket
+// that contains `now`. Boundaries are floored so a timestamp anywhere inside the
+// hour/day/month lands in the bucket that represents it.
+function buildBuckets(period: TimePeriod, now: Date): TimeBucket[] {
+  const buckets: TimeBucket[] = [];
+
+  if (period === '24h') {
+    const anchor = new Date(now);
+    anchor.setMinutes(0, 0, 0);
+    for (let i = 23; i >= 0; i--) {
+      const start = new Date(anchor);
+      start.setHours(anchor.getHours() - i);
+      buckets.push({ start: start.getTime(), label: getBucketLabel(start, period) });
+    }
+    return buckets;
+  }
+
+  if (period === '12m') {
+    // Built from (year, month) arithmetic rather than setMonth() on `now`: on the
+    // 29th-31st, stepping a month from Jul 31 lands on Oct 1 and September vanishes.
+    for (let i = 11; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets.push({ start: start.getTime(), label: getBucketLabel(start, period) });
+    }
+    return buckets;
+  }
+
+  const days = period === '7d' ? 7 : 30;
+  const anchor = new Date(now);
+  anchor.setHours(0, 0, 0, 0);
+  for (let i = days - 1; i >= 0; i--) {
+    const start = new Date(anchor);
+    start.setDate(anchor.getDate() - i);
+    buckets.push({ start: start.getTime(), label: getBucketLabel(start, period) });
+  }
+  return buckets;
+}
+
+// Stored progress drives `learnedKanji.includes(...)` all over the app, so a blob
+// of the wrong shape white-screens the review and progress pages. Reject it rather
+// than trusting JSON.parse — but never delete it: an unrecognised shape may still
+// be recoverable, and destroying someone's progress is worse than an empty chart.
+function normaliseStoredProgress(value: unknown): KanjiProgressData | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+
+  const candidate = value as Partial<KanjiProgressData>;
+  if (!Array.isArray(candidate.learnedKanji)) return null;
+
+  const hasTimestamps =
+    typeof candidate.timestamps === 'object' &&
+    candidate.timestamps !== null &&
+    !Array.isArray(candidate.timestamps);
+
+  return {
+    learnedKanji: candidate.learnedKanji,
+    // A missing timestamps map only costs us the chart, not the learned list
+    timestamps: hasTimestamps ? (candidate.timestamps as Record<string, number>) : {},
+  };
 }
 
 export function useKanjiProgress() {
@@ -37,8 +106,12 @@ export function useKanjiProgress() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          const parsed = JSON.parse(stored);
-          setProgressData(parsed);
+          const normalised = normaliseStoredProgress(JSON.parse(stored));
+          if (normalised) {
+            setProgressData(normalised);
+          } else {
+            console.warn('Ignoring stored kanji progress data: unexpected shape.');
+          }
         } catch (error) {
           console.error('Failed to parse kanji progress data:', error);
         }
@@ -97,67 +170,41 @@ export function useKanjiProgress() {
   }, [progressData.learnedKanji]);
 
   // Get progress over time for chart with period filtering
-  const getProgressOverTime = useCallback((period: '24h' | '7d' | '30d' | '12m' = '30d') => {
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (period) {
-      case '24h':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case '7d':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case '30d':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case '12m':
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-    }
-    
-    // Filter timestamps within the period
-    const filteredEntries = Object.entries(progressData.timestamps)
-      .filter(([, timestamp]) => timestamp >= startDate.getTime())
-      .sort(([, a], [, b]) => a - b);
-    
-    // Create time buckets based on period
-    const buckets = new Map<string, number>();
-    let currentDate = new Date(startDate);
-    
-    // Initialize buckets
-    while (currentDate <= now) {
-      const key = getDateKey(currentDate, period);
-      buckets.set(key, 0);
-      
-      // Increment by appropriate interval
-      switch (period) {
-        case '24h':
-          currentDate.setHours(currentDate.getHours() + 1);
-          break;
-        case '7d':
-        case '30d':
-          currentDate.setDate(currentDate.getDate() + 1);
-          break;
-        case '12m':
-          currentDate.setMonth(currentDate.getMonth() + 1);
-          break;
+  const getProgressOverTime = useCallback((period: TimePeriod = '30d') => {
+    const buckets = buildBuckets(period, new Date());
+    const counts = new Array<number>(buckets.length).fill(0);
+
+    const sorted = Object.values(progressData.timestamps)
+      .filter(timestamp => typeof timestamp === 'number' && Number.isFinite(timestamp))
+      .sort((a, b) => a - b);
+
+    // Anything older than the first bucket is the starting height of the curve —
+    // without it a returning user's chart flatlines at zero and looks broken.
+    let baseline = 0;
+    let index = 0;
+
+    for (const timestamp of sorted) {
+      if (timestamp < buckets[0].start) {
+        baseline++;
+        continue;
       }
+      // Entries are sorted, so the cursor only ever moves forward
+      while (index + 1 < buckets.length && buckets[index + 1].start <= timestamp) {
+        index++;
+      }
+      counts[index]++;
     }
-    
-    // Fill buckets with actual data
-    filteredEntries.forEach(([, timestamp]) => {
-      const date = new Date(timestamp);
-      const key = getDateKey(date, period);
-      buckets.set(key, (buckets.get(key) || 0) + 1);
+
+    let cumulative = baseline;
+    return buckets.map((bucket, i) => {
+      cumulative += counts[i];
+      return {
+        name: bucket.label,
+        daily: counts[i],
+        cumulative,
+        date: bucket.label,
+      };
     });
-    
-    // Convert to chart data
-    return Array.from(buckets.entries()).map(([dateKey, daily]) => ({
-      name: dateKey,
-      daily,
-      date: dateKey
-    }));
   }, [progressData.timestamps]);
 
   // Reset all progress

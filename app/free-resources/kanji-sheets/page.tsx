@@ -44,7 +44,7 @@ export default function KanjiSheetsLandingPage() {
       title: 'N4 Kanji Practice Sheets',
       description: 'Elementary kanji (~170 characters)',
       count: '~170 characters',
-      available: false,
+      available: true,
       href: '/free-resources/kanji-sheets/n4-sheets',
       color: 'blue'
     },
@@ -53,7 +53,7 @@ export default function KanjiSheetsLandingPage() {
       title: 'N3 Kanji Practice Sheets',
       description: 'Intermediate kanji (~370 characters)',
       count: '~370 characters',
-      available: false,
+      available: true,
       href: '/free-resources/kanji-sheets/n3-sheets',
       color: 'yellow'
     },
@@ -62,7 +62,7 @@ export default function KanjiSheetsLandingPage() {
       title: 'N2 Kanji Practice Sheets',
       description: 'Upper intermediate kanji (~370 characters)',
       count: '~370 characters',
-      available: false,
+      available: true,
       href: '/free-resources/kanji-sheets/n2-sheets',
       color: 'orange'
     },
@@ -71,7 +71,7 @@ export default function KanjiSheetsLandingPage() {
       title: 'N1 Kanji Practice Sheets',
       description: 'Advanced kanji (~1000+ characters)',
       count: '~1000+ characters',
-      available: false,
+      available: true,
       href: '/free-resources/kanji-sheets/n1-sheets',
       color: 'red'
     }
