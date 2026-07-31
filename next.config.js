@@ -46,6 +46,19 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-icons'],
   },
   async headers() {
+    // Next's dev-mode react-refresh runtime evaluates a string as JavaScript.
+    // Without 'unsafe-eval' the whole main-app chunk throws an EvalError, which
+    // means NO client component hydrates under `pnpm dev` — buttons, search and
+    // the /admin review tool are all inert. Scoped to development only; the
+    // production header is byte-for-byte what it was.
+    const scriptSrc = [
+      "script-src 'self' 'unsafe-inline'",
+      process.env.NODE_ENV === 'production' ? null : "'unsafe-eval'",
+      'https://vercel.live https://us-assets.i.posthog.com https://app.posthog.com https://js.stripe.com https://datafa.st',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return [
       {
         source: '/:path*',
@@ -70,7 +83,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://vercel.live https://us-assets.i.posthog.com https://app.posthog.com https://js.stripe.com https://datafa.st",
+              scriptSrc,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
