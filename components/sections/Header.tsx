@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { trackConversion } from '@/lib/analytics';
+import { StudyNavLinks } from '@/components/nav/StudyNavLinks';
 
 const Header = () => {
   return (
@@ -35,6 +36,12 @@ const Header = () => {
           <Link href="/kanji" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
             Kanji
           </Link>
+          {/* Renders nothing until something has been learned, so it sits next to
+              Kanji rather than at the end of the nav: it belongs to that flow. */}
+          <StudyNavLinks
+            itemAs="div"
+            linkClassName="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium"
+          />
           <Link
             href="/free-resources"
             className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium"
@@ -54,7 +61,9 @@ const Header = () => {
           </Link>
         </nav>
 
-        {/* Mobile menu button */}
+        {/* Mobile menu button. It opens nothing today, so the nav above is
+            desktop-only in practice — on mobile the Study links are reached via
+            the site-wide Footer, which renders its own <StudyNavLinks />. */}
         <Button variant="outline" size="sm" className="md:hidden border-japan-sakura-waters/30 text-japan-deep-ocean hover:bg-japan-soft-mist">
           Menu
         </Button>

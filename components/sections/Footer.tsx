@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
+// Client child inside a server component: Footer itself stays a server component.
+import { StudyNavLinks } from "@/components/nav/StudyNavLinks";
 
 const Footer = () => {
   return (
@@ -38,6 +40,13 @@ const Footer = () => {
                   All Kanji
                 </Link>
               </li>
+              {/* Extends "Learn" rather than adding a fifth column, which would
+                  break the md:grid-cols-4 layout. The footer is site-wide, so
+                  this is the only nav surface mobile users actually get. */}
+              <StudyNavLinks
+                itemAs="li"
+                linkClassName="text-sm text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors"
+              />
             </ul>
           </div>
 

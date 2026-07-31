@@ -25,7 +25,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 // import { strokeOrderService } from '@/lib/stroke-order';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, Printer } from 'lucide-react';
 import { AdBanner } from '@/components/AdBanner';
 
 // Combine all kanji data with levels
@@ -305,6 +305,20 @@ export default async function KanjiDetailPage({ params }: Props) {
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Stroke Order Animation</h2>
             <StrokeOrderViewer kanji={kanjiData.kanji} />
+
+            {/* The sheet is generated per character, so one exists for every kanji
+                that has a page — but until now it was only reachable from the
+                level sheet listings. A plain <a>, not <Link>: the target is an
+                API route returning HTML, which client navigation cannot render. */}
+            <a
+              href={`/api/kanji-sheets?character=${encodeURIComponent(kanjiData.kanji)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Print a practice sheet for {kanjiData.kanji}
+            </a>
           </div>
           
           {/* Kanji Information */}
@@ -366,6 +380,15 @@ export default async function KanjiDetailPage({ params }: Props) {
             className="w-32 md:w-40 drop-shadow-sm"
           />
           <p className="text-sm text-gray-500">Nice — one more kanji learned!</p>
+          {/* The one place a reader is guaranteed to be in a learning mindset.
+              Server-rendered and always visible, unlike the nav links, so it is
+              also the crawlable inbound link to /kanji/review. */}
+          <Link
+            href="/kanji/review"
+            className="text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
+          >
+            Review what you&rsquo;ve learned →
+          </Link>
         </div>
 
           {/* Related Kanji - BEFORE CTA */}
