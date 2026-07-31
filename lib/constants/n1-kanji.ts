@@ -371,6 +371,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "遵", onyomi: "じゅん", kunyomi: "したが（う）", meaning: "abide by, follow, obey" },
   { kanji: "邪", onyomi: "よこしま", kunyomi: "", meaning: "wicked, evil, wrong" },
   { kanji: "邸", onyomi: "やしき", kunyomi: "", meaning: "residence, estate, grounds" },
+  { kanji: "郊", onyomi: "こう", kunyomi: "", meaning: "outskirts, suburbs, rural areas" },
   { kanji: "郭", onyomi: "くるわ", kunyomi: "", meaning: "district, quarter, enclosure" },
   { kanji: "酷", onyomi: "こく", kunyomi: "", meaning: "severe, harsh, stringent" },
   { kanji: "醇", onyomi: "じゅん", kunyomi: "", meaning: "pure sake, full-bodied sake, pure" },
