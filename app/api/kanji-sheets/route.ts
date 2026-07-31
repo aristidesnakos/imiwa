@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { N5_KANJI } from '@/lib/constants/n5-kanji';
+import { KanjiData, N5_KANJI } from '@/lib/constants/n5-kanji';
+import { N4_KANJI } from '@/lib/constants/n4-kanji';
+import { N3_KANJI } from '@/lib/constants/n3-kanji';
+import { N2_KANJI } from '@/lib/constants/n2-kanji';
+import { N1_KANJI } from '@/lib/constants/n1-kanji';
+
+interface KanjiWithLevel extends KanjiData {
+  level: string;
+}
+
+// Built once at module scope: this route is hit on every sheet open, so a
+// ~2000-entry lookup should not be rebuilt per request.
+// Insertion order runs N1 -> N5 so that a kanji appearing in several level
+// lists is overwritten by the LOWEST level, matching how the rest of the site
+// (KanjiSearchClient, ReviewClient) resolves duplicates.
+const KANJI_MAP = new Map<string, KanjiWithLevel>([
+  ...N1_KANJI.map((k) => [k.kanji, { ...k, level: 'N1' }] as [string, KanjiWithLevel]),
+  ...N2_KANJI.map((k) => [k.kanji, { ...k, level: 'N2' }] as [string, KanjiWithLevel]),
+  ...N3_KANJI.map((k) => [k.kanji, { ...k, level: 'N3' }] as [string, KanjiWithLevel]),
+  ...N4_KANJI.map((k) => [k.kanji, { ...k, level: 'N4' }] as [string, KanjiWithLevel]),
+  ...N5_KANJI.map((k) => [k.kanji, { ...k, level: 'N5' }] as [string, KanjiWithLevel]),
+]);
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -9,11 +30,14 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Missing character parameter', { status: 400 });
   }
 
-  // Find kanji data
-  const kanjiData = N5_KANJI.find(k => k.kanji === character);
+  // Find kanji data across every JLPT level
+  const kanjiData = KANJI_MAP.get(character);
 
   if (!kanjiData) {
-    return new NextResponse('Kanji not found in N5 dataset', { status: 404 });
+    return new NextResponse(
+      `Kanji "${character}" is not in our JLPT N5-N1 dataset`,
+      { status: 404 }
+    );
   }
 
   // Fetch stroke order SVG
@@ -72,7 +96,7 @@ function extractStrokeCount(svg: string): number {
 }
 
 function generatePracticeSheetHTML(
-  kanjiData: { kanji: string; onyomi: string; kunyomi: string; meaning: string },
+  kanjiData: KanjiWithLevel,
   strokeOrderSvg: string | null,
   strokeCount: number | null
 ): string {
@@ -261,6 +285,10 @@ function generatePracticeSheetHTML(
           <div class="info-row">
             <span class="info-label">Kunyomi:</span>
             <span class="info-value">${kanjiData.kunyomi}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">JLPT Level:</span>
+            <span class="info-value">${kanjiData.level}</span>
           </div>
           ${strokeCount ? `
           <div class="info-row">

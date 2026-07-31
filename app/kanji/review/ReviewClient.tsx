@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RotateCcw, BookOpen, CheckCircle, Brain } from 'lucide-react';
+import { ArrowLeft, RotateCcw, BookOpen, CheckCircle, Brain, TrendingUp } from 'lucide-react';
 import Header from '@/components/sections/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +34,17 @@ const KANJI_MAP = new Map<string, KanjiInfo>([
   ...N5_KANJI.map((k) => [k.kanji, { ...k, level: 'N5' }] as [string, KanjiInfo]),
 ]);
 
+/**
+ * Maximum cards in a single review session.
+ *
+ * Every learned kanji starts life due (a new card's nextReview is "now"), so a
+ * returning user who checked off 400 kanji and never reviewed would otherwise
+ * open a 400-card session with a "1/400" progress bar. Nobody finishes that —
+ * they bounce and conclude the feature is broken. Capping keeps a session to a
+ * few minutes; the rest of the backlog is drained by tapping "Review Again".
+ */
+const SESSION_CAP = 20;
+
 type SessionState = 'loading' | 'empty' | 'reviewing' | 'finished';
 
 interface ReviewResult {
@@ -50,6 +61,28 @@ export function ReviewClient() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [results, setResults] = useState<ReviewResult[]>([]);
+  // Full due count at the moment the session was built, so the UI can stay
+  // honest about a backlog that the cap is deliberately hiding from the queue.
+  const [totalDue, setTotalDue] = useState(0);
+
+  /** Build a capped, randomised session from the given due list. */
+  const startSession = useCallback((due: string[]) => {
+    if (due.length === 0) {
+      // Nothing left to show — never enter 'reviewing' with an empty queue.
+      setSessionState('empty');
+      return;
+    }
+    setTotalDue(due.length);
+    // Shuffle FIRST, then slice: slicing first would hand back the same 20
+    // kanji in stored insertion order every single time, so cards 21+ of a
+    // large backlog would never come up. Shuffling first makes each session a
+    // random sample of the whole backlog.
+    setQueue(shuffle(due).slice(0, SESSION_CAP));
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setResults([]);
+    setSessionState('reviewing');
+  }, []);
 
   // Initialise the session once learnedKanji is available from localStorage
   useEffect(() => {
@@ -69,11 +102,7 @@ export function ReviewClient() {
       if (due.length === 0) {
         setSessionState('empty');
       } else {
-        setQueue(shuffle(due));
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setResults([]);
-        setSessionState('reviewing');
+        startSession(due);
       }
     }, 100);
 
@@ -115,7 +144,8 @@ export function ReviewClient() {
   }
 
   if (sessionState === 'empty') {
-    const hasDue = learnedKanji.length > 0 && getDueKanji(learnedKanji).length > 0;
+    const dueNow = learnedKanji.length > 0 ? getDueKanji(learnedKanji) : [];
+    const hasDue = dueNow.length > 0;
     return (
       <>
         <Header />
@@ -150,14 +180,50 @@ export function ReviewClient() {
                   You&apos;ve reviewed all {learnedKanji.length} learned kanji. Check back later
                   when more cards are due.
                 </p>
-                <Link href="/kanji">
-                  <Button size="lg">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Continue Learning
-                  </Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link href="/kanji">
+                    <Button size="lg">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Continue Learning
+                    </Button>
+                  </Link>
+                  <Link href="/kanji/progress">
+                    <Button variant="outline" size="lg">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      See Your Progress
+                    </Button>
+                  </Link>
+                </div>
               </>
-            ) : null}
+            ) : (
+              // Reachable only if the due count changes between the state being
+              // set to 'empty' and this render. Rare, but it must never be a
+              // bare checkmark on a blank page — there IS something to review,
+              // so offer to build the session again.
+              <>
+                <h1 className="text-3xl font-bold mb-3">Your Reviews Are Ready</h1>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                  You have {dueNow.length} kanji due for review. Something interrupted the
+                  session before it started — start it again below.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    size="lg"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={() => startSession(getDueKanji(learnedKanji))}
+                  >
+                    <Brain className="w-4 h-4 mr-2" />
+                    Start Review
+                  </Button>
+                  <Link href="/kanji">
+                    <Button variant="outline" size="lg">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Back to Dictionary
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </>
@@ -168,6 +234,9 @@ export function ReviewClient() {
   if (sessionState === 'finished') {
     const passed = results.filter((r) => r.quality >= 3).length;
     const failed = results.length - passed;
+    // Cards just reviewed are pushed at least 10 minutes out, so whatever is
+    // still due here is genuinely the leftover backlog the cap held back.
+    const remainingDue = getDueKanji(learnedKanji).length;
 
     return (
       <>
@@ -183,8 +252,13 @@ export function ReviewClient() {
           <div className="text-center py-8">
             <div className="text-5xl mb-4">🎌</div>
             <h1 className="text-3xl font-bold mb-2">Session Complete!</h1>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 mb-2">
               You reviewed {results.length} kanji
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              {remainingDue > 0
+                ? `${remainingDue} more still due — another round takes about the same time.`
+                : 'That clears your queue. Nothing else is due right now.'}
             </p>
 
             <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-8">
@@ -205,23 +279,23 @@ export function ReviewClient() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 size="lg"
-                onClick={() => {
-                  // Restart with any newly-due cards (failed ones come back at interval=1)
-                  const due = getDueKanji(learnedKanji);
-                  if (due.length > 0) {
-                    setQueue(shuffle(due));
-                    setCurrentIndex(0);
-                    setIsFlipped(false);
-                    setResults([]);
-                    setSessionState('reviewing');
-                  } else {
-                    setSessionState('empty');
-                  }
-                }}
+                // Purple = SRS throughout the app. With a backlog left this is
+                // the obvious next step, so give it the accent treatment.
+                className={remainingDue > 0 ? 'bg-purple-600 hover:bg-purple-700' : undefined}
+                variant={remainingDue > 0 ? 'default' : 'outline'}
+                onClick={() => startSession(getDueKanji(learnedKanji))}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Review Again
+                {remainingDue > 0
+                  ? `Review Next ${Math.min(remainingDue, SESSION_CAP)}`
+                  : 'Review Again'}
               </Button>
+              <Link href="/kanji/progress">
+                <Button variant="outline" size="lg">
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  See Your Progress
+                </Button>
+              </Link>
               <Link href="/kanji">
                 <Button variant="outline" size="lg">
                   <BookOpen className="w-4 h-4 mr-2" />
@@ -267,6 +341,14 @@ export function ReviewClient() {
               style={{ width: `${progress}%` }}
             />
           </div>
+          {/* Be honest about the backlog the cap is holding back — a user who
+              finishes 20/20 and then sees a "137 due" badge on the dictionary
+              would otherwise assume the review page is broken. */}
+          {totalDue > queue.length && (
+            <p className="text-xs text-gray-400 mt-1.5">
+              {queue.length} of {totalDue} due — the rest are waiting for you.
+            </p>
+          )}
         </div>
 
         {/* Flashcard */}
