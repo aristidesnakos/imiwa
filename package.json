@@ -13,7 +13,9 @@
     "submit-indexnow": "tsx --tsconfig tsconfig.json scripts/submit-indexnow.ts",
     "validate:schema": "tsx --tsconfig tsconfig.json scripts/validate-schema.ts --all",
     "sentences:publish": "tsx --tsconfig tsconfig.json scripts/sentences/publish.ts",
-    "validate:sentences": "tsx --tsconfig tsconfig.json scripts/sentences/validate-published.ts"
+    "validate:sentences": "tsx --tsconfig tsconfig.json scripts/sentences/validate-published.ts",
+    "validate:announcements": "tsx --tsconfig tsconfig.json scripts/announcements/validate.ts",
+    "announcements:status": "tsx --tsconfig tsconfig.json scripts/announcements/status.ts"
   },
   "dependencies": {
     "@datafast/ai-crawl": "^1.0.5",
