@@ -570,6 +570,7 @@ Record these on each review so the trend is legible:
 | Kanji pages prerendered | 1,894 | build output |
 | Total static pages | 1,924 | build output |
 | Sitemap URLs | 1,906 (1,893 kanji + 13 static) | `/sitemap.xml` |
+| ↳ **current, Jul 31, 2026** | **1,909 (1,896 kanji + 13 static)** — three kanji added Jul 31 (暑, 茹, 郊); verified against the running dev server and `scripts/sentences/kanji-inventory.ts` | `/sitemap.xml` |
 | Indexed pages | **not yet recorded** — P2-7 fills this on its first run | Search Console |
 | Kanji page `x-vercel-cache` | `MISS` → **`HIT` confirmed Jul 30** | `curl -I` |
 | Kanji page First Load JS | 123 kB | build output |
