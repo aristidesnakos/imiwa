@@ -18,6 +18,8 @@ import { CTASection } from '@/components/CTASection';
 import Header from '@/components/sections/Header';
 import { RelatedKanjiSection } from '@/components/kanji/RelatedKanjiSection';
 import { ExampleSentencesSection } from '@/components/kanji/ExampleSentencesSection';
+import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
+import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { sentencesForKanji } from '@/lib/sentences/published';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
@@ -25,7 +27,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 // import { strokeOrderService } from '@/lib/stroke-order';
-import { ArrowLeft, BookOpen, Printer } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import { AdBanner } from '@/components/AdBanner';
 
 // Combine all kanji data with levels
@@ -299,79 +301,56 @@ export default async function KanjiDetailPage({ params }: Props) {
           </div>
         </div>
         
-        {/* Main Content Grid */}
+        {/* The two halves of "what this character is": how you write it and what
+            it says. Side by side because they are read together — but they are
+            real sections, not column labels, so they carry the same heading
+            treatment as every other band on the page. */}
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Stroke Order */}
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Stroke Order Animation</h2>
+          <section className="space-y-4" aria-labelledby="writing-heading">
+            <h2 id="writing-heading" className={SECTION_HEADING}>
+              How to write {kanjiData.kanji}
+            </h2>
             <StrokeOrderViewer kanji={kanjiData.kanji} />
+          </section>
 
-            {/* The sheet is generated per character, so one exists for every kanji
-                that has a page — but until now it was only reachable from the
-                level sheet listings. A plain <a>, not <Link>: the target is an
-                API route returning HTML, which client navigation cannot render. */}
-            <a
-              href={`/api/kanji-sheets?character=${encodeURIComponent(kanjiData.kanji)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 transition-colors"
-            >
-              <Printer className="w-4 h-4" />
-              Print a practice sheet for {kanjiData.kanji}
-            </a>
-          </div>
-          
           {/* Kanji Information */}
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold mb-4">Meaning & Readings</h2>
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-700 mb-2">Meaning</h3>
-                  <p className="text-xl">{kanjiData.meaning}</p>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-700 mb-2">Onyomi (音読み)</h3>
-                  <p className="text-lg font-mono">{kanjiData.onyomi}</p>
-                  <p className="text-sm text-gray-600 mt-1">Chinese reading</p>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-700 mb-2">Kunyomi (訓読み)</h3>
-                  <p className="text-lg font-mono">{kanjiData.kunyomi}</p>
-                  <p className="text-sm text-gray-600 mt-1">Japanese reading</p>
-                </div>
-              </div>
+          <section className="space-y-4" aria-labelledby="readings-heading">
+            <h2 id="readings-heading" className={SECTION_HEADING}>
+              Meaning and readings
+            </h2>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-700 mb-2">Meaning</h3>
+              <p className="text-xl">{kanjiData.meaning}</p>
             </div>
-            
-            {/* Additional Information */}
-            {/* <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-medium mb-3">Character Information</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">JLPT Level:</span>
-                  <span className="font-medium">{kanjiData.level}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Unicode:</span>
-                  <span className="font-mono">{unicodeInfo.unicode}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Hex Code:</span>
-                  <span className="font-mono">{unicodeInfo.hex}</span>
-                </div>
-              </div>
-            </div> */}
-          </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-700 mb-2">Onyomi (音読み)</h3>
+              <p className="text-lg font-mono">{kanjiData.onyomi}</p>
+              <p className="text-sm text-gray-600 mt-1">Chinese reading</p>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-700 mb-2">Kunyomi (訓読み)</h3>
+              <p className="text-lg font-mono">{kanjiData.kunyomi}</p>
+              <p className="text-sm text-gray-600 mt-1">Japanese reading</p>
+            </div>
+          </section>
         </div>
+
+        {/* Actions on this character. Its own tier, on the page's left spine —
+            not an appendix to the stroke-order column. See KanjiActionBar. */}
+        <KanjiActionBar kanji={kanjiData.kanji} />
 
         {/* Example sentences (layer 4). Renders nothing when there are none —
             which is the normal state until a level has been through review. */}
         <ExampleSentencesSection kanji={kanjiData.kanji} sentences={exampleSentences} />
 
-        {/* Tan thumbs-up accent – between kanji content and related kanji */}
-        <div className="flex flex-col items-center gap-2 mt-10">
+        {/* Tan thumbs-up accent. Centred, and centring on this page means exactly
+            one thing: a moment rather than content. The hero is the only other
+            place it is used. */}
+        <div className="flex flex-col items-center gap-2 mt-16">
           <Image
             src="/assets/tan-thumbsup.png"
             alt="Tan the tanuki mascot giving a thumbs up"
@@ -391,19 +370,20 @@ export default async function KanjiDetailPage({ params }: Props) {
           </Link>
         </div>
 
-          {/* Related Kanji - BEFORE CTA */}
+        {/* Related Kanji — last content section, before the commercial blocks. */}
         <RelatedKanjiSection
           currentKanji={kanjiData}
           allKanji={ALL_KANJI_DATA}
         />
 
-        {/* Sponsor Ad */}
-        <section className="mt-10">
+        {/* Sponsor Ad. No rule: it is not part of the page's outline, and giving
+            it one would read as a fifth content section. */}
+        <section className="mt-12">
           <AdBanner />
         </section>
 
         {/* CTA Section */}
-        <section className="mt-12 pt-8 border-t border-gray-200">
+        <section className={SECTION_BAND}>
           <CTASection variant="with-image" />
         </section>
       </div>

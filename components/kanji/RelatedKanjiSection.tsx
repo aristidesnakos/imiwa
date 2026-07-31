@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { getRelatedKanji } from '@/lib/linking/kanji-links';
+import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import type { KanjiData } from '@/lib/constants/n5-kanji';
 
 interface Props {
@@ -22,8 +23,10 @@ export function RelatedKanjiSection({ currentKanji, allKanji }: Props) {
   if (relatedKanji.length === 0) return null;
 
   return (
-    <section className="mt-12 pt-8 border-t border-gray-200">
-      <h2 className="text-2xl font-semibold mb-6">Related Kanji</h2>
+    <section className={SECTION_BAND} aria-labelledby="related-kanji-heading">
+      <h2 id="related-kanji-heading" className={`${SECTION_HEADING} mb-6`}>
+        Related kanji
+      </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         {relatedKanji.map((related) => (
           <Link

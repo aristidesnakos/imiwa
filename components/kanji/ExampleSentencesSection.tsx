@@ -27,6 +27,7 @@
 import type { ExampleSentence } from '@/lib/sentences/types';
 import { Furigana } from '@/components/sentences/furigana';
 import { Attribution } from '@/components/sentences/attribution';
+import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 
 interface Props {
   kanji: string;
@@ -37,8 +38,8 @@ export function ExampleSentencesSection({ kanji, sentences }: Props) {
   if (sentences.length === 0) return null;
 
   return (
-    <section className="mt-12" aria-labelledby="example-sentences-heading">
-      <h2 id="example-sentences-heading" className="text-2xl font-semibold">
+    <section className={SECTION_BAND} aria-labelledby="example-sentences-heading">
+      <h2 id="example-sentences-heading" className={SECTION_HEADING}>
         Example sentences using {kanji}
       </h2>
       <p className="mt-1 text-sm text-gray-600">
