@@ -34,7 +34,12 @@ export function RelatedKanjiSection({ currentKanji, allKanji }: Props) {
             href={`/kanji/${encodeURIComponent(related.kanji)}`}
             className="block p-4 bg-gray-50 hover:bg-blue-50 rounded-lg transition-colors text-center group"
           >
-            <div className="text-4xl font-bold mb-2 group-hover:scale-110 transition-transform">
+            {/* lang="ja": the document is lang="en", and this character is the
+                entire accessible name of the link. */}
+            <div
+              lang="ja"
+              className="text-4xl font-bold mb-2 group-hover:scale-110 transition-transform"
+            >
               {related.kanji}
             </div>
             <p className="text-sm text-gray-700 mb-2">{related.meaning}</p>

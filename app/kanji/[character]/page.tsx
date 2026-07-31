@@ -260,7 +260,12 @@ export default async function KanjiDetailPage({ params }: Props) {
       
       <Header />
       
-      <div className="container mx-auto p-8 max-w-4xl">
+      {/* <main>, not <div>: Header and Footer emit banner/contentinfo landmarks,
+          so without this every word of the page sits outside any landmark and
+          there is no way to jump past the sticky header. The rest of the site
+          (app/page.tsx, /tos, /advertise, …) already does this; the /kanji/*
+          family was the holdout. */}
+      <main className="container mx-auto p-8 max-w-4xl">
         {/* Breadcrumbs (mirror the BreadcrumbList JSON-LD) */}
         <nav className="text-sm text-gray-600 mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center flex-wrap gap-1">
@@ -278,7 +283,7 @@ export default async function KanjiDetailPage({ params }: Props) {
             </li>
             <li aria-hidden className="text-gray-400">/</li>
             <li className="text-gray-800 font-medium" aria-current="page">
-              {kanjiData.kanji} — {primaryMeaning}
+              <span lang="ja">{kanjiData.kanji}</span> — {primaryMeaning}
             </li>
           </ol>
         </nav>
@@ -286,8 +291,15 @@ export default async function KanjiDetailPage({ params }: Props) {
         {/* Header — meaning-bearing H1: big character stays visual, the
             English meaning is real, indexable text for "[meaning] kanji" queries. */}
         <div className="text-center mb-8 space-y-4">
+          {/* lang="ja" on every run of Japanese: the document is lang="en", so
+              without it a screen reader hands these to an English voice, which
+              either skips the character or mangles the readings. The sentences
+              layer already does this per token (components/sentences/furigana);
+              this markup predates it. */}
           <h1 className="space-y-1">
-            <span className="block text-8xl font-bold">{kanjiData.kanji}</span>
+            <span lang="ja" className="block text-8xl font-bold">
+              {kanjiData.kanji}
+            </span>
             <span className="block text-2xl font-semibold text-gray-700">
               &ldquo;{primaryMeaning}&rdquo; Kanji
             </span>
@@ -309,7 +321,7 @@ export default async function KanjiDetailPage({ params }: Props) {
           {/* Stroke Order */}
           <section className="space-y-4" aria-labelledby="writing-heading">
             <h2 id="writing-heading" className={SECTION_HEADING}>
-              How to write {kanjiData.kanji}
+              How to write <span lang="ja">{kanjiData.kanji}</span>
             </h2>
             <StrokeOrderViewer kanji={kanjiData.kanji} />
           </section>
@@ -326,14 +338,18 @@ export default async function KanjiDetailPage({ params }: Props) {
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium text-gray-700 mb-2">Onyomi (音読み)</h3>
-              <p className="text-lg font-mono">{kanjiData.onyomi}</p>
+              <h3 className="font-medium text-gray-700 mb-2">
+                Onyomi (<span lang="ja">音読み</span>)
+              </h3>
+              <p lang="ja" className="text-lg font-mono">{kanjiData.onyomi}</p>
               <p className="text-sm text-gray-600 mt-1">Chinese reading</p>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium text-gray-700 mb-2">Kunyomi (訓読み)</h3>
-              <p className="text-lg font-mono">{kanjiData.kunyomi}</p>
+              <h3 className="font-medium text-gray-700 mb-2">
+                Kunyomi (<span lang="ja">訓読み</span>)
+              </h3>
+              <p lang="ja" className="text-lg font-mono">{kanjiData.kunyomi}</p>
               <p className="text-sm text-gray-600 mt-1">Japanese reading</p>
             </div>
           </section>
@@ -386,7 +402,7 @@ export default async function KanjiDetailPage({ params }: Props) {
         <section className={SECTION_BAND}>
           <CTASection variant="with-image" />
         </section>
-      </div>
+      </main>
     </>
   );
 }

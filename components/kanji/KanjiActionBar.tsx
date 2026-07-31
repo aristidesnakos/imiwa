@@ -52,6 +52,7 @@
 import { Printer } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SECTION_HEADING } from '@/components/kanji/section';
+import { cn } from '@/lib/utils';
 
 interface Props {
   kanji: string;
@@ -69,12 +70,12 @@ export function KanjiActionBar({ kanji }: Props) {
         </span>
 
         <h2 id="practice-heading" className={`${SECTION_HEADING} mt-5`}>
-          Practice {kanji} on paper
+          Practice <span lang="ja">{kanji}</span> on paper
         </h2>
 
         <p className="mx-auto mt-3 max-w-md text-gray-600">
-          A printable grid for tracing {kanji} by hand, with its readings and a stroke
-          order reference above the squares.
+          A printable grid for tracing <span lang="ja">{kanji}</span> by hand, with its
+          readings and a stroke order reference above the squares.
         </p>
 
         {/* A sheet is generated per character, so one exists for every kanji that
@@ -82,15 +83,30 @@ export function KanjiActionBar({ kanji }: Props) {
             returning HTML, which client navigation cannot render.
             `w-full sm:w-auto` because the base button class sets whitespace-nowrap:
             at 320px the label plus lg's px-8 is wider than the card's inner width,
-            and a nowrap button overflows rather than wrapping. */}
+            and a nowrap button overflows rather than wrapping.
+
+            The focus ring is overridden, not inherited. `buttonVariants` sets
+            `outline-none` + `ring-1 ring-ring`, and --ring is #7BB3D3, which is
+            2.28:1 against this white card — under the 3:1 WCAG 1.4.11 floor, and
+            a net regression because outline-none first removes the UA default.
+            Merged with cn() so tailwind-merge drops the inherited ring-1 rather
+            than leaving both widths to fight in the stylesheet. */}
         <a
           href={`/api/kanji-sheets?character=${encodeURIComponent(kanji)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonVariants({ size: 'lg' })} mt-6 w-full sm:w-auto`}
+          className={cn(
+            buttonVariants({ size: 'lg' }),
+            'mt-6 w-full sm:w-auto',
+            'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--deep-ocean)]'
+          )}
         >
           <Printer aria-hidden />
           Print a practice sheet
+          {/* The icon reads as "print", not "new tab", and the house convention
+              elsewhere (AdBanner, Footer) is an ExternalLink glyph we cannot use
+              here without muddling that meaning. */}
+          <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </div>
     </section>
