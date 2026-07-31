@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 
 export default function NotFound() {
   return (
@@ -52,7 +51,6 @@ export default function NotFound() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

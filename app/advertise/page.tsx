@@ -1,5 +1,4 @@
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 import AdvertiseContactForm from '@/components/sections/advertise/AdvertiseContactForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -228,7 +227,6 @@ export default async function AdvertisePage() {
         </section>
       </main>
 
-      <Footer />
     </>
   );
 }

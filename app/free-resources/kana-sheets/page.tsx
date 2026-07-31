@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 import { SheetCard } from '@/components/kana/SheetCard';
 import { KanaWorkbookCTA } from '@/components/kana/KanaWorkbookCTA';
 import { SHEET_CONFIGS } from './constants';
@@ -148,7 +147,6 @@ export default function KanaSheetsPage() {
         </section>
       </main>
 
-      <Footer />
     </>
   );
 }

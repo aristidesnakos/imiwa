@@ -125,7 +125,38 @@ export default function TermsOfService() {
             and unfair competition laws) and treaties in the United States and around the world.
           </p>
           <p>
-            The Content and Marks are provided in or through the Services &quot;AS IS&quot; for your personal, non-commercial use only.
+            The Content and Marks are provided in or through the Services &quot;AS IS&quot; for your personal, non-commercial use only,
+            <strong> except for the Third-Party Licensed Materials described immediately below</strong>, which are governed by
+            their own open licences and are not subject to that restriction.
+          </p>
+
+          <h3 className="text-lg font-medium mt-4">Third-party licensed materials</h3>
+          <p>
+            Parts of our Services incorporate material published by third parties under open licences. We do not own that
+            material, and nothing in these Legal Terms restricts any right you hold in it under the applicable licence.
+            Where these Legal Terms conflict with one of those licences, the licence governs as to that material.
+          </p>
+          <ul className="list-disc list-inside space-y-2 ml-4">
+            <li>
+              <strong>Kanji stroke diagrams</strong> derive from the KanjiVG project, copyright © 2009-2012 Ulrich Apel,
+              licensed under{' '}
+              <Link href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="underline">
+                CC BY-SA 3.0
+              </Link>
+              .
+            </li>
+          </ul>
+          <p>
+            These materials are reproduced without modification. Attribution appears in the site footer on every page.
+            We apply no technological measure that would restrict your exercise of the rights those licences grant you.
+          </p>
+
+          <h3 className="text-lg font-medium mt-4">What remains ours</h3>
+          <p>
+            Everything that is not Third-Party Licensed Material remains ours and is expressly reserved — including our
+            written explanations and commentary, our selection, arrangement and presentation of any material (including our
+            compilation of third-party licensed material), our source code, designs, and our Marks. Open licences covering
+            individual components do not extend to the surrounding work.
           </p>
         </section>
 

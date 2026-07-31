@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from "@/components/sections/Header";
-import Footer from "@/components/sections/Footer";
 import { Button } from '@/components/ui/button';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
@@ -272,7 +271,6 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <Footer />
     </>
   );
 }

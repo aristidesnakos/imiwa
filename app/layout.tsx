@@ -10,6 +10,7 @@ import { JsonLd } from "@/lib/jsonld";
 import { CookieConsent } from "@/components/CookieConsent";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
+import Footer from "@/components/sections/Footer";
 import "./globals.css";
 
 // Font is managed through globals.css with Nunito and Bangers
@@ -114,6 +115,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <AnalyticsProvider />
           <ClientLayout>
             {children}
+            {/* Site-wide, NOT per-page. The footer carries the KanjiVG
+                (CC BY-SA 3.0) attribution, and will carry the EDRDG and Tatoeba
+                acknowledgements. EDRDG's licence requires the acknowledgement
+                "on each screen display", and CC BY-SA attribution must travel
+                with the copies you distribute — so it has to render on
+                /kanji/[character], which is where the licensed SVGs actually
+                appear. It previously did not.
+                See docs/prd/content-source-licence-investigation.md §0. */}
+            <Footer />
             <CookieConsent />
             <FeedbackWidget />
           </ClientLayout>

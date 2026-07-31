@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
-import Footer from '@/components/sections/Footer';
 import Link from 'next/link';
 import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
 
@@ -216,7 +215,6 @@ export default function KanjiSheetsLandingPage() {
         />
       </main>
 
-      <Footer />
     </>
   );
 }
