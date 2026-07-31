@@ -39,6 +39,8 @@ next-env.d.ts
 # scripts/check-indexation.ts. Only ever exist if a run was killed between the
 # write and the rename; the state file itself IS committed, the scratch is not.
 /data/*.json.tmp
+# Same pattern, used by the atomic write in lib/sentences/store.ts.
+/data/sentences/**/*.json.tmp
 
 # reports
 /reports
@@ -58,3 +60,6 @@ next-env.d.ts
 /kanji-sheets
 
 package-lock.json
+
+# Tatoeba corpus dumps — fetched by scripts/sentences/, never vendored
+.tatoeba-cache/
