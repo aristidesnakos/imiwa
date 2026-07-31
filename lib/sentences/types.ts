@@ -246,6 +246,23 @@ export interface ExampleSentence {
   id: CandidateId;
   kanji: string[];
   targets: KanjiTarget[];
+  /**
+   * The kanji whose review accepted this sentence — which pages it may appear
+   * on. Usually one entry.
+   *
+   * This is NOT the same as `kanji` or `targets`, and the difference matters.
+   * A `CandidateId` is a JP/EN pair id and carries no kanji, so one sentence
+   * appears in several kanji's candidate lists and one `ReviewDecision` covers
+   * all of them. But acceptance is partly kanji-specific — `target-kanji-unused`
+   * exists as a reject reason precisely because a sentence can be natural, well
+   * translated, and still a poor demonstration of one of the characters in it.
+   *
+   * So a sentence surfaces only where a human actually looked at it in that
+   * character's context. The cheaper rule — show it on every page whose kanji
+   * it contains — would multiply coverage for free by inferring a judgement
+   * nobody made, and this site's claim is accuracy.
+   */
+  reviewedFor: string[];
   japanese: string;
   tokens: Token[];
   english: string;

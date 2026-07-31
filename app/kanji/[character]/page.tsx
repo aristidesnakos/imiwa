@@ -17,6 +17,8 @@ import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
 import Header from '@/components/sections/Header';
 import { RelatedKanjiSection } from '@/components/kanji/RelatedKanjiSection';
+import { ExampleSentencesSection } from '@/components/kanji/ExampleSentencesSection';
+import { sentencesForKanji } from '@/lib/sentences/published';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
@@ -125,6 +127,9 @@ export default async function KanjiDetailPage({ params }: Props) {
   
   // const unicodeInfo = strokeOrderService.getUnicodeInfo(kanjiData.kanji);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
+
+  // Layer 4. Empty for most kanji for a long time — the section omits itself.
+  const exampleSentences = sentencesForKanji(kanjiData.kanji);
 
   const pageUrl = `${SITE_URL}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
 
@@ -346,6 +351,10 @@ export default async function KanjiDetailPage({ params }: Props) {
             </div> */}
           </div>
         </div>
+
+        {/* Example sentences (layer 4). Renders nothing when there are none —
+            which is the normal state until a level has been through review. */}
+        <ExampleSentencesSection kanji={kanjiData.kanji} sentences={exampleSentences} />
 
         {/* Tan thumbs-up accent – between kanji content and related kanji */}
         <div className="flex flex-col items-center gap-2 mt-10">
