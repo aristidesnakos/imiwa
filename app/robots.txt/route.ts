@@ -13,6 +13,7 @@ Sitemap: ${baseUrl}/sitemap.xml
 
 # Block admin/private areas
 Disallow: /api/
+Disallow: /admin/
 Disallow: /settings/
 Disallow: /favicon.ico`;
 
