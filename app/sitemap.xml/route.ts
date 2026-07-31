@@ -14,6 +14,9 @@ import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
 const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   { path: '', lastmod: '2026-06-14', priority: '1.0' },
   { path: '/kanji', lastmod: '2026-06-14', priority: '0.9' },
+  // Indexable and canonical, but both of its in-app links sit behind localStorage
+  // checks a crawler never satisfies — without this entry it is an orphan.
+  { path: '/kanji/review', lastmod: '2026-07-31', priority: '0.6' },
   { path: '/free-resources', lastmod: '2026-06-14', priority: '0.7' },
   { path: '/free-resources/kana-sheets', lastmod: '2026-01-10', priority: '0.7' },
   { path: '/free-resources/kanji-sheets', lastmod: '2026-06-14', priority: '0.7' },
