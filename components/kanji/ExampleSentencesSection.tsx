@@ -40,7 +40,7 @@ export function ExampleSentencesSection({ kanji, sentences }: Props) {
   return (
     <section className={SECTION_BAND} aria-labelledby="example-sentences-heading">
       <h2 id="example-sentences-heading" className={SECTION_HEADING}>
-        Example sentences using {kanji}
+        Example sentences using <span lang="ja">{kanji}</span>
       </h2>
       <p className="mt-1 text-sm text-gray-600">
         Human-reviewed sentence pairs from the Tatoeba corpus, with readings shown above
