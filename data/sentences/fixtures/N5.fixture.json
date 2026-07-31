@@ -1,0 +1,1582 @@
+{
+  "level": "N5",
+  "corpusVintage": "2026-07-25",
+  "generatedAt": "2026-07-31T00:00:00.000Z",
+  "targetPerKanji": 3,
+  "entries": [
+    {
+      "kanji": "暑",
+      "level": "N5",
+      "meaning": "hot, sultry",
+      "candidates": [
+        {
+          "id": "tatoeba-9100001-9100002",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "今日はとても暑いです。",
+          "english": "It's very hot today.",
+          "tokens": [
+            {
+              "surface": "今日",
+              "reading": "きょう"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "とても"
+            },
+            {
+              "surface": "暑い",
+              "reading": "あつい"
+            },
+            {
+              "surface": "です"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "今",
+            "日",
+            "暑"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100001,
+              "contributor": "kaori_t",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100001"
+            },
+            "english": {
+              "sentenceId": 9100002,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100002"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": true,
+            "hasAudio": true,
+            "isTanaka": false
+          },
+          "score": 0.94,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑い (あつい) — exact dictionary word match",
+            "length 11 chars, inside the 8–60 band",
+            "all kanji at or below N5",
+            "JP owner declares native Japanese",
+            "has audio"
+          ],
+          "rank": 1,
+          "senseHint": "hot"
+        },
+        {
+          "id": "tatoeba-9100003-9100004",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "暑いので窓を開けました。",
+          "english": "It was hot, so I opened the window.",
+          "tokens": [
+            {
+              "surface": "暑い",
+              "reading": "あつい"
+            },
+            {
+              "surface": "ので"
+            },
+            {
+              "surface": "窓",
+              "reading": "まど"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "開け",
+              "reading": "あけ"
+            },
+            {
+              "surface": "まし"
+            },
+            {
+              "surface": "た"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "暑",
+            "窓",
+            "開"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100003,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100003"
+            },
+            "english": {
+              "sentenceId": 9100004,
+              "contributor": "Nero",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100004"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.88,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑い (あつい) — exact dictionary word match",
+            "length 12 chars, inside the 8–60 band",
+            "窓 is N3, one level above target",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 2,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9100005-9100006",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "夏の京都は本当に暑い。",
+          "english": "Kyoto is really hot in summer.",
+          "tokens": [
+            {
+              "surface": "夏",
+              "reading": "なつ"
+            },
+            {
+              "surface": "の"
+            },
+            {
+              "surface": "京都",
+              "reading": "きょうと"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "本当に",
+              "reading": "ほんとうに"
+            },
+            {
+              "surface": "暑い",
+              "reading": "あつい"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "夏",
+            "京",
+            "都",
+            "本",
+            "当",
+            "暑"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100005,
+              "contributor": "mookeee",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100005"
+            },
+            "english": {
+              "sentenceId": 9100006,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100006"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": false,
+            "hasAudio": false,
+            "isTanaka": false
+          },
+          "score": 0.81,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑い (あつい) — exact dictionary word match",
+            "length 11 chars, inside the 8–60 band",
+            "all kanji at or below N4",
+            "EN side is an unadopted Tanaka Corpus import"
+          ],
+          "rank": 3,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9100007-9100008",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "部屋が暑すぎて眠れません。",
+          "english": "The room is too hot and I can't sleep.",
+          "tokens": [
+            {
+              "surface": "部屋",
+              "reading": "へや"
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "暑",
+              "reading": "あつ"
+            },
+            {
+              "surface": "すぎ"
+            },
+            {
+              "surface": "て"
+            },
+            {
+              "surface": "眠れ",
+              "reading": "ねむれ"
+            },
+            {
+              "surface": "ませ"
+            },
+            {
+              "surface": "ん"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "部",
+            "屋",
+            "暑",
+            "眠"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100007,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100007"
+            },
+            "english": {
+              "sentenceId": 9100008,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100008"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.76,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑すぎる — inflected form, not the dictionary word",
+            "length 13 chars, inside the 8–60 band",
+            "眠 is N2, two levels above target",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 4,
+          "senseHint": "hot"
+        },
+        {
+          "id": "tatoeba-9100009-9100010",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "暑さで頭が痛くなった。",
+          "english": "The heat gave me a headache.",
+          "tokens": [
+            {
+              "surface": "暑",
+              "reading": "あつ"
+            },
+            {
+              "surface": "さ"
+            },
+            {
+              "surface": "で"
+            },
+            {
+              "surface": "頭",
+              "reading": "あたま"
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "痛く",
+              "reading": "いたく"
+            },
+            {
+              "surface": "なっ"
+            },
+            {
+              "surface": "た"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "暑",
+            "頭",
+            "痛"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100009,
+              "contributor": "bunbuku",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100009"
+            },
+            "english": {
+              "sentenceId": 9100010,
+              "contributor": "Hybrid",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100010"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": false
+          },
+          "score": 0.72,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑さ — nominalised, target reading あつ is partial",
+            "length 11 chars, inside the 8–60 band",
+            "痛 is N3, one level above target"
+          ],
+          "rank": 5,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9100011-9100012",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "猛暑日が続いています。",
+          "english": "The extremely hot days are continuing.",
+          "tokens": [
+            {
+              "surface": "猛暑日",
+              "readingUnknown": true
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "続い",
+              "reading": "つづい"
+            },
+            {
+              "surface": "て"
+            },
+            {
+              "surface": "い"
+            },
+            {
+              "surface": "ます"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猛",
+            "暑",
+            "日",
+            "続"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100011,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100011"
+            },
+            "english": {
+              "sentenceId": 9100012,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100012"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": false,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.55,
+          "scoreBreakdown": [
+            "target kanji 暑 in 猛暑日 — compound, 猛 is not in our dictionary",
+            "tokenizer returned no reading for 猛暑日 (known IPADIC failure on rare compounds)",
+            "length 11 chars, inside the 8–60 band",
+            "both sides are unadopted Tanaka Corpus imports"
+          ],
+          "rank": 6,
+          "senseHint": "sultry"
+        },
+        {
+          "id": "tatoeba-9100013-9100014",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "暑い日には水をたくさん飲んでください。",
+          "english": "Please drink a lot of water on hot days.",
+          "tokens": [
+            {
+              "surface": "暑い",
+              "reading": "あつい"
+            },
+            {
+              "surface": "日",
+              "reading": "ひ"
+            },
+            {
+              "surface": "に"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "水",
+              "reading": "みず"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "たくさん"
+            },
+            {
+              "surface": "飲ん",
+              "reading": "のん"
+            },
+            {
+              "surface": "で"
+            },
+            {
+              "surface": "ください"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "暑",
+            "日",
+            "水",
+            "飲"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100013,
+              "contributor": "arnab",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100013"
+            },
+            "english": {
+              "sentenceId": 9100014,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100014"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": true,
+            "isTanaka": false
+          },
+          "score": 0.69,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑い (あつい) — exact dictionary word match",
+            "length 19 chars, inside the 8–60 band",
+            "all kanji at or below N5",
+            "JP owner does not declare native Japanese",
+            "has audio"
+          ],
+          "rank": 7,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9100015-9100016",
+          "targetKanji": "暑",
+          "targetLevel": "N5",
+          "japanese": "この部屋は暑くない。",
+          "english": "This room is not hot.",
+          "tokens": [
+            {
+              "surface": "この"
+            },
+            {
+              "surface": "部屋",
+              "reading": "へや"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "暑く",
+              "reading": "あつく"
+            },
+            {
+              "surface": "ない"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "部",
+            "屋",
+            "暑"
+          ],
+          "targets": [
+            {
+              "kanji": "暑",
+              "word": "暑い",
+              "reading": "あつい"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9100015,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100015"
+            },
+            "english": {
+              "sentenceId": 9100016,
+              "contributor": "Swift",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9100016"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.64,
+          "scoreBreakdown": [
+            "target kanji 暑 in 暑くない — negated form",
+            "length 10 chars, inside the 8–60 band",
+            "all kanji at or below N5",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 8,
+          "senseHint": null
+        }
+      ],
+      "totalCandidates": 412
+    },
+    {
+      "kanji": "猫",
+      "level": "N5",
+      "meaning": "cat",
+      "candidates": [
+        {
+          "id": "tatoeba-9200001-9200002",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "猫が好きです。",
+          "english": "I like cats.",
+          "tokens": [
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "好き",
+              "reading": "すき"
+            },
+            {
+              "surface": "です"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猫",
+            "好"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200001,
+              "contributor": "moxy",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200001"
+            },
+            "english": {
+              "sentenceId": 9200002,
+              "contributor": "rul",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200002"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": true,
+            "hasAudio": true,
+            "isTanaka": false
+          },
+          "score": 0.91,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "length 7 chars, at the short end of the 8–60 band",
+            "all kanji at or below N5",
+            "JP owner declares native Japanese",
+            "has audio"
+          ],
+          "rank": 1,
+          "senseHint": "cat"
+        },
+        {
+          "id": "tatoeba-9200003-9200004",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "うちの猫は白い。",
+          "english": "Our cat is white.",
+          "tokens": [
+            {
+              "surface": "うち"
+            },
+            {
+              "surface": "の"
+            },
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "白い",
+              "reading": "しろい"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猫",
+            "白"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200003,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200003"
+            },
+            "english": {
+              "sentenceId": 9200004,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200004"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.86,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "length 8 chars, inside the 8–60 band",
+            "all kanji at or below N5",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 2,
+          "senseHint": "cat"
+        },
+        {
+          "id": "tatoeba-9200005-9200006",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "猫は魚を食べる。",
+          "english": "Cats eat fish.",
+          "tokens": [
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "魚",
+              "reading": "さかな"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "食べる",
+              "reading": "たべる"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猫",
+            "魚",
+            "食"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200005,
+              "contributor": "tommy_san",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200005"
+            },
+            "english": {
+              "sentenceId": 9200006,
+              "contributor": "Zifre",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200006"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": false
+          },
+          "score": 0.84,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "also demonstrates 魚 (N5) and 食 (N5)",
+            "length 8 chars, inside the 8–60 band",
+            "JP owner declares native Japanese"
+          ],
+          "rank": 3,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9200007-9200008",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "黒い猫が道を渡った。",
+          "english": "A black cat crossed the road.",
+          "tokens": [
+            {
+              "surface": "黒い",
+              "reading": "くろい"
+            },
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "道",
+              "reading": "みち"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "渡っ",
+              "reading": "わたっ"
+            },
+            {
+              "surface": "た"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "黒",
+            "猫",
+            "道",
+            "渡"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200007,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200007"
+            },
+            "english": {
+              "sentenceId": 9200008,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200008"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": false,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.78,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "渡 is N3, one level above target",
+            "length 10 chars, inside the 8–60 band",
+            "both sides are unadopted Tanaka Corpus imports"
+          ],
+          "rank": 4,
+          "senseHint": "cat"
+        },
+        {
+          "id": "tatoeba-9200009-9200010",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "猫が窓から外を見ている。",
+          "english": "The cat is looking outside through the window.",
+          "tokens": [
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "窓",
+              "reading": "まど"
+            },
+            {
+              "surface": "から"
+            },
+            {
+              "surface": "外",
+              "reading": "そと"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "見",
+              "reading": "み"
+            },
+            {
+              "surface": "て"
+            },
+            {
+              "surface": "いる"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猫",
+            "窓",
+            "外",
+            "見"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200009,
+              "contributor": "mookeee",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200009"
+            },
+            "english": {
+              "sentenceId": 9200010,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200010"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": true,
+            "hasAudio": true,
+            "isTanaka": false
+          },
+          "score": 0.75,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "窓 is N3, one level above target",
+            "length 12 chars, inside the 8–60 band",
+            "has audio"
+          ],
+          "rank": 5,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9200011-9200012",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "私は犬より猫が好きだ。",
+          "english": "I like cats better than dogs.",
+          "tokens": [
+            {
+              "surface": "私",
+              "reading": "わたし"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "犬",
+              "reading": "いぬ"
+            },
+            {
+              "surface": "より"
+            },
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "が"
+            },
+            {
+              "surface": "好き",
+              "reading": "すき"
+            },
+            {
+              "surface": "だ"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "私",
+            "犬",
+            "猫",
+            "好"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200011,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200011"
+            },
+            "english": {
+              "sentenceId": 9200012,
+              "contributor": "Eldad",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200012"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.71,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "also demonstrates 犬 (N5) and 私 (N5)",
+            "length 11 chars, inside the 8–60 band",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 6,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9200013-9200014",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "その猫はとても小さい。",
+          "english": "That cat is very small.",
+          "tokens": [
+            {
+              "surface": "その"
+            },
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "とても"
+            },
+            {
+              "surface": "小さい",
+              "reading": "ちいさい"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猫",
+            "小"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200013,
+              "contributor": "bunbuku",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200013"
+            },
+            "english": {
+              "sentenceId": 9200014,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200014"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": false,
+            "hasAudio": false,
+            "isTanaka": false
+          },
+          "score": 0.68,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "length 11 chars, inside the 8–60 band",
+            "all kanji at or below N5",
+            "EN side is an unadopted Tanaka Corpus import"
+          ],
+          "rank": 7,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9200015-9200016",
+          "targetKanji": "猫",
+          "targetLevel": "N5",
+          "japanese": "猫を三匹飼っています。",
+          "english": "I keep three cats.",
+          "tokens": [
+            {
+              "surface": "猫",
+              "reading": "ねこ"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "三",
+              "reading": "さん"
+            },
+            {
+              "surface": "匹",
+              "readingUnknown": true
+            },
+            {
+              "surface": "飼っ",
+              "reading": "かっ"
+            },
+            {
+              "surface": "て"
+            },
+            {
+              "surface": "い"
+            },
+            {
+              "surface": "ます"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "猫",
+            "三",
+            "匹",
+            "飼"
+          ],
+          "targets": [
+            {
+              "kanji": "猫",
+              "word": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9200015,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200015"
+            },
+            "english": {
+              "sentenceId": 9200016,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9200016"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.52,
+          "scoreBreakdown": [
+            "target kanji 猫 in 猫 (ねこ) — exact dictionary word match",
+            "tokenizer returned no reading for 匹 (counter, known IPADIC failure)",
+            "飼 is not in our dictionary",
+            "length 11 chars, inside the 8–60 band"
+          ],
+          "rank": 8,
+          "senseHint": null
+        }
+      ],
+      "totalCandidates": 806
+    },
+    {
+      "kanji": "食",
+      "level": "N5",
+      "meaning": "eat, food",
+      "candidates": [
+        {
+          "id": "tatoeba-9300001-9300002",
+          "targetKanji": "食",
+          "targetLevel": "N5",
+          "japanese": "朝ご飯を食べましたか。",
+          "english": "Did you eat breakfast?",
+          "tokens": [
+            {
+              "surface": "朝ご飯",
+              "reading": "あさごはん"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "食べ",
+              "reading": "たべ"
+            },
+            {
+              "surface": "まし"
+            },
+            {
+              "surface": "た"
+            },
+            {
+              "surface": "か"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "朝",
+            "飯",
+            "食"
+          ],
+          "targets": [
+            {
+              "kanji": "食",
+              "word": "食べる",
+              "reading": "たべる"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9300001,
+              "contributor": "tommy_san",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300001"
+            },
+            "english": {
+              "sentenceId": 9300002,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300002"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": true,
+            "hasAudio": true,
+            "isTanaka": false
+          },
+          "score": 0.9,
+          "scoreBreakdown": [
+            "target kanji 食 in 食べる (たべる) — exact dictionary word match",
+            "also demonstrates 朝 (N5) and 飯 (N3)",
+            "length 11 chars, inside the 8–60 band",
+            "JP owner declares native Japanese",
+            "has audio"
+          ],
+          "rank": 1,
+          "senseHint": "eat"
+        },
+        {
+          "id": "tatoeba-9300003-9300004",
+          "targetKanji": "食",
+          "targetLevel": "N5",
+          "japanese": "私は毎日和食を食べる。",
+          "english": "I eat Japanese food every day.",
+          "tokens": [
+            {
+              "surface": "私",
+              "reading": "わたし"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "毎日",
+              "reading": "まいにち"
+            },
+            {
+              "surface": "和食",
+              "reading": "わしょく"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "食べる",
+              "reading": "たべる"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "私",
+            "毎",
+            "日",
+            "和",
+            "食"
+          ],
+          "targets": [
+            {
+              "kanji": "食",
+              "word": "食べる",
+              "reading": "たべる"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9300003,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300003"
+            },
+            "english": {
+              "sentenceId": 9300004,
+              "contributor": "Hybrid",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300004"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.83,
+          "scoreBreakdown": [
+            "target kanji 食 in 食べる (たべる) — exact dictionary word match",
+            "and again in 和食 (わしょく) — two distinct readings shown",
+            "length 11 chars, inside the 8–60 band",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 2,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9300005-9300006",
+          "targetKanji": "食",
+          "targetLevel": "N5",
+          "japanese": "食事の前に手を洗いなさい。",
+          "english": "Wash your hands before the meal.",
+          "tokens": [
+            {
+              "surface": "食事",
+              "reading": "しょくじ"
+            },
+            {
+              "surface": "の"
+            },
+            {
+              "surface": "前",
+              "reading": "まえ"
+            },
+            {
+              "surface": "に"
+            },
+            {
+              "surface": "手",
+              "reading": "て"
+            },
+            {
+              "surface": "を"
+            },
+            {
+              "surface": "洗い",
+              "reading": "あらい"
+            },
+            {
+              "surface": "なさい"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "食",
+            "事",
+            "前",
+            "手",
+            "洗"
+          ],
+          "targets": [
+            {
+              "kanji": "食",
+              "word": "食べる",
+              "reading": "たべる"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9300005,
+              "contributor": "mookeee",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300005"
+            },
+            "english": {
+              "sentenceId": 9300006,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300006"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": true,
+            "englishByNativeSpeaker": false,
+            "hasAudio": false,
+            "isTanaka": false
+          },
+          "score": 0.74,
+          "scoreBreakdown": [
+            "target kanji 食 in 食事 (しょくじ) — on-reading, not the target kun-reading",
+            "洗 is N3, one level above target",
+            "length 13 chars, inside the 8–60 band",
+            "EN side is an unadopted Tanaka Corpus import"
+          ],
+          "rank": 3,
+          "senseHint": null
+        },
+        {
+          "id": "tatoeba-9300007-9300008",
+          "targetKanji": "食",
+          "targetLevel": "N5",
+          "japanese": "この店の食べ物はおいしい。",
+          "english": "This shop's food is delicious.",
+          "tokens": [
+            {
+              "surface": "この"
+            },
+            {
+              "surface": "店",
+              "reading": "みせ"
+            },
+            {
+              "surface": "の"
+            },
+            {
+              "surface": "食べ物",
+              "reading": "たべもの"
+            },
+            {
+              "surface": "は"
+            },
+            {
+              "surface": "おいしい"
+            },
+            {
+              "surface": "。"
+            }
+          ],
+          "kanji": [
+            "店",
+            "食",
+            "物"
+          ],
+          "targets": [
+            {
+              "kanji": "食",
+              "word": "食べる",
+              "reading": "たべる"
+            }
+          ],
+          "level": "N5",
+          "source": {
+            "japanese": {
+              "sentenceId": 9300007,
+              "contributor": null,
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300007"
+            },
+            "english": {
+              "sentenceId": 9300008,
+              "contributor": "CK",
+              "license": "CC BY 2.0 FR",
+              "url": "https://tatoeba.org/en/sentences/show/9300008"
+            }
+          },
+          "signals": {
+            "japaneseByNativeSpeaker": false,
+            "englishByNativeSpeaker": true,
+            "hasAudio": false,
+            "isTanaka": true
+          },
+          "score": 0.7,
+          "scoreBreakdown": [
+            "target kanji 食 in 食べ物 (たべもの) — compound noun",
+            "also demonstrates 店 (N4) and 物 (N5)",
+            "length 13 chars, inside the 8–60 band",
+            "unadopted Tanaka Corpus import (curated textbook source)"
+          ],
+          "rank": 4,
+          "senseHint": "food"
+        }
+      ],
+      "totalCandidates": 4
+    }
+  ]
+}
