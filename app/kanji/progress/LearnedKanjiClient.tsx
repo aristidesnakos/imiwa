@@ -199,7 +199,7 @@ export function LearnedKanjiClient() {
           </Link>
 
           <Link href="/kanji/review" className="w-full">
-            <Button variant="outline" size="lg" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50">
+            <Button variant="outline" size="lg" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 hover:text-purple-700">
               <Brain className="w-4 h-4 mr-2" />
               SRS Review
               {dueCount > 0 && (

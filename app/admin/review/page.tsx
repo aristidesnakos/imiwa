@@ -61,7 +61,7 @@ export default async function ReviewOverviewPage({
   const visible = rows.filter((r) => matches(r.counts, filter));
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold">Example sentence review</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ export default async function ReviewOverviewPage({
                 <Badge variant="outline" className="border-emerald-500/50 text-emerald-700">
                   {counts.accepted} ✓
                 </Badge>
-                <Badge variant="outline" className="border-destructive/50 text-destructive">
+                <Badge variant="outline" className="border-destructive-ink text-destructive-ink">
                   {counts.rejected} ✕
                 </Badge>
                 <Badge variant={counts.undecided ? 'secondary' : 'outline'}>
@@ -159,7 +159,7 @@ export default async function ReviewOverviewPage({
 
 function EmptyState() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-20 text-center">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-2xl px-4 py-20 text-center">
       <h1 className="text-2xl font-semibold">No review queue yet</h1>
       <p className="mt-3 text-sm text-muted-foreground">
         Nothing was found in <code className="font-mono">data/sentences/queue/</code>. The

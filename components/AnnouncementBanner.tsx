@@ -166,7 +166,7 @@ export function AnnouncementBanner() {
           <Link
             href={announcement.cta.href}
             onClick={() => acknowledge('cta', 'announcement_cta_click')}
-            className="whitespace-nowrap font-semibold text-japan-sakura-waters underline underline-offset-2 hover:text-japan-coral-sunset"
+            className="whitespace-nowrap font-semibold text-japan-sakura-waters underline underline-offset-2 hover:text-japan-coral-sunset-ink"
           >
             {announcement.cta.label} →
           </Link>
@@ -178,7 +178,7 @@ export function AnnouncementBanner() {
           type="button"
           onClick={() => acknowledge('dismiss', 'announcement_dismiss')}
           aria-label="Dismiss announcement"
-          className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-japan-mountain-mist transition-colors hover:bg-white/70 hover:text-japan-deep-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-japan-sakura-waters"
+          className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-japan-mountain-mist transition-colors hover:bg-white/70 hover:text-japan-deep-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <X className="h-4 w-4" />
         </button>

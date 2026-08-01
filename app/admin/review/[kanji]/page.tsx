@@ -33,7 +33,7 @@ export default async function ReviewKanjiPage({
     const queues = readAllQueues();
     if (queues.length === 0) {
       return (
-        <main className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <main id="main-content" tabIndex={-1} className="mx-auto max-w-2xl px-4 py-20 text-center">
           <h1 className="text-2xl font-semibold">No review queue yet</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             <code className="font-mono">data/sentences/queue/</code> is empty, so{' '}

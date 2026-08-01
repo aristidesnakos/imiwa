@@ -61,7 +61,7 @@ export function FeedbackWidget() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Share feedback"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-japan-deep-ocean px-4 py-2.5 text-sm font-medium text-white shadow-lg hover:bg-japan-deep-ocean/90 transition-colors focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/60"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-japan-deep-ocean px-4 py-2.5 text-sm font-medium text-white shadow-lg hover:bg-japan-deep-ocean/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <MessageSquare className="w-4 h-4" />
         Feedback
@@ -128,7 +128,7 @@ export function FeedbackWidget() {
                           onClick={() => { setRating(star); setRatingError(false); }}
                           onMouseEnter={() => setHovered(star)}
                           onMouseLeave={() => setHovered(0)}
-                          className="focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/60 rounded"
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
                         >
                           <Star
                             className={`w-7 h-7 transition-colors ${
@@ -159,7 +159,7 @@ export function FeedbackWidget() {
                       value={form.message}
                       onChange={handleChange}
                       placeholder="Tell us what you think…"
-                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40 resize-none"
+                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
                     />
                   </div>
 
@@ -176,7 +176,7 @@ export function FeedbackWidget() {
                       value={form.features}
                       onChange={handleChange}
                       placeholder="Any features you'd love to see added?"
-                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40 resize-none"
+                      className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
                     />
                   </div>
 
@@ -192,7 +192,7 @@ export function FeedbackWidget() {
                         value={form.name}
                         onChange={handleChange}
                         placeholder="Optional"
-                        className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
+                        className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       />
                     </div>
                     <div>
@@ -205,7 +205,7 @@ export function FeedbackWidget() {
                         value={form.email}
                         onChange={handleChange}
                         placeholder="Optional"
-                        className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus:outline-none focus:ring-2 focus:ring-japan-sakura-waters/40"
+                        className="w-full rounded-lg border border-japan-sakura-waters/30 bg-japan-soft-mist/20 px-3 py-2.5 text-sm text-japan-deep-ocean placeholder-japan-mountain-mist/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       />
                     </div>
                   </div>

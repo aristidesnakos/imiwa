@@ -23,6 +23,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   // apart the way three inline copies of the expression could.
   const diagramId = `stroke-${kanji.codePointAt(0)}`;
   const diagramLabelId = `${diagramId}-label`;
+  // The role="img" wrapper, which is what Play controls and what the label
+  // names. Distinct from diagramId, which stays on the inner element the
+  // animation code looks up — see the render for why they had to separate.
+  const diagramFigureId = `${diagramId}-figure`;
 
   const [svg, setSvg] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -69,6 +73,34 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       }
     }
   }, [svg, diagramId]);
+
+  // What the live region says. Deliberately NOT the instruction text.
+  //
+  // Feeding it the instruction meant two bugs. The component is server-rendered
+  // with loading=true, so every visitor to every kanji page heard "Loading…"
+  // flip to "Click Play to see the stroke order animation" without having done
+  // anything — an unsolicited announcement on a page they came to read. And the
+  // instruction only ever changes once, when hasStarted flips, so the second and
+  // every later Replay was silent: the text was already identical and identical
+  // text is not re-announced.
+  //
+  // So this reports events, not instructions. Empty until something actually
+  // happens, and `announce` clears before setting so a repeated press is a real
+  // change to the node.
+  const [status, setStatus] = useState('');
+
+  const announce = useCallback((message: string) => {
+    setStatus('');
+    // A frame, not a microtask: React batches both setStates in the same commit
+    // otherwise, and the region never sees the empty value.
+    requestAnimationFrame(() => setStatus(message));
+  }, []);
+
+  useEffect(() => {
+    if (error) {
+      setStatus('Stroke order diagram is not available for this kanji.');
+    }
+  }, [error]);
 
   const cancelAnimation = useCallback(() => {
     if (animationTimerRef.current) {
@@ -156,7 +188,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     if (strokeCount === 0) return;
     if (!hasStarted) setHasStarted(true);
     startAnimation();
-  }, [strokeCount, hasStarted, startAnimation]);
+    // The one thing worth announcing: the animation is purely visual, so
+    // without this a non-sighted user gets no confirmation the button did
+    // anything. Re-announced on every press, including repeats.
+    announce(
+      `Playing stroke order animation, ${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'}.`
+    );
+  }, [strokeCount, hasStarted, startAnimation, announce]);
 
   const getButtonContent = () => {
     if (hasStarted) {
@@ -170,15 +208,6 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     return 'Click Play to see the stroke order animation';
   };
 
-  // Single sentence describing where the viewer currently is, fed to the live
-  // region below. The three visual states are three different subtrees, so the
-  // wording is centralised here rather than scraped out of whichever subtree
-  // happens to be mounted.
-  const getStatusMessage = () => {
-    if (loading) return 'Loading stroke order diagram';
-    if (error) return 'Stroke order not available. This kanji may not be in the KanjiVG database.';
-    return getInstructionText();
-  };
 
   return (
     // One persistent wrapper across loading / error / loaded. The states used to
@@ -189,13 +218,10 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     // the wrapper (and the status node below) mounted is what makes the
     // loading -> loaded -> error transitions audible at all.
     <div className={className}>
-      {/* Visually hidden because every message here is already on screen in the
-          state it belongs to; this node exists to announce the transition, not
-          to repeat the text a second time. Its content on first mount is
-          deliberately the loading message: mount-time content is not announced,
-          so arriving on the page is quiet and only real changes speak. */}
+      {/* Empty on mount, so landing on the page is silent. Only a Play press or
+          a failed load ever puts anything in here. */}
       <div role="status" aria-live="polite" className="sr-only">
-        {getStatusMessage()}
+        {status}
       </div>
 
       {loading ? (
@@ -233,22 +259,38 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
                 The KanjiVG files we inject carry no <title>/<desc> of their own
                 and the SVG proxy does not add one, so without this the site's
                 headline feature is an unnamed graphic. */}
-            <span id={diagramLabelId} className="sr-only">
-              {'Stroke order diagram for the kanji '}
-              <span lang="ja">{kanji}</span>
-              {/* strokeCount is 0 until the injected SVG has been measured, so the
-                  count is appended only once it is real — a diagram briefly
-                  labelled "(0 strokes)" would be worse than one labelled without
-                  a count at all. */}
-              {strokeCount > 0 && ` (${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'})`}
-            </span>
+            {/* The label sits INSIDE the role="img" element, not beside it.
+                aria-labelledby does not remove its target from the accessibility
+                tree, and role="img" prunes only its own descendants — so a
+                sibling label is announced twice, once as ordinary text in
+                reading order and again as the image's name. Nested, the same
+                span computes the name and is then hidden by the
+                presentational-children rule.
+
+                Two ids because of that nesting: the wrapper cannot carry the
+                SVG (dangerouslySetInnerHTML forbids children), so the inner
+                element keeps diagramId for the animation lookups and the
+                wrapper takes diagramFigureId for role, name and aria-controls. */}
             <div
-              id={diagramId}
+              id={diagramFigureId}
               role="img"
               aria-labelledby={diagramLabelId}
-              className={`stroke-animation${animating ? ' animate' : ''}`}
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
+            >
+              <span id={diagramLabelId} className="sr-only">
+                {'Stroke order diagram for the kanji '}
+                <span lang="ja">{kanji}</span>
+                {/* strokeCount is 0 until the injected SVG has been measured, so
+                    the count is appended only once it is real — a diagram briefly
+                    labelled "(0 strokes)" would be worse than one labelled
+                    without a count at all. */}
+                {strokeCount > 0 && ` (${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'})`}
+              </span>
+              <div
+                id={diagramId}
+                className={`stroke-animation${animating ? ' animate' : ''}`}
+                dangerouslySetInnerHTML={{ __html: svg }}
+              />
+            </div>
           </div>
 
           {/* Controls */}
@@ -258,7 +300,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
               variant="default"
               size="sm"
               disabled={strokeCount === 0}
-              aria-controls={diagramId}
+              aria-controls={diagramFigureId}
             >
               {getButtonContent()}
             </Button>

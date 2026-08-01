@@ -37,8 +37,13 @@ const FEATURES = [
   },
 ];
 
+// `accent` is used as a solid fill under white 18px-bold text. 18px bold is
+// 13.5pt, which misses the 14pt-bold large-text threshold by 0.67pt, so these
+// owe the full 4.5:1 rather than 3:1 — an easy one to mis-assess. N5 uses the
+// coral ink for that reason; cherry-blossom and sakura-waters fail the same
+// test and are NOT fixed here (see the note in the JSX below).
 const LEVELS = [
-  { level: 'N5', count: N5_KANJI.length, label: 'Beginner', accent: 'var(--coral-sunset)' },
+  { level: 'N5', count: N5_KANJI.length, label: 'Beginner', accent: 'var(--coral-sunset-ink)' },
   { level: 'N4', count: N4_KANJI.length, label: 'Elementary', accent: 'var(--cherry-blossom)' },
   { level: 'N3', count: N3_KANJI.length, label: 'Intermediate', accent: 'var(--sakura-waters)' },
   { level: 'N2', count: N2_KANJI.length, label: 'Upper-int.', accent: 'var(--mountain-mist)' },
@@ -61,7 +66,7 @@ export default function LandingPage() {
         <Header />
       </Suspense>
 
-      <main className="min-h-screen">
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
         {/* Hero */}
         <section className="relative overflow-hidden bg-gradient-to-b from-japan-soft-mist via-background to-background pt-14 pb-20 md:pt-20 md:pb-28">
           {/* Soft mountain horizon */}
@@ -256,10 +261,21 @@ export default function LandingPage() {
                 No sign-up, no cost. Jump straight into {ALL_KANJI_COUNT.toLocaleString()} kanji
                 with animated stroke order and readings.
               </p>
+              {/* brightness-90, not /90. An alpha hover composites against
+                  whatever is behind it, so the same class darkened on this navy
+                  section but LIGHTENED on the advertise page — a hover that
+                  reduced contrast below the resting state. A filter darkens
+                  regardless of backdrop: 4.84:1 white-on-hover.
+
+                  The focus ring is inverted here, and this is the only place on
+                  the site that needs it. The shared ring is deep ocean on a
+                  page-coloured offset, which on THIS navy section renders as an
+                  invisible ring inside a bright near-white halo — the indicator
+                  upside down. */}
               <Button
                 asChild
                 size="lg"
-                className="mt-8 bg-japan-coral-sunset text-white hover:bg-japan-coral-sunset/90"
+                className="mt-8 bg-japan-coral-sunset-ink text-white hover:brightness-90 focus-visible:ring-white focus-visible:ring-offset-japan-deep-ocean"
               >
                 <Link href="/kanji" onClick={() => handleExploreClick('homepage_footer_cta')}>
                   Start learning now

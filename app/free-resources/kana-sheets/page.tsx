@@ -62,7 +62,7 @@ export default function KanaSheetsPage() {
 
       <Header />
 
-      <main className="max-w-4xl mx-auto px-4 py-10 min-h-[60vh]">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-10 min-h-[60vh]">
         {/* Header */}
         <div className="text-center mb-10 pb-8 border-b-2 border-border">
           <h1 className="text-4xl font-bold text-card-foreground mb-3">

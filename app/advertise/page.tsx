@@ -68,7 +68,7 @@ export default async function AdvertisePage() {
     <>
       <Header />
 
-      <main className="min-h-screen">
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
         {/* Hero */}
         <section className="bg-gradient-to-b from-japan-soft-mist via-background to-muted/20 pt-20 pb-14">
           <div className="container mx-auto px-4 text-center space-y-5 max-w-2xl">
@@ -154,13 +154,13 @@ export default async function AdvertisePage() {
                   key={slot.name}
                   className={`flex flex-col border-2 ${
                     slot.highlighted
-                      ? 'border-japan-coral-sunset bg-japan-coral-sunset/5 shadow-xl shadow-japan-coral-sunset/20 animate-pulse-border'
+                      ? 'border-japan-coral-sunset-ink bg-japan-coral-sunset/5 shadow-xl shadow-japan-coral-sunset/20 animate-pulse-border'
                       : 'border-japan-deep-ocean/15'
                   }`}
                 >
                   {slot.highlighted && (
                     <div className="px-6 pt-4">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-japan-coral-sunset">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-japan-coral-sunset-ink">
                         Biggest audience
                       </span>
                     </div>
@@ -180,7 +180,7 @@ export default async function AdvertisePage() {
                         <li key={f} className="flex items-start gap-2 text-sm">
                           <Check
                             className={`w-4 h-4 mt-0.5 shrink-0 ${
-                              slot.highlighted ? 'text-japan-coral-sunset' : 'text-japan-sakura-waters'
+                              slot.highlighted ? 'text-japan-coral-sunset-ink' : 'text-japan-sakura-waters'
                             }`}
                           />
                           <span className="text-japan-mountain-mist">{f}</span>
@@ -193,7 +193,7 @@ export default async function AdvertisePage() {
                       asChild
                       className={`w-full ${
                         slot.highlighted
-                          ? 'bg-japan-coral-sunset hover:bg-japan-coral-sunset/90'
+                          ? 'bg-japan-coral-sunset-ink hover:brightness-90'
                           : 'border border-japan-deep-ocean/30 text-japan-deep-ocean hover:bg-japan-soft-mist'
                       }`}
                       variant={slot.highlighted ? 'default' : 'outline'}

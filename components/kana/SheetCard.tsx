@@ -19,13 +19,22 @@ export function SheetCard({
   downloadUrl,
   ariaLabel
 }: SheetCardProps) {
+  // These were arbitrary hexes, including two darker corals (#D94E2A, #E55A3A)
+  // that existed nowhere else in the palette — someone hit the coral contrast
+  // problem here first and patched locally, and neither literal actually
+  // cleared AA. They are palette tokens now so the fix cannot drift again.
   const badgeStyles = badgeColor === 'sakura'
-    ? 'bg-[#7BB3D3]/10 text-[#2C5F7C] border-[#7BB3D3]/30'
-    : 'bg-[#FF6B47]/10 text-[#D94E2A] border-[#FF6B47]/30';
+    ? 'bg-japan-sakura-waters/10 text-japan-mountain-mist border-japan-sakura-waters/30'
+    : 'bg-japan-coral-sunset/10 text-japan-coral-sunset-ink border-japan-coral-sunset/30';
 
+  // The sakura button is white text on #7BB3D3 — 2.3:1, a worse failure than
+  // the coral one. Mountain mist is the palette's own dark blue and gives
+  // 6.5:1, so the two branches now behave the same way: a solid ink fill that
+  // can carry white, darkened on hover by a filter rather than by an alpha
+  // (an alpha would composite against the card and LIGHTEN it).
   const buttonStyles = badgeColor === 'sakura'
-    ? 'bg-[#7BB3D3] hover:bg-[#2C5F7C] focus:ring-[#7BB3D3]/20'
-    : 'bg-[#FF6B47] hover:bg-[#E55A3A] focus:ring-[#FF6B47]/20';
+    ? 'bg-japan-mountain-mist hover:brightness-90'
+    : 'bg-japan-coral-sunset-ink hover:brightness-90';
 
   return (
     <div className="bg-card border-2 border-border rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden group">
@@ -60,7 +69,13 @@ export function SheetCard({
           target="_blank"
           rel="noopener noreferrer"
           aria-label={ariaLabel}
-          className={`w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold text-base text-white transition-colors duration-200 focus:outline-none focus:ring-4 ${buttonStyles}`}
+          /* The focus ring was `focus:ring-[#FF6B47]/20` next to
+             `focus:outline-none`: 20% coral over the card is 1.22:1, so this
+             link removed the browser's own indicator and replaced it with one
+             that is effectively invisible. It now uses --ring (deep ocean),
+             matching every other focusable control on the site, and
+             focus-visible so it does not fire on mouse click. */
+          className={`w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold text-base text-white transition-[filter,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${buttonStyles}`}
         >
           <svg
             className="w-5 h-5"
