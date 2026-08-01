@@ -5,7 +5,14 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  // The focus ring is 2px with an offset, not 1px flush. `outline-none` removes
+  // the browser's own indicator, so whatever replaces it has to be at least as
+  // legible: a 1px ring flush against the button reads as a border tweak on a
+  // control that already has a border, and on the `outline` variant it was
+  // nearly indistinguishable from the resting state. The offset separates the
+  // ring from the button edge, and ring-offset-background keeps that gap the
+  // page colour rather than Tailwind's default white.
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

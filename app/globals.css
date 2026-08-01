@@ -19,7 +19,19 @@
     --background: var(--temple-stone);
     --foreground: var(--ink-black);
     --accent: var(--sakura-waters);
+    /* Was never defined, so `hover:text-accent-foreground` (outline/ghost
+       buttons, nav-menu items, select options) resolved to an invalid var()
+       and the hover text colour simply never changed. Deep ocean on sakura
+       waters is 5.3:1. */
+    --accent-foreground: var(--deep-ocean);
     --border: #E8EDF2; /* Subtle border between temple-stone and soft-mist */
+    /* Also never defined. `border-input` therefore fell back to `currentcolor`,
+       so every outline button, input, textarea and select trigger drew its
+       border in the inherited TEXT colour — near-black, and silently coupled to
+       whatever colour the parent happened to set. Mountain mist is 6.5:1
+       against the page background, comfortably over the 3:1 that WCAG 1.4.11
+       wants for a control boundary, and softer than what rendered before. */
+    --input: var(--mountain-mist);
     
     --primary: var(--deep-ocean);
     --primary-foreground: var(--temple-stone);
@@ -36,10 +48,20 @@
     --secondary: var(--mountain-mist);
     --secondary-foreground: var(--temple-stone);
 
-    --destructive: 0 84.2% 60.2%; /* Keep default destructive */
-    --destructive-foreground: 0 0% 98%;
+    /* These were carried over from stock shadcn as bare HSL triplets, which only
+       work when the Tailwind config wraps them in hsl(). This config maps colours
+       to `var(--token)` directly (see tailwind.config.js), so the triplet landed
+       in the stylesheet as `background-color: 0 84.2% 60.2%` — invalid, dropped,
+       leaving destructive buttons and badges with no background at all. */
+    --destructive: #DC2626;
+    --destructive-foreground: #FAFAFA;
 
-    --ring: var(--sakura-waters);
+    /* Focus ring. Sakura waters (#7BB3D3) is 2.3:1 against white and against the
+       page background — under the 3:1 floor of WCAG 1.4.11 — and because
+       `buttonVariants` pairs the ring with `outline-none`, it was replacing the
+       browser's own high-contrast focus indicator with a weaker one. Deep ocean
+       is 11.6:1 on the page background. */
+    --ring: var(--deep-ocean);
 
     --radius: 0.5rem;
   }

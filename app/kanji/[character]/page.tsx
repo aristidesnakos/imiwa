@@ -28,7 +28,6 @@ import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 // import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
-import { AdBanner } from '@/components/AdBanner';
 
 // Combine all kanji data with levels
 const ALL_KANJI_DATA = [
@@ -374,7 +373,7 @@ export default async function KanjiDetailPage({ params }: Props) {
             height={160}
             className="w-32 md:w-40 drop-shadow-sm"
           />
-          <p className="text-sm text-gray-500">Nice — one more kanji learned!</p>
+          <p className="text-sm text-gray-600">Nice — one more kanji learned!</p>
           {/* The one place a reader is guaranteed to be in a learning mindset.
               Server-rendered and always visible, unlike the nav links, so it is
               also the crawlable inbound link to /kanji/review. */}
@@ -391,12 +390,6 @@ export default async function KanjiDetailPage({ params }: Props) {
           currentKanji={kanjiData}
           allKanji={ALL_KANJI_DATA}
         />
-
-        {/* Sponsor Ad. No rule: it is not part of the page's outline, and giving
-            it one would read as a fifth content section. */}
-        <section className="mt-12">
-          <AdBanner />
-        </section>
 
         {/* CTA Section */}
         <section className={SECTION_BAND}>
