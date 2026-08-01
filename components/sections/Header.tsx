@@ -9,6 +9,23 @@ import { StudyNavLinks } from '@/components/nav/StudyNavLinks';
 const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-sm border-b border-japan-sakura-waters/20">
+      {/* Skip link. This header is sticky and puts a logo, four-plus nav links
+          and a CTA ahead of the content on every page, and the announcement bar
+          can sit above it — that is a lot of tabbing to get past on a site whose
+          pages are each a single character's reference entry.
+
+          Visible only on focus, which is the point: `sr-only` until focused,
+          then it takes itself out of flow and pins over the header so it cannot
+          shift the layout. Every <main> in app/ carries id="main-content" and
+          tabIndex={-1} — the tabindex matters, because without it Safari and
+          older WebKit move the visual viewport but leave keyboard focus behind,
+          so the next Tab returns to the nav you just skipped. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+      >
+        Skip to main content
+      </a>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
           <Link

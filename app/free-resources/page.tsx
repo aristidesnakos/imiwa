@@ -70,7 +70,7 @@ export default function FreeResourcesPage() {
       
       <Header />
       
-      <main className="max-w-4xl mx-auto px-4 py-10 min-h-[60vh]">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-10 min-h-[60vh]">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-3">
             Free Japanese Learning Resources

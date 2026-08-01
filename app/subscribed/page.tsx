@@ -16,7 +16,7 @@ export default function SubscribedPage() {
     <>
       <Header />
 
-      <main className="max-w-4xl mx-auto px-4 py-16 min-h-[60vh] flex items-center justify-center">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-16 min-h-[60vh] flex items-center justify-center">
         <div className="w-full max-w-md bg-white p-8 rounded-lg border border-gray-200 shadow-sm text-center">
           <div className="flex justify-center mb-5">
             <CheckCircle className="w-12 h-12 text-green-600" />

@@ -470,7 +470,7 @@ export function SentenceReviewer({
       {error ? (
         <div
           role="alert"
-          className="mx-auto mt-4 max-w-4xl rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          className="mx-auto mt-4 max-w-4xl rounded-md border border-destructive-ink/40 bg-destructive/10 px-4 py-3 text-sm text-destructive-ink"
         >
           <p className="font-semibold">Not saved</p>
           <p className="mt-1">{error}</p>
@@ -879,8 +879,8 @@ const CandidateCard = forwardRef<HTMLElement, CandidateCardProps>(function Candi
       ) : null}
 
       {armed === 'reject' ? (
-        <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3">
-          <p className="mb-2 text-xs font-semibold text-destructive">
+        <div className="mt-3 rounded-md border border-destructive-ink/40 bg-destructive/5 p-3">
+          <p className="mb-2 text-xs font-semibold text-destructive-ink">
             Pick a reason — press its number, or Esc to cancel
           </p>
           <div className="grid gap-1.5 sm:grid-cols-2">

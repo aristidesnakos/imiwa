@@ -58,7 +58,7 @@ export default function N5KanjiSheetsPage() {
 
       <Header />
 
-      <main className="max-w-6xl mx-auto px-4 py-10 min-h-[60vh]">
+      <main id="main-content" tabIndex={-1} className="max-w-6xl mx-auto px-4 py-10 min-h-[60vh]">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-3">
             N5 Kanji Practice Sheet Generator

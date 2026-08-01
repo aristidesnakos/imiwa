@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <>
       <Header />
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-japan-soft-mist via-background to-muted/20">
+      <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center bg-gradient-to-b from-japan-soft-mist via-background to-muted/20">
         <div className="container mx-auto px-4 py-16 text-center">
           <div className="max-w-md mx-auto space-y-6">
             {/* Tan confused mascot */}

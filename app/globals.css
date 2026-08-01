@@ -7,6 +7,13 @@
   :root {
     /* Core Japan-inspired colors */
     --coral-sunset: #FF6B47;    /* Main background accent, Japanese sunsets */
+    /* Coral for TEXT and INDICATORS. #FF6B47 is 2.7:1 on the page background and
+       2.8:1 under white, so it fails AA in both directions and cannot legally
+       carry a label, a state border or an icon that means something — but its
+       lightness is doing real work in the tinted washes and the OG stripe, so it
+       stays as the fill and this is its ink. 4.75:1 as text on temple stone,
+       5.04:1 for white on top. Same hue, same saturation. */
+    --coral-sunset-ink: #C24521;
     --deep-ocean: #1B365D;      /* Primary text, deep Japanese waters */
     --mountain-mist: #2C5F7C;   /* Secondary elements, mountain silhouettes */
     --sakura-waters: #7BB3D3;   /* Accent highlights, temple waters */
@@ -32,6 +39,15 @@
        against the page background, comfortably over the 3:1 that WCAG 1.4.11
        wants for a control boundary, and softer than what rendered before. */
     --input: var(--mountain-mist);
+    /* The unchecked switch track, and NOT --input. Defining --input turned an
+       invisible track (the dropped declaration) into a filled one, but a border
+       colour and a filled track have different jobs: the track must clear 3:1
+       against BOTH the card behind it and the checked track (--primary), and
+       mountain mist is only 1.75:1 from deep ocean — two states reading as the
+       same navy blob. This clears 3.24:1 against the card and 3.53:1 against
+       checked. (Position still carries the state too; this is 1.4.11, not
+       1.4.1.) */
+    --switch-unchecked: #6B8FA8;
     
     --primary: var(--deep-ocean);
     --primary-foreground: var(--temple-stone);
@@ -54,7 +70,14 @@
        in the stylesheet as `background-color: 0 84.2% 60.2%` — invalid, dropped,
        leaving destructive buttons and badges with no background at all. */
     --destructive: #DC2626;
-    --destructive-foreground: #FAFAFA;
+    /* Pure white, not #FAFAFA: the off-white is 4.63:1 on the red, which passes
+       at rest but leaves no headroom for the hover state. */
+    --destructive-foreground: #FFFFFF;
+    /* Same fill/ink split as coral: #DC2626 is a fine BACKGROUND but only
+       3.9:1 as text on its own /10 tint, which is how the admin reviewer draws
+       every error and reject affordance. 5.3:1 on that tint, 6.2:1 as a border
+       on the page. */
+    --destructive-ink: #B91C1C;
 
     /* Focus ring. Sakura waters (#7BB3D3) is 2.3:1 against white and against the
        page background — under the 3:1 floor of WCAG 1.4.11 — and because

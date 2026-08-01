@@ -18,8 +18,11 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        // brightness-90, not /90: an alpha hover blends toward whatever is
+        // behind the button, which on a light page LIGHTENS the red and drops
+        // white text to 4.17:1. A filter darkens regardless of backdrop.
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-sm hover:brightness-90",
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary:

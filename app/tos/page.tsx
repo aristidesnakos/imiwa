@@ -9,7 +9,7 @@ export const metadata = getSEOTags({
 
 export default function TermsOfService() {
   return (
-    <main className="max-w-3xl mx-auto py-12 px-4">
+    <main id="main-content" tabIndex={-1} className="max-w-3xl mx-auto py-12 px-4">
       <Link href="/" className="btn btn-ghost inline-flex items-center mb-6">
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -42,7 +42,9 @@ module.exports = {
   			},
   			destructive: {
   				DEFAULT: 'var(--destructive)',
-  				foreground: 'var(--destructive-foreground)'
+  				foreground: 'var(--destructive-foreground)',
+  				// For destructive TEXT and borders. See app/globals.css.
+  				ink: 'var(--destructive-ink)'
   			},
   			muted: {
   				DEFAULT: 'var(--muted)',
@@ -73,6 +75,8 @@ module.exports = {
   			// Japan-inspired direct color access
   			japan: {
   				'coral-sunset': 'var(--coral-sunset)',
+  				// Text/indicator companion to coral-sunset. See app/globals.css.
+  				'coral-sunset-ink': 'var(--coral-sunset-ink)',
   				'deep-ocean': 'var(--deep-ocean)',
   				'mountain-mist': 'var(--mountain-mist)',
   				'sakura-waters': 'var(--sakura-waters)',
