@@ -25,9 +25,9 @@
  * the section above, and a printable sheet per character is one of the few
  * things here that hands the reader an artefact. It should not be missable.
  *
- * So it is a self-contained card — the same shape as `AdBanner` and the sentence
- * pairs, which is the page's established vocabulary for "a discrete object,
- * not prose". Centring happens INSIDE the card, whose own edges sit on the same
+ * So it is a self-contained card — the same shape as the sentence pairs, which
+ * is the page's established vocabulary for "a discrete object, not prose".
+ * Centring happens INSIDE the card, whose own edges sit on the same
  * left spine as every other section, so the page keeps one spine while the offer
  * still reads as an offer.
  *
@@ -85,27 +85,22 @@ export function KanjiActionBar({ kanji }: Props) {
             at 320px the label plus lg's px-8 is wider than the card's inner width,
             and a nowrap button overflows rather than wrapping.
 
-            The focus ring is overridden, not inherited. `buttonVariants` sets
-            `outline-none` + `ring-1 ring-ring`, and --ring is #7BB3D3, which is
-            2.28:1 against this white card — under the 3:1 WCAG 1.4.11 floor, and
-            a net regression because outline-none first removes the UA default.
-            Merged with cn() so tailwind-merge drops the inherited ring-1 rather
-            than leaving both widths to fight in the stylesheet. */}
+            The focus ring is inherited, not overridden. It briefly was not: the
+            shared --ring token was #7BB3D3, 2.3:1 against this white card and
+            under the WCAG 1.4.11 floor, so this link carried a local fix. The
+            token is correct now (app/globals.css) and the local override would
+            only mask the next regression. */}
         <a
           href={`/api/kanji-sheets?character=${encodeURIComponent(kanji)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            buttonVariants({ size: 'lg' }),
-            'mt-6 w-full sm:w-auto',
-            'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--deep-ocean)]'
-          )}
+          className={cn(buttonVariants({ size: 'lg' }), 'mt-6 w-full sm:w-auto')}
         >
           <Printer aria-hidden />
           Print a practice sheet
           {/* The icon reads as "print", not "new tab", and the house convention
-              elsewhere (AdBanner, Footer) is an ExternalLink glyph we cannot use
-              here without muddling that meaning. */}
+              elsewhere (Footer) is an ExternalLink glyph we cannot use here
+              without muddling that meaning. */}
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </div>

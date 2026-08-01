@@ -17,10 +17,9 @@
 /**
  * Wrapper for a top-level section: hairline rule, then breathing room.
  *
- * Sections whose body is a bordered card (`KanjiActionBar`, `AdBanner`) skip
- * this and take the margin alone — the card's own border already draws the
- * boundary, and a hairline directly above a bordered box is two separators
- * doing one job.
+ * Sections whose body is a bordered card (`KanjiActionBar`) skip this and take
+ * the margin alone — the card's own border already draws the boundary, and a
+ * hairline directly above a bordered box is two separators doing one job.
  */
 export const SECTION_BAND = 'mt-12 border-t border-gray-200 pt-8';
 

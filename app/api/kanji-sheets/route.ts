@@ -56,7 +56,13 @@ export async function GET(request: NextRequest) {
 
 async function fetchKanjiStrokeOrder(character: string): Promise<string | null> {
   try {
-    const unicode = character.charCodeAt(0);
+    // codePointAt, not charCodeAt: KanjiVG filenames are the full code point, and
+    // charCodeAt would hand back a lone surrogate for anything above U+FFFF —
+    // a filename that cannot exist, so the sheet would silently print without its
+    // stroke-order reference. Every kanji in the N5-N1 dataset is BMP today, so
+    // this is guarding the door before anyone walks through it, not fixing a
+    // sheet that is currently broken.
+    const unicode = character.codePointAt(0) ?? 0;
     const hex = unicode.toString(16).padStart(5, '0');
     const response = await fetch(`https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${hex}.svg`, {
       headers: {
@@ -314,7 +320,7 @@ function generatePracticeSheetHTML(
     <div class="practice-grid">
       <div class="grid-title">Practice Grid (80 squares)</div>
       <table class="grid-table">
-        ${Array.from({ length: 8 }, (_, rowIndex) => `
+        ${Array.from({ length: 8 }, () => `
           <tr>
             ${Array.from({ length: 10 }, (_, colIndex) => `
               <td class="grid-cell ${colIndex === 0 ? 'with-guide' : ''}">

@@ -15,6 +15,15 @@ const DOM_REFLOW_DELAY_MS = 10;
 const MAX_CSS_STROKE_INDEX = 20;
 
 export function StrokeOrderViewer({ kanji, className = '' }: Props) {
+  // codePointAt, not charCodeAt: for characters above U+FFFF charCodeAt returns
+  // only the leading surrogate, so two different kanji in the same supplementary
+  // plane can collide on one DOM id. The current JLPT N5-N1 dataset is entirely
+  // BMP, so this is a latent hazard rather than a bug anyone has hit — but the
+  // id is derived once here so the lookups and the rendered element cannot drift
+  // apart the way three inline copies of the expression could.
+  const diagramId = `stroke-${kanji.codePointAt(0)}`;
+  const diagramLabelId = `${diagramId}-label`;
+
   const [svg, setSvg] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
@@ -54,12 +63,12 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
   // Count strokes once the SVG is rendered into the DOM
   useEffect(() => {
     if (svg) {
-      const element = document.getElementById(`stroke-${kanji.charCodeAt(0)}`);
+      const element = document.getElementById(diagramId);
       if (element) {
         setStrokeCount(element.querySelectorAll('path').length);
       }
     }
-  }, [svg, kanji]);
+  }, [svg, diagramId]);
 
   const cancelAnimation = useCallback(() => {
     if (animationTimerRef.current) {
@@ -100,7 +109,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
       animationTimerRef.current = null;
       setAnimating(true);
 
-      const container = document.getElementById(`stroke-${kanji.charCodeAt(0)}`);
+      const container = document.getElementById(diagramId);
       if (!container) return;
 
       // Find the highest sN stroke index present in the SVG
@@ -141,7 +150,7 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         animationCleanupRef.current = null;
       };
     }, DOM_REFLOW_DELAY_MS);
-  }, [kanji, strokeCount, cancelAnimation]);
+  }, [diagramId, strokeCount, cancelAnimation]);
   
   const handleButtonClick = useCallback(() => {
     if (strokeCount === 0) return;
@@ -160,58 +169,114 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
     if (hasStarted) return 'Click Replay to restart the animation';
     return 'Click Play to see the stroke order animation';
   };
-  
-  if (loading) {
-    return (
-      <div className={`flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg ${className}`}>
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400 mb-2" />
-        <div className="text-gray-500">Loading stroke order...</div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className={`flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg ${className}`}>
-        <div className="text-gray-500 mb-4 text-center">
-          <div className="text-lg mb-2">Stroke order not available</div>
-          <div className="text-sm">This kanji may not be in the KanjiVG database</div>
-        </div>
-        <Button variant="outline" size="sm" onClick={loadStrokeOrder}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry
-        </Button>
-      </div>
-    );
-  }
-  
+
+  // Single sentence describing where the viewer currently is, fed to the live
+  // region below. The three visual states are three different subtrees, so the
+  // wording is centralised here rather than scraped out of whichever subtree
+  // happens to be mounted.
+  const getStatusMessage = () => {
+    if (loading) return 'Loading stroke order diagram';
+    if (error) return 'Stroke order not available. This kanji may not be in the KanjiVG database.';
+    return getInstructionText();
+  };
+
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* SVG Display */}
-      <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
-        <div 
-          id={`stroke-${kanji.charCodeAt(0)}`}
-          className={`stroke-animation${animating ? ' animate' : ''}`}
-          dangerouslySetInnerHTML={{ __html: svg }}
-        />
+    // One persistent wrapper across loading / error / loaded. The states used to
+    // be early returns, which meant any live region inside them was mounted and
+    // unmounted along with the state it described — and assistive tech only
+    // announces changes to a region that was already in the accessibility tree,
+    // so a region that arrives carrying its own message stays silent. Keeping
+    // the wrapper (and the status node below) mounted is what makes the
+    // loading -> loaded -> error transitions audible at all.
+    <div className={className}>
+      {/* Visually hidden because every message here is already on screen in the
+          state it belongs to; this node exists to announce the transition, not
+          to repeat the text a second time. Its content on first mount is
+          deliberately the loading message: mount-time content is not announced,
+          so arriving on the page is quiet and only real changes speak. */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {getStatusMessage()}
       </div>
-      
-      {/* Controls */}
-      <div className="flex justify-center">
-        <Button
-          onClick={handleButtonClick}
-          variant="default"
-          size="sm"
-          disabled={strokeCount === 0}
-        >
-          {getButtonContent()}
-        </Button>
-      </div>
-      
-      {/* Instructions */}
-      <div className="text-xs text-gray-500 text-center">
-        {getInstructionText()}
-      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
+          {/* gray-600, not gray-400. The spinner is non-text content that is the
+              sole indicator of the loading state, so WCAG 1.4.11 asks 3:1 of it;
+              gray-400 is 2.43:1 on this bg-gray-50 panel. gray-600 is 7.2:1. */}
+          <Loader2 className="w-8 h-8 animate-spin text-gray-600 mb-2" />
+          <div className="text-gray-600">Loading stroke order...</div>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
+          <div className="text-gray-600 mb-4 text-center">
+            <div className="text-lg mb-2">Stroke order not available</div>
+            <div className="text-sm">This kanji may not be in the KanjiVG database</div>
+          </div>
+          <Button variant="outline" size="sm" onClick={loadStrokeOrder}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* SVG Display */}
+          <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
+            {/* aria-labelledby rather than aria-label, even though the label is a
+                fixed English sentence: the kanji itself has to sit inside a
+                lang="ja" run or an English voice mangles or skips it, and an
+                aria-label is a flat string that inherits the document's lang="en"
+                with no way to mark the Japanese portion. Referencing real markup
+                is the only vehicle that carries the language switch, and it
+                matches how the rest of the page tags Japanese (see
+                app/kanji/[character]/page.tsx).
+
+                The KanjiVG files we inject carry no <title>/<desc> of their own
+                and the SVG proxy does not add one, so without this the site's
+                headline feature is an unnamed graphic. */}
+            <span id={diagramLabelId} className="sr-only">
+              {'Stroke order diagram for the kanji '}
+              <span lang="ja">{kanji}</span>
+              {/* strokeCount is 0 until the injected SVG has been measured, so the
+                  count is appended only once it is real — a diagram briefly
+                  labelled "(0 strokes)" would be worse than one labelled without
+                  a count at all. */}
+              {strokeCount > 0 && ` (${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'})`}
+            </span>
+            <div
+              id={diagramId}
+              role="img"
+              aria-labelledby={diagramLabelId}
+              className={`stroke-animation${animating ? ' animate' : ''}`}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          </div>
+
+          {/* Controls */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleButtonClick}
+              variant="default"
+              size="sm"
+              disabled={strokeCount === 0}
+              aria-controls={diagramId}
+            >
+              {getButtonContent()}
+            </Button>
+          </div>
+
+          {/* Instructions — the on-screen twin of the live region above, hidden
+              from assistive tech so the identical sentence is not read twice in
+              a row. Deliberately not wired to announce each stroke: the drawing
+              is the point, and a per-stroke commentary would bury the one thing
+              worth hearing (that the animation finished and can be replayed). */}
+          {/* gray-600 throughout, not gray-500. gray-500 is 4.56:1 on the page
+              background — passing AA by 1.3%, which is not a margin worth
+              keeping on the only instructions the Play button has. */}
+          <div className="text-xs text-gray-600 text-center" aria-hidden="true">
+            {getInstructionText()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
