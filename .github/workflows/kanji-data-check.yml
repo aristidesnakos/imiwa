@@ -1,0 +1,97 @@
+name: Kanji Data Check
+
+# Guards the two contracts that sit underneath every kanji page: the shape of
+# the kanji data itself, and the kana->romaji transform derived from it.
+#
+# Both were previously ungated. That is worth spelling out, because neither
+# failure is the kind anyone notices by looking.
+#
+# `pnpm validate:romaji` — the romaji subsystem (lib/romaji/) is the newest and
+# most rule-dense thing in the repo: gemination, っち -> tch, the ei/ii
+# carve-out, moraic n, two annotation dialects (native 、+（） and a
+# KANJIDIC-imported , + .), and katakana folding for the 137 onyomi stored in
+# katakana against the 1,714 in hiragana. Its output does not stay in a corner
+# of a page — it goes straight into <title>, the H1 and the JSON-LD. The sweep
+# over all ~3,586 readings asserting that no annotation syntax and no
+# unconverted kana reaches the output is the real contract here, and it exists
+# because raw fields leaking into structured data is not hypothetical: it
+# shipped, publishing ひと（つ） into Article.mainEntity.alternateName as a name.
+#
+# `pnpm validate:kanji-data` — five level lists get merged into one character
+# lookup at six different call sites, hand-rolled three different ways, and the
+# rule that a character in more than one list resolves to the LOWEST level is
+# enforced by none of them. They agree today only because the data happens to
+# be clean. One character added to two lists and the sitemap emits a duplicate
+# URL while the homepage inflates the kanji count it advertises. The repo's own
+# history is the argument: three separate one-off duplicate-sweeping scripts
+# used to live in scripts/, because this went wrong and was fixed by hand.
+#
+# Like sentences-check.yml and unlike schema-check.yml, this needs no build —
+# it reads the TypeScript sources directly and runs in seconds, which is why it
+# can afford to fire on any data edit.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'lib/constants/**'
+      - 'lib/romaji/**'
+      # Consumes the romaji transform to build titles and descriptions, so a
+      # change here can leak annotation syntax into a <title> without touching
+      # lib/romaji/ at all.
+      - 'lib/seo/kanji-optimization.ts'
+      - 'scripts/validate-romaji.ts'
+      - 'scripts/validate-kanji-data.ts'
+      - '.github/workflows/kanji-data-check.yml'
+  # Catch anything reaching main through a route other than a PR.
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/constants/**'
+      - 'lib/romaji/**'
+      - 'lib/seo/kanji-optimization.ts'
+      - 'scripts/validate-romaji.ts'
+      - 'scripts/validate-kanji-data.ts'
+      - '.github/workflows/kanji-data-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: kanji-data-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-kanji-data:
+    name: Validate kanji data and romaji derivation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Ordered deliberately: the data check runs first because the romaji
+      # sweep reads every reading in these same files. A duplicate or a
+      # malformed entry should be reported as what it is, not as a confusing
+      # downstream romaji failure.
+      - name: Validate kanji data integrity
+        run: pnpm validate:kanji-data
+
+      - name: Validate romaji derivation
+        run: pnpm validate:romaji
