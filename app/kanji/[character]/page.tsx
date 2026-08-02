@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getSEOTags } from '@/lib/seo';
 import { getOptimizedKanjiMetadata, getPrimaryMeaning } from '@/lib/seo/kanji-optimization';
+import { kanjiReadings, romajiSearchKeys, primaryRomaji, romajiLabel, type Reading } from '@/lib/romaji/readings';
 import {
   SITE_URL,
   SITE_NAME,
@@ -40,6 +41,32 @@ const ALL_KANJI_DATA = [
 
 interface Props {
   params: Promise<{ character: string }>;
+}
+
+/**
+ * One reading per line: the kana exactly as the dictionary records it, then its
+ * romaji. The affix hyphen is re-attached on the romaji side so a bound form
+ * (`-び` / `-bi`) still reads as bound — `Reading.display` deliberately holds
+ * only clean romaji, which is what the validator's no-annotation-leakage sweep
+ * asserts.
+ */
+function ReadingList({ readings }: { readings: Reading[] }) {
+  if (readings.length === 0) {
+    return <p className="text-lg font-mono text-gray-500">—</p>;
+  }
+
+  return (
+    <ul className="text-lg font-mono space-y-0.5">
+      {readings.map((r, i) => (
+        <li key={`${r.raw}-${i}`}>
+          <span lang="ja">{r.raw}</span>{' '}
+          <span className="text-gray-600">
+            {r.affix === 'suffix' ? `-${r.display}` : r.affix === 'prefix' ? `${r.display}-` : r.display}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 // Malformed percent-encoding (e.g. a crawler hitting /kanji/%E6) makes
@@ -83,11 +110,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Use the optimized metadata function from dedicated utility
   const { title, description } = getOptimizedKanjiMetadata(kanjiData);
   const primaryMeaning = getPrimaryMeaning(kanjiData.meaning);
-  
+
+  // Romaji spellings of the readings — "michi", but also "dou"/"do"/"dō" for
+  // どう, since a long vowel has no single correct Latin spelling and learners
+  // type all of them. Capped: the keys are ordered by reading, so the first
+  // few cover the primary on/kun spellings, and a kanji with six readings
+  // would otherwise emit fifty-odd near-duplicate phrases.
+  const romajiKeys = romajiSearchKeys(kanjiData).slice(0, 6);
+
   return getSEOTags({
     title,
     description,
     keywords: [
+      // Romaji phrases — the query class the page previously could not match
+      // at all. "michi kanji", "michi kanji meaning", …
+      ...romajiKeys.flatMap(r => [
+        `${r} kanji`,
+        `${r} kanji meaning`,
+        `${r} in japanese`,
+      ]),
       // Kanji + meaning combinations – matches "[kanji] [meaning] kanji" searches
       `${kanjiData.kanji} kanji`,
       `${kanjiData.kanji} ${primaryMeaning} kanji`,
@@ -134,10 +175,22 @@ export default async function KanjiDetailPage({ params }: Props) {
 
   const pageUrl = `${SITE_URL}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
 
+  // Structured readings, with romaji. Every reading-bearing surface below goes
+  // through this rather than reading the raw fields, which carry two different
+  // okurigana notations and store 137 onyomi in katakana.
+  const readings = kanjiReadings(kanjiData);
+  const romaji = primaryRomaji(readings);
+
+  /** `みち (michi)` — kana first, romaji in support. Used in prose answers. */
+  const readingWithRomaji = (r: { kanaFull: string; romajiFull: string }) =>
+    `${r.kanaFull} (${r.romajiFull})`;
+
   // Build a human-readable readings string used in FAQ answers.
   const readingsAnswer = [
-    kanjiData.onyomi && `onyomi (Chinese-derived) ${kanjiData.onyomi}`,
-    kanjiData.kunyomi && `kunyomi (native Japanese) ${kanjiData.kunyomi}`,
+    readings.onyomi.length &&
+      `onyomi (Chinese-derived) ${readings.onyomi.map(readingWithRomaji).join(', ')}`,
+    readings.kunyomi.length &&
+      `kunyomi (native Japanese) ${readings.kunyomi.map(readingWithRomaji).join(', ')}`,
   ]
     .filter(Boolean)
     .join(', ');
@@ -183,8 +236,16 @@ export default async function KanjiDetailPage({ params }: Props) {
       '@type': 'Thing',
       name: `${kanjiData.kanji} – ${primaryMeaning} Kanji`,
       description: kanjiData.meaning,
-      // Skip empty reading fields so we don't emit blank alternate names.
-      alternateName: [kanjiData.onyomi, kanjiData.kunyomi].filter(Boolean),
+      // Every name this character goes by: its readings in kana, and each of
+      // those in romaji. Previously this emitted the raw fields, which meant
+      // annotation syntax ("ひと（つ）", "しげ.る") leaked into structured data
+      // as though it were a name. `kanjiReadings` strips that.
+      alternateName: Array.from(
+        new Set([
+          ...readings.all.map(r => r.kanaFull),
+          ...readings.all.map(r => r.romajiFull),
+        ]),
+      ).filter(Boolean),
     },
     keywords: `${kanjiData.kanji}, ${primaryMeaning} kanji, ${primaryMeaning} kanji stroke order, kanji stroke order, Japanese, JLPT ${kanjiData.level}`,
   };
@@ -198,9 +259,22 @@ export default async function KanjiDetailPage({ params }: Props) {
         name: `What does the kanji ${kanjiData.kanji} mean?`,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `The kanji ${kanjiData.kanji} means "${kanjiData.meaning}". It is a JLPT ${kanjiData.level} character.`,
+          text: `The kanji ${kanjiData.kanji}${romaji ? ` (${romaji})` : ''} means "${kanjiData.meaning}". It is a JLPT ${kanjiData.level} character.`,
         },
       },
+      // The reverse question, and the one that exposed this whole gap: someone
+      // has heard a word and wants the character. Phrased with the romaji
+      // because that is what they can type. Omitted when we have no reading.
+      ...(romaji
+        ? [{
+            '@type': 'Question',
+            name: `What kanji is "${romaji}"?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `"${romaji}" is written with the kanji ${kanjiData.kanji}, meaning "${kanjiData.meaning}". ${readingsAnswer ? `Its readings are ${readingsAnswer}.` : ''} It is a JLPT ${kanjiData.level} character.`.trim(),
+            },
+          }]
+        : []),
       {
         '@type': 'Question',
         name: `How do you write the kanji ${kanjiData.kanji}?`,
@@ -302,6 +376,15 @@ export default async function KanjiDetailPage({ params }: Props) {
             <span className="block text-2xl font-semibold text-gray-700">
               &ldquo;{primaryMeaning}&rdquo; Kanji
             </span>
+            {/* Inside the h1, not beside it: the romaji is part of what this
+                character is called, and it is the form the arriving searcher
+                actually typed. Kept visually subordinate so the hierarchy of
+                character → meaning is unchanged. */}
+            {romaji && (
+              <span className="block text-lg font-normal text-gray-500">
+                {romajiLabel(kanjiData)}
+              </span>
+            )}
           </h1>
 
           <div className="flex justify-center space-x-2">
@@ -336,11 +419,18 @@ export default async function KanjiDetailPage({ params }: Props) {
               <p className="text-xl">{kanjiData.meaning}</p>
             </div>
 
+            {/* Readings carry their romaji beside them. This is the page's only
+                indexable romaji, and it is also the reason the page is legible
+                to a learner who cannot yet read kana — which is most of the
+                people arriving here from a "michi kanji" style search.
+
+                lang="ja" is scoped to the kana run alone: the romaji is Latin
+                script and an English voice should read it as such. */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-medium text-gray-700 mb-2">
                 Onyomi (<span lang="ja">音読み</span>)
               </h3>
-              <p lang="ja" className="text-lg font-mono">{kanjiData.onyomi}</p>
+              <ReadingList readings={readings.onyomi} />
               <p className="text-sm text-gray-600 mt-1">Chinese reading</p>
             </div>
 
@@ -348,7 +438,7 @@ export default async function KanjiDetailPage({ params }: Props) {
               <h3 className="font-medium text-gray-700 mb-2">
                 Kunyomi (<span lang="ja">訓読み</span>)
               </h3>
-              <p lang="ja" className="text-lg font-mono">{kanjiData.kunyomi}</p>
+              <ReadingList readings={readings.kunyomi} />
               <p className="text-sm text-gray-600 mt-1">Japanese reading</p>
             </div>
           </section>
