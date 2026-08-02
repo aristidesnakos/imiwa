@@ -12,6 +12,8 @@
  * that learners type into Google (e.g. "heaven kanji stroke order").
  */
 
+import { kanjiReadings, primaryRomaji } from '@/lib/romaji/readings';
+
 export interface KanjiData {
   kanji: string;
   meaning: string;
@@ -33,6 +35,13 @@ export type OptimizationStrategy = 'stroke-order-focused' | 'meaning-focused' | 
  * free-practice CTA always survives.
  */
 const MAX_DESC_LENGTH = 155;
+
+/**
+ * Target max length for titles. Google truncates around 60 characters; adding
+ * the romaji clause pushed the fullest variant past that, so titles now
+ * degrade through `TITLE_VARIANTS` instead of being silently cut mid-phrase.
+ */
+const MAX_TITLE_LENGTH = 60;
 
 // Fundamental kanji categories (moved outside function for performance)
 const FUNDAMENTAL_KANJI_CATEGORIES = [
@@ -80,20 +89,48 @@ export function getOptimizedKanjiMetadata(kanjiData: KanjiData): OptimizedMetada
   const { kanji, meaning = '', onyomi = '', kunyomi = '', level = 'N5' } = kanjiData;
   const primaryMeaning = getPrimaryMeaning(meaning);
   const strategy = determineOptimizationStrategy(kanji, level);
-  
+
+  // Romaji is the single biggest gap this file used to have. A learner who has
+  // heard a word searches "michi kanji", not "みち" — they typically cannot type
+  // kana yet, which is why they are looking the character up at all. With no
+  // romaji anywhere on the page we were unmatchable for that entire query
+  // class, and Google fell back to ranking the homepage for it.
+  const readings = kanjiReadings({ onyomi, kunyomi });
+  const romaji = primaryRomaji(readings);
+  // 39 of ~1,896 kanji have no reading data at all, so every use is optional.
+  const romajiClause = romaji ? ` (${romaji})` : '';
+
   // Site-wide title template (option A from the Phase 0 brief). The quoted
   // meaning placed directly before "Kanji" forms the reverse-intent search
   // phrase learners type ("\"heaven\" kanji") while staying natural to read.
-  const title = `${kanji} — "${primaryMeaning}" Kanji: Stroke Order & Readings (JLPT ${level})`;
+  // The romaji sits immediately after the character, matching how every
+  // competing dictionary titles these pages ("道 [michi]").
+  const TITLE_VARIANTS = [
+    `${kanji}${romajiClause} — "${primaryMeaning}" Kanji: Stroke Order & Readings (JLPT ${level})`,
+    `${kanji}${romajiClause} — "${primaryMeaning}" Kanji: Stroke Order (JLPT ${level})`,
+    `${kanji}${romajiClause} — "${primaryMeaning}" Kanji (JLPT ${level})`,
+    `${kanji}${romajiClause} — "${primaryMeaning}" Kanji`,
+  ];
+  const title =
+    TITLE_VARIANTS.find(t => t.length <= MAX_TITLE_LENGTH) ??
+    TITLE_VARIANTS[TITLE_VARIANTS.length - 1];
 
-  // Readings clause uses only the FIRST onyomi/kunyomi to stay compact (many
-  // kanji list several readings, which blows past the SERP snippet limit).
-  const firstReading = (r: string) => r.split(/[、,]/)[0].trim();
-  const readingBits = [
-    onyomi && `${firstReading(onyomi)} (onyomi)`,
-    kunyomi && `${firstReading(kunyomi)} (kunyomi)`,
-  ].filter(Boolean);
-  const readingsClause = readingBits.length ? ` Readings: ${readingBits.join(', ')}.` : '';
+  // The core sentence already names the primary reading, so this clause carries
+  // the *others* — 水 leads with "mizu" and this is where "sui" gets said. The
+  // previous version repeated the primary reading back ("… 校 (kō). Readings: kō
+  // (onyomi)"), spending a third of a tight budget to say nothing new.
+  //
+  // Bound forms (`-び`) are excluded: they never stand alone, so as a bare
+  // romaji token in a snippet they read as noise.
+  const otherReadings = Array.from(
+    new Set(
+      readings.all
+        .filter(r => r.affix === 'none')
+        .map(r => (r.kind === 'kunyomi' ? r.romajiFull : r.romaji))
+        .filter(r => r && r !== romaji),
+    ),
+  ).slice(0, 3);
+  const readingsClause = otherReadings.length ? ` Also read ${otherReadings.join(', ')}.` : '';
 
   // The free-practice CTA is the CTR lever, so it must always survive Google's
   // ~155-char truncation. Build core + CTA first; insert the readings clause
@@ -108,20 +145,20 @@ export function getOptimizedKanjiMetadata(kanjiData: KanjiData): OptimizedMetada
     case 'stroke-order-focused':
       return {
         title,
-        description: compose(`How to write ${kanji}, the "${primaryMeaning}" kanji, with a step-by-step stroke order animation.`),
+        description: compose(`How to write ${kanji}${romajiClause}, the "${primaryMeaning}" kanji, with a step-by-step stroke order animation.`),
       };
 
     case 'meaning-focused':
       return {
         title,
-        description: compose(`${kanji} is the kanji for "${primaryMeaning}". Learn its stroke order and readings.`),
+        description: compose(`${kanji}${romajiClause} is the kanji for "${primaryMeaning}". Learn its stroke order and readings.`),
       };
 
     case 'standard':
     default:
       return {
         title,
-        description: compose(`Learn the "${primaryMeaning}" kanji ${kanji} with an interactive stroke order animation.`),
+        description: compose(`Learn the "${primaryMeaning}" kanji ${kanji}${romajiClause} with an interactive stroke order animation.`),
       };
   }
 }

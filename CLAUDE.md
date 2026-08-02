@@ -34,6 +34,7 @@ the closest thing to "running a single test":
 
 ```bash
 pnpm validate:schema         # structured data / JSON-LD across page types
+pnpm validate:romaji         # kana->Hepburn rules + a leakage sweep over every reading
 pnpm validate:sentences      # published example sentences against lib/sentences/types.ts
 pnpm validate:announcements  # announcement config + a replay of the acknowledgement model
 pnpm announcements:status    # human-readable state of the announcement queue
@@ -73,6 +74,31 @@ N1→N5 so N5 overwrites. Any new lookup must land on the same answer.
 
 Stroke diagrams are proxied through `app/api/kanji-svg/[hex]/route.ts`. The hex comes from
 `codePointAt(0)` (never `charCodeAt`, which returns a lone surrogate above U+FFFF).
+
+### Romaji
+
+`lib/romaji/` derives romaji from the kana readings at runtime. Nothing is stored: baking romaji
+into `lib/constants/*` would add an estimated 15–25 kB gzipped to the `/kanji` client bundle, which
+has roughly 44 kB of headroom against a Lighthouse budget that is an `error`, not a warning.
+
+Two layers, and callers should use the upper one:
+
+- `hepburn.ts` knows kana only. It parses once and renders three ways, because a long vowel has no
+  single correct spelling and learners type all of them: `どう` → `dō` (display), `dou` (typed),
+  `do` (typed without an IME). Modified Hepburn, so `えい`/`いい` are **not** macronised.
+- `readings.ts` knows *our data*, which carries two annotation dialects: the native `、` + `（）`
+  and a KANJIDIC-imported `, ` + `.` (55 entries). It also folds katakana, because 137 onyomi are
+  stored in katakana and 1,714 in hiragana with no rule behind which. **Never romanise a raw
+  reading field** — annotation syntax will leak into titles and JSON-LD, which is exactly what
+  `Article.mainEntity.alternateName` used to do.
+
+`validate:romaji` pins the rules a naive implementation gets wrong (gemination, `っち` → `tch`, the
+ei/ii carve-out, moraic `n`) and then sweeps all ~3,586 readings asserting no annotation or
+unconverted kana reaches the output. That sweep is the actual contract.
+
+Why it exists: a learner who has heard a word searches "michi kanji", not "みち" — they usually
+cannot type kana yet, which is why they are looking the character up. With no romaji anywhere,
+`/kanji/道` was unmatchable for that whole query class and Google ranked the homepage instead.
 
 ### No server-side user state
 
