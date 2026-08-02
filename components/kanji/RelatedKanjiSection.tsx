@@ -9,11 +9,11 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { getRelatedKanji } from '@/lib/linking/kanji-links';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
-import type { KanjiData } from '@/lib/constants/n5-kanji';
+import type { KanjiWithLevel } from '@/lib/constants/kanji-types';
 
 interface Props {
-  currentKanji: KanjiData & { level: string };
-  allKanji: (KanjiData & { level: string })[];
+  currentKanji: KanjiWithLevel;
+  allKanji: KanjiWithLevel[];
 }
 
 export function RelatedKanjiSection({ currentKanji, allKanji }: Props) {

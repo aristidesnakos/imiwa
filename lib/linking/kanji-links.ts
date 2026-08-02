@@ -1,5 +1,5 @@
 import { findCluster, getClusterMembers } from './semantic-clusters';
-import type { KanjiData } from '@/lib/constants/n5-kanji';
+import type { KanjiWithLevel } from '@/lib/constants/kanji-types';
 
 export interface RelatedKanji {
   kanji: string;
@@ -9,7 +9,7 @@ export interface RelatedKanji {
 
 const RELATED_TARGET = 8;
 
-const toRelated = (k: KanjiData & { level: string }): RelatedKanji => ({
+const toRelated = (k: KanjiWithLevel): RelatedKanji => ({
   kanji: k.kanji,
   meaning: k.meaning,
   level: k.level,
@@ -23,8 +23,8 @@ const toRelated = (k: KanjiData & { level: string }): RelatedKanji => ({
  * suggestions pedagogically relevant while spreading crawl authority.
  */
 export function getRelatedKanji(
-  currentKanji: KanjiData & { level: string },
-  allKanji: (KanjiData & { level: string })[]
+  currentKanji: KanjiWithLevel,
+  allKanji: KanjiWithLevel[]
 ): RelatedKanji[] {
   const seen = new Set<string>([currentKanji.kanji]);
   const related: RelatedKanji[] = [];

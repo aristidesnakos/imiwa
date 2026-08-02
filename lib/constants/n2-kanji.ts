@@ -1,9 +1,9 @@
-export interface KanjiData {
-  kanji: string;
-  onyomi: string;
-  kunyomi: string;
-  meaning: string;
-}
+// The canonical declaration lives in ./kanji-types. Re-exported here so that
+// existing imports of KanjiData from this module keep resolving. Both
+// statements are erased at compile time — zero runtime bytes.
+import type { KanjiData } from './kanji-types';
+
+export type { KanjiData };
 
 export const N2_KANJI: KanjiData[] = [
   // Government/Politics/Administration
