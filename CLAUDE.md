@@ -34,6 +34,7 @@ the closest thing to "running a single test":
 
 ```bash
 pnpm validate:schema         # structured data / JSON-LD across page types
+pnpm validate:kanji-data     # the level lists: no duplicates, one code point, readings present
 pnpm validate:romaji         # kana->Hepburn rules + a leakage sweep over every reading
 pnpm validate:sentences      # published example sentences against lib/sentences/types.ts
 pnpm validate:announcements  # announcement config + a replay of the acknowledgement model
@@ -71,6 +72,20 @@ database. `/kanji/[character]` prerenders all ~1,896 characters via `generateSta
 different mechanisms implement that rule: the detail page concatenates N5→N1 and takes the first
 `.find` match, while `KANJI_MAP` in `app/api/kanji-sheets/route.ts` and `ReviewClient.tsx` inserts
 N1→N5 so N5 overwrites. Any new lookup must land on the same answer.
+
+Six call sites merge the five lists this way, three different ways, and `app/sitemap.xml/route.ts`
+concatenates with no dedup at all. They agree only because the data is clean, so
+`pnpm validate:kanji-data` is what keeps them agreeing: it asserts no character appears twice within
+or across the lists, that every `kanji` field is exactly one code point, and that every entry has a
+meaning and at least one reading (with a committed allowlist for the reading-less entries). It
+replaced three one-off regex scripts that used to sweep duplicates out by hand — deleted, because
+they rewrote the constants files wholesale and would now clobber the shared type.
+
+`KanjiData` and `KanjiWithLevel` live in `lib/constants/kanji-types.ts` and are re-exported by each
+level file, so `import type { KanjiData } from '@/lib/constants/n5-kanji'` still resolves. `level` is
+never stored in the data — it is added by whichever call site does the merge. Keep these imports
+`import type`: `/kanji` runs against a hard Lighthouse byte budget, and a barrel that pulls the data
+arrays into the five single-level `kanji-sheets` routes would blow it.
 
 Stroke diagrams are proxied through `app/api/kanji-svg/[hex]/route.ts`. The hex comes from
 `codePointAt(0)` (never `charCodeAt`, which returns a lone surrogate above U+FFFF).
