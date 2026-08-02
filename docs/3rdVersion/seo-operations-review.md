@@ -127,6 +127,28 @@ indexation alarm — that one asks *are we still in the index*, this one asks *i
 — and conflating them would weaken both. Run it Monday 08:00 UTC, an hour after the alarm, so they
 never contend.
 
+**Built 2026-08-02** as `scripts/check-query-performance.ts` + `.github/workflows/query-performance.yml`
+(Mondays 08:00 UTC, an hour after the indexation alarm so the two never contend or race on a rebase).
+Three design decisions are worth recording, because each one was a trap:
+
+1. **The watchlist is the corpus.** Rather than hand-maintaining a list of queries to watch, the
+   script classifies every query Search Console returns against the 1,853 distinct romaji search keys
+   `romajiSearchKeys()` derives from our own data. The watchlist can never drift from the corpus,
+   and it surfaces romaji queries nobody thought to watch for.
+2. **A stoplist, because 16 romaji keys are also common English words.** Measured, not guessed:
+   `to no so on in an me he do go you man sun ten` (plus single-char `a`/`i`) are all legitimate
+   romaji readings — 十 is `to`, 野 is `no`, 御 is `on`. A naive "any token is a romaji key" rule
+   would classify *"how to write kanji"* and *"kanji for sun"* as romaji hits, and the headline
+   number would be a large, flat, meaningless figure. So the script records two: a **strict** count
+   requiring a non-stoplisted romaji token *and* a kanji-context word (the literal shape of "michi
+   kanji"), and a **loose** count for context. Strict is the headline. If loose ever grows much
+   faster than strict, our targeting assumption is too narrow and the rule needs widening — that
+   divergence is itself the signal.
+3. **It never goes red for a disappointing number.** It records a trend; it does not judge one. The
+   only issue it opens is a dead-man's switch for the job failing to run at all — same reasoning as
+   `announcements-status.yml`. A red X for "the SEO work has not paid off yet" is how you train
+   people to ignore a signal.
+
 It also happens to answer two of the open questions for free:
 
 - **Macron vs doubled** (`kō` vs `kou`): if GSC reports impressions on both spellings against the
@@ -301,7 +323,7 @@ Beyond the two the query script answers for free:
 | 2 | Put `validate:romaji` in CI | 15 min | either | **done — `kanji-data-check.yml`** |
 | 3 | `validate-kanji-data.ts` + CI; delete the three one-off dup scripts | 1 h | either | **done** |
 | 5 | Canonical `KanjiData` / `KanjiWithLevel` type | 30 min | either | **done** |
-| 4 | `check-query-performance.ts` + weekly workflow | 2–3 h | either | next |
+| 4 | `check-query-performance.ts` + weekly workflow | 2–3 h | either | **done — first reading pending** |
 | 3a | Fill in the 38 empty entries (or drop them from the sitemap) | ~1 h | **Ari (Japanese review)** | **new — see §3a** |
 | 6 | Fix 道's meaning by hand | 5 min | Ari (Japanese review) | open |
 | 7 | Stroke counts from KanjiVG → extractable FAQ answers | half day | either | open |

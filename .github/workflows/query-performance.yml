@@ -1,0 +1,208 @@
+name: Query Performance
+
+# Weekly query-dimension reading from the Google Search Console API — the
+# counterpart to indexation-alarm.yml, and deliberately a different job.
+#
+# indexation-alarm.yml counts DISTINCT PAGES WITH AN IMPRESSION. That is the
+# right alarm for a catastrophic deindexing cliff, and its baseline is on file:
+# 903 of 1,906 submitted URLs over 2026-07-03..2026-07-30. What it structurally
+# cannot tell anyone is whether a specific page started ranking for a specific
+# thing people type — it counts pages, not queries.
+#
+# That gap matters because the work shipped on 2026-08-02 was a bet on exactly
+# one query class. `lib/romaji/` derives Hepburn from the kana readings and puts
+# it into every kanji page's title, H1, description and JSON-LD, on the theory
+# that a learner who has HEARD a word searches "michi kanji" — they usually
+# cannot type kana yet, which is precisely why they are looking the character
+# up. Before that, the string "michi" appeared nowhere in the repository and
+# /kanji/道 was unmatchable for the whole class.
+#
+# scripts/check-query-performance.ts asks the question directly: same endpoint,
+# same credentials, same auth helper, no new secret and no new quota class —
+# `dimensions: ['query']` instead of `['page']`. The headline metric classifies
+# every incoming query against the ~1,850 distinct romaji search keys derived
+# from our own corpus, so the watchlist IS the data and can never drift from it.
+#
+# ── This job does not go red when the numbers are flat ──────────────────────
+#
+# It records a trend; it does not judge one. A scheduled check that fails
+# because "the SEO work has not paid off yet" is how you teach people to ignore
+# a signal, and this repo has made that argument before — see the header of
+# announcements-status.yml. The reading is committed to data/query-history.json
+# and rendered into the run's job summary. Nothing here opens an issue about a
+# disappointing number.
+#
+# The one thing that DOES raise an issue is the job failing to run at all, for
+# the same reason indexation-alarm.yml has a dead-man's switch: a red run in the
+# Actions tab is not a notification, and a monitor that quietly stopped
+# monitoring looks identical to a healthy one from the repo.
+
+on:
+  # Mondays at 08:00 UTC — an hour after indexation-alarm.yml so the two never
+  # contend for runner minutes or race on a `git pull --rebase` against main.
+  # Weekly, not daily, for the same reason as its sibling: the underlying window
+  # is 28 days, so consecutive readings share 21 of 28 days and a daily run
+  # would re-read almost the same number while adding commit noise.
+  schedule:
+    - cron: '0 8 * * 1'
+  # Manual trigger for the first reading and for checking immediately after a
+  # content or metadata change.
+  workflow_dispatch:
+
+# Serialise runs so two overlapping jobs can never race on the history file.
+concurrency:
+  group: query-performance
+  cancel-in-progress: false
+
+jobs:
+  check-query-performance:
+    name: Record weekly query performance
+    runs-on: ubuntu-latest
+    # Talks to a rate-limited external API in a paginated loop. Bound the job so
+    # a fault cannot burn Actions minutes up to GitHub's 6h default.
+    timeout-minutes: 10
+    permissions:
+      # Open / comment on the "this job is broken" issue.
+      issues: write
+      # Commit the updated data/query-history.json back to the repo.
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run query performance check
+        env:
+          # Same single service account and Search Console setup as
+          # indexation-alarm.yml — one credential, two scripts.
+          GSC_SERVICE_ACCOUNT_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_KEY }}
+
+          # Optional. "domain" for a DNS property (sc-domain:michikanji.com),
+          # otherwise a URL-prefix property is assumed. The script auto-retries
+          # the other form on 403/404 and reports which one worked, so a wrong
+          # guess degrades to a warning rather than a failure.
+          GSC_PROPERTY_TYPE: ${{ vars.GSC_PROPERTY_TYPE }}
+          GSC_PROPERTY: ${{ vars.GSC_PROPERTY }}
+
+          # Optional tuning. Defaults: 28 / 3, matching the sibling script so the
+          # two readings describe the same stretch of time and can be read
+          # side by side.
+          QUERY_WINDOW_DAYS: ${{ vars.QUERY_WINDOW_DAYS }}
+          QUERY_LAG_DAYS: ${{ vars.QUERY_LAG_DAYS }}
+        run: pnpm exec tsx --tsconfig tsconfig.json scripts/check-query-performance.ts
+
+      # ── Dead-man's switch ────────────────────────────────────────────────
+      # Mirrors indexation-alarm.yml. This is the only issue this workflow ever
+      # opens, and it means "the tracker is broken", never "the numbers are
+      # bad". It lives in the workflow rather than the script because a
+      # script-level handler cannot report a failure that happened before the
+      # script started — a lockfile drift, tsx failing to resolve, checkout or
+      # setup-node dying on the runner. Those are the slow-rot failures that
+      # leave a monitor looking healthy for months.
+      - name: Report that the tracker itself failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Explicit rather than inferred from the git remote: this step must
+          # survive a failure in `Checkout repository`, and in that case there is
+          # no local repo for gh to infer from.
+          GH_REPO: ${{ github.repository }}
+          ISSUE_TITLE: '🔧 [Query] Weekly query performance tracker failed to run'
+          # Its own label, not indexation-alarm's. These are different jobs with
+          # different triage, and sharing a label would mix "the deindexing alarm
+          # is broken" in with "the progress tracker is broken" in one filter.
+          ISSUE_LABEL: query-performance
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # `gh issue create --label X` hard-fails when the label is missing,
+          # which would make this step swallow the alert it exists to raise.
+          gh label create "$ISSUE_LABEL" \
+            --color 1D76DB \
+            --description "Weekly Search Console query-performance tracking" \
+            >/dev/null 2>&1 || true
+
+          BODY=$(cat <<EOF
+          The weekly query performance tracker did not complete. **No reading was taken this
+          week**, so \`data/query-history.json\` now has a gap and the romaji trend is
+          unobservable for that window.
+
+          **Failed run:** ${RUN_URL}
+
+          This issue means the tracker is broken. It does **not** mean the numbers went the
+          wrong way — this workflow never opens an issue about a disappointing figure, by
+          design.
+
+          ### Likely causes, cheapest to check first
+
+          1. \`GSC_SERVICE_ACCOUNT_KEY\` expired, was rotated, or was deleted from repo secrets.
+          2. The service account lost access to the Search Console property, or was downgraded
+             from "Full" to "Restricted" (Search Console > Settings > Users and permissions).
+          3. The Google Search Console API was disabled on the Cloud project, or its quota
+             changed. This is not hypothetical — it is why the first indexation reading was
+             never taken, and it reports as a 403 that looks like a permissions problem but is
+             fixed in Google Cloud, not in Search Console.
+          4. The job failed before the script ran at all — dependency install, tsx resolution,
+             or runner setup. Check which step is red in the run log above.
+
+          Re-run manually (Actions > Query Performance > Run workflow) once fixed, then close
+          this issue.
+
+          _Opened automatically by \`.github/workflows/query-performance.yml\`._
+          EOF
+          )
+
+          # Comment on the open issue rather than stacking a fresh one weekly —
+          # a duplicate pile is the fastest way to get a signal muted. Matched on
+          # exact title. `|| EXISTING=` keeps a transient API hiccup from failing
+          # the step and swallowing the alert; worst case we open a duplicate.
+          EXISTING=$(gh issue list \
+            --state open \
+            --label "$ISSUE_LABEL" \
+            --limit 100 \
+            --json number,title \
+            --jq 'map(select(.title == $ENV.ISSUE_TITLE)) | .[0].number // empty') || EXISTING=
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "Commented on existing failure issue #${EXISTING}."
+          else
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label "$ISSUE_LABEL" \
+              --body "$BODY"
+          fi
+
+      # Runs even if the check step failed so a partial reading is never lost.
+      # The credential-missing path exits before writing anything, so there is
+      # simply nothing to commit in that case.
+      - name: Commit updated query history
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain data/query-history.json)" ]; then
+            echo "No change to data/query-history.json — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/query-history.json
+          # [skip ci] so this bot commit does not trigger other workflows or a
+          # redundant Vercel production deploy — the file ships no runtime code.
+          git commit -m "chore(seo): record weekly query performance reading [skip ci]"
+          # Rebase before pushing in case a human pushed while the job ran.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

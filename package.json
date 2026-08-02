@@ -10,6 +10,7 @@
     "analyze": "ANALYZE=true next build",
     "check-indexation": "tsx --tsconfig tsconfig.json scripts/check-indexation.ts",
     "check-index-status": "tsx --tsconfig tsconfig.json scripts/check-index-status.ts",
+    "check-query-performance": "tsx --tsconfig tsconfig.json scripts/check-query-performance.ts",
     "submit-indexnow": "tsx --tsconfig tsconfig.json scripts/submit-indexnow.ts",
     "validate:schema": "tsx --tsconfig tsconfig.json scripts/validate-schema.ts --all",
     "validate:romaji": "tsx --tsconfig tsconfig.json scripts/validate-romaji.ts",
