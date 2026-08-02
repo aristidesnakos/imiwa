@@ -249,6 +249,58 @@ on is enforced nowhere, and the repo's own history says it has been violated bef
 
 ---
 
+## 2a. The first query reading, and what it changes
+
+Dispatched 2026-08-02 immediately after merge — deliberately, because the whole lesson of §1 is
+that an undispatched scheduled workflow sits broken and looks fine. It succeeded on the first run
+and recorded a reading for `2026-07-03 → 2026-07-30`, the same pre-romaji window as the indexation
+baseline.
+
+```
+total (query dim)   2,984 queries   26,684 impressions   1,028 clicks   3.85% CTR
+romajiStrict          237 queries    2,312 impressions      82 clicks   pos 10.16
+romajiLoose           249 queries    2,350 impressions      85 clicks   pos 10.12
+kanji detail pages                  38,670 impressions      97 clicks   pos 10.48
+```
+
+Four things fall out of it, in ascending order of how much they should change what we do next.
+
+**The strict filter is well calibrated.** Strict and loose differ by 12 queries out of 249. The
+stoplist did essentially all the work and the kanji-context requirement removed almost nothing,
+which is the outcome we wanted: precision bought cheaply, not by throwing away half the signal.
+
+**"michi kanji" cannot be the success metric, because it is also our brand.** It shows 597
+impressions, 79 clicks, position 3.05 — *before* the romaji work shipped. MichiKanji is the product
+name, so this query is irreducibly part brand-seeking and part 道-seeking and no amount of care
+separates them. The original analysis read the homepage ranking for "michi kanji" as the bug; for
+the brand half of that traffic, the homepage ranking there is simply correct.
+
+**But the hypothesis survives, on a cleaner query.** `kanji michi` — same intent, reversed word
+order, no brand reading available — sits at **290 impressions, 0 clicks, position 7.4**. Zero. And
+every other romaji query on the watchlist is at zero impressions: `mizu kanji`, `hi kanji`,
+`kokoro kanji`, `kou kanji`, `ko kanji`, with `yama kanji` at 7 impressions and position 53. That is
+a clean, uncontaminated baseline and `kanji michi` is the single best test case we have: if the
+romaji work does anything at all, that 0 should move.
+
+**The finding that reframes the project: the kanji pages are being seen and not clicked.** 38,670
+impressions against 97 clicks is a **0.25% CTR** at an average position of 10.5. Site-wide CTR is
+3.85%. (Those two come from different API dimensions — Search Console omits anonymised queries from
+the query dimension, which is why 26,684 < 38,670 — so treat the *gap* as directional rather than as
+a precise ratio. It is far too large to be a dimension artefact.)
+
+This inverts the working assumption. We have been treating this as a discovery problem — pages Google
+does not know about. It is substantially a **SERP-appeal** problem: Google is already showing these
+pages tens of thousands of times a month and almost nobody clicks. That makes three things much more
+valuable than they looked an hour ago, and all three are already on this list:
+
+- the romaji titles (item 4's subject — they change what the searcher sees, which is what moves CTR),
+- the raw KANJIDIC meanings that put `road-way` in a title (§4, item 6),
+- and the **38 empty pages** in §3a, which are the most extreme form of this exact failure.
+
+Compare against `kanji stroke order`: 2,514 impressions, 353 clicks, position 3.3 — a 14% CTR. When
+the page matches the query, this site converts perfectly well. The kanji detail pages are not
+converting because of what they say, not because of where they rank.
+
 ## 3a. Found while building the validator: 38 pages that are a bare character
 
 Writing `validate:kanji-data` turned up a defect nobody was looking for. **38 N1 entries have an
