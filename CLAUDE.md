@@ -57,6 +57,7 @@ pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.js
 ```bash
 pnpm sentences:publish --level N5 --dry-run      # queue + decisions -> published/<level>.json
 pnpm check-indexation                            # Search Console indexed-page trend
+pnpm check-query-performance                     # per-query trend; is romaji actually landing?
 pnpm submit-indexnow
 ```
 
@@ -196,6 +197,19 @@ exactly one thing on that page: a moment rather than content.
 three linked JSON-LD types (Article, FAQPage, BreadcrumbList); `lib/seo/site.ts` is the single source
 of absolute URLs, and JSON-LD must use the canonical `www` host — the apex 301s to it, and hardcoding
 the apex splits the brand entity across two hostnames. `schema-check` CI gates this on every PR.
+
+Two weekly Search Console monitors exist and they answer different questions — do not merge them:
+
+- `check-indexation.ts` (Mon 07:00 UTC) counts **distinct pages with an impression**. It is a
+  deindexing alarm, tuned to catch a cliff, and it opens an issue when the trend drops.
+- `check-query-performance.ts` (Mon 08:00 UTC) records **per-query** impressions, clicks and
+  position, classifying every query against the ~1,850 romaji search keys derived from our own
+  corpus. It is a progress tracker and **never goes red because a number failed to improve** — only
+  because the job itself broke. Both use the one `GSC_SERVICE_ACCOUNT_KEY`.
+
+A 403 from either usually means the Search Console API is disabled on the *Google Cloud project*,
+not that Search Console permissions are wrong. The scripts special-case that message because the two
+send you to completely different consoles.
 
 ### Performance budgets
 
