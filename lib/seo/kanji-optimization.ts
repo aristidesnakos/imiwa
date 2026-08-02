@@ -12,15 +12,8 @@
  * that learners type into Google (e.g. "heaven kanji stroke order").
  */
 
+import type { KanjiWithLevel } from '@/lib/constants/kanji-types';
 import { kanjiReadings, primaryRomaji } from '@/lib/romaji/readings';
-
-export interface KanjiData {
-  kanji: string;
-  meaning: string;
-  onyomi: string;
-  kunyomi: string;
-  level: string;
-}
 
 export interface OptimizedMetadata {
   title: string;
@@ -80,7 +73,7 @@ export function getPrimaryMeaning(meaning: string): string {
 /**
  * Main function to generate optimized metadata for kanji pages
  */
-export function getOptimizedKanjiMetadata(kanjiData: KanjiData): OptimizedMetadata {
+export function getOptimizedKanjiMetadata(kanjiData: KanjiWithLevel): OptimizedMetadata {
   // Input validation
   if (!kanjiData?.kanji?.trim()) {
     throw new Error('Kanji character is required');

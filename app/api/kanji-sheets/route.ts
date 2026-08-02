@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { KanjiData, N5_KANJI } from '@/lib/constants/n5-kanji';
+import type { KanjiWithLevel } from '@/lib/constants/kanji-types';
+import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-
-interface KanjiWithLevel extends KanjiData {
-  level: string;
-}
 
 // Built once at module scope: this route is hit on every sheet open, so a
 // ~2000-entry lookup should not be rebuilt per request.
