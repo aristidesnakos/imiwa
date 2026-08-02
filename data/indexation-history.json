@@ -1,5 +1,16 @@
 {
   "schemaVersion": 1,
   "metricNote": "pagesWithImpressions = distinct pages with >=1 Google Search impression in the window, from searchanalytics.query (dimensions: [page]). This is a PROXY for indexed pages and is structurally lower than the Search Console coverage report figure, which no Search Console API exposes. See scripts/check-indexation.ts.",
-  "readings": []
+  "readings": [
+    {
+      "takenOn": "2026-08-02",
+      "windowStart": "2026-07-03",
+      "windowEnd": "2026-07-30",
+      "property": "sc-domain:michikanji.com",
+      "pagesWithImpressions": 903,
+      "impressions": 66727,
+      "clicks": 1771,
+      "sitemapUrlsSubmitted": 1906
+    }
+  ]
 }
