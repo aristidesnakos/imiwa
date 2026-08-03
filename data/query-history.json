@@ -237,6 +237,242 @@
         "clicks": 97,
         "avgPosition": 10.48
       }
+    },
+    {
+      "takenOn": "2026-08-03",
+      "windowStart": "2026-07-04",
+      "windowEnd": "2026-07-31",
+      "property": "sc-domain:michikanji.com",
+      "totalQueries": 3023,
+      "impressions": 27066,
+      "clicks": 1038,
+      "romajiStrict": {
+        "queries": 248,
+        "impressions": 2331,
+        "clicks": 84,
+        "avgPosition": 10.27
+      },
+      "romajiLoose": {
+        "queries": 260,
+        "impressions": 2369,
+        "clicks": 88,
+        "avgPosition": 10.23
+      },
+      "watchedQueries": [
+        {
+          "query": "michi kanji",
+          "impressions": 585,
+          "clicks": 81,
+          "ctr": 0.1385,
+          "position": 3.02
+        },
+        {
+          "query": "mizu kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        },
+        {
+          "query": "hi kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        },
+        {
+          "query": "kokoro kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        },
+        {
+          "query": "yama kanji",
+          "impressions": 7,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 53
+        },
+        {
+          "query": "michikanji",
+          "impressions": 110,
+          "clicks": 80,
+          "ctr": 0.7273,
+          "position": 1
+        },
+        {
+          "query": "kou kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        },
+        {
+          "query": "ko kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        }
+      ],
+      "topQueries": [
+        {
+          "query": "kanji stroke order",
+          "impressions": 2521,
+          "clicks": 357,
+          "position": 3.29
+        },
+        {
+          "query": "japanese kanji",
+          "impressions": 1339,
+          "clicks": 24,
+          "position": 7.63
+        },
+        {
+          "query": "n5 kanji",
+          "impressions": 643,
+          "clicks": 12,
+          "position": 9.19
+        },
+        {
+          "query": "difference in meaning of 漏, 泄, 洩 kanji",
+          "impressions": 590,
+          "clicks": 0,
+          "position": 9.73
+        },
+        {
+          "query": "michi kanji",
+          "impressions": 585,
+          "clicks": 81,
+          "position": 3.02
+        },
+        {
+          "query": "japanese stroke order",
+          "impressions": 384,
+          "clicks": 22,
+          "position": 5.11
+        },
+        {
+          "query": "stroke order japanese",
+          "impressions": 318,
+          "clicks": 29,
+          "position": 4.42
+        },
+        {
+          "query": "kanji michi",
+          "impressions": 289,
+          "clicks": 0,
+          "position": 7.39
+        },
+        {
+          "query": "stroke order kanji",
+          "impressions": 269,
+          "clicks": 21,
+          "position": 3.2
+        },
+        {
+          "query": "japanese kanji dictionary",
+          "impressions": 255,
+          "clicks": 6,
+          "position": 8.81
+        },
+        {
+          "query": "samurai kanji",
+          "impressions": 235,
+          "clicks": 1,
+          "position": 8.71
+        },
+        {
+          "query": "migi kanji",
+          "impressions": 235,
+          "clicks": 0,
+          "position": 5.52
+        },
+        {
+          "query": "kanji stroke",
+          "impressions": 233,
+          "clicks": 27,
+          "position": 3.48
+        },
+        {
+          "query": "heal in japanese",
+          "impressions": 231,
+          "clicks": 0,
+          "position": 7.42
+        },
+        {
+          "query": "kanji n5",
+          "impressions": 226,
+          "clicks": 4,
+          "position": 9.56
+        },
+        {
+          "query": "i kanji",
+          "impressions": 216,
+          "clicks": 1,
+          "position": 7.76
+        },
+        {
+          "query": "kanji",
+          "impressions": 210,
+          "clicks": 0,
+          "position": 9.67
+        },
+        {
+          "query": "n5 kanji list",
+          "impressions": 198,
+          "clicks": 4,
+          "position": 10.87
+        },
+        {
+          "query": "pain kanji",
+          "impressions": 187,
+          "clicks": 1,
+          "position": 8.25
+        },
+        {
+          "query": "kanji strokes",
+          "impressions": 139,
+          "clicks": 14,
+          "position": 4.56
+        },
+        {
+          "query": "kanji for book",
+          "impressions": 132,
+          "clicks": 0,
+          "position": 10.14
+        },
+        {
+          "query": "day kanji",
+          "impressions": 131,
+          "clicks": 0,
+          "position": 6.28
+        },
+        {
+          "query": "nihongo kanji stroke order",
+          "impressions": 125,
+          "clicks": 3,
+          "position": 5.1
+        },
+        {
+          "query": "ambition in japanese",
+          "impressions": 125,
+          "clicks": 0,
+          "position": 9.48
+        },
+        {
+          "query": "kanji kanji",
+          "impressions": 125,
+          "clicks": 0,
+          "position": 11.5
+        }
+      ],
+      "kanjiPages": {
+        "impressions": 38996,
+        "clicks": 95,
+        "avgPosition": 10.6
+      }
     }
   ]
 }
