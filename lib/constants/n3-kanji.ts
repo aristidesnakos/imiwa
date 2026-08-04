@@ -298,6 +298,7 @@ export const N3_KANJI: KanjiData[] = [
   // Plants
   { kanji: "葉", onyomi: "こう", kunyomi: "は", meaning: "leaf, plane, needle, blade, counter for flat things" },
   { kanji: "草", onyomi: "そう", kunyomi: "くさ", meaning: "grass, weeds, herbs" },
+  { kanji: "畑", onyomi: "はた", kunyomi: "はたけ", meaning: "field (for crops)" },
 
   // Body Parts
   { kanji: "首", onyomi: "しゅ", kunyomi: "くび", meaning: "neck" },
