@@ -290,6 +290,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "光", onyomi: "こう", kunyomi: "ひか（る）、ひかり", meaning: "ray, light" },
   { kanji: "陽", onyomi: "よう", kunyomi: "ひ", meaning: "sunshine, positive" },
   { kanji: "雪", onyomi: "せつ", kunyomi: "ゆき", meaning: "snow" },
+  { kanji: "曇", onyomi: "うん", kunyomi: "くも（る）、くも", meaning: "cloud, cloudy" },
   { kanji: "候", onyomi: "こう", kunyomi: "", meaning: "climate, season, weather" },
   { kanji: "煙", onyomi: "えん", kunyomi: "けむ（る）、けむり", meaning: "smoke" },
   { kanji: "流", onyomi: "りゅう、る", kunyomi: "なが（れる）", meaning: "current, flow" },
