@@ -191,6 +191,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "参", onyomi: "さん", kunyomi: "まい（る）", meaning: "going, coming, participate" },
   { kanji: "加", onyomi: "か", kunyomi: "くわ（える）", meaning: "add, addition, increase, join" },
   { kanji: "寄", onyomi: "き", kunyomi: "よ（る）", meaning: "draw near, gather" },
+  { kanji: "募", onyomi: "ぼ", kunyomi: "つの（る）", meaning: "recruit, solicit, gather" },
   { kanji: "込", onyomi: "", kunyomi: "こ（む）", meaning: "crowded, mixture" },
 
   // Work/Tasks/Duties
