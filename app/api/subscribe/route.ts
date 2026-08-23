@@ -1,6 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import rateLimit from '@/middlewares/rateLimiter';
 
 export const runtime = 'nodejs';
+
+// 2 submissions per 10 minutes per IP — the same shape as /api/feedback and
+// /api/advertise. This endpoint is public and unauthenticated, so without it
+// the form can be used to subscription-bomb arbitrary addresses through our
+// domain, which burns Kit deliverability (phase-0 risk #9).
+//
+// Caveat, so nobody mistakes this for real protection: the store is an
+// in-memory Map, so the window is per serverless instance and resets on cold
+// start. It stops a naive script from one IP. It does not stop a distributed
+// attack. It is the established pattern in this repo; upgrade to a shared
+// store only if the logs show it is actually being worked around.
+const limiter = rateLimit(2, 10 * 60 * 1000);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const KIT_API = 'https://api.kit.com/v4';
@@ -30,7 +43,14 @@ function kitPost(path: string, body: Record<string, unknown>) {
   });
 }
 
-export async function POST(request: Request) {
+// Typed NextRequest, not Request: `limiter.check` reads `x-forwarded-for` /
+// `x-real-ip` off the request and is typed against NextRequest. The App Router
+// hands route handlers a NextRequest at runtime either way, so this is a type
+// correction, not a behaviour change.
+export async function POST(request: NextRequest) {
+  const rateLimitResponse = await limiter.check(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json().catch(() => ({}));
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
