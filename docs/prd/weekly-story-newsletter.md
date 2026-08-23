@@ -39,9 +39,9 @@ low-volume queries (1,028 vs 1,771 clicks, same window).
 
 | # | Surface | `source` | Notes |
 |---|---|---|---|
-| 1 | `/kanji` (index) | `kanji-index-weekly-story` | Largest likely click destination. Most headroom of any route — 384 kB budget vs 340 kB baseline. Already a client route (`KanjiSearchClient`). |
-| 2 | Homepage | `homepage-weekly-story` | Brand traffic plus a share of the stroke-order cluster. Between Popular Kanji (`app/page.tsx:203`) and the Closing CTA (`app/page.tsx:246`). 250 kB vs 222 kB baseline. |
-| 3 | `/kanji/[character]` | `kanji-detail-weekly-story` | **97 clicks/month.** Build it, don't stake the pilot on it; it only becomes the biggest surface if the CTR work lands. Slot: between `RelatedKanjiSection` and `CTASection` (`page.tsx:478` reserves it as "last content section, before the commercial blocks"). Needs a wrapper `<section>` + `<h2>` carrying `SECTION_HEADING`, with `title={undefined}` — `EmailCapture` renders its own `<h3>` card. Card-bodied sections skip the band's rule. Update `section.ts:27`'s "five headings" note. 260 kB vs 228 kB baseline. |
+| 1 | `/kanji` (index) | `kanji-index-weekly-story` | Largest likely click destination. Already a client route (`KanjiSearchClient`). Tightest byte budget of the three — see below. |
+| 2 | Homepage | `homepage-weekly-story` | Brand traffic plus a share of the stroke-order cluster. Between Popular Kanji (`app/page.tsx:203`) and the Closing CTA (`app/page.tsx:246`). |
+| 3 | `/kanji/[character]` | `kanji-detail-weekly-story` | **97 clicks/month.** Build it, don't stake the pilot on it; it only becomes the biggest surface if the CTR work lands. Slot: between `RelatedKanjiSection` and `CTASection` (`page.tsx:478` reserves it as "last content section, before the commercial blocks"). Needs a wrapper `<section>` + `<h2>` carrying `SECTION_HEADING`, with `title={undefined}` — `EmailCapture` renders its own `<h3>` card. Card-bodied sections skip the band's rule. Update `section.ts:27`'s "five headings" note. |
 | 4 | `/kanji/progress`, `/kanji/review` | `progress-sync` | Low volume, highest intent — returning users already in a "what next" frame (`announcement-banner-roadmap.md:477`). Phase-0 SG1's designated surface, so building here discharges part of SG1. |
 | 5 | Announcement bar | — | Not before episode 1 exists, and not before **2026-08-31** — `MAX_RUN_DAYS` is 14, runs may not overlap, queue is occupied through 2026-08-30. `MESSAGE_MAX_LENGTH` 110, `CTA_MAX_LENGTH` 28. |
 
@@ -50,10 +50,28 @@ the free kanji / stroke-order pages — they are the acquisition engine."* Surfa
 pages. Nothing here gates anything, but it does add weight — which is why the budget gets measured
 before merge, and why the surface stays a static card.
 
-**Budget.** Every route above is gated at `error` severity on script weight (`lighthouserc.js`). The
-cost is the client-component boundary plus `lib/analytics`, which `/kanji/[character]` doesn't import
-today; the homepage is already `'use client'`. Run `pnpm dlx @lhci/cli@0.14.0
-autorun --config=./lighthouserc.js` after `pnpm build` before merging.
+**Budget — measured 2026-08-23, it fits.** Lighthouse transferred script bytes, clean `main` against
+the same build with `EmailCapture` mounted. Every route is gated at `error` severity.
+
+| Route | Now | With capture | Budget | Headroom after |
+|---|---|---|---|---|
+| `/` | 223.1 kB | 224.5 kB | 250 kB | 25.5 kB |
+| `/kanji/日` | 228.3 kB | 231.1 kB | 260 kB | 28.9 kB |
+| `/kanji` | 372.1 kB | 375.0 kB | 384 kB | **9.0 kB** |
+
+Two things that are not obvious:
+
+- **Mounting on two routes raises the measured figure on three.** Lighthouse counts Next `<Link>`
+  prefetches, so `/kanji` picks up +2.9 kB for the homepage and detail-page chunks it prefetches
+  without receiving an edit.
+- **`/kanji` has already drifted ~32 kB past the 340 kB baseline `lighthouserc.js` records** — 372.1
+  kB measured on unmodified `main`, eating 73% of that route's headroom. Unrelated to this work; `/`
+  and `/kanji/日` still match their documented baselines. `/kanji` is the assertion that trips first,
+  and it needs its own fix or a re-baseline.
+
+Run the gate on a free port. 3000 is often taken, and LHCI will silently profile whatever else is
+listening instead of failing — use `pnpm exec next start -p 3111`, not `pnpm start -- -p 3111`
+(pnpm passes `--` through literally and `next start` reads it as a directory).
 
 **Announcement bar** is mounted site-wide (`app/layout.tsx:124`) with dismissal, impression caps and
 `LearnerSignals` targeting — the only behavioural trigger the site has. `AnnouncementCta.href` is an
