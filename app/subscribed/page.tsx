@@ -8,9 +8,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Static thank-you page. Kit owns the opt-in flow; set this URL as the form's
-// confirmation/success redirect in the Kit dashboard if you want subscribers to
-// land here after confirming.
+// Static thank-you page, reached after a subscriber clicks the Kit
+// confirmation link — set it as the form's confirmation redirect in the Kit
+// dashboard. Nothing gates direct navigation, so treat arrival here as a hint,
+// not proof that anyone confirmed anything.
+//
+// One page serves every Kit form, because `/api/subscribe` has a single
+// `KIT_FORM_ID` and Kit's redirect is configured per form. So this copy has to
+// stay true for every offer that points here — today the weekly story list,
+// which sends nothing until the next send day, and later the practice pack,
+// which arrives immediately. It previously read "check your inbox for your free
+// pack", which was false for the only list actually wired up. If an offer ever
+// needs its own wording, give it its own route rather than making this one
+// vague enough to cover both. See docs/prd/weekly-story-newsletter.md,
+// "Open decisions".
 export default function SubscribedPage() {
   return (
     <>
@@ -19,13 +30,13 @@ export default function SubscribedPage() {
       <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-16 min-h-[60vh] flex items-center justify-center">
         <div className="w-full max-w-md bg-white p-8 rounded-lg border border-gray-200 shadow-sm text-center">
           <div className="flex justify-center mb-5">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+            <CheckCircle aria-hidden="true" className="w-12 h-12 text-green-600" />
           </div>
 
           <h1 className="text-2xl font-bold text-gray-800 mb-3">You&apos;re in!</h1>
           <p className="text-gray-600 leading-relaxed mb-8">
-            Check your inbox for your free pack. If you don&apos;t see it, look in your
-            promotions or spam folder.
+            You&apos;re on the list. When the next email goes out it&apos;ll land in your
+            inbox — if you don&apos;t see us there, check your promotions or spam folder.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
