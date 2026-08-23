@@ -1,47 +1,113 @@
 # Weekly Story Newsletter — Roadmap
 
-**Version 1.0** · Created 2026-08-20 · Owner: Ari Nakos
-**Status:** Kit activated, list + form live, homepage signup box drafted (pending deploy). Content pilot not started.
-**Related:** [`phase-0-growth-monetization.md`](./phase-0-growth-monetization.md) (SG1 — email capture, the pipeline this reuses) · project memory `weekly_email_strategy.md`, `creator_collab_strategy.md`
+**Version 1.3** · Created 2026-08-20 · Updated 2026-08-23 · Owner: Ari Nakos
+**Status:** Kit form configured, capture copy fixed (uncommitted). **No visitor can subscribe** — `EmailCapture` is imported by no page. Content pilot not started.
+**Related:** [`phase-0-growth-monetization.md`](./phase-0-growth-monetization.md) (SG1 — the capture pipeline this reuses) · [`../3rdVersion/seo-operations-review.md`](../3rdVersion/seo-operations-review.md) (the CTR finding placement rests on)
 
 ## What this is
 
-A weekly email: a short story built from kanji a beginner already knows, plus 3–5 new target-vocab words with a memory hook, linking back to the relevant `/kanji/<char>` pages. Modeled on Upwordo's format. It is **not a new product line** — it's the delivery vehicle for two bets already on the roadmap: starting an owned email list, and a free, low-cost MVP for "graded reading tied to learned kanji" before that becomes a built site feature.
+A free weekly email: a short story built from kanji a beginner already knows, plus 3–5 new
+target-vocab words with a memory hook, linking back to the relevant `/kanji/<char>` pages.
+**Audience: N5–N4 only**, to keep the return signal clean.
 
-**Audience for the pilot: Beginner, N5–N4.** Not all five JLPT levels — one segment, to keep the first read/return signal clean. Broader levels are a Phase 1 decision, gated on this pilot actually working.
+The pilot answers one question — do people read it and come back? If they do, the payoff is
+**collaborations with Japanese language teachers**, pitched on the pilot's own numbers. Everything
+stays free through the pilot. `engagement-log.csv` (repo root, header row only, untracked) is the
+ledger for that outreach: commit it or delete it.
 
-## Non-goals for this phase
+## Non-goals
 
-- No paywall, no quiz gate, no billing.
-- No new backend, no user accounts — the site's no-server-side-user-state architecture (`CLAUDE.md`) doesn't change.
-- No second domain (a `jlptmanga.com`-style comic-strip site was considered and killed — see memory).
-- No multi-level story tracks yet — N5–N4 only, one track.
-- No cron job yet — see [Sending mechanism](#sending-mechanism-phase-0-manual-no-cron) below.
+- No paywall, no quiz gate, no billing, no accounts, no new backend.
+- No second domain (a `jlptmanga.com`-style comic site was considered and killed — see memory).
+- No multi-level tracks, no cron job, no modal or exit-intent signup.
 
----
+## Where the signup appears
 
-## Current state (as of 2026-08-20)
+**The detail pages are not where the visitors are.** Page-dimension, 28 days to 2026-07-30: 1,771
+clicks across 903 pages. The `kanjiPages` aggregate in `query-history.json` gives `/kanji/<char>`
+**97 clicks against 38,670 impressions** — 0.25% CTR at position 10.5, against 3.85% site-wide. So
+~1,890 detail pages take 58% of impressions and 5.5% of clicks
+(`../3rdVersion/seo-operations-review.md:283`).
+
+The other ~94% lands on the homepage and `/kanji`, via the stroke-order cluster (`kanji stroke
+order`: 353 clicks at position 3.3; ~426 across variants) and the brand query `michikanji` (81
+clicks, position 1.0). Both pages are titled around stroke order and no repo data separates them —
+**check DataFast's landing-page report before building**; it decides the order of 1 and 2.
+
+Compare clicks only within one Search Console dimension. The query dimension drops anonymised
+low-volume queries (1,028 vs 1,771 clicks, same window).
+
+| # | Surface | `source` | Notes |
+|---|---|---|---|
+| 1 | `/kanji` (index) | `kanji-index-weekly-story` | Largest likely click destination. Most headroom of any route — 384 kB budget vs 340 kB baseline. Already a client route (`KanjiSearchClient`). |
+| 2 | Homepage | `homepage-weekly-story` | Brand traffic plus a share of the stroke-order cluster. Between Popular Kanji (`app/page.tsx:203`) and the Closing CTA (`app/page.tsx:246`). 250 kB vs 222 kB baseline. |
+| 3 | `/kanji/[character]` | `kanji-detail-weekly-story` | **97 clicks/month.** Build it, don't stake the pilot on it; it only becomes the biggest surface if the CTR work lands. Slot: between `RelatedKanjiSection` and `CTASection` (`page.tsx:478` reserves it as "last content section, before the commercial blocks"). Needs a wrapper `<section>` + `<h2>` carrying `SECTION_HEADING`, with `title={undefined}` — `EmailCapture` renders its own `<h3>` card. Card-bodied sections skip the band's rule. Update `section.ts:27`'s "five headings" note. 260 kB vs 228 kB baseline. |
+| 4 | `/kanji/progress`, `/kanji/review` | `progress-sync` | Low volume, highest intent — returning users already in a "what next" frame (`announcement-banner-roadmap.md:477`). Phase-0 SG1's designated surface, so building here discharges part of SG1. |
+| 5 | Announcement bar | — | Not before episode 1 exists, and not before **2026-08-31** — `MAX_RUN_DAYS` is 14, runs may not overlap, queue is occupied through 2026-08-30. `MESSAGE_MAX_LENGTH` 110, `CTA_MAX_LENGTH` 28. |
+
+**This runs against a phase-0 guardrail** (`phase-0-growth-monetization.md:11`): *"Never gate or slow
+the free kanji / stroke-order pages — they are the acquisition engine."* Surfaces 1–3 are those
+pages. Nothing here gates anything, but it does add weight — which is why the budget gets measured
+before merge, and why the surface stays a static card.
+
+**Budget.** Every route above is gated at `error` severity on script weight (`lighthouserc.js`). The
+cost is the client-component boundary plus `lib/analytics`, which `/kanji/[character]` doesn't import
+today; the homepage is already `'use client'`. Run `pnpm dlx @lhci/cli@0.14.0
+autorun --config=./lighthouserc.js` after `pnpm build` before merging.
+
+**Announcement bar** is mounted site-wide (`app/layout.tsx:124`) with dismissal, impression caps and
+`LearnerSignals` targeting — the only behavioural trigger the site has. `AnnouncementCta.href` is an
+internal path only, so the bar can't hold a form and needs a destination page. Per
+`announcement-banner-roadmap.md`, "a banner that leads to a page with no visible change is the most
+expensive mistake available here."
+
+**Always-on static sections. No modal, exit-intent or scroll trigger** — no such mechanism exists,
+building one adds client JS against `error`-level budgets, and it would compete with the announcement
+bar's acknowledgement model. Revisit only if static placement gives a signal too small to read.
+**Everyone sees it**; no targeting outside the bar.
+
+The newsletter links readers straight into `/kanji/<char>` pages — the traffic those pages can't win
+from the SERP. The list is a direct channel at the 0.25% CTR problem.
+
+## Current state
 
 | Piece | Status |
 |---|---|
-| Kit account | ✅ Created (`aristides.nakos@gmail.com`), free 14-day trial — **check before it lapses into a paid plan; downgrade to Free if not converting to paid features** |
-| Kit form | ✅ `MichiKanji Weekly - Beginner (N5-N4)`, form ID `9824359`. Double opt-in **on**. Post-confirmation redirect → `https://michikanji.com/subscribed` |
-| `KIT_API_KEY` / `KIT_FORM_ID` | ✅ Set in Vercel (production) |
-| `/api/subscribe` → Kit proxy | ✅ Already existed in the codebase (`app/api/subscribe/route.ts`), unchanged |
-| `EmailCapture` on the homepage | ⚠️ Drafted (new "Weekly Story Email" section between "Popular Kanji" and the closing CTA), **not yet committed/deployed** — pending Ari's go-ahead |
-| First story episode | ☐ Not started |
-| Kit incentive/lead magnet | ☐ None attached — the form has no downloadable "pack"; the weekly story itself is the offer |
-| Abuse protection on `/api/subscribe` | ☐ Still open per `phase-0-growth-monetization.md` risk #9 — public, unauthenticated endpoint. Low priority at current traffic, but note it before wider promotion |
+| `/api/subscribe` → Kit proxy | ✅ `app/api/subscribe/route.ts` |
+| `EmailCapture` component | ✅ exists — imported by no page |
+| Capture copy | ✅ Fixed 2026-08-23, uncommitted. Copy is props; defaults assert neither an incentive nor a confirmation email — both are false for a returning address. Plus a11y and a stuck-`sending` fix. |
+| Capture sections | ☐ Not in version control. Rebuild from the table above. |
+| Abuse protection on `/api/subscribe` | ☐ See technical step 3 |
+| Kit account / form `9824359` / DOI / redirect / Vercel env vars | Claimed set, not verifiable from this repo — recheck in the dashboards. Trial started 2026-08-20, **lapses ~2026-09-03**. |
 
----
+## Open decisions
 
-## Soft steps — content & editorial
+1. **Form identity.** `route.ts:46` reads one `KIT_FORM_ID` for every `source`, now pointing at the
+   no-incentive newsletter form — but `phase-0-growth-monetization.md:44` specifies that slot as the
+   lead-magnet form with the practice-pack PDF attached. `referrer` still separates audiences for
+   broadcasts, but **the confirmation email and redirect are per-form**, so when SG1 ships,
+   pack-seekers get the newsletter's confirmation email.
+   **(a)** newsletter keeps the slot, SG1 gets a second form + env var later ·
+   **(b)** newsletter gets its own now ·
+   **(c)** one shared form and confirmation email for both.
+   (a) and (b) need a code change — one env var, no `source`→form map — so only (c) is free, and (c)
+   is what `app/subscribed/page.tsx:19` argues against ("give it its own route rather than making
+   this one vague enough to cover both"). The pack is a weak magnet regardless:
+   `app/free-resources/page.tsx` already offers direct downloads with no email.
+2. **Byline** — Ari, or "MichiKanji" as a brand voice? Blocks episode 1 and sets the precedent for
+   any teacher-collaboration byline.
+3. **SG1's free-resources surface** — still ships on phase-0's schedule, or waits behind this pilot?
+   Surface 4 above is SG1's `progress-sync` under its own name; free-resources is untouched. Phase-0's
+   SG2 (Pro fake-door, $6.99/mo · $49/yr) is a separate willingness-to-pay test and nothing here
+   sequences the two.
 
-These produce the thing that actually gets sent; nothing technical below matters if this queue is empty.
+## Content & editorial
 
-1. **Lock the format.** One story (150–300 words, N5–N4 vocabulary and grammar only) + 3–5 target words with a one-line memory hook each + 2–3 links back to the relevant `/kanji/<char>` pages. No audio, no quiz, no illustration for the pilot — those are Phase 1+ per the memory decision.
-2. **Pick the story spine.** A recurring light narrative (e.g., one continuing character/setting learners follow week to week) reads better than disconnected vignettes and gives a reason to open episode 2. Decide once, keep it for all 4–6 pilot episodes.
-3. **Build a content calendar for the pilot** — 4 to 6 episodes, one per week:
+Nothing technical matters if this queue is empty.
+
+1. **Lock the format.** One story (150–300 words, N5–N4 vocabulary and grammar only) + 3–5 target words with a one-line memory hook each + 2–3 links back to `/kanji/<char>` pages. No audio, quiz or illustration in the pilot.
+2. **Pick the story spine.** A recurring character/setting followed week to week gives a reason to open episode 2. Decide once, keep it for all pilot episodes.
+3. **Fill the calendar before writing episode 1** — deciding kanji/theme up front avoids scrambling on send day and stops episodes repeating characters.
 
    | Episode | Theme / kanji focus | Target vocab (3–5) | Write-by | Send date |
    |---|---|---|---|---|
@@ -49,71 +115,76 @@ These produce the thing that actually gets sent; nothing technical below matters
    | 2 | — | — | — | — |
    | 3 | — | — | — | — |
    | 4 | — | — | — | — |
-   | 5 (optional) | — | — | — | — |
-   | 6 (optional) | — | — | — | — |
+   | 5–6 (optional) | — | — | — | — |
 
-   Fill this in before writing episode 1 — deciding the kanji/theme per week up front avoids scrambling on send day and makes it easy to check episodes don't repeat the same characters.
-4. **Write episode 1 end-to-end** (story + vocab + hooks + links), and treat it as the template for tone/length/structure for the rest of the pilot.
-5. **Decide the byline/voice** — written as Ari, or as "MichiKanji"? Matters for the sign-off and for any future creator-collab byline (see `creator_collab_strategy.md` — that idea is explicitly sequenced *after* this pilot, using its numbers as the pitch).
-6. **Define the read signal you're watching** before episode 1 sends, not after: opens, click-through to the linked `/kanji/<char>` pages, and — the one that actually matters — whether episode 2's open rate holds up against episode 1's (the return-open is the real "did they want more" signal, not the first open).
-7. **Weekly editorial loop, once live:** write → self-review against episode 1's template → schedule in Kit (see below) → the following week, check episode N-1's opens/clicks before finalizing episode N (lets you kill or pivot mid-pilot instead of only at the end).
+4. **Write episode 1 end-to-end** and treat it as the template for tone, length and structure.
+5. **Define the read signal before episode 1 sends.** Opens, click-through to the linked kanji pages, and — the one that matters — whether episode 2's open rate holds against episode 1's. The return-open is the "did they want more" signal; the first open is curiosity.
+6. **Weekly loop once live:** write → self-review against the episode 1 template → schedule in Kit → next week, check episode N-1's numbers before finalizing episode N.
 
-## Technical steps — infrastructure
-
-The email-capture pipeline already exists and is now wired end to end:
+## Technical steps
 
 ```
-<EmailCapture source="homepage-weekly-story" />  →  POST /api/subscribe  →  Kit form 9824359 (DOI)
-                                                                              → /subscribed on confirm
+<EmailCapture source="kanji-index-weekly-story" />   ┐
+<EmailCapture source="homepage-weekly-story" />      ┼→ POST /api/subscribe → Kit form (DOI)
+<EmailCapture source="kanji-detail-weekly-story" />  ┘   └ fires DataFast   → /subscribed on confirm
+                                                           email_signup(source)
 ```
 
-1. ~~Create Kit account~~ ✅ done
-2. ~~Create + configure the form (DOI, redirect)~~ ✅ done
-3. ~~Set `KIT_API_KEY` / `KIT_FORM_ID` in Vercel~~ ✅ done
-4. **Deploy the homepage signup section** (drafted, needs Ari's sign-off — see the diff shared in chat) so `/api/subscribe` actually has a visitor-facing entry point. Nothing above matters to a real visitor until this ships.
-5. **Live test after deploy:** submit a real email, confirm the DOI email arrives, click it, land on `/subscribed`, and check the contact in Kit shows as **confirmed**, not stuck pending. This is the same gate `phase-0-growth-monetization.md` already calls out for other capture surfaces — do it here too before promoting the signup box anywhere.
-6. **(Optional, cheap) A second `source` value** if the signup box ever appears on more than one page (e.g. also on `/kanji/[character]` pages later) — costs nothing since `source` is already a prop, just pick distinct values per surface so Kit's `referrer` field stays meaningful.
-7. **Decide the honeypot/throttle question** on `/api/subscribe` (phase-0 risk #9) before actively promoting this — not urgent at current traffic, but a newsletter CTA getting real traffic raises the abuse surface slightly.
+1. ~~Kit account, form (DOI + redirect), `KIT_API_KEY` / `KIT_FORM_ID` in Vercel~~ ✅
+2. ~~Fix the capture copy~~ ✅ 2026-08-23
+3. **Rate-limit `/api/subscribe`.** It is public and unauthenticated; subscription-bombing hurts Kit
+   deliverability (phase-0 risk #9). `middlewares/rateLimiter.ts` already runs in production at
+   `rateLimit(2, 10 * 60 * 1000)` on `app/api/feedback/route.ts` and `app/api/advertise/route.ts` —
+   reuse it. Only wrinkle: `/api/subscribe` takes `Request`, not `NextRequest`. It's an in-memory
+   `Map`, so per-instance and weak against a distributed attack, but it is the established pattern.
+   (`components/CaptchaVerification.tsx` is a build-time mock imported by nothing.)
+4. **Settle form identity** (open decision 1) before any surface ships.
+5. **Build the capture sections in priority order** — `/kanji` first, not the detail pages. Run the
+   Lighthouse gate locally before opening the PR.
+6. **Live test after deploy.** The fallback at `app/api/subscribe/route.ts:62`
+   (`POST /v4/subscribers`) creates `state: active` — single opt-in. Once active, the form add won't
+   re-trigger confirmation, so the subscriber skips consent (phase-0 risk #6). It fires only when the
+   first form-add fails, so a clean first submit proves nothing about it.
+   - Submit a fresh email. **Before clicking anything, check the contact in Kit is `unconfirmed`, not `active`.** Checking only the end state cannot detect this.
+   - Confirm the DOI email arrives, click it, land on `/subscribed`, check it flips to confirmed.
+   - Re-submit the *same* email and confirm it doesn't silently skip consent.
+   - If plain form-subscribe works without the fallback, delete the fallback.
 
-### Sending mechanism (Phase 0): manual, no cron
+### Sending: manual, no cron
 
-For the pilot, **do not build a cron job.** Kit's own Broadcasts feature already does everything Phase 0 needs:
+Kit Broadcasts covers Phase 0. Write the episode in Kit's composer, use "Schedule for later", target
+by filtering on `referrer` — **referrer, not tags**, matching `phase-0-growth-monetization.md`.
+Nothing on our side triggers a send.
 
-- Write the episode in Kit's broadcast composer (or paste in prepared copy).
-- Use Kit's native **"Schedule for later"** to set the weekly send time — Kit handles the actual delivery at that timestamp. No code on our side triggers anything.
-- Target the audience by filtering on `referrer = homepage-weekly-story` (or whichever `source` was used), matching the segmentation approach already established in `phase-0-growth-monetization.md` — **referrer, not tags**, unless a tag-triggered automation is specifically needed later.
-
-This keeps the entire pilot at zero net-new code, which matches the "not overengineered" instruction — the goal right now is proving people read and return, not building send infrastructure for a format that might not work.
-
-### If this validates: what automation would look like (Phase 1+, not now)
-
-Documenting this now so it doesn't need re-deriving later, but **do not build any of it until the pilot's 4–6 episodes show real read-through and return-opens.**
-
-- **A content queue, not hand-scheduling forever.** A simple `data/newsletter/episodes/<n>.md` (or similar, mirroring the existing `data/sentences/` pipeline pattern already in the repo) holding queued episodes with front-matter (send date, target segment, vocab list).
-- **A Vercel Cron Job** (`vercel.json` → `crons`, same deployment platform the site already runs on) hitting a new `app/api/cron/weekly-newsletter/route.ts` on a weekly schedule. Its job: read the next queued episode, and call Kit's **v4 Broadcasts API** (`POST /v4/broadcasts`) to create and schedule the send — not send raw SMTP, Kit still owns delivery/deliverability.
-- **Segment-aware sending** at that point would mean multiple queued tracks (N5–N4 vs N3–N2, etc.) and the cron job picking the right broadcast + audience filter per track — this is exactly the point multi-level segmentation (deferred in the 20 Aug decision) would actually get built, once there's more than one track to justify it.
-- **Personalization** (stories assembled from a specific reader's own learned-kanji progress, the long-term differentiator vs. Satori Reader) is a further step past that — it needs a way to read a subscriber's `kanji-progress` data server-side, which the current no-server-side-user-state architecture doesn't support yet. Out of scope until Phase 1 paid tier is being built.
-
-**Why not build the cron now:** every piece of automation above is code that has to be maintained whether or not anyone reads the newsletter. Four to six manually-scheduled Kit broadcasts cost a few minutes each and answer the only question that matters right now — do people want this — before spending engineering time on delivery infrastructure for content that might not work.
-
----
+Automation is code that must be maintained whether or not anyone reads the newsletter. If the pilot
+validates, the shape is a queued-episode file plus a Vercel Cron job calling Kit's v4 Broadcasts API.
+Design it then, against real numbers.
 
 ## Sequence
 
-1. **Now:** fill in the content calendar (soft step 3), write episode 1, get the homepage signup section deployed and live-tested.
-2. **Weeks 1–4/6:** run the pilot — one episode/week, manually scheduled in Kit, checking opens/clicks weekly.
-3. **After the pilot:** decision gate below.
+| When | What |
+|---|---|
+| **By 2026-08-30** | Settle form identity + byline. Fill the calendar. Write episode 1. |
+| **By ~2026-09-03** | Kit trial: let it lapse to Free (10k subscribers, unlimited sends — covers Phase 0) or keep a paid tier. Automations/tags aren't needed until a tag-triggered flow exists. |
+| **Then** | Ship `/kanji` capture → Lighthouse gate → deploy → live test → homepage capture. |
+| **Weeks 1–4/6** | One episode/week, manually scheduled, checking opens/clicks weekly. |
 
-## Decision gate (into Phase 1)
+## Decision gate
 
-Mirrors the phase-0 doc's gate style — gate on signal, not a fixed date.
+Gate on signal, not date.
 
-- **Continue + expand** if episode-to-episode open rate holds (return-opens don't collapse) and click-through to `/kanji/<char>` pages is meaningfully non-zero. Next steps then: consider a second level track, and start the Phase 1 monetization design (Satori Reader-anchored $9/mo or $89/yr tier — see `weekly_email_strategy.md` memory) — still content/ops work before any paywall code.
-- **Pause and rethink the format** if opens crater after episode 1 (a curiosity-driven first open, then no return) — the story format itself may not be the hook, regardless of segmentation.
-- **Kill** if the list barely grows past the homepage box's existing traffic and opens are low from episode 1 — signals the format, not the targeting, is the problem, and no amount of level-segmentation fixes that.
+- **Continue** if episode-to-episode open rate holds and click-through to `/kanji/<char>` pages is
+  meaningfully non-zero. The next move is not more engineering — it is taking those numbers to
+  Japanese language teachers and opening collaborations. A second level track and send automation
+  come after that, if the collaborations create demand for them.
+- **Pause and rethink the format** if opens crater after episode 1 — a curiosity-driven first open
+  with no return means the story format isn't the hook, regardless of segmentation.
+- **Kill** if the list barely grows past the capture surfaces' traffic and opens are low from episode
+  1 — that points at the format, not the targeting.
 
-## Open questions
+Read list growth from **Kit's confirmed count, not DataFast**. `email_signup` counts submits, and
+with DOI on ~20–30% never confirm, so the goal runs ~25% above the real list (phase-0 risk #5). Use
+`email_signup` for funnel and per-surface CTR — that is what the distinct `source` values are for.
 
-- Byline/voice for the pilot (Ari vs. "MichiKanji" as a brand voice) — decide before episode 1.
-- Whether to attach any incentive to the signup form at all, or let "the weekly story" be the entire offer (current setup: no incentive attached).
-- Kit trial: confirm before day 14 whether to let it lapse to Free or intentionally keep a paid tier — Free covers everything Phase 0 needs (10k subscribers, unlimited sends); automations/tags aren't needed until a tag-triggered flow is actually built.
+**Paid is unresolved and not being designed during the pilot.** The plausible candidate is a paid
+tier of this newsletter rather than a separate product. Teacher collaborations come first.
