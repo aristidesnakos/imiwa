@@ -1,0 +1,93 @@
+name: Palette Check
+
+# Holds new UI to the brand palette in app/globals.css.
+#
+# The palette is not decoration. Several tokens exist specifically because a
+# measured contrast ratio forced them: coral and destructive are split into
+# fill/ink pairs because #FF6B47 is 2.7:1 and cannot legally carry a label,
+# --switch-unchecked exists because --input was only 1.75:1 from --primary and
+# the two switch states read as one navy blob. A `text-gray-500` dropped into a
+# component bypasses every one of those decisions, and it does it invisibly:
+# nothing about the class looks wrong in review.
+#
+# The validator also catches three ways a colour can silently render as nothing
+# at all, which is the failure mode this codebase keeps hitting:
+#
+#   * an opacity modifier on a japan-* token (`bg-japan-soft-mist/60`) — Tailwind
+#     cannot fold alpha into a bare `var(--x)` holding a hex, so it drops the
+#     whole utility. 69 of these are live in the tree right now.
+#   * `hsl(var(--x))` wrapped around a hex, or a bare `var(--x)` around an HSL
+#     triplet. The second is what shipped on --destructive for a long time.
+#   * a token the config maps that globals.css never defines. That is how
+#     `border-input` drew in the inherited text colour for months.
+#
+# All three end the same way: the declaration is invalid, the browser drops it,
+# no error is raised, and the class list still reads correctly. That is why this
+# gate checks resolved values rather than intent.
+#
+# On the baseline: 625 off-palette usages already exist across 52 files. They
+# are frozen per-file in scripts/palette-baseline.json rather than fixed as a
+# precondition, because a gate that can never go green is a gate people learn to
+# ignore. Counts may only fall. A PR that adds one fails; a PR that removes some
+# is told to re-record with `--tighten`.
+#
+# Like kanji-data-check.yml and unlike lighthouse-ci.yml, this needs no build —
+# it reads the sources and resolves the Tailwind config, and runs in seconds.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'app/globals.css'
+      - 'tailwind.config.js'
+      - 'scripts/validate-palette.ts'
+      - 'scripts/palette-baseline.json'
+      - '.github/workflows/palette-check.yml'
+  # Catch anything reaching main through a route other than a PR.
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'app/globals.css'
+      - 'tailwind.config.js'
+      - 'scripts/validate-palette.ts'
+      - 'scripts/palette-baseline.json'
+      - '.github/workflows/palette-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: palette-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-palette:
+    name: Validate brand-palette alignment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate brand-palette alignment
+        run: pnpm validate:palette

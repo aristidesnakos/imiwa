@@ -15,6 +15,7 @@
     "validate:schema": "tsx --tsconfig tsconfig.json scripts/validate-schema.ts --all",
     "validate:romaji": "tsx --tsconfig tsconfig.json scripts/validate-romaji.ts",
     "validate:kanji-data": "tsx --tsconfig tsconfig.json scripts/validate-kanji-data.ts",
+    "validate:palette": "tsx --tsconfig tsconfig.json scripts/validate-palette.ts",
     "sentences:publish": "tsx --tsconfig tsconfig.json scripts/sentences/publish.ts",
     "validate:sentences": "tsx --tsconfig tsconfig.json scripts/sentences/validate-published.ts",
     "validate:announcements": "tsx --tsconfig tsconfig.json scripts/announcements/validate.ts",
