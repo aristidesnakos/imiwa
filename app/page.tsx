@@ -12,6 +12,7 @@ import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { ArrowRight, PenLine, Layers3, Search, Sparkles } from 'lucide-react';
 import { trackConversion } from '@/lib/analytics';
+import EmailCapture from '@/components/EmailCapture';
 
 const ALL_KANJI_COUNT =
   N5_KANJI.length + N4_KANJI.length + N3_KANJI.length + N2_KANJI.length + N1_KANJI.length;
@@ -239,6 +240,61 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Weekly story newsletter capture.
+            Homepage first, not /kanji: /kanji has ~9 kB of script headroom left
+            against an error-level budget and has already drifted ~32 kB past its
+            recorded baseline, so it is the assertion that trips first. `/` has
+            ~25 kB. See docs/prd/weekly-story-newsletter.md.
+
+            `title={undefined}` because EmailCapture's own heading is an <h3> and
+            this page's sections lead with an <h2>; letting the card render its
+            title here would skip a heading level.
+
+            The band is a real surface, not a wash. `bg-japan-soft-mist/60` drew
+            NOTHING: Tailwind cannot fold an opacity modifier into a colour that
+            is a bare `var(--x)` holding a hex, so it drops the whole utility
+            silently — the same class of failure as the dropped HSL triplets in
+            app/globals.css, and it is why the tints here are `color-mix` on the
+            token rather than `/25`. Verified against compiled CSS, not by
+            reading the class list.
+
+            The gradient ends on the accent so the page cools from warm
+            off-white through this band into the navy closing CTA. The hairline
+            is `border-t` only: the navy edge below is already a hard contrast
+            step, and a light rule on top of it reads as an artifact. */}
+        <section className="border-t border-border bg-gradient-to-b from-japan-soft-mist to-[color-mix(in_srgb,var(--sakura-waters)_25%,var(--temple-stone))] py-16 md:py-20">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto mb-8 max-w-2xl text-center">
+              {/* coral-sunset-INK, never coral-sunset: the fill is 2.7:1 here and
+                  cannot legally carry a label. The ink is 4.70:1 against the top
+                  of the gradient, which this line sits on. See app/globals.css. */}
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
+                Free weekly newsletter
+              </p>
+              <h2 className="mt-3 text-balance text-2xl font-bold text-japan-deep-ocean md:text-3xl">
+                A weekly story you can actually read
+              </h2>
+              <p className="mt-3 text-pretty text-japan-mountain-mist">
+                One short story a week, written with beginner (N5) kanji and grammar only.
+              </p>
+            </div>
+
+            <div className="mx-auto max-w-xl">
+              {/* `border-[color:...]`, not `border-[...]`: without the type hint
+                  tailwind-merge reads the arbitrary value as a border-WIDTH and
+                  strips the card's own `border` class, and preflight sets
+                  border-width to 0 — so the card loses its border entirely. */}
+              <EmailCapture
+                source="homepage-weekly-story"
+                title={undefined}
+                description={undefined}
+                cta="Send me the stories"
+                className="border-[color:color-mix(in_srgb,var(--sakura-waters)_55%,var(--temple-stone))] shadow-md"
+              />
             </div>
           </div>
         </section>

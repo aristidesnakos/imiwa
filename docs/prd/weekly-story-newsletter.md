@@ -1,7 +1,10 @@
 # Weekly Story Newsletter — Roadmap
 
-**Version 1.3** · Created 2026-08-20 · Updated 2026-08-23 · Owner: Ari Nakos
-**Status:** Kit form configured, capture copy fixed (uncommitted). **No visitor can subscribe** — `EmailCapture` is imported by no page. Content pilot not started.
+**Version 1.4** · Created 2026-08-20 · Updated 2026-08-23 · Owner: Ari Nakos
+**Status:** Kit form configured; capture copy fixed (committed `f30f50c`); `/api/subscribe`
+rate-limited; `EmailCapture` mounted on the homepage — all on branch
+`feat/weekly-story-capture`, **not yet merged or deployed**, so no visitor can subscribe *yet*.
+Open decisions 1 and 2 are settled. Content pilot not started.
 **Related:** [`phase-0-growth-monetization.md`](./phase-0-growth-monetization.md) (SG1 — the capture pipeline this reuses) · [`../3rdVersion/seo-operations-review.md`](../3rdVersion/seo-operations-review.md) (the CTR finding placement rests on)
 
 ## What this is
@@ -93,27 +96,26 @@ from the SERP. The list is a direct channel at the 0.25% CTR problem.
 |---|---|
 | `/api/subscribe` → Kit proxy | ✅ `app/api/subscribe/route.ts` |
 | `EmailCapture` component | ✅ exists — imported by no page |
-| Capture copy | ✅ Fixed 2026-08-23, uncommitted. Copy is props; defaults assert neither an incentive nor a confirmation email — both are false for a returning address. Plus a11y and a stuck-`sending` fix. |
-| Capture sections | ☐ Not in version control. Rebuild from the table above. |
-| Abuse protection on `/api/subscribe` | ☐ See technical step 3 |
+| Capture copy | ✅ Committed `f30f50c`. Copy is props; defaults assert neither an incentive nor a confirmation email — both are false for a returning address. Plus a11y and a stuck-`sending` fix. |
+| Capture sections | ⏳ Homepage section built on `feat/weekly-story-capture` (`app/page.tsx`, between Popular Kanji and the Closing CTA). Surfaces 1, 3 and 4 not built. |
+| Abuse protection on `/api/subscribe` | ✅ `rateLimit(2, 10 * 60 * 1000)` per IP, same shape as `/api/feedback`. In-memory `Map`, so per-instance — stops a naive script, not a distributed attack. |
 | Kit account / form `9824359` / DOI / redirect / Vercel env vars | Claimed set, not verifiable from this repo — recheck in the dashboards. Trial started 2026-08-20, **lapses ~2026-09-03**. |
 
 ## Open decisions
 
-1. **Form identity.** `route.ts:46` reads one `KIT_FORM_ID` for every `source`, now pointing at the
-   no-incentive newsletter form — but `phase-0-growth-monetization.md:44` specifies that slot as the
-   lead-magnet form with the practice-pack PDF attached. `referrer` still separates audiences for
-   broadcasts, but **the confirmation email and redirect are per-form**, so when SG1 ships,
-   pack-seekers get the newsletter's confirmation email.
-   **(a)** newsletter keeps the slot, SG1 gets a second form + env var later ·
-   **(b)** newsletter gets its own now ·
-   **(c)** one shared form and confirmation email for both.
-   (a) and (b) need a code change — one env var, no `source`→form map — so only (c) is free, and (c)
-   is what `app/subscribed/page.tsx:19` argues against ("give it its own route rather than making
-   this one vague enough to cover both"). The pack is a weak magnet regardless:
-   `app/free-resources/page.tsx` already offers direct downloads with no email.
-2. **Byline** — Ari, or "MichiKanji" as a brand voice? Blocks episode 1 and sets the precedent for
-   any teacher-collaboration byline.
+1. ~~**Form identity.**~~ **Settled 2026-08-23 — (a).** The single `KIT_FORM_ID` that `route.ts`
+   reads for every `source` stays pointed at the no-incentive newsletter form. SG1 gets its own Kit
+   form and its own env var **when SG1 ships, not before** — nothing today reads a second form, so
+   this costs zero code now. `referrer` continues to separate audiences for broadcasts; the
+   confirmation email and redirect are per-form, which is exactly why SG1 cannot share this slot.
+   **Carry-over obligation:** `phase-0-growth-monetization.md:44` still describes this slot as the
+   lead-magnet form. Whoever implements SG1 must add the second form + env var and a `source`→form
+   map, or pack-seekers will receive the newsletter's confirmation email. That note is now recorded
+   in the phase-0 doc.
+2. ~~**Byline.**~~ **Settled 2026-08-23 — a person, not the brand.** Episodes are written by Ari and
+   sent from **"Ari at MichiKanji"**. Rationale: the pilot's only readable signal at this list size
+   is replies (see Decision gate), and people do not reply to a brand. Teacher-collaboration
+   outreach inherits the same byline — a named person is also what makes that pitch answerable.
 3. **SG1's free-resources surface** — still ships on phase-0's schedule, or waits behind this pilot?
    Surface 4 above is SG1's `progress-sync` under its own name; free-resources is untouched. Phase-0's
    SG2 (Pro fake-door, $6.99/mo · $49/yr) is a separate willingness-to-pay test and nothing here
@@ -150,15 +152,20 @@ Nothing technical matters if this queue is empty.
 
 1. ~~Kit account, form (DOI + redirect), `KIT_API_KEY` / `KIT_FORM_ID` in Vercel~~ ✅
 2. ~~Fix the capture copy~~ ✅ 2026-08-23
-3. **Rate-limit `/api/subscribe`.** It is public and unauthenticated; subscription-bombing hurts Kit
-   deliverability (phase-0 risk #9). `middlewares/rateLimiter.ts` already runs in production at
-   `rateLimit(2, 10 * 60 * 1000)` on `app/api/feedback/route.ts` and `app/api/advertise/route.ts` —
-   reuse it. Only wrinkle: `/api/subscribe` takes `Request`, not `NextRequest`. It's an in-memory
-   `Map`, so per-instance and weak against a distributed attack, but it is the established pattern.
+3. ~~**Rate-limit `/api/subscribe`.**~~ ✅ 2026-08-23. `rateLimit(2, 10 * 60 * 1000)` per IP,
+   matching `/api/feedback` and `/api/advertise`. The `Request` vs `NextRequest` wrinkle was
+   resolved by typing the handler `NextRequest` — the App Router passes one at runtime regardless,
+   so it is a type correction, not a behaviour change. Note the limiter runs *before* payload
+   validation, so a rejected 400 also consumes quota; that is intended.
    (`components/CaptchaVerification.tsx` is a build-time mock imported by nothing.)
-4. **Settle form identity** (open decision 1) before any surface ships.
-5. **Build the capture sections in priority order** — `/kanji` first, not the detail pages. Run the
-   Lighthouse gate locally before opening the PR.
+4. ~~**Settle form identity**~~ ✅ 2026-08-23 — (a), see Open decisions.
+5. **Build the capture sections in priority order — the homepage first, not `/kanji`.**
+   This reverses v1.3. `/kanji` has **9.0 kB** of script headroom against an `error`-severity budget
+   *and* has already drifted ~32 kB past the 340 kB baseline `lighthouserc.js` records, so it is the
+   assertion that trips first — on unmodified `main`, before this work touches it. `/` has 25.5 kB
+   and carries the brand query plus a share of the stroke-order cluster. `/kanji` waits for its own
+   re-baseline, which is unrelated to this pilot. ✅ Homepage section built on
+   `feat/weekly-story-capture`.
 6. **Live test after deploy.** The fallback at `app/api/subscribe/route.ts:62`
    (`POST /v4/subscribers`) creates `state: active` — single opt-in. Once active, the form add won't
    re-trigger confirmation, so the subscriber skips consent (phase-0 risk #6). It fires only when the

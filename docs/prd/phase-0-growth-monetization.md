@@ -42,6 +42,15 @@ The code is done; this is dashboard + env config to turn the list on.
 |---|------|-----------|
 | 1 | Create a Kit account | The list exists |
 | 2 | Create one **Form** for the lead magnet → enable **double opt-in** → attach the practice-pack PDF as the **incentive** | Confirmed signups auto-receive the pack, no code |
+
+> **⚠️ Superseded for SG1 — decided 2026-08-23.** The single `KIT_FORM_ID` env var this table
+> assumes is now claimed by the weekly-story newsletter (a no-incentive form), per
+> [`weekly-story-newsletter.md`](./weekly-story-newsletter.md) open decision 1, option (a).
+> **SG1 must therefore create a *second* Kit form with the practice pack attached, add its own env
+> var, and add a `source`→form map in `app/api/subscribe/route.ts`** — which today reads one form ID
+> for every `source`. Skip that and pack-seekers get the newsletter's confirmation email and never
+> receive the pack, because the confirmation email and redirect are per-form. `referrer` does not
+> help here; it segments broadcasts, not opt-in flows.
 | 3 | (Optional) Add a Kit automation that tags subscribers by their `referrer` value (`free-resources-pack`, `progress-sync`, `pro-waitlist`) | Tag-triggered automations, if needed later |
 | 4 | Copy the **v4 API key** (Settings → Advanced → API) + the **Form ID** (in the form URL); set `KIT_API_KEY` + `KIT_FORM_ID` in Vercel | `/api/subscribe` can reach Kit |
 | 5 | **Live test (gates SG1 launch):** submit a real email; confirm you get the DOI email + pack **and** that the contact lands in Kit as **unconfirmed/pending**, not `active`. If it lands `active`, the API created a single opt-in subscriber — DOI is being bypassed (see Measurement validity #6) and the on-page "check your email to confirm" copy is wrong | Verifies opt-in mode before any capture form ships |

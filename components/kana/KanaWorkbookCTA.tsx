@@ -1,64 +1,80 @@
 'use client';
 
 import Image from 'next/image';
+import { Download } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
 import { trackConversion } from '@/lib/analytics';
+import { cn } from '@/lib/utils';
+
+/**
+ * components/kana/KanaWorkbookCTA.tsx
+ *
+ * The kana twin of KanjiN5WorkbookCTA — read that file's header for why the
+ * pack is free, why "Free" appears in the button as well as the body, and why
+ * the store URL is a single const.
+ *
+ * One thing specific to this one: the old href carried a `_gl` linker parameter
+ * copied out of a browser address bar — a cross-domain Google Analytics handoff
+ * blob, minted in a session in 2026 and stale ever since. It was never doing
+ * anything except making the link unreadable in review, which is part of how
+ * the dead `llanai.gumroad.com` host underneath it went unnoticed.
+ */
+
+const PACK_URL = 'https://michikanji.gumroad.com/l/kana-workbook-beginners';
 
 interface KanaWorkbookCTAProps {
   className?: string;
 }
 
-/**
- * KanaWorkbookCTA Component
- *
- * Promotional banner for the premium kana workbook with cover image.
- * Features a two-column responsive layout with compelling copy and CTA button.
- *
- * @param props - KanaWorkbookCTAProps
- */
-export function KanaWorkbookCTA({ className = "" }: KanaWorkbookCTAProps) {
+export function KanaWorkbookCTA({ className = '' }: KanaWorkbookCTAProps) {
   return (
-    <div className={`my-8 ${className}`}>
-      <div className="bg-gradient-to-r from-[#7BB3D3]/10 to-[#E89CAE]/10 rounded-lg border-2 border-[#7BB3D3]/30 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-          {/* Content Section */}
-          <div className="p-6 md:p-8 flex flex-col justify-center order-2 lg:order-1">
-            <h3 className="font-bold text-xl md:text-2xl text-card-foreground mb-3">
-              Want a Cuter, Printable Version?
+    <div className={cn('my-8', className)}>
+      <div className="overflow-hidden rounded-lg border border-border bg-japan-soft-mist">
+        <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
+          <div className="order-2 flex flex-col justify-center p-6 md:p-8 lg:order-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
+              Free printable PDF
+            </p>
+            <h3 className="mb-3 mt-2 text-xl font-bold text-japan-deep-ocean md:text-2xl">
+              Want both kana charts in one file?
             </h3>
-            <p className="text-muted-foreground mb-5 text-sm md:text-base leading-relaxed">
-              Get beautifully designed kana workbook sheets perfect for beginners. Print-friendly layouts with enhanced visuals and guided practice.
+            <p className="mb-5 text-sm leading-relaxed text-japan-mountain-mist md:text-base">
+              Hiragana and katakana together, with stroke-order guides and blank practice grids,
+              collected into a single printable pack. Free, and yours to print as often as you
+              like.
             </p>
             <div>
               <a
-                href="https://llanai.gumroad.com/l/kana-workbook-beginners?_gl=1*16ptcwb*_ga*MjE0MTg2MTczNS4xNzQ4NzI0ODk4*_ga_6LJN6D94N6*czE3NjgwNDU2MzckbzY2JGcxJHQxNzY4MDQ1NjYzJGozNCRsMCRoMA.."
+                href={PACK_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-[#7BB3D3] text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-medium hover:bg-[#6AA2C2] transition-colors text-sm md:text-base shadow-sm"
-                onClick={async () => {
-                  await trackConversion({
+                className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
+                onClick={() => {
+                  void trackConversion({
                     name: 'kana_workbook_gumroad_clicked',
                     properties: {
                       product: 'kana_workbook_beginners',
                       source: 'kana_sheets_page',
-                      destination: 'gumroad'
-                    }
+                      destination: 'gumroad',
+                    },
                   });
                 }}
               >
-                View Premium Kana Workbook
+                <Download aria-hidden />
+                Get the free kana pack
+                <span className="sr-only"> (opens in a new tab)</span>
               </a>
             </div>
           </div>
 
-          {/* Image Section */}
-          <div className="relative h-48 md:h-64 lg:h-full min-h-[200px] order-1 lg:order-2 p-6 md:p-8 flex items-center justify-center">
+          <div className="relative order-1 flex min-h-[200px] items-center justify-center p-6 md:p-8 lg:order-2 lg:h-full">
             <Image
-              src="/assets/kana-workbook-cover.jpg"
-              alt="Kana workbook cover for beginners"
-              fill
-              className="object-contain object-center p-4"
-              sizes="(max-width: 1024px) 90vw, 50vw"
-              priority={false}
+              src="/assets/pack-cover-kana.jpg"
+              alt="Free hiragana and katakana practice sheets — printable PDF"
+              width={960}
+              height={540}
+              className="h-auto w-full rounded-md"
+              sizes="(max-width: 1024px) 90vw, 45vw"
             />
           </div>
         </div>

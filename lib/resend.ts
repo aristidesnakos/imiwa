@@ -44,16 +44,26 @@ export const sendEmail = async ({
   }
 
   try {
-    const data = {
+    // Passed inline, NOT via a `const data = {...}` binding, and that is
+    // load-bearing. TypeScript only runs its excess-property check on an object
+    // literal written at the call site; assign it to a variable first and an
+    // unrecognised key becomes a structurally-compatible extra property that
+    // compiles clean and is silently dropped at runtime.
+    //
+    // Which is exactly what happened here: this call passed `reply_to` for
+    // years. The SDK reads `payload.replyTo` and does the snake_case mapping to
+    // `reply_to` itself (resend/dist/index.mjs:132), so the key was ignored and
+    // every email went out with no Reply-To header at all — replies fell back
+    // to the From address. camelCase is the SDK's contract; snake_case is the
+    // wire's, and it applies only where we call the REST API with raw fetch.
+    const { data: result, error } = await resend.emails.send({
       from: config.resend.fromAdmin,
       to: [to],
       subject,
       text,
       html,
-      reply_to: replyTo,
-    };
-
-    const { data: result, error } = await resend.emails.send(data);
+      replyTo,
+    });
 
     if (error) {
       console.error('Error sending email:', error);
