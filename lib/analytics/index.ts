@@ -245,7 +245,15 @@ export type ProCtaLocation = 'nav' | 'review' | 'milestone' | 'pro_page';
 // Adding a surface means adding it here first — the type error is the point.
 // The PRD's next one is `kanji-detail-weekly-story`; it is absent until mounted
 // so this list never claims a surface we are not actually measuring.
-export type EmailSignupSource = 'homepage-weekly-story';
+/**
+ * Surfaces that can capture an email. Typed, not a free string: per-surface CTR
+ * is read entirely off this value, so a typo would split one surface's rate
+ * across two spellings silently.
+ *
+ * `free-resources` is the printables hub — the page that ranks for "free
+ * printable kanji worksheets" and, until now, asked its visitors for nothing.
+ */
+export type EmailSignupSource = 'homepage-weekly-story' | 'free-resources';
 
 // Track an email signup; source identifies which page/offer the signup came from
 export async function trackEmailSignup(

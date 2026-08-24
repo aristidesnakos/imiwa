@@ -446,7 +446,7 @@ export default async function KanjiDetailPage({ params }: Props) {
 
         {/* Actions on this character. Its own tier, on the page's left spine —
             not an appendix to the stroke-order column. See KanjiActionBar. */}
-        <KanjiActionBar kanji={kanjiData.kanji} />
+        <KanjiActionBar kanji={kanjiData.kanji} level={kanjiData.level} />
 
         {/* Example sentences (layer 4). Renders nothing when there are none —
             which is the normal state until a level has been through review. */}
