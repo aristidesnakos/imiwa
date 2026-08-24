@@ -57,7 +57,7 @@ export type VerifyResult =
  * The signing secret, or `null` when it is unset.
  *
  * Returned rather than thrown so the route handlers can answer 503 and say
- * "not configured" instead of 500-ing — the same shape the Kit route used.
+ * "not configured" instead of 500-ing — the same shape the route answered with before.
  */
 export function getTokenSecret(): string | null {
   const secret = process.env.EMAIL_TOKEN_SECRET;
