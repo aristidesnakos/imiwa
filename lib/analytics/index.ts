@@ -246,14 +246,24 @@ export type ProCtaLocation = 'nav' | 'review' | 'milestone' | 'pro_page';
 // The PRD's next one is `kanji-detail-weekly-story`; it is absent until mounted
 // so this list never claims a surface we are not actually measuring.
 /**
- * Surfaces that can capture an email. Typed, not a free string: per-surface CTR
- * is read entirely off this value, so a typo would split one surface's rate
- * across two spellings silently.
+ * Surfaces that can capture an email.
  *
- * `free-resources` is the printables hub — the page that ranks for "free
- * printable kanji worksheets" and, until now, asked its visitors for nothing.
+ * The list now lives in `./email-signup-sources` as a `const` array with the
+ * type derived from it, because `/api/subscribe` has to validate against it on
+ * the server and a type union cannot be checked at runtime. This module is a
+ * browser module, so a route handler must not import it — import the source
+ * module directly. Re-exported here so `@/lib/analytics` keeps resolving for
+ * the client components that already import from it.
  */
-export type EmailSignupSource = 'homepage-weekly-story' | 'free-resources';
+export {
+  EMAIL_SIGNUP_SOURCES,
+  isEmailSignupSource,
+  type EmailSignupSource,
+} from './email-signup-sources';
+
+// Also imported locally: the re-export above publishes the name, it does not
+// bind it in this module's scope, and `trackEmailSignup` below is typed on it.
+import type { EmailSignupSource } from './email-signup-sources';
 
 // Track an email signup; source identifies which page/offer the signup came from
 export async function trackEmailSignup(

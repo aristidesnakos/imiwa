@@ -12,33 +12,40 @@ type Status = 'idle' | 'sending' | 'success' | 'error';
 const GENERIC_ERROR = 'Something went wrong. Please try again.';
 
 /**
- * Every string here is a promise about what arrives in the subscriber's inbox,
- * and what actually arrives is decided by the Kit form behind `KIT_FORM_ID` —
- * not by this component. The two are wired together by nothing but matching
- * copy, so the defaults promise as little as they can get away with.
+ * Every string here is a promise about what arrives in the subscriber's inbox.
+ * That promise used to be unkeepable, and it is worth recording why it is now
+ * keepable, because the copy changed for a reason rather than a mood.
  *
- * Two specific things the defaults must NOT assert:
+ * Under Kit, what actually arrived was decided by the form behind `KIT_FORM_ID`
+ * — configured in a dashboard, wired to this component by nothing but matching
+ * copy. So the defaults hedged. Two things they could not assert:
  *
- *  - **That an incentive is coming.** The previous defaults promised a "free
- *    kanji pack" while `KIT_FORM_ID` pointed at a list with no incentive
+ *  - **That an incentive was coming.** The defaults before those promised a
+ *    "free kanji pack" while `KIT_FORM_ID` pointed at a list with no incentive
  *    attached, so the capture path promised a pack three times and nothing ever
  *    arrived.
- *  - **That a confirmation email is on its way.** For a returning address it
- *    is not: Kit answers 2xx for an already-subscribed email without re-sending
- *    anything, and the fallback in `app/api/subscribe/route.ts` can mint an
- *    already-`active` subscriber that never gets a confirmation step at all.
- *    Hence "if this is your first time" rather than a flat promise.
+ *  - **That a confirmation email was on its way.** For a returning address it
+ *    was not: Kit answered 2xx for an already-subscribed email without
+ *    re-sending anything, and a fallback in `app/api/subscribe/route.ts` could
+ *    mint an already-`active` subscriber that never saw a confirmation step at
+ *    all. Hence the old "if this is your first time" hedge.
  *
- * A surface with a real offer passes its own copy, and is responsible for that
- * copy matching what its Kit form actually sends. See
- * docs/prd/weekly-story-newsletter.md, "Open decisions".
+ * Both causes are gone. `POST /api/subscribe` now sends the confirmation email
+ * itself, unconditionally, on every accepted submission — returning address or
+ * not — and it never creates a contact, so there is no path that skips consent.
+ * The fallback that could is deleted. The confirmation promise is therefore
+ * plainly true and the copy says it plainly.
+ *
+ * A surface with a real offer still passes its own copy, and is still
+ * responsible for that copy being true. See docs/prd/story-delivery-resend.md.
  */
 interface EmailCaptureProps {
   /**
    * Identifies this surface in the `email_signup` goal. Typed, not a free
    * string: per-surface CTR is read entirely off this value, so a typo would
-   * split one surface's rate across two spellings silently. See
-   * EmailSignupSource in lib/analytics.
+   * split one surface's rate across two spellings silently. Now also validated
+   * server-side: `/api/subscribe` rejects anything outside the list. See
+   * EMAIL_SIGNUP_SOURCES in lib/analytics/email-signup-sources.
    */
   source: EmailSignupSource;
   title?: string;
@@ -46,7 +53,11 @@ interface EmailCaptureProps {
   cta?: string;
   /** Heading of the post-submit state. */
   successTitle?: string;
-  /** Body of the post-submit state. Must hold for a returning address too. */
+  /**
+   * Body of the post-submit state. Must hold for a returning address too —
+   * which it now does, because the confirmation email is sent on every accepted
+   * submission rather than only for addresses the ESP considers new.
+   */
   successMessage?: string;
   /** Small print under the form. */
   footnote?: string;
@@ -59,8 +70,8 @@ export function EmailCapture({
   description = 'Drop your email and we’ll send new study material as it’s published.',
   cta = 'Sign me up',
   successTitle = 'Thanks!',
-  successMessage = 'We’ve got your address. If this is your first time signing up, check your inbox for a confirmation link.',
-  footnote = 'A new address gets one confirmation email to check it’s you. We’ll only send study material — unsubscribe anytime.',
+  successMessage = 'Check your inbox — there’s a confirmation link waiting. One tap and you’re on the list.',
+  footnote = 'We’ll send one confirmation email to check it’s you. Nothing else arrives until you tap it, and you can unsubscribe anytime.',
   className,
 }: EmailCaptureProps) {
   const [email, setEmail] = useState('');

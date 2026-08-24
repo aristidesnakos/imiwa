@@ -73,10 +73,6 @@
   "app/privacy-policy/page.tsx": {
     "stock": 3
   },
-  "app/subscribed/page.tsx": {
-    "stock": 9,
-    "blackWhite": 2
-  },
   "app/tos/page.tsx": {
     "stock": 4
   },
