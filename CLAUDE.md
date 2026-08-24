@@ -39,6 +39,7 @@ pnpm validate:romaji         # kana->Hepburn rules + a leakage sweep over every 
 pnpm validate:sentences      # published example sentences against lib/sentences/types.ts
 pnpm validate:announcements  # announcement config + a replay of the acknowledgement model
 pnpm announcements:status    # human-readable state of the announcement queue
+pnpm validate:palette        # brand-palette alignment in app/ and components/
 ```
 
 `validate:announcements` does more than check a config shape — it replays the acknowledgement model
@@ -168,6 +169,31 @@ of every admin route handler (`blockedResponse()`) and every admin page/layout
 - An **undefined** token does the same: `border-input` fell back to `currentcolor` for months.
 
 So verify colour work against computed values in a browser, not by reading the class list.
+
+**Hard rule: components use the brand palette, and `pnpm validate:palette` enforces it.** Stock
+Tailwind colours (`text-gray-500`), pure `black`/`white`, and hard-coded literals (`bg-[#7BB3D3]`)
+are failures — use a `japan-*` token or a semantic one (`primary`, `muted`, `card`, `destructive`).
+`palette-check.yml` gates every PR touching `app/`, `components/`, `globals.css` or the Tailwind
+config.
+
+There is a third silent-drop mechanism alongside the two above, and it is the most common:
+**an opacity modifier on a `japan-*` token compiles to nothing.** `bg-japan-soft-mist/60` and
+`border-japan-sakura-waters/20` emit no CSS at all, because Tailwind cannot fold alpha into a colour
+whose value is a bare `var(--x)` holding a hex. 69 of these are live in the tree. Write a tint as
+`color-mix` on the token instead, and give a *border* the `color:` type hint or tailwind-merge reads
+the arbitrary value as a border-width and strips the element's own `border` class:
+
+```
+to-[color-mix(in_srgb,var(--sakura-waters)_25%,var(--temple-stone))]          background
+border-[color:color-mix(in_srgb,var(--sakura-waters)_55%,var(--temple-stone))] border
+```
+
+625 pre-existing violations across 52 files are frozen per-file in `scripts/palette-baseline.json`,
+so the gate is green today and any *increase* fails. The counts only ever fall:
+`pnpm validate:palette --tighten` re-records them downward and refuses to raise one. Fixing a batch
+of them is a welcome standalone change — note that converting the tokens to channel triplets with
+`<alpha-value>` would make all 69 dead-alpha usages start rendering at once, which is a visible
+site-wide shift and wants its own review.
 
 Several brand colours are too light to carry text, so the palette uses **fill/ink pairs**: use
 `--coral-sunset` / `--destructive` as backgrounds and washes, and `--coral-sunset-ink` /

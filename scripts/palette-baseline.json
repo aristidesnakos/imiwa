@@ -1,0 +1,189 @@
+{
+  "app/admin/layout.tsx": {
+    "stock": 5
+  },
+  "app/admin/review/page.tsx": {
+    "stock": 3
+  },
+  "app/advertise/page.tsx": {
+    "deadAlpha": 14
+  },
+  "app/free-resources/kana-sheets/page.tsx": {
+    "literal": 2
+  },
+  "app/free-resources/kanji-sheets/n1-sheets/page.tsx": {
+    "stock": 22,
+    "blackWhite": 1
+  },
+  "app/free-resources/kanji-sheets/n2-sheets/page.tsx": {
+    "stock": 22,
+    "blackWhite": 1
+  },
+  "app/free-resources/kanji-sheets/n3-sheets/page.tsx": {
+    "stock": 22,
+    "blackWhite": 1
+  },
+  "app/free-resources/kanji-sheets/n4-sheets/page.tsx": {
+    "stock": 22,
+    "blackWhite": 1
+  },
+  "app/free-resources/kanji-sheets/n5-sheets/page.tsx": {
+    "stock": 22,
+    "blackWhite": 1
+  },
+  "app/free-resources/kanji-sheets/page.tsx": {
+    "stock": 32,
+    "blackWhite": 2
+  },
+  "app/free-resources/page.tsx": {
+    "stock": 42,
+    "blackWhite": 4
+  },
+  "app/kanji/KanjiSearchClient.tsx": {
+    "stock": 46,
+    "blackWhite": 3
+  },
+  "app/kanji/[character]/not-found.tsx": {
+    "stock": 2
+  },
+  "app/kanji/[character]/page.tsx": {
+    "stock": 21
+  },
+  "app/kanji/page.tsx": {
+    "stock": 7
+  },
+  "app/kanji/progress/LearnedKanjiClient.tsx": {
+    "stock": 33,
+    "blackWhite": 1
+  },
+  "app/kanji/review/ReviewClient.tsx": {
+    "stock": 45
+  },
+  "app/not-found.tsx": {
+    "deadAlpha": 1,
+    "stock": 1
+  },
+  "app/opengraph-image.tsx": {
+    "literal": 1
+  },
+  "app/page.tsx": {
+    "deadAlpha": 10,
+    "blackWhite": 4
+  },
+  "app/privacy-policy/page.tsx": {
+    "stock": 3
+  },
+  "app/subscribed/page.tsx": {
+    "stock": 9,
+    "blackWhite": 2
+  },
+  "app/tos/page.tsx": {
+    "stock": 4
+  },
+  "components/AnnouncementBanner.tsx": {
+    "deadAlpha": 1,
+    "blackWhite": 1
+  },
+  "components/CTASection.tsx": {
+    "stock": 8,
+    "blackWhite": 2
+  },
+  "components/CaptchaVerification.tsx": {
+    "stock": 4,
+    "blackWhite": 1
+  },
+  "components/CookieConsent.tsx": {
+    "stock": 4
+  },
+  "components/EmailCapture.tsx": {
+    "deadAlpha": 2,
+    "stock": 1,
+    "blackWhite": 2
+  },
+  "components/FeedbackWidget.tsx": {
+    "deadAlpha": 16,
+    "stock": 7,
+    "blackWhite": 3
+  },
+  "components/StrokeOrderViewer.tsx": {
+    "stock": 7,
+    "blackWhite": 1
+  },
+  "components/admin/sentences/sentence-reviewer.tsx": {
+    "stock": 19
+  },
+  "components/kana/KanaWorkbookCTA.tsx": {
+    "blackWhite": 1,
+    "literal": 5
+  },
+  "components/kana/SheetCard.tsx": {
+    "deadAlpha": 4,
+    "blackWhite": 1,
+    "literal": 1
+  },
+  "components/kanji/ExampleSentencesSection.tsx": {
+    "stock": 6,
+    "blackWhite": 1
+  },
+  "components/kanji/KanjiActionBar.tsx": {
+    "stock": 4,
+    "blackWhite": 1
+  },
+  "components/kanji/KanjiN5WorkbookCTA.tsx": {
+    "blackWhite": 1,
+    "literal": 5
+  },
+  "components/kanji/PopularKanjiLinks.tsx": {
+    "stock": 6,
+    "blackWhite": 1
+  },
+  "components/kanji/RelatedKanjiSection.tsx": {
+    "stock": 3
+  },
+  "components/kanji/section.ts": {
+    "stock": 1
+  },
+  "components/nav/StudyNavLinks.tsx": {
+    "stock": 2
+  },
+  "components/progress/ProgressChart.tsx": {
+    "stock": 8,
+    "blackWhite": 1,
+    "literal": 6
+  },
+  "components/sections/Footer.tsx": {
+    "deadAlpha": 3
+  },
+  "components/sections/Header.tsx": {
+    "deadAlpha": 2
+  },
+  "components/sections/Hero.tsx": {
+    "stock": 19,
+    "blackWhite": 10
+  },
+  "components/sections/Problem.tsx": {
+    "stock": 3
+  },
+  "components/sections/advertise/AdvertiseContactForm.tsx": {
+    "deadAlpha": 16,
+    "stock": 2
+  },
+  "components/sentences/furigana.tsx": {
+    "stock": 9
+  },
+  "components/ui/alert-dialog.tsx": {
+    "blackWhite": 1
+  },
+  "components/ui/chart.tsx": {
+    "literal": 5
+  },
+  "components/ui/dialog.tsx": {
+    "blackWhite": 1
+  },
+  "components/ui/sheet.tsx": {
+    "blackWhite": 1
+  },
+  "components/ui/toast.tsx": {
+    "stock": 4
+  }
+}
