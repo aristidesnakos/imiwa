@@ -41,6 +41,16 @@
       "impressions": 78026,
       "clicks": 1864,
       "sitemapUrlsSubmitted": 1913
+    },
+    {
+      "takenOn": "2026-08-24",
+      "windowStart": "2026-07-25",
+      "windowEnd": "2026-08-21",
+      "property": "sc-domain:michikanji.com",
+      "pagesWithImpressions": 850,
+      "impressions": 90758,
+      "clicks": 1990,
+      "sitemapUrlsSubmitted": 1913
     }
   ]
 }
