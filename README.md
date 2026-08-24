@@ -33,7 +33,7 @@ account, because everything is stored in the browser.
 - **Styling**: Tailwind CSS with Radix UI primitives (shadcn/ui)
 - **Data storage**: browser `localStorage` only — no database, no auth
 - **Stroke diagrams**: KanjiVG SVGs, served through an internal API route
-- **Email**: Resend (contact) and Kit (list)
+- **Email**: Resend — transactional and the weekly-story list, both on our own domain
 - **Analytics**: DataFast, with consent-gated Ahrefs
 - **Deployment**: Vercel
 
