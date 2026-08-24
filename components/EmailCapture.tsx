@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } 
 import { CheckCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { trackEmailSignup } from '@/lib/analytics';
+import { trackEmailSignup, type EmailSignupSource } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
@@ -34,7 +34,13 @@ const GENERIC_ERROR = 'Something went wrong. Please try again.';
  * docs/prd/weekly-story-newsletter.md, "Open decisions".
  */
 interface EmailCaptureProps {
-  source: string;
+  /**
+   * Identifies this surface in the `email_signup` goal. Typed, not a free
+   * string: per-surface CTR is read entirely off this value, so a typo would
+   * split one surface's rate across two spellings silently. See
+   * EmailSignupSource in lib/analytics.
+   */
+  source: EmailSignupSource;
   title?: string;
   description?: string;
   cta?: string;
