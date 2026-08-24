@@ -112,10 +112,6 @@
   "components/admin/sentences/sentence-reviewer.tsx": {
     "stock": 19
   },
-  "components/kana/KanaWorkbookCTA.tsx": {
-    "blackWhite": 1,
-    "literal": 5
-  },
   "components/kana/SheetCard.tsx": {
     "deadAlpha": 4,
     "blackWhite": 1,
@@ -128,10 +124,6 @@
   "components/kanji/KanjiActionBar.tsx": {
     "stock": 4,
     "blackWhite": 1
-  },
-  "components/kanji/KanjiN5WorkbookCTA.tsx": {
-    "blackWhite": 1,
-    "literal": 5
   },
   "components/kanji/PopularKanjiLinks.tsx": {
     "stock": 6,
