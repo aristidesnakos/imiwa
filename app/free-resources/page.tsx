@@ -2,8 +2,12 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Package } from 'lucide-react';
 import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
+import { buttonVariants } from '@/components/ui/button';
+import EmailCapture from '@/components/EmailCapture';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = getSEOTags({
   title: 'Free Japanese Learning Resources | Printable Worksheets & Study Materials',
@@ -150,10 +154,116 @@ export default function FreeResourcesPage() {
 
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────────
+            THE PACKS BAND
+
+            The two cards above are generators: pick a character, get a sheet.
+            That covers the reader who wants one thing and leaves the reader who
+            wants the set with nothing to do — which described this page
+            entirely until now. It ranked for "free printable kanji worksheets",
+            sent people to a tool, and asked for nothing in return; the store it
+            could have handed them to took ONE referral from this whole domain
+            in thirty days.
+
+            So: same material, other shape. A generator is a visit, a pack is a
+            download, and a download is an email address.
+
+            Deliberately below the generators rather than above them. The
+            free tool is the reason the page ranks and the reason a stranger
+            trusts it; leading with an offsite link would spend that trust
+            before earning it.
+            ───────────────────────────────────────────────────────────────── */}
+        <section className="mt-8 overflow-hidden rounded-lg border border-border bg-japan-soft-mist">
+          <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
+            <div className="order-2 flex flex-col justify-center p-6 md:p-8 lg:order-1">
+              <div className="mb-3 flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-japan-temple-stone text-japan-deep-ocean"
+                >
+                  <Package className="h-5 w-5" />
+                </span>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
+                  Free printable PDFs
+                </p>
+              </div>
+
+              <h2 className="mb-3 text-xl font-semibold text-japan-deep-ocean md:text-2xl">
+                Prefer the whole set in one file?
+              </h2>
+
+              <p className="mb-5 text-sm leading-relaxed text-japan-mountain-mist md:text-base">
+                Hiragana, katakana and all 81 JLPT N5 kanji, collected into printable packs with
+                stroke order and practice grids on every page. Free — print as many copies as
+                your desk, your class or your study group needs.
+              </p>
+
+              <div>
+                <a
+                  href="https://michikanji.gumroad.com/l/n5-kanji-kana-sheets"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
+                >
+                  <Download aria-hidden />
+                  Get the free starter pack
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="order-1 flex items-center justify-center p-6 md:p-8 lg:order-2">
+              <Image
+                src="/assets/pack-cover-pack.jpg"
+                alt="Free Japanese writing starter pack — hiragana, katakana and all 81 N5 kanji"
+                width={960}
+                height={540}
+                className="h-auto w-full rounded-md"
+                sizes="(max-width: 1024px) 90vw, 45vw"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Internal links to high-priority kanji pages (S3) */}
         <PopularKanjiLinks
           description="Beyond the printables, study any of these frequently searched kanji with an interactive stroke-order animation:"
         />
+
+        {/* The page's only ask. It sits after the material rather than in
+            front of it: everything above is usable without an address, which is
+            what makes the address worth asking for.
+
+            `title={undefined}` because EmailCapture leads with an <h3> and this
+            page's sections lead with an <h2> — letting the card render its own
+            title here would skip a heading level. Same reasoning as the
+            homepage band; see app/page.tsx. */}
+        <section className="mt-12" aria-labelledby="weekly-story-heading">
+          <div className="mx-auto mb-6 max-w-2xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
+              Free weekly newsletter
+            </p>
+            <h2
+              id="weekly-story-heading"
+              className="mt-3 text-2xl font-semibold text-japan-deep-ocean"
+            >
+              A weekly story you can actually read
+            </h2>
+            <p className="mt-3 text-japan-mountain-mist">
+              One short story a week, written with beginner (N5) kanji and grammar only — the same
+              characters these sheets drill.
+            </p>
+          </div>
+
+          <div className="mx-auto max-w-xl">
+            <EmailCapture
+              source="free-resources"
+              title={undefined}
+              description={undefined}
+              cta="Send me the stories"
+            />
+          </div>
+        </section>
 
         <section className="mt-12 bg-blue-50 p-6 rounded-lg border border-blue-200">
           <h3 className="text-lg font-semibold text-blue-900 mb-3">
