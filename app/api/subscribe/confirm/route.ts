@@ -106,9 +106,35 @@ export async function POST(request: NextRequest) {
   // no-op. That is the accepted trade for not storing a used-token list.
   if (!res.ok) {
     const detail = await res.text();
+
+    // ...but "treats as a no-op" is their behaviour, not our contract, and the
+    // failure mode if it changes is nasty: someone who IS subscribed clicks a
+    // link twice and is told "Failed to confirm", so they submit the form again
+    // and get another confirmation email. Absorb exactly that case.
+    if (isAlreadySubscribed(res.status, detail)) {
+      console.info('[api/subscribe/confirm] Contact already on the list; treating replay as confirmed.');
+      return NextResponse.redirect(new URL('/subscribed', request.url), { status: 303 });
+    }
+
     console.error('[api/subscribe/confirm] Resend contact create failed:', res.status, detail);
     return NextResponse.json({ error: 'Failed to confirm subscription.' }, { status: 502 });
   }
 
   return NextResponse.redirect(new URL('/subscribed', request.url), { status: 303 });
+}
+
+/**
+ * Is this non-2xx actually "the address is already on the list"?
+ *
+ * Deliberately narrow. A false positive here is worse than the bug it guards
+ * against: it would redirect someone to /subscribed without a contact having
+ * been created, and the contact record is the ONLY consent artefact this design
+ * keeps (see docs/prd/story-delivery-resend.md §9.5). So this matches a plain
+ * conflict, or an unprocessable-entity whose body says so in words, and lets
+ * everything else fail loudly.
+ */
+function isAlreadySubscribed(status: number, detail: string): boolean {
+  if (status === 409) return true;
+  if (status !== 422) return false;
+  return /already\s+(exists|registered|subscribed|in)/i.test(detail);
 }

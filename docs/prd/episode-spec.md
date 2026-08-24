@@ -1,12 +1,13 @@
 # Weekly Story — Episode Spec & Calendar
 
-**Version 1.0** · Created 2026-08-23 · Owner: Ari Nakos
+**Version 1.1** · Created 2026-08-23 · Revised 2026-08-24 (Kit → Resend; compliance items added to §A7) · Owner: Ari Nakos
 **Related:** [`weekly-story-newsletter.md`](./weekly-story-newsletter.md) (the pilot this feeds)
 
 Two jobs. **Part A** is the format — locked, so "write episode 1" has a spec instead of a vibe.
 **Part B** is the calendar — filled, so send day is never a scramble.
 
-The binding constraint on every decision below: **the episode is a static email composed in Kit.**
+The binding constraint on every decision below: **the episode is a static email composed in Resend's
+broadcast editor.**
 No toggle, no collapsible, no script. Everything here is chosen to survive Outlook for Windows,
 which is the client that breaks things.
 
@@ -16,27 +17,27 @@ which is the client that breaks things.
 
 ### A0. The one rule that governs the rest
 
-**Compose inside Kit's editor. Never paste formatted text into it.**
+**Compose inside Resend's broadcast editor. Never paste formatted text into it.**
 
 Pasting from Google Docs, Word, or Notion injects hundreds of `<span style="…">` wrappers around
 Japanese text. Three consequences, all bad: Gmail clips any message whose HTML exceeds ~102 KB and
 hides the rest behind a "View entire message" link — and span soup gets there faster than you'd
 think; Outlook's renderer chokes on nested inline styles around CJK and drops your line spacing;
-and Kit's plain-text auto-generation produces garbage.
+and the auto-generated plain-text part comes out as garbage.
 
-Paste as plain text (`⌘⇧V`), then apply formatting with Kit's own buttons. Kit's output is already
-tested across clients. Yours isn't.
+Paste as plain text (`⌘⇧V`), then apply formatting with the editor's own buttons. Its output is
+already tested across clients. Yours isn't.
 
 ### A1. Banned constructs
 
 | Don't | Why | Do instead |
 |---|---|---|
-| `<ruby>` furigana | Outlook for Windows renders email through the **Word** engine, which has no ruby support — readings drop inline and corrupt the sentence into unreadable mush. Not available in Kit's composer anyway. | Parenthetical reading after first occurrence: 山（やま） |
+| `<ruby>` furigana | Outlook for Windows renders email through the **Word** engine, which has no ruby support — readings drop inline and corrupt the sentence into unreadable mush. Not available in the composer anyway. | Parenthetical reading after first occurrence: 山（やま） |
 | Story text as an image | Outlook blocks images by default, so the episode arrives blank. Also kills the plain-text part, accessibility, and any text selection. | Real text, always |
 | Collapsibles / `<details>` / "click to reveal" | No JS in email. `<details>` is unsupported in Outlook and inconsistent elsewhere. | Answers physically last, under a rule |
 | White-on-white or `display:none` hidden answers | Dark mode reveals them, and hidden text is a **spam-filter signal** — a real deliverability risk on a young list | Same as above |
 | Background-colour boxes carrying meaning | Gmail app and Outlook.com force-invert in dark mode; a pale-yellow "answers" panel can invert to near-black on black | Horizontal rules + bold labels |
-| A decorative or serif Latin font | Word substitutes per-glyph for CJK; you get mismatched baselines and cramped kana | Kit's default sans-serif, untouched |
+| A decorative or serif Latin font | Word substitutes per-glyph for CJK; you get mismatched baselines and cramped kana | The editor's default sans-serif, untouched |
 | Raw CJK in URLs | See A5 — this is the likeliest failure in your specific design | Pre-encoded URLs, listed in Part B |
 | Emoji as structural markers | Outlook renders many monochrome; some Android clients drop them | Text labels and rules |
 
@@ -48,7 +49,7 @@ The translation is itself part of the answer key, so it belongs low. One-line ch
 
 ```
 1  Subject line                    ≤ 30 chars — mobile truncates
-2  Preview text                    Kit field. Set it. Never let it default.
+2  Preview text                    A field on the broadcast. Set it. Never let it default.
 3  Title                           Japanese title + English gloss
 4  The story                       Japanese, one sentence per line
    ───────────────────────────
@@ -78,7 +79,7 @@ unenforceable.
 
 One sentence per line is not a stylistic flourish. It does three things at once: it gives the reader
 short lines without any CSS (Outlook ignores `line-height` on `<p>` unless you write
-`mso-line-height-rule: exactly`, which Kit won't let you); it makes the English translation align
+`mso-line-height-rule: exactly`, which a hosted composer won't let you); it makes the English translation align
 line-for-line so readers can self-check; and it prevents CJK — which legally breaks at *any*
 character — from producing ragged mid-word wraps on narrow phones.
 
@@ -128,8 +129,10 @@ count into spam-filter territory on a young sending reputation.
 
 **Always paste the percent-encoded URL.** `https://michikanji.com/kanji/山` is not a valid URL — the
 CJK character has to be percent-encoded to `%E5%B1%B1` somewhere in the chain, and *which* link in the
-chain does it is inconsistent. Kit rewrites links for click tracking, then the client may re-encode,
-then the receiving MTA may re-encode again. Double-encoding produces `%25E5%25B1%25B1` and a 404;
+chain does it is inconsistent. A click-tracking rewriter re-encodes the link, then the client may
+re-encode, then the receiving MTA may re-encode again. **This is why Resend click tracking stays off
+for `stories.michikanji.com`** (§A8) — but leave the URLs encoded regardless, because the rewriter is
+only the first of the three. Double-encoding produces `%25E5%25B1%25B1` and a 404;
 some clients simply refuse to linkify a non-ASCII path at all.
 
 Encode it yourself so exactly one representation exists end to end. Every URL you need is
@@ -164,29 +167,55 @@ Words to keep:
 Run this before scheduling. It takes four minutes and catches everything that has ever gone wrong
 with Japanese email.
 
+**Machine-checkable — these belong in `validate:stories` once Phase 3 exists:**
+
 1. Every kanji in the body appears in `lib/constants/n5-kanji.ts`.
 2. Every grammar pattern is on the A4 whitelist.
 3. Every link href is percent-encoded; zero links in the story body.
-4. Click each link in the Kit preview — confirm it lands on the kanji page, not a 404.
-5. Preview text field is set and is not the first line of the greeting.
-6. Send a test to **Gmail (web), Gmail (mobile app), and Outlook.com** at minimum. Outlook.com is
+4. Read block 8 against block 4 — the line count must match exactly.
+5. `pnpm validate:subscribe` passes. It refuses while `config.business.postalAddress` is empty,
+   which is the CAN-SPAM blocker, and it asserts the unsubscribe variable is the unescaped
+   triple-brace form.
+6. Paste the composed body into `auditBroadcastBody()` (`lib/email/broadcast-footer.ts`) and get an
+   empty array back.
+
+**Only a human can do these. Nobody else may report them as passed:**
+
+7. Click each link in the Resend preview — confirm it lands on the kanji page, not a 404.
+8. Preview text field is set and is not the first line of the greeting.
+9. Send a test to **Gmail (web), Gmail (mobile app), and Outlook.com** at minimum. Outlook.com is
    where CJK and dark mode both fail. If you have access to Outlook desktop on Windows, add it.
-7. In the Gmail test, check no "View entire message" clip link appeared at the bottom.
-8. Toggle your phone to dark mode and re-read the test. Confirm nothing vanished.
-9. Confirm the reply-to lands in an inbox you actually read.
-10. Read block 8 against block 4 — the line count must match exactly.
+10. In the Gmail test, check no "View entire message" clip link appeared at the bottom.
+11. Toggle your phone to dark mode and re-read the test. Confirm nothing vanished.
+12. Confirm the reply-to lands in an inbox you actually read. (`sendEmail` silently dropped every
+    Reply-To header until 2524da3 — it passed `reply_to` where the SDK reads `replyTo`. Check the
+    header on a real received message, not the code.)
+13. **Click the unsubscribe link in the test send and confirm it works.** `{{{RESEND_UNSUBSCRIBE_URL}}}`
+    does nothing at all if the variable is absent from the body, and nothing warns you — not the
+    SDK, not the types, not the dashboard. Item 6 catches an absent variable; only this catches a
+    present-but-broken one.
 
-### A8. Kit settings that matter
+### A8. Resend settings that matter
 
-- **From name:** `Ari at MichiKanji` (settled — see the PRD's open decision 2).
+Kit is gone — see `docs/prd/story-delivery-resend.md` for why. These are the equivalents.
+
+- **From name:** `Ari at MichiKanji`, from `stories.michikanji.com`. The subdomain is deliberate:
+  reputation isolation from the apex, which carries transactional mail.
 - **Reply-to: a real inbox you read.** Not `noreply@`. The decision gate reads replies; a broken
   reply path silently zeroes the only signal the pilot can produce at this list size.
-- **Audience:** filter on `referrer = homepage-weekly-story`. Referrer, not tags — the code applies
-  no tags.
-- **Authenticate the sending domain** (SPF, DKIM, DMARC) in Kit before episode 1. You're far below
-  the 5,000/day threshold that makes it mandatory at Gmail and Yahoo, but alignment still moves
-  inbox placement, and a list this small can't absorb a spam-folder start.
-- **Template:** the plainest one Kit offers. Heavy templates wrap content in nested tables that
+- **Audience:** one audience, one offer. Resend contacts carry no custom properties, so there is no
+  per-source segment to filter on and none is needed — DataFast holds the attribution.
+- **Click tracking OFF, open tracking on.** Resend's link rewriter re-encodes percent-encoded CJK
+  URLs (`/kanji/%E5%B1%B1` → `%25E5%25B1%25B1` → 404), which is the exact trap §A5 documents. Open
+  tracking is the read signal; the click signal comes from DataFast on our own pages.
+- **Authenticate the sending domain** (SPF, DKIM) in Resend before episode 1, and give
+  `_dmarc.michikanji.com` a `rua=` so the reports go somewhere. You're far below the 5,000/day
+  threshold that makes alignment mandatory at Gmail and Yahoo, but it still moves inbox placement,
+  and a list this small can't absorb a spam-folder start.
+- **Footer:** paste `broadcastFooterHtml()` from `lib/email/broadcast-footer.ts` rather than
+  retyping it. It renders the postal address and the unsubscribe variable from `config.business`,
+  and it throws rather than rendering a footer with either missing.
+- **Template:** the plainest one available. Heavy templates wrap content in nested tables that
   interact badly with CJK line breaking, and buy nothing here.
 
 ---

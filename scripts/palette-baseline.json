@@ -70,9 +70,6 @@
     "deadAlpha": 10,
     "blackWhite": 4
   },
-  "app/privacy-policy/page.tsx": {
-    "stock": 3
-  },
   "app/tos/page.tsx": {
     "stock": 4
   },

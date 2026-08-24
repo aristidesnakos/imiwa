@@ -23,7 +23,11 @@
  *     not pinned on verify;
  *   - an expired token still verifies its signature (so the re-subscribe form
  *     stays attributed) but is refused as consent;
- *   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send.
+ *   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
+ *   - a broadcast cannot be composed without a working unsubscribe link and a
+ *     postal address. Consent you can't withdraw isn't consent, and both of
+ *     those obligations fail silently at send time — see
+ *     lib/email/broadcast-footer.ts.
  *
  * The migration this guards replaced a Kit proxy that had a fallback minting
  * `state: active` subscribers with no confirmation step at all. That bug is
@@ -39,6 +43,11 @@ import {
   EMAIL_SIGNUP_SOURCES,
   isEmailSignupSource,
 } from '../lib/analytics/email-signup-sources';
+import {
+  RESEND_UNSUBSCRIBE_VARIABLE,
+  auditBroadcastBody,
+  missingBroadcastRequirements,
+} from '../lib/email/broadcast-footer';
 
 const SECRET = 'test-secret-not-used-anywhere-real';
 const OTHER_SECRET = 'a-different-secret-entirely';
@@ -169,6 +178,41 @@ check('an empty string does not validate', !isEmailSignupSource(''));
 check('a non-string does not validate', !isEmailSignupSource(42));
 check('null does not validate', !isEmailSignupSource(null));
 
+// --- Broadcast compliance -------------------------------------------------
+//
+// These are not about tokens; they are the other half of the same promise. The
+// confirmation flow above proves consent was given. This proves it can be
+// withdrawn, and that the email says who sent it and from where.
+
+check(
+  'an empty body is flagged for the missing unsubscribe variable',
+  auditBroadcastBody('').some((p) => p.includes('RESEND_UNSUBSCRIBE_URL'))
+);
+check(
+  'a body carrying the variable is not flagged for it',
+  !auditBroadcastBody(`Hello ${RESEND_UNSUBSCRIBE_VARIABLE}`).some((p) =>
+    p.includes('the unsubscribe link will not exist')
+  )
+);
+check(
+  'the variable is the unescaped triple-brace form',
+  RESEND_UNSUBSCRIBE_VARIABLE === '{{{RESEND_UNSUBSCRIBE_URL}}}'
+);
+check(
+  'a double-brace near-miss does not satisfy the check',
+  auditBroadcastBody('{{RESEND_UNSUBSCRIBE_URL}}').some((p) =>
+    p.includes('the unsubscribe link will not exist')
+  )
+);
+
+// Deliberately a hard failure rather than a warning. This validator is not in
+// CI (no workflow references it), so red here blocks nobody's pull request —
+// it blocks the one person about to schedule a broadcast, which is the only
+// moment the address actually matters.
+for (const problem of missingBroadcastRequirements()) {
+  check(`broadcast prerequisite: ${problem}`, false);
+}
+
 // --- Report ---------------------------------------------------------------
 
 const total = passed + failures.length;
@@ -186,6 +230,7 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · forged, wrong-secret, malformed and alg:none tokens are all refused
   · an expired token keeps a trustworthy source but is never treated as consent
   · a source outside EMAIL_SIGNUP_SOURCES cannot reach an email we send
+  · a broadcast cannot be composed without an unsubscribe link or a postal address
 
 PASS — ${passed}/${total} checks passed
 `);

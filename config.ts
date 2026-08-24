@@ -13,6 +13,26 @@ const config = {
   stripe: {
     plans: [],
   },
+  business: {
+    // These three are the single source of truth for anything a regulator
+    // reads. The privacy policy, the ToS and the broadcast footer all render
+    // them from here rather than restating them, because three copies of a
+    // postal address is three chances for one of them to go stale.
+    legalName: "The Auspicious Company",
+    // HARD BLOCKER before the first broadcast. CAN-SPAM (16 CFR 316.5) requires
+    // a valid physical postal address in every commercial email, and a
+    // residential one in a public footer is not the trade we want — so this
+    // waits on a virtual-mailbox/registered-agent address rather than shipping
+    // a home address. `assertBroadcastFooter()` in lib/email/broadcast-footer.ts
+    // refuses to build a footer while this is empty, and `pnpm validate:subscribe`
+    // reports it, so the gap cannot reach a send quietly.
+    postalAddress: "",
+    // Deliberately the llanai.com inbox: it is a live Google Workspace mailbox
+    // that is actually read. An unread on-brand address would be worse than an
+    // off-brand read one, because this is the address someone exercises a
+    // right through.
+    privacyEmail: "ari@llanai.com",
+  },
   resend: {
     // Sender identities vs inbound destinations — two different kinds of value,
     // and only the first kind moved. See docs/prd/story-delivery-resend.md §3.
