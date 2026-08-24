@@ -232,8 +232,26 @@ export async function trackGoal(name: string, properties?: Record<string, any>):
 // that comparison can't be run at all.
 export type ProCtaLocation = 'nav' | 'review' | 'milestone' | 'pro_page';
 
+// Which surface an email signup came from.
+//
+// The newsletter deliberately runs ONE goal name and separates surfaces by
+// `source` (docs/prd/weekly-story-newsletter.md: "use `email_signup` for funnel
+// and per-surface CTR — that is what the distinct `source` values are for").
+// That makes `source` the entire per-surface measurement, so it is a union and
+// not a string: a misspelt literal invents a surface that converts once and
+// never again, splitting one CTR across two spellings with no error raised
+// anywhere. Same reasoning as ProCtaLocation below.
+//
+// Adding a surface means adding it here first — the type error is the point.
+// The PRD's next one is `kanji-detail-weekly-story`; it is absent until mounted
+// so this list never claims a surface we are not actually measuring.
+export type EmailSignupSource = 'homepage-weekly-story';
+
 // Track an email signup; source identifies which page/offer the signup came from
-export async function trackEmailSignup(source: string, properties?: Record<string, any>): Promise<void> {
+export async function trackEmailSignup(
+  source: EmailSignupSource,
+  properties?: Record<string, any>
+): Promise<void> {
   await trackGoal('email_signup', { source, ...properties });
 }
 
