@@ -64,7 +64,7 @@ export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) 
               Free printable PDF
             </p>
             <h3 className="mb-3 mt-2 text-xl font-bold text-japan-deep-ocean md:text-2xl">
-              Want all 81 N5 kanji in one file?
+              Want the whole N5 set in one file?
             </h3>
             <p className="mb-5 text-sm leading-relaxed text-japan-mountain-mist md:text-base">
               The same sheets you can generate here, collected into a single printable pack —

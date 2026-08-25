@@ -75,9 +75,19 @@ interface Props {
    * "THE PACK LINE" note above.
    */
   level: string;
+  /**
+   * How many characters are in the N5 set, passed in rather than written down.
+   *
+   * It was written down, as "81", in four places across the site and three
+   * Gumroad listings. 暑 was added to N5_KANJI on 31 Jul 2026 and every one of
+   * those numbers quietly became wrong — including the PDF they pointed at,
+   * which really did have 81 sheets. The page already imports the arrays, so
+   * deriving it here costs nothing and cannot go stale.
+   */
+  n5Count: number;
 }
 
-export function KanjiActionBar({ kanji, level }: Props) {
+export function KanjiActionBar({ kanji, level, n5Count }: Props) {
   return (
     <section className="mt-12" aria-labelledby="practice-heading">
       <div className="rounded-xl border border-gray-200 bg-white px-5 py-10 text-center sm:px-6">
@@ -126,7 +136,7 @@ export function KanjiActionBar({ kanji, level }: Props) {
         {/* One sheet is the thing this page can hand you. The whole set is the
             thing worth an email address, and this is the moment of highest
             intent for it — a reader who is about to print one character is the
-            reader who wants the other eighty.
+            reader who wants the other eighty-one.
 
             N5 only, and not by accident: the pack contains the N5 set, so
             offering it under 個 or 憂 would be a promise the file does not keep.
@@ -148,7 +158,7 @@ export function KanjiActionBar({ kanji, level }: Props) {
               rel="noopener noreferrer"
               className="rounded-sm font-medium text-japan-mountain-mist underline underline-offset-4 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              Or get all 81 N5 sheets as one free PDF
+              Or get all {n5Count} N5 sheets as one free PDF
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>

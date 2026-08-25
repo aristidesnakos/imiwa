@@ -193,7 +193,7 @@ export default function FreeResourcesPage() {
               </h2>
 
               <p className="mb-5 text-sm leading-relaxed text-japan-mountain-mist md:text-base">
-                Hiragana, katakana and all 81 JLPT N5 kanji, collected into printable packs with
+                Hiragana, katakana and every JLPT N5 kanji, collected into printable packs with
                 stroke order and practice grids on every page. Free — print as many copies as
                 your desk, your class or your study group needs.
               </p>
@@ -215,7 +215,7 @@ export default function FreeResourcesPage() {
             <div className="order-1 flex items-center justify-center p-6 md:p-8 lg:order-2">
               <Image
                 src="/assets/pack-cover-pack.jpg"
-                alt="Free Japanese writing starter pack — hiragana, katakana and all 81 N5 kanji"
+                alt="Free Japanese writing starter pack — hiragana, katakana and every N5 kanji"
                 width={960}
                 height={540}
                 className="h-auto w-full rounded-md"
