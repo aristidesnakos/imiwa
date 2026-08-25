@@ -42,7 +42,7 @@ export function ExampleSentencesSection({ kanji, sentences }: Props) {
       <h2 id="example-sentences-heading" className={SECTION_HEADING}>
         Example sentences using <span lang="ja">{kanji}</span>
       </h2>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted-foreground">
         Human-reviewed sentence pairs from the Tatoeba corpus, with readings shown above
         the kanji.
       </p>
@@ -51,17 +51,21 @@ export function ExampleSentencesSection({ kanji, sentences }: Props) {
         {sentences.map((sentence) => {
           const target = sentence.targets.find((t) => t.kanji === kanji);
           return (
-            <li key={sentence.id} className="rounded-lg border border-gray-200 bg-white p-5">
+            // Soft-mist rather than a plain white fill: the page background is
+            // temple-stone (a warm off-white), so a white card barely reads as a
+            // card at all. Soft-mist is the cool light already used by the one
+            // brand-correct card on this page, KanjiN5WorkbookCTA.
+            <li key={sentence.id} className="rounded-lg border border-border bg-japan-soft-mist p-5">
               <Furigana
                 tokens={sentence.tokens}
                 highlightKanji={kanji}
                 className="text-2xl sm:text-3xl"
               />
-              <p className="mt-3 text-base text-gray-700">{sentence.english}</p>
+              <p className="mt-3 text-base text-foreground">{sentence.english}</p>
 
               {target ? (
-                <p className="mt-3 text-sm text-gray-600">
-                  <span lang="ja" className="font-medium text-gray-800">
+                <p className="mt-3 text-sm text-muted-foreground">
+                  <span lang="ja" className="font-medium text-foreground">
                     {target.word}
                   </span>{' '}
                   <span lang="ja">({target.reading})</span>
@@ -71,7 +75,7 @@ export function ExampleSentencesSection({ kanji, sentences }: Props) {
               <Attribution
                 japanese={sentence.source.japanese}
                 english={sentence.source.english}
-                className="mt-4 border-t border-gray-100 pt-3"
+                className="mt-4 border-t border-border pt-3"
               />
             </li>
           );

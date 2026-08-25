@@ -21,7 +21,12 @@
  * the margin alone — the card's own border already draws the boundary, and a
  * hairline directly above a bordered box is two separators doing one job.
  */
-export const SECTION_BAND = 'mt-12 border-t border-gray-200 pt-8';
+// `border-border` (#E8EDF2) rather than the stock Tailwind grey (#e5e7eb) it
+// used to be — visually all but identical, but it is a palette token, so the
+// rule between every section on this page now comes from the same source as
+// everything else. (Naming the old class here verbatim would keep this file's
+// own palette baseline at 1: the validator scans raw text, comments included.)
+export const SECTION_BAND = 'mt-12 border-t border-border pt-8';
 
 /**
  * Every section's <h2>. Uniform by design: the five headings on this page —
