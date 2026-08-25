@@ -7,6 +7,7 @@ import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
 import { buttonVariants } from '@/components/ui/button';
 import EmailCapture from '@/components/EmailCapture';
 import Image from 'next/image';
+import { PACK_DOWNLOADS, PACK_FILENAMES } from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = getSEOTags({
@@ -160,18 +161,22 @@ export default function FreeResourcesPage() {
             The two cards above are generators: pick a character, get a sheet.
             That covers the reader who wants one thing and leaves the reader who
             wants the set with nothing to do — which described this page
-            entirely until now. It ranked for "free printable kanji worksheets",
-            sent people to a tool, and asked for nothing in return; the store it
-            could have handed them to took ONE referral from this whole domain
-            in thirty days.
+            entirely until recently. It ranks for "free printable kanji
+            worksheets" and sent every one of those people to a tool.
 
-            So: same material, other shape. A generator is a visit, a pack is a
-            download, and a download is an email address.
+            So: same material, other shape. A generator is a visit; a pack is a
+            file you keep.
 
-            Deliberately below the generators rather than above them. The
-            free tool is the reason the page ranks and the reason a stranger
-            trusts it; leading with an offsite link would spend that trust
-            before earning it.
+            The link used to leave for an external store, which is why this band
+            sits below the generators — spending a stranger's trust on an
+            offsite hop before earning it is a bad trade. The file is served
+            from this domain now, so the hop is gone, but the ordering stays:
+            the free tool is still the reason the page ranks and the reason
+            anyone believes the pack is worth downloading.
+
+            No email gate on the download, deliberately. The page's one ask is
+            the newsletter card at the bottom, after the material — which is
+            what makes it worth asking.
             ───────────────────────────────────────────────────────────────── */}
         <section className="mt-8 overflow-hidden rounded-lg border border-border bg-japan-soft-mist">
           <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
@@ -193,21 +198,20 @@ export default function FreeResourcesPage() {
               </h2>
 
               <p className="mb-5 text-sm leading-relaxed text-japan-mountain-mist md:text-base">
-                Hiragana, katakana and all 81 JLPT N5 kanji, collected into printable packs with
-                stroke order and practice grids on every page. Free — print as many copies as
-                your desk, your class or your study group needs.
+                Hiragana, katakana and all 82 JLPT N5 kanji, collected into one printable file
+                with stroke order and practice grids on every page. Free — print as many copies
+                as your desk, your class or your study group needs.
               </p>
 
               <div>
                 <a
-                  href="https://michikanji.gumroad.com/l/n5-kanji-kana-sheets"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={PACK_DOWNLOADS.starter}
+                  download={PACK_FILENAMES.starter}
                   className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
                 >
                   <Download aria-hidden />
                   Get the free starter pack
-                  <span className="sr-only"> (opens in a new tab)</span>
+                  <span className="sr-only"> (87-page PDF, downloads to your device)</span>
                 </a>
               </div>
             </div>
@@ -215,7 +219,7 @@ export default function FreeResourcesPage() {
             <div className="order-1 flex items-center justify-center p-6 md:p-8 lg:order-2">
               <Image
                 src="/assets/pack-cover-pack.jpg"
-                alt="Free Japanese writing starter pack — hiragana, katakana and all 81 N5 kanji"
+                alt="Free Japanese writing starter pack — hiragana, katakana and all 82 N5 kanji"
                 width={960}
                 height={540}
                 className="h-auto w-full rounded-md"

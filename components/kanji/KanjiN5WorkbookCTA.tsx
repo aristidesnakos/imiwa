@@ -4,6 +4,12 @@ import Image from 'next/image';
 import { Download } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { trackConversion } from '@/lib/analytics';
+import {
+  PACK_DESTINATION,
+  PACK_DOWNLOADS,
+  PACK_DOWNLOAD_GOALS,
+  PACK_FILENAMES,
+} from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
 /**
@@ -34,8 +40,10 @@ import { cn } from '@/lib/utils';
  * This pointed at `llanai.gumroad.com` until the store was renamed to match the
  * brand, at which point Gumroad released the old subdomain and every one of
  * these buttons started serving a 404 — on five pages, silently, because
- * nothing here asserts the target resolves. The store slug lives in one const
- * per component for that reason; if it moves again, it moves in one place.
+ * nothing here asserted the target resolves. "One const per component" was the
+ * first fix and was still four consts; the destination now lives once, in
+ * lib/commerce/links.ts, and the file it names is served from this domain, so
+ * there is no third party left that can release a hostname out from under it.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * PALETTE
@@ -47,8 +55,6 @@ import { cn } from '@/lib/utils';
  * pair and the focus ring rather than re-deciding them. See CLAUDE.md,
  * "Design tokens".
  */
-
-const PACK_URL = 'https://michikanji.gumroad.com/l/kanji-n5-sheets-workbook';
 
 interface KanjiN5WorkbookCTAProps {
   className?: string;
@@ -64,7 +70,7 @@ export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) 
               Free printable PDF
             </p>
             <h3 className="mb-3 mt-2 text-xl font-bold text-japan-deep-ocean md:text-2xl">
-              Want all 81 N5 kanji in one file?
+              Want all 82 N5 kanji in one file?
             </h3>
             <p className="mb-5 text-sm leading-relaxed text-japan-mountain-mist md:text-base">
               The same sheets you can generate here, collected into a single printable pack —
@@ -73,9 +79,8 @@ export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) 
             </p>
             <div>
               <a
-                href={PACK_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={PACK_DOWNLOADS.n5Kanji}
+                download={PACK_FILENAMES.n5Kanji}
                 className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
                 onClick={() => {
                   // Not awaited: `trackConversion` wraps a bare fetch with no
@@ -83,18 +88,18 @@ export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) 
                   // inside the handler delays the nav for an analytics call
                   // whose outcome nobody reads.
                   void trackConversion({
-                    name: 'kanji_n5_workbook_gumroad_clicked',
+                    name: PACK_DOWNLOAD_GOALS.n5Kanji,
                     properties: {
                       product: 'kanji_n5_workbook',
                       source: 'n5_kanji_sheets_page',
-                      destination: 'gumroad',
+                      destination: PACK_DESTINATION,
                     },
                   });
                 }}
               >
                 <Download aria-hidden />
                 Get the free N5 pack
-                <span className="sr-only"> (opens in a new tab)</span>
+                <span className="sr-only"> (PDF, downloads to your device)</span>
               </a>
             </div>
           </div>

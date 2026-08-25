@@ -4,6 +4,12 @@ import Image from 'next/image';
 import { Download } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { trackConversion } from '@/lib/analytics';
+import {
+  PACK_DESTINATION,
+  PACK_DOWNLOADS,
+  PACK_DOWNLOAD_GOALS,
+  PACK_FILENAMES,
+} from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
 /**
@@ -17,10 +23,10 @@ import { cn } from '@/lib/utils';
  * copied out of a browser address bar — a cross-domain Google Analytics handoff
  * blob, minted in a session in 2026 and stale ever since. It was never doing
  * anything except making the link unreadable in review, which is part of how
- * the dead `llanai.gumroad.com` host underneath it went unnoticed.
+ * the dead `llanai.gumroad.com` host underneath it went unnoticed. Both that
+ * host and the Gumroad listing that replaced it are gone now: the file is
+ * served from this domain and the destination lives in lib/commerce/links.ts.
  */
-
-const PACK_URL = 'https://michikanji.gumroad.com/l/kana-workbook-beginners';
 
 interface KanaWorkbookCTAProps {
   className?: string;
@@ -45,24 +51,23 @@ export function KanaWorkbookCTA({ className = '' }: KanaWorkbookCTAProps) {
             </p>
             <div>
               <a
-                href={PACK_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={PACK_DOWNLOADS.kana}
+                download={PACK_FILENAMES.kana}
                 className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
                 onClick={() => {
                   void trackConversion({
-                    name: 'kana_workbook_gumroad_clicked',
+                    name: PACK_DOWNLOAD_GOALS.kana,
                     properties: {
                       product: 'kana_workbook_beginners',
                       source: 'kana_sheets_page',
-                      destination: 'gumroad',
+                      destination: PACK_DESTINATION,
                     },
                   });
                 }}
               >
                 <Download aria-hidden />
                 Get the free kana pack
-                <span className="sr-only"> (opens in a new tab)</span>
+                <span className="sr-only"> (PDF, downloads to your device)</span>
               </a>
             </div>
           </div>

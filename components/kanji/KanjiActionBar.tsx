@@ -65,6 +65,7 @@
 import { Printer } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SECTION_HEADING } from '@/components/kanji/section';
+import { PACK_DOWNLOADS, PACK_FILENAMES } from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -137,19 +138,21 @@ export function KanjiActionBar({ kanji, level }: Props) {
             A plain <a> with no tracking and no client boundary. This template
             renders ~1,896 times and carries LCP debt already gated in
             lighthouserc.js; the file is a Server Component precisely so a link
-            costs bytes and nothing else. Per-surface click-through for this one
-            is readable off the Gumroad referrer, which is enough to decide
-            whether it earns its place. */}
+            costs bytes and nothing else. Click-through for this one used to be
+            readable off the Gumroad referrer — it is not any more, now that the
+            pack is served from this domain, and adding a click handler here
+            would mean a client boundary on 1,896 pages to learn it. If this
+            link's pull ever needs measuring, the honest instrument is the
+            request log for the PDF, not a `use client` on the whole bar. */}
         {level === 'N5' && (
           <p className="mt-5 text-sm">
             <a
-              href="https://michikanji.gumroad.com/l/kanji-n5-sheets-workbook"
-              target="_blank"
-              rel="noopener noreferrer"
+              href={PACK_DOWNLOADS.n5Kanji}
+              download={PACK_FILENAMES.n5Kanji}
               className="rounded-sm font-medium text-japan-mountain-mist underline underline-offset-4 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              Or get all 81 N5 sheets as one free PDF
-              <span className="sr-only"> (opens in a new tab)</span>
+              Or get all 82 N5 sheets as one free PDF
+              <span className="sr-only"> (downloads to your device)</span>
             </a>
           </p>
         )}
