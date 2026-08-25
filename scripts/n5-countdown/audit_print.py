@@ -78,6 +78,134 @@ def audit(path):
     return ok
 
 
+def audit_overlap(path):
+    """No two runs of type may sit on top of each other.
+
+    This is the check that was missing. The margin audit measured every element
+    against the trim, passed, and said nothing while REVIEW printed on top of the
+    running credit line on all 82 practice pages -- because both were comfortably
+    inside the margins, just not beside each other. Distance to the paper edge is
+    not the same question as distance to the next thing on the page.
+
+    Two exclusions, both necessary or the check drowns in false positives:
+
+    Grid glyphs -- the model character and the traced greys are text inside table
+    cells that legitimately share a row, and their boxes touch.
+
+    Spans sharing a baseline -- full-width CJK punctuation carries far more side
+    bearing than advance width, so 「）」 and the 「、」 after it genuinely overlap as
+    boxes while reading perfectly. So does a typographic apostrophe against the
+    letters beside it. Anything on the same baseline is adjacency, not collision;
+    a real collision is one run of type printed across another at a different
+    height, which is what REVIEW over the credit line was.
+    """
+    d = pymupdf.open(path)
+    hits = []
+    for i, pg in enumerate(d):
+        spans = []
+        for blk in pg.get_text('rawdict')['blocks']:
+            for ln in blk.get('lines', []):
+                for sp in ln['spans']:
+                    t = ''.join(c['c'] for c in sp.get('chars', [])).strip()
+                    r = pymupdf.Rect(sp['bbox'])
+                    # a lone CJK glyph at grid size is a practice square, not prose
+                    if len(t) <= 1 and sp['size'] > 18:
+                        continue
+                    if t and r.width > 0 and r.height > 0:
+                        spans.append((r, t))
+        for a in range(len(spans)):
+            for b in range(a + 1, len(spans)):
+                ra, ta = spans[a]
+                rb, tb = spans[b]
+                if abs((ra.y0 + ra.y1) / 2 - (rb.y0 + rb.y1) / 2) < 1.2:
+                    continue                      # same baseline: adjacency
+                ov = ra & rb
+                if ov.is_empty or ov.width <= 0.5 or ov.height <= 0.5:
+                    continue
+                # ignore slivers: real collisions bury one run under another
+                share = (ov.width * ov.height) / min(ra.width * ra.height,
+                                                     rb.width * rb.height)
+                if share > 0.18:
+                    hits.append((i + 1, ta[:26], tb[:26], round(share, 2)))
+    # A ruled box printed across a line of type is the same defect wearing a
+    # different hat, and it is how this nearly shipped a second time: with REVIEW
+    # moved off the foot, the from-memory grid grew into the space and its bottom
+    # border crossed the credit line by 1.3pt on all 82 practice pages.
+    #
+    # Bucketed by y. A practice page carries ~300 box drawings and ~60 runs of
+    # type; comparing every pair is 3.5 million rect intersections over the book
+    # and takes minutes. Only boxes and type that share a horizontal band can
+    # possibly touch.
+    BIN = 12.0
+    for i, pg in enumerate(d):
+        buckets = {}
+        for blk in pg.get_text('rawdict')['blocks']:
+            for ln in blk.get('lines', []):
+                for sp in ln['spans']:
+                    t = ''.join(c['c'] for c in sp.get('chars', [])).strip()
+                    if not t:
+                        continue
+                    r = pymupdf.Rect(sp['bbox'])
+                    for b in range(int(r.y0 // BIN), int(r.y1 // BIN) + 1):
+                        buckets.setdefault(b, []).append((r, t))
+        for dd in pg.get_drawings():
+            r = dd['rect']
+            if r.width > W - 1 or r.is_empty or r.width <= 0 or r.height <= 0:
+                continue
+            near = {}
+            for b in range(int(r.y0 // BIN), int(r.y1 // BIN) + 1):
+                for rt, t in buckets.get(b, []):
+                    near[(tuple(rt), t)] = (rt, t)
+            for rt, t in near.values():
+                ov = r & rt
+                if ov.is_empty or ov.width <= 0.5 or ov.height <= 0.5:
+                    continue
+                # a box may legitimately contain type: a cell, a chip, a card
+                if r.contains(rt):
+                    continue
+                share = (ov.width * ov.height) / (rt.width * rt.height)
+                if share > 0.25:
+                    hits.append((i + 1, '<box>', t[:26], round(share, 2)))
+
+    # Near misses too. A ruled border stopping 0.9mm above a line of type has
+    # not collided, but it is one layout tweak from doing so and it reads as a
+    # mistake on paper. 1.5mm is the floor.
+    NEAR = 1.5 * 72 / 25.4
+    for i, pg in enumerate(d):
+        boxes = [dd['rect'] for dd in pg.get_drawings()
+                 if dd['rect'].width < W - 1 and not dd['rect'].is_empty]
+        if not boxes:
+            continue
+        for blk in pg.get_text('rawdict')['blocks']:
+            for ln in blk.get('lines', []):
+                for sp in ln['spans']:
+                    t = ''.join(c['c'] for c in sp.get('chars', [])).strip()
+                    if not t:
+                        continue
+                    y0 = sp['bbox'][1]
+                    above = [r for r in boxes
+                             if r.y1 <= y0 and y0 - r.y1 < NEAR
+                             and r.x1 > sp['bbox'][0] and r.x0 < sp['bbox'][2]]
+                    if above:
+                        gap = min(y0 - r.y1 for r in above)
+                        hits.append((i + 1, '<box>', f'{t[:20]} ({gap / 72 * 25.4:.1f}mm below a rule)',
+                                     round(1 - gap / NEAR, 2)))
+
+    if hits:
+        print(f'  {len(hits)} collision(s) on {len({h[0] for h in hits})} page(s):')
+        seen = set()
+        for pno, ta, tb, sh in hits:
+            if pno in seen:
+                continue
+            seen.add(pno)
+            print(f'   p{pno:<4d} {ta!r} over {tb!r}  ({sh:.0%} buried)')
+            if len(seen) >= 8:
+                break
+    else:
+        print('  no two runs of type overlap')
+    return not hits
+
+
 def audit_cover():
     PAPER=0.002252; TRIM_W,TRIM_H=8.5,11.0; BLEED=0.125
     PAGES=pymupdf.open(HERE / 'N5-Practice-print-interior.pdf').page_count
@@ -148,5 +276,7 @@ def audit_cover():
 if __name__ == '__main__':
     a = audit(str(HERE / 'N5-Practice-print-interior.pdf'))
     print()
+    o = audit_overlap(str(HERE / 'N5-Practice-print-interior.pdf'))
+    print()
     b = audit_cover()
-    sys.exit(0 if (a and b) else 1)
+    sys.exit(0 if (a and o and b) else 1)

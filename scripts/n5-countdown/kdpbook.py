@@ -281,7 +281,7 @@ h3.lbl span {{ color:#9A8878; font-weight:400; letter-spacing:0; text-transform:
 .head .num {{ text-align:right; font-size:9pt; color:#8A7666; white-space:nowrap; }}
 .head .num b {{ display:block; font-size:19pt; color:{INK}; line-height:1.1; }}
 
-.band {{ margin-top:5mm; }}
+.band {{ margin-top:4.2mm; }}
 table.grid {{ border-collapse:collapse; }}
 table.grid td {{ border:1px solid {SAGE_DEEP}; height:{CELL}mm; width:{CELL}mm;
                  position:relative; text-align:center; vertical-align:middle;
@@ -306,22 +306,34 @@ table.grid td::after {{ content:''; position:absolute; top:50%; left:1mm; right:
               text-transform:uppercase; width:14mm; text-align:right; }}
 
 /* ── practice page ────────────────────────────────────────────────────── */
-.phead {{ display:flex; align-items:center; gap:5mm; border-bottom:1px solid {SAGE_DEEP};
-          padding-bottom:3.5mm; }}
-.phead .g {{ font-family:'Noto Serif CJK JP',serif; font-size:24pt; line-height:1; }}
-.phead .m {{ font-size:11.5pt; flex:1; }}
-.phead .r {{ font-size:8.5pt; color:#7A6858; line-height:1.5; text-align:right; }}
-.mini {{ margin-top:4mm; }}
+.phead {{ display:flex; align-items:flex-start; gap:5mm; border-bottom:1px solid {SAGE_DEEP};
+          padding-bottom:4mm; }}
+.phead .g {{ font-family:'Noto Serif CJK JP',serif; font-size:24pt; line-height:1.05; }}
+.phead .m {{ font-size:11.5pt; flex:1; padding-top:1mm; }}
+.phead .m .pos {{ display:block; font-size:8pt; color:#8A7666; margin-top:1.5mm; }}
+.phead .r {{ font-size:8.5pt; color:#7A6858; line-height:1.55; text-align:right;
+             padding-top:1mm; white-space:nowrap; }}
+
+/* The review boxes live in the header, not at the foot of the page.
+   At the foot they sat on top of the running credit line -- the page had grown
+   under them and nothing complained, because the margin audit measured distance
+   to the trim and never element against element. Up here the block is the same
+   height on every sheet regardless of stroke count, which the empty right-hand
+   end of the ORDER row is not: it is wide open at 4 strokes and full at 14. */
+.rev {{ border:1.2px solid {SAGE_DEEP}; border-radius:2mm; padding:2.4mm 3mm 2.6mm;
+        flex:0 0 auto; }}
+.rev .rt {{ font-size:7.5pt; letter-spacing:.14em; text-transform:uppercase;
+            color:{TERRA_INK}; font-weight:700; margin-bottom:2mm; }}
+.rev .rg {{ display:grid; grid-template-columns:auto auto; gap:1.8mm 4mm; }}
+.mini {{ margin-top:3.5mm; }}
 .mini .srow {{ gap:1.6mm; }}
 .mini svg {{ border:1px dashed #DDE7D7; border-radius:1mm; flex:0 0 auto; }}
 
 /* Intervals, not dates: the same spacing, with no expiry. */
-.review {{ margin-top:6mm; border-top:1px solid {SAGE_DEEP}; padding-top:4mm;
-           display:flex; gap:7mm; align-items:center; }}
-.review .t {{ font-size:8.5pt; letter-spacing:.14em; text-transform:uppercase;
-              color:{TERRA_INK}; font-weight:700; }}
-.slot {{ display:flex; gap:2mm; align-items:center; font-size:10pt; color:#5C4A3C; }}
-.slot .b {{ width:5mm; height:5mm; border:1.3px solid {SAGE_DEEP}; border-radius:1mm; }}
+.slot {{ display:flex; gap:1.8mm; align-items:center; font-size:8.5pt; color:#5C4A3C;
+         white-space:nowrap; }}
+.slot .b {{ width:4.2mm; height:4.2mm; border:1.2px solid {SAGE_DEEP};
+            border-radius:0.8mm; flex:0 0 auto; }}
 
 /* ── week review ──────────────────────────────────────────────────────── */
 .rev-row {{ display:flex; align-items:center; gap:4mm; margin-top:3.5mm; }}
@@ -344,8 +356,8 @@ table.grid td::after {{ content:''; position:absolute; top:50%; left:1mm; right:
                       border-left:1px dashed #CFDDC6; }}
 .all82 .sq::after {{ content:''; position:absolute; top:50%; left:1mm; right:1mm;
                      border-top:1px dashed #CFDDC6; }}
-.all82 .cap {{ font-size:5pt; color:#8A7666; line-height:1.15; margin-top:0.8mm;
-               height:4.6mm; overflow:hidden; }}
+.all82 .cap {{ font-size:5pt; color:#8A7666; line-height:1.15; margin-top:1.7mm;
+               height:4.2mm; overflow:hidden; }}
 
 /* ── tracker & index ──────────────────────────────────────────────────── */
 h2.pt {{ font-size:24pt; margin-top:2mm; }}
@@ -362,7 +374,32 @@ h2.pt {{ font-size:24pt; margin-top:2mm; }}
 .idx .p {{ color:#9A8878; }}
 """
 
-CREDIT_KVG = 'Stroke data: KanjiVG &copy; 2009&ndash;2011 Ulrich Apel &middot; CC BY-SA 3.0'
+# WHY THERE IS NO PER-PAGE CREDIT LINE IN THIS BOOK
+# ─────────────────────────────────────────────────
+# There used to be one on all 164 pages carrying a diagram. It was carried over
+# from `freepack.py` and `app/api/kanji-sheets/route.ts`, where it is genuinely
+# required and must stay: a single practice sheet leaves the site as a loose
+# page with no colophon attached to it, so the credit has to be ON the sheet or
+# it does not travel with the work at all.
+#
+# A 198-page perfect-bound book is the opposite case. Its copyright page cannot
+# be separated from any of its pages, and both licences ask for credit
+# appropriate to the medium rather than credit repeated on every leaf:
+#
+#   CC BY-SA 3.0 s4(c) requires copyright notices be kept intact and says the
+#   credit "may be implemented in any reasonable manner" and is to be
+#   "reasonable to the medium or means You are utilizing". KanjiVG's own notice
+#   asks to be attributed "in your own copyright header" -- which is exactly
+#   what a copyright page is, and where the notice is now reproduced in full.
+#
+#   EDRDG's "on each screen display" clause, which the earlier README cited as
+#   the reason, applies specifically to WEB-BASED DICTIONARY SERVERS. For apps
+#   EDRDG accepts an About screen; for software packages, the documentation. A
+#   printed book has no screens; its front matter is the analogue.
+#
+# So the obligations are discharged once, in full, on page 2 -- and 164 pages of
+# repeated small print stop competing with the practice grids for the reader's
+# attention. The free sheets keep their per-sheet credit. Do not "tidy" that.
 
 # Reproduced from the header of every KanjiVG file. CC BY-SA 3.0 4(c) asks that
 # copyright notices be kept intact; this is where the book keeps them.
@@ -381,12 +418,9 @@ Under the following conditions:
   one."""
 
 
-def foot(page_no, left='', extra=''):
-    rows = (f'<div class="row"><span>{left}</span>'
-            f'<span class="pn">{page_no}</span></div>')
-    if extra:
-        rows += f'<div class="row"><span>{extra}</span><span></span></div>'
-    return f'<div class="foot">{rows}</div>'
+def foot(page_no, left=''):
+    return (f'<div class="foot"><div class="row"><span>{left}</span>'
+            f'<span class="pn">{page_no}</span></div></div>')
 
 
 # ── front matter ──────────────────────────────────────────────────────────
@@ -446,6 +480,7 @@ def copyright_page(page_no):
       Attribution-ShareAlike 4.0 licence
       (<span>www.edrdg.org/edrdg/licence.html</span>). Selection and ordering of
       the entries are ours; the entries themselves are unaltered.</p>
+    <pre>{VOCAB_CREDIT or ''}</pre>
 
     <h3>A note on what this book is not</h3>
     <p>This book is not affiliated with, endorsed by, or connected to the Japan
@@ -600,7 +635,6 @@ def ref_page(k, w, page_no, index_no):
                       f'<span> &mdash; each written with characters in this book</span>'
                       f'</h3>{rows}</div>')
 
-    credit2 = VOCAB_CREDIT if words else ''
     return f"""<div class="page">
   <div class="strokes"><h3 class="lbl">Stroke order
     <span>&mdash; {len(paths)} strokes</span></h3>
@@ -618,12 +652,7 @@ def ref_page(k, w, page_no, index_no):
 
   {words_html}
 
-  <div class="foot"><div class="row">
-      <span>Week {w['week']} &middot; {k['kanji']} &middot; write it on the facing page</span>
-      <span class="pn">{page_no}</span></div>
-    <div class="row"><span>{CREDIT_KVG}</span><span></span></div>
-    <div class="row"><span>{credit2}</span><span></span></div>
-  </div>
+  {foot(page_no, f"Week {w['week']} &middot; {k['kanji']} &middot; write it on the facing page")}
 </div>"""
 
 
@@ -659,9 +688,10 @@ def practice_page(k, w, page_no, index_no):
     return f"""<div class="page">
   <div class="phead">
     <div class="g">{k['kanji']}</div>
-    <div class="m">{k['meaning']}</div>
+    <div class="m">{k['meaning']}
+      <span class="pos">{index_no} of 82 &middot; Week {w['week']}</span></div>
     <div class="r">On {k['on'] or '&mdash;'}<br>Kun {k['kun'] or '&mdash;'}</div>
-    <div class="r" style="text-align:right"><b>{index_no}</b> of 82<br>Week {w['week']}</div>
+    <div class="rev"><div class="rt">Review</div><div class="rg">{slots}</div></div>
   </div>
 
   <div class="mini"><h3 class="lbl">Order <span>&mdash; {len(paths)} strokes</span></h3>
@@ -677,12 +707,7 @@ def practice_page(k, w, page_no, index_no):
     <span>&mdash; cover the left-hand page</span></h3>
     <table class="grid memory">{band(4)}</table></div>
 
-  <div class="review"><div class="t">Review</div>{slots}</div>
-
-  <div class="foot"><div class="row">
-      <span>Week {w['week']} &middot; {k['kanji']}</span><span class="pn">{page_no}</span></div>
-    <div class="row"><span>{CREDIT_KVG}</span><span></span></div>
-  </div>
+  {foot(page_no, f"Week {w['week']} &middot; {k['kanji']}")}
 </div>"""
 
 
