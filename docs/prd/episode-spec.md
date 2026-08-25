@@ -1,6 +1,6 @@
 # Weekly Story — Episode Spec & Calendar
 
-**Version 1.1** · Created 2026-08-23 · Revised 2026-08-24 (Kit → Resend; compliance items added to §A7) · Owner: Ari Nakos
+**Version 1.2** · Created 2026-08-23 · Revised 2026-08-24 (Kit → Resend; compliance items added to §A7) · Revised 2026-08-25 (§A8 corrected against the live dashboard: apex not subdomain, tracking already off) · Owner: Ari Nakos
 **Related:** [`weekly-story-newsletter.md`](./weekly-story-newsletter.md) (the pilot this feeds)
 
 Two jobs. **Part A** is the format — locked, so "write episode 1" has a spec instead of a vibe.
@@ -131,7 +131,7 @@ count into spam-filter territory on a young sending reputation.
 CJK character has to be percent-encoded to `%E5%B1%B1` somewhere in the chain, and *which* link in the
 chain does it is inconsistent. A click-tracking rewriter re-encodes the link, then the client may
 re-encode, then the receiving MTA may re-encode again. **This is why Resend click tracking stays off
-for `stories.michikanji.com`** (§A8) — but leave the URLs encoded regardless, because the rewriter is
+for `michikanji.com`** (§A8) — but leave the URLs encoded regardless, because the rewriter is
 only the first of the three. Double-encoding produces `%25E5%25B1%25B1` and a 404;
 some clients simply refuse to linkify a non-ASCII path at all.
 
@@ -199,15 +199,25 @@ with Japanese email.
 
 Kit is gone — see `docs/prd/story-delivery-resend.md` for why. These are the equivalents.
 
-- **From name:** `Ari at MichiKanji`, from `stories.michikanji.com`. The subdomain is deliberate:
-  reputation isolation from the apex, which carries transactional mail.
+- **From name:** `Ari at MichiKanji`, from the apex `michikanji.com`, already verified.
+  The PRD wanted `stories.michikanji.com` for reputation isolation from transactional mail, and
+  that is still the better shape — but the Resend account is at its plan's domain limit (10 on Pro,
+  12 in use), so the subdomain cannot be added without paying or deleting another project's domain.
+  At a list of forty the isolation buys little; revisit before the list is large enough for a
+  complaint to matter.
 - **Reply-to: a real inbox you read.** Not `noreply@`. The decision gate reads replies; a broken
   reply path silently zeroes the only signal the pilot can produce at this list size.
-- **Audience:** one audience, one offer. Resend contacts carry no custom properties, so there is no
-  per-source segment to filter on and none is needed — DataFast holds the attribution.
-- **Click tracking OFF, open tracking on.** Resend's link rewriter re-encodes percent-encoded CJK
-  URLs (`/kanji/%E5%B1%B1` → `%25E5%25B1%25B1` → 404), which is the exact trap §A5 documents. Open
-  tracking is the read signal; the click signal comes from DataFast on our own pages.
+- **Audience:** there is exactly one, per account — Resend removed multiple audiences, and Segments
+  and Topics live inside the single one. Contacts DO carry custom properties again, and
+  `/api/subscribe/confirm` writes the signup surface to the `source` property, so a segment can be
+  built on it if a second offer ever points here.
+- **Click tracking OFF.** It already is: Resend disables open and click tracking by default for
+  every domain, and `michikanji.com` has no tracking subdomain configured — so this needs no action,
+  only the discipline not to switch it on. The rewriter re-encodes percent-encoded CJK URLs
+  (`/kanji/%E5%B1%B1` → `%25E5%25B1%25B1` → 404), the exact trap §A5 documents. Open tracking would
+  be the read signal but costs a verified tracking-subdomain CNAME (any tracking needs one), and
+  turning that on makes it easy to switch clicks on by accident. The click signal comes from
+  DataFast on our own pages regardless.
 - **Authenticate the sending domain** (SPF, DKIM) in Resend before episode 1, and give
   `_dmarc.michikanji.com` a `rua=` so the reports go somewhere. You're far below the 5,000/day
   threshold that makes alignment mandatory at Gmail and Yahoo, but it still moves inbox placement,

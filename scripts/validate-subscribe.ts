@@ -48,6 +48,7 @@ import {
   auditBroadcastBody,
   missingBroadcastRequirements,
 } from '../lib/email/broadcast-footer';
+import { isAlreadySubscribed } from '../lib/email/audience';
 
 const SECRET = 'test-secret-not-used-anywhere-real';
 const OTHER_SECRET = 'a-different-secret-entirely';
@@ -178,6 +179,27 @@ check('an empty string does not validate', !isEmailSignupSource(''));
 check('a non-string does not validate', !isEmailSignupSource(42));
 check('null does not validate', !isEmailSignupSource(null));
 
+// --- The already-subscribed guard -----------------------------------------
+//
+// This one absorbs a Resend response and turns it into "you are subscribed", so
+// a false positive would send someone to /subscribed with NO contact created —
+// and the contact is the only consent artefact this design keeps. The tests
+// that matter are therefore the negative ones.
+
+check('a plain conflict is already-subscribed', isAlreadySubscribed(409, ''));
+check(
+  'a 422 that says so in words is already-subscribed',
+  isAlreadySubscribed(422, '{"message":"Contact already exists"}')
+);
+check('a 500 is never already-subscribed', !isAlreadySubscribed(500, 'Contact already exists'));
+check('a 502 is never already-subscribed', !isAlreadySubscribed(502, ''));
+check('a 401 is never already-subscribed', !isAlreadySubscribed(401, 'Invalid API key'));
+check(
+  'a 422 about something else is not already-subscribed',
+  !isAlreadySubscribed(422, '{"message":"Invalid email address"}')
+);
+check('an empty 422 body is not already-subscribed', !isAlreadySubscribed(422, ''));
+
 // --- Broadcast compliance -------------------------------------------------
 //
 // These are not about tokens; they are the other half of the same promise. The
@@ -231,6 +253,7 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · an expired token keeps a trustworthy source but is never treated as consent
   · a source outside EMAIL_SIGNUP_SOURCES cannot reach an email we send
   · a broadcast cannot be composed without an unsubscribe link or a postal address
+  · only a genuine already-exists response is treated as a successful confirmation
 
 PASS — ${passed}/${total} checks passed
 `);

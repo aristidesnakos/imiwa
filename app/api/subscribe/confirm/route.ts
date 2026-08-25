@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAudienceId } from '@/lib/email/audience';
+import {
+  createContact,
+  isAlreadySubscribed,
+  setContactSource,
+} from '@/lib/email/audience';
 import { getTokenSecret, verifyConfirmToken } from '@/lib/email/subscribe-token';
 
 export const runtime = 'nodejs';
-
-const RESEND_API = 'https://api.resend.com';
 
 /**
  * POST /api/subscribe/confirm
@@ -26,32 +28,17 @@ const RESEND_API = 'https://api.resend.com';
  * So the email links to `/confirm`, which renders one button that POSTs here.
  * Scanners do not POST. Costs one page and no storage.
  *
- * ---------------------------------------------------------------------------
- * Why plain fetch and not the SDK
- * ---------------------------------------------------------------------------
- *
- * `resend` is a caret range (^4.8.0), so an install can move it underneath us,
- * and its contacts surface has been moving. Verified against the INSTALLED
- * types in node_modules/resend/dist/index.d.ts on 2026-08-24:
- *
- *   - a contact is exactly {created_at, id, email, first_name?, last_name?,
- *     unsubscribed} and is audience-scoped (`:507`, `:516`);
- *   - there is NO custom-property field, so `source` cannot be stored here —
- *     DataFast already has it from capture time;
- *   - the string "segment" appears ZERO times in the whole type surface;
- *   - a broadcast targets exactly one `audience_id` (`:397`).
- *
- * The wire format is snake_case even though the SDK's options are camelCase.
- * Re-verify both against the live docs and the installed .d.ts before changing
- * anything here.
+ * The Resend calls live in `lib/email/audience.ts`, which also explains why
+ * they are raw fetch rather than the SDK, and why there is no audience id in
+ * them any more.
  */
 export async function POST(request: NextRequest) {
   const secret = getTokenSecret();
-  const audienceId = getAudienceId();
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!process.env.RESEND_API_KEY || !secret || !audienceId) {
+  if (!apiKey || !secret) {
     console.error(
-      '[api/subscribe/confirm] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET / RESEND_AUDIENCE_ID missing)'
+      '[api/subscribe/confirm] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET missing)'
     );
     return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
   }
@@ -89,52 +76,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const res = await fetch(`${RESEND_API}/audiences/${audienceId}/contacts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      email: result.payload.email,
-      unsubscribed: false,
-    }),
-  });
+  const { email, source } = result.payload;
 
   // Creation is idempotent from our side: a replayed token inside the 48h
   // window re-adds an address that is already there, which Resend treats as a
   // no-op. That is the accepted trade for not storing a used-token list.
-  if (!res.ok) {
-    const detail = await res.text();
+  const created = await createContact(email, apiKey);
 
-    // ...but "treats as a no-op" is their behaviour, not our contract, and the
-    // failure mode if it changes is nasty: someone who IS subscribed clicks a
-    // link twice and is told "Failed to confirm", so they submit the form again
-    // and get another confirmation email. Absorb exactly that case.
-    if (isAlreadySubscribed(res.status, detail)) {
-      console.info('[api/subscribe/confirm] Contact already on the list; treating replay as confirmed.');
-      return NextResponse.redirect(new URL('/subscribed', request.url), { status: 303 });
-    }
-
-    console.error('[api/subscribe/confirm] Resend contact create failed:', res.status, detail);
+  if (!created.ok && !isAlreadySubscribed(created.status, created.detail)) {
+    console.error(
+      '[api/subscribe/confirm] Resend contact create failed:',
+      created.status,
+      created.detail
+    );
     return NextResponse.json({ error: 'Failed to confirm subscription.' }, { status: 502 });
   }
 
-  return NextResponse.redirect(new URL('/subscribed', request.url), { status: 303 });
-}
+  // Enrichment, not consent. This runs AFTER the contact exists and its failure
+  // is logged rather than surfaced: the property has to be declared in the
+  // Resend dashboard to be settable, and a dashboard edit by someone else must
+  // never be able to turn a valid confirmation into "Failed to confirm".
+  const tagged = await setContactSource(email, source, apiKey);
+  if (!tagged.ok) {
+    console.warn(
+      '[api/subscribe/confirm] Contact created but source property not set:',
+      tagged.status,
+      tagged.detail
+    );
+  }
 
-/**
- * Is this non-2xx actually "the address is already on the list"?
- *
- * Deliberately narrow. A false positive here is worse than the bug it guards
- * against: it would redirect someone to /subscribed without a contact having
- * been created, and the contact record is the ONLY consent artefact this design
- * keeps (see docs/prd/story-delivery-resend.md §9.5). So this matches a plain
- * conflict, or an unprocessable-entity whose body says so in words, and lets
- * everything else fail loudly.
- */
-function isAlreadySubscribed(status: number, detail: string): boolean {
-  if (status === 409) return true;
-  if (status !== 422) return false;
-  return /already\s+(exists|registered|subscribed|in)/i.test(detail);
+  return NextResponse.redirect(new URL('/subscribed', request.url), { status: 303 });
 }

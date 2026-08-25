@@ -1,6 +1,6 @@
 # Story Delivery on Our Own Domain — Resend PRD (Option C)
 
-**Version 1.1** · Created 2026-08-24 · Revised 2026-08-24 · Owner: Ari Nakos
+**Version 1.2** · Created 2026-08-24 · Revised 2026-08-24 · Revised 2026-08-25 · Owner: Ari Nakos
 **Status:** Approved in principle 2026-08-24. Nothing built. Kit is still the wired ESP and the
 capture path is still unmerged, so no visitor can subscribe to anything today.
 
@@ -13,6 +13,39 @@ a four-value change, not two (§3); the `michikanji-episode` skill cannot be fou
 confirm link is auto-clickable by mail scanners (§5, §7, open question 5); the announcement-bar
 suppression needs a stated mechanism (§6); and several line and path citations were stale. The
 argument in §1 is unchanged, and everything the review confirmed correct is unchanged.
+**v1.2 — corrections from driving the live dashboard, 2026-08-25.** Three assumptions in this
+document are wrong, and they were wrong in a way no amount of reading the installed SDK could have
+caught, because the platform moved underneath it. Read this block before trusting any Resend
+mechanic below.
+
+1. **There is no `audience_id` any more, and no audience to create.** Resend now has ONE Audience per
+   account: the dashboard shows a singular "Audience" at `/audience/` with no id in the URL and no
+   create button, and what used to be several audiences is now Segments and Topics inside that one.
+   The contacts API is a flat `POST /contacts` with `email`, `first_name`, `last_name`,
+   `unsubscribed`, `properties`, `segments`, `topics`; contacts are global to the account, keyed by
+   email. So M8's `RESEND_AUDIENCE_ID` cannot be obtained, and the code as merged would have answered
+   503 to every confirmation forever, blaming a variable that cannot exist. Fixed in
+   `lib/email/audience.ts`.
+
+2. **Custom contact properties exist, so §9.5's concession is reversed.** This document accepted that
+   dropping `source` from Resend meant the audience would no longer record which surface someone
+   consented through — DataFast would hold it, but as analytics rather than a consent artefact. There
+   is now a `source` property (declared in the dashboard 2026-08-25) and the confirm route writes it
+   in a second, deliberately non-fatal call after the contact exists. It is enrichment; the contact
+   is the consent.
+
+3. **`stories.michikanji.com` cannot be added, and click tracking was never on.** The Resend account
+   is at its plan's domain limit (Pro includes 10; 12 are in use), so "Add domain" opens an upgrade
+   wall — §3's reputation-isolation decision is deferred and the newsletter sends from the already
+   verified apex. Separately, Resend disables open *and* click tracking by default for every domain
+   and `michikanji.com` has no tracking subdomain, so the CJK double-encoding trap is dormant rather
+   than live: §5 Phase 1's "turn click tracking off" is already true and needs no action. Enabling
+   open tracking would cost a verified tracking-subdomain CNAME, since any tracking requires one.
+
+Also: **the Kit deadline in this plan does not exist.** Kit's own billing page states the
+subscription cancels itself at the end of the trial and downgrades to free, so nothing converts to
+paid on 2026-09-03. (Creator is $39/mo for 1,000 subscribers, not $33.)
+
 **Related:** [`weekly-story-newsletter.md`](./weekly-story-newsletter.md) (the pilot) ·
 [`story-pages.md`](./story-pages.md) (the pages — carried forward unchanged) ·
 [`episode-spec.md`](./episode-spec.md) (the format) ·
