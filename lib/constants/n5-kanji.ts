@@ -99,7 +99,7 @@ export const N5_KANJI: KanjiData[] = [
   { kanji: "名", onyomi: "めい、みょう", kunyomi: "な", meaning: "name, noted, distinguished, reputation" },
   { kanji: "分", onyomi: "ぶん、ふん、ぶ", kunyomi: "わ（ける）", meaning: "part, minute of time, understand" },
   { kanji: "今", onyomi: "こん、きん", kunyomi: "いま", meaning: "now; the present" },
-  { kanji: "金", onyomi: "きん、こん、ごん", kunyomi: "かね、かな、がね", meaning: "gold" },
+  { kanji: "金", onyomi: "きん、こん、ごん", kunyomi: "かね、かな、がね", meaning: "gold, money" },
   { kanji: "電", onyomi: "でん", kunyomi: "", meaning: "electricity; electric powered" },
   { kanji: "語", onyomi: "ご", kunyomi: "かた（る）", meaning: "word, speech, language" },
   { kanji: "車", onyomi: "しゃ", kunyomi: "くるま", meaning: "car, wheel" },

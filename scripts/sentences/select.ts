@@ -155,6 +155,8 @@ import type {
   Token,
 } from '../../lib/sentences/types';
 import { candidateId } from '../../lib/sentences/types';
+import type { AppliedCorrection } from '../../lib/sentences/reading-corrections';
+import { correctReadings } from '../../lib/sentences/reading-corrections';
 
 /* ══════════════════════════ Tunable constants ════════════════════════════ */
 
@@ -276,7 +278,32 @@ const WEIGHTS = {
    */
   duplicateSenseEach: -9,
   duplicateSenseFloor: -22,
+
+  /**
+   * Charge for a sentence that is near-textually identical to one already
+   * selected. Distinct from `duplicateWordEach`: these pairs use DIFFERENT
+   * words and so slip past that check entirely, while still spending two of a
+   * kanji's eight slots on one idea —
+   *
+   *   この本はね、小学校の時に読んだよ。 / この本は、小学生の時に読んだよ。
+   *   一休みしませんか。               / ひと休みしませんか。
+   *
+   * Heavy enough to lose to almost anything else, but finite: a kanji whose
+   * pool genuinely holds nothing else should still fill its slots.
+   */
+  nearDuplicateEach: -30,
 } as const;
+
+/**
+ * Trigram-overlap threshold above which two sentences are "the same one".
+ *
+ * 0.45, not the 0.6 this started at. Japanese sentences here are short, so they
+ * yield few trigrams and a one-character substitution costs far more overlap
+ * than intuition suggests: 小学校/小学生 — the pair this penalty was written for
+ * — scores 0.450, and the two シンガポール sentences score 0.563. At 0.6 the
+ * penalty fired exactly zero times across all 650 candidates.
+ */
+const NEAR_DUPLICATE_JACCARD = 0.45;
 
 /**
  * IPADIC's known silent misreadings, from Phase 0 §4.
@@ -316,6 +343,212 @@ const KNOWN_MISREADINGS: {
     reading: 'ツキ',
     when: (raw, i) => /^[0-9０-９一二三四五六七八九十]+$/u.test(raw[i - 1]?.surface_form ?? ''),
     note: 'after a numeral this is がつ (the month), not つき (the moon)',
+  },
+
+  // ── From the N5 queue audit. Every one of these has TWO live readings and
+  //    only context chooses between them, which is why they are flagged here
+  //    rather than corrected in lib/sentences/reading-corrections.ts. Putting a
+  //    context-dependent pair in that table would reintroduce exactly the
+  //    confident-but-wrong reading this list exists to catch.
+  {
+    surface: '木の下',
+    reading: 'コノシタ',
+    note: 'このした is the surname 木下; the phrase "under the tree" is きのした',
+  },
+  {
+    surface: '時の間',
+    reading: 'トキノマ',
+    when: (raw, i) => /^[0-9０-９一二三四五六七八九十]+$/u.test(raw[i - 1]?.surface_form ?? ''),
+    note: 'after a numeral this is a mis-parse — 「３時 の 間」 is さんじ…あいだ, not the noun ときのま',
+  },
+  {
+    surface: '何分',
+    reading: 'ナニブン',
+    note: 'なにぶん means "at any rate"; asking a quantity of minutes is なんぷん',
+  },
+  {
+    surface: '何時',
+    reading: 'イツ',
+    note: 'いつ ("when") and なんじ ("what time") are both live here; check the English',
+  },
+  {
+    surface: '行',
+    reading: 'クダリ',
+    note: 'a line of text is ぎょう; くだり is a passage in classical prose',
+  },
+  // ── From an adversarial sweep of all 592 distinct surface|reading pairs in
+  //    the N5 queue. Each is a real misreading IPADIC produced, and each has a
+  //    second live reading, so each is a flag rather than a table entry.
+  {
+    surface: '大',
+    reading: 'ダイ',
+    when: (raw, i) => raw[i + 1]?.surface_form === '火事',
+    note: '大火事 is おおかじ; 大 is おお here, not だい',
+  },
+  {
+    surface: '下',
+    reading: 'シタ',
+    // Narrow on purpose. 「机の下に」 and 「木の下に」 are した and are common, so
+    // flagging every 「の下」 would spend review attention on correct readings.
+    // もと turns up after an abstract two-kanji noun — 白日の下, 監視の下.
+    when: (raw, i) =>
+      raw[i - 1]?.surface_form === 'の' &&
+      /^[一-鿿]{2,}$/u.test(raw[i - 2]?.surface_form ?? ''),
+    note: 'after an abstract jukugo, 「〜の下」 is もと (白日の下 = はくじつのもと), not した',
+  },
+  {
+    surface: '中',
+    reading: 'チュウ',
+    // 午前 and 午後 are deliberately NOT here: 午前中 is ごぜんちゅう, and listing
+    // them charged two live 午 candidates −4 apiece while telling the reviewer
+    // to "correct" a reading that was right. A flag that is confidently wrong
+    // costs more than no flag.
+    when: (raw, i) => /^(今日|明日|昨日|今週|今月|今年)$/u.test(raw[i - 1]?.surface_form ?? ''),
+    note: 'after a day word this is じゅう (今日中 = きょうじゅう), not ちゅう',
+  },
+  {
+    surface: '一行',
+    reading: 'イッコウ',
+    note: 'いっこう is a party of travellers; a line of text is いちぎょう',
+  },
+  {
+    surface: '橋',
+    reading: 'キョウ',
+    note: 'standalone 橋 is はし; きょう only survives inside compounds like 鉄橋',
+  },
+  {
+    surface: '人',
+    reading: 'ジン',
+    // じん is right when 人 suffixes a group name — カナダ人 in katakana, or a
+    // kanji jukugo like 西洋人 (せいようじん). Only a HIRAGANA neighbour marks the
+    // bare noun: 「いい人」 is いいひと. Flagging kanji-preceded 人 as well spent
+    // review attention on 西洋人, which was right all along.
+    when: (raw, i) => /[ぁ-ん]/u.test((raw[i - 1]?.surface_form ?? '').slice(-1)),
+    note: 'じん is the nationality suffix (カナダ人); a bare 人 meaning "person" is ひと',
+  },
+  {
+    surface: '十分',
+    reading: 'ジュウブン',
+    note: 'confirm the sense: じゅうぶん is "enough", じゅっぷん is ten minutes. IPADIC lexicalises this as one token, so the correction pass can never reach it — this flag is the only guard',
+  },
+  // ── From a second adversarial sweep (2026-08-25, this file's third pass),
+  //    which looked specifically at SINGLE-KANJI tokens standing between kana
+  //    — the environment where IPADIC's on-reading default is least defensible
+  //    and where the first two sweeps, both organised around jukugo and
+  //    numerals, had no reason to look.
+  {
+    surface: '金',
+    reading: 'キン',
+    // Unconditional. Both readings are live for a bare 金 — きん is the metal
+    // (「金の指輪」), かね is money — and IPADIC picks きん every time. All three
+    // occurrences in the N5 queue mean money, one of them at a rank that
+    // publishes.
+    note: 'a bare 金 meaning money is かね; きん is the metal',
+  },
+  {
+    surface: '今',
+    reading: 'コン',
+    // IPADIC tags this 接頭詞 — it has decided 今 is the prefix of a compound
+    // (今月, 今シーズン) and then found no compound. Standalone 今 is いま.
+    // Left as a flag rather than a correction because こん IS right when a
+    // noun really does follow (「今シーズンは…」), which is a judgement about
+    // the next word, not a lookup.
+    note: 'こん is the compound prefix (今月, 今シーズン); a standalone 今 is いま',
+  },
+  {
+    surface: '土',
+    reading: 'ド',
+    note: 'ど survives only in compounds (土曜日, 土地, 土台), all of which IPADIC keeps whole; a bare 土 meaning soil is つち',
+  },
+  // ── The pairs AMBIGUOUS in lib/sentences/reading-corrections.ts names as
+  //    deliberately excluded from the correction table. That comment promises
+  //    the reviewer is told instead, and for a while only 十分 actually was.
+  //    Each guard also tests the token BEFORE the numeral: in 二十一日 the
+  //    token preceding 日 is still 一, and にじゅういちにち is perfectly regular.
+  {
+    surface: '日',
+    reading: 'ニチ',
+    when: (raw, i) =>
+      /^(一|1|１)$/u.test(raw[i - 1]?.surface_form ?? '') &&
+      !/^[0-9０-９〇零一二三四五六七八九十百千]+$/u.test(raw[i - 2]?.surface_form ?? ''),
+    note: '一日 is ついたち (the 1st) or いちにち (a whole day) — both frequent, only the English decides',
+  },
+  {
+    surface: '時間',
+    reading: 'ジカン',
+    when: (raw, i) =>
+      /^(七|7|７)$/u.test(raw[i - 1]?.surface_form ?? '') &&
+      !/^[0-9０-９〇零一二三四五六七八九十百千]+$/u.test(raw[i - 2]?.surface_form ?? ''),
+    note: '七時間 is しちじかん or ななじかん; both are standard for a span',
+  },
+  {
+    surface: 'ヶ月',
+    reading: 'カゲツ',
+    when: (raw, i) =>
+      /^(八|8|８)$/u.test(raw[i - 1]?.surface_form ?? '') &&
+      !/^[0-9０-９〇零一二三四五六七八九十百千]+$/u.test(raw[i - 2]?.surface_form ?? ''),
+    note: '八ヶ月 is はっかげつ or はちかげつ; both are ordinary',
+  },
+  {
+    surface: '階',
+    reading: 'カイ',
+    when: (raw, i) =>
+      /^(三|八|3|8|３|８)$/u.test(raw[i - 1]?.surface_form ?? '') &&
+      !/^[0-9０-９〇零一二三四五六七八九十百千]+$/u.test(raw[i - 2]?.surface_form ?? ''),
+    note: '三階 is さんがい or さんかい and 八階 is はっかい or はちかい; the other floors are in the correction table',
+  },
+  // ── From a fourth sweep, which re-read all 650 candidates with their English
+  //    rather than working from the distinct surface|reading table. Reading a
+  //    pair in isolation cannot see 「長い間」; only the sentence can.
+  {
+    surface: '千',
+    reading: 'セン',
+    // 何千 is なんぜん — rendaku the numeral table cannot express, because 何 is
+    // not a value it can parse. Shipped at rank 1 of 千 and rank 2 of 人.
+    when: (raw, i) => raw[i - 1]?.surface_form === '何',
+    note: '何千 is なんぜん, not なんせん',
+  },
+  {
+    surface: '間',
+    reading: 'カン',
+    // Sibling of the 間/マ rule below, and it took a second sweep to find:
+    // 「長い間」 tokenizes with かん in one sentence and ま in another, so
+    // flagging only ま left ながいかん shipping at rank 2.
+    when: (raw, i) => raw[i - 1]?.pos === '形容詞',
+    note: 'after an adjective, 間 is あいだ (長い間 = ながいあいだ); かん only survives inside compounds like 年間',
+  },
+  {
+    surface: '書き',
+    reading: 'ガキ',
+    // がき is the bound rendaku form, and every word that licenses it — 落書き,
+    // 下書き — is a single IPADIC token, so a BARE 書き read がき is always the
+    // verb and always かき.
+    note: 'がき only occurs bound (落書き, 下書き), all of which IPADIC keeps whole; a bare 書き is かき',
+  },
+  {
+    surface: '入り',
+    reading: 'イリ',
+    // お入りになる is おはいり. お気に入り and 仲間入り are single tokens, so the
+    // honorific お is the discriminator without catching the noun uses.
+    when: (raw, i) => raw[i - 1]?.surface_form === 'お',
+    note: '「お入りになる」 is おはいり; いり is the noun-forming reading (仲間入り), which IPADIC keeps whole',
+  },
+  {
+    surface: '生っ',
+    reading: 'ナッ',
+    // Not a misreading but a MIS-SEGMENTATION, which reaches the page the same
+    // way: 女子高生って split as 女子高 + 生っ + て, so 生 carries なっ.
+    note: 'segmentation failure — 女子高生って was split as 女子高 + 生っ; the word is じょしこうせい',
+  },
+  {
+    surface: '間',
+    reading: 'マ',
+    // Deliberately unconditional. The first version of this rule fired only
+    // after の and missed 「長い間」 at rank 2 — ながいあいだ, rendered ながいま.
+    // Standalone 間 is あいだ in almost every environment a learner meets; ま
+    // survives in 「間が持たない」 and 「間を置く」, which is exactly enough
+    // ambiguity to keep this a flag rather than a correction.
+    note: 'standalone 間 is usually あいだ (a span); ま is the rarer "pause/timing" sense',
   },
 ];
 
@@ -373,6 +606,15 @@ interface Tokenized {
   unknownReadings: number;
   /** Hits from KNOWN_MISREADINGS, already formatted for `scoreBreakdown`. */
   misreadingFlags: string[];
+  /** Numeral/counter and 日本 readings rewritten by `correctReadings`. */
+  corrections: AppliedCorrection[];
+  /**
+   * Maps an index into `raw` to its index in `tokens`. Not the identity —
+   * `correctReadings` merges a numeral into its counter, so `tokens` is shorter
+   * than `raw` whenever a correction fired. Anything walking the two in
+   * parallel MUST go through this.
+   */
+  rawToToken: number[];
 }
 
 /**
@@ -394,7 +636,8 @@ function tokenize(tokenizer: Tokenizer<IpadicFeatures>, japanese: string): Token
   const raw = tokenizer.tokenize(japanese);
   const tokens: Token[] = [];
   let unknownReadings = 0;
-  const misreadingFlags: string[] = [];
+  /** Flag hits, kept with their raw index so corrections can retire them below. */
+  const flagged: { rawIndex: number; text: string }[] = [];
 
   for (let i = 0; i < raw.length; i++) {
     const t = raw[i];
@@ -413,20 +656,55 @@ function tokenize(tokenizer: Tokenizer<IpadicFeatures>, japanese: string): Token
     for (const m of KNOWN_MISREADINGS) {
       if (t.surface_form !== m.surface || t.reading !== m.reading) continue;
       if (m.when && !m.when(raw, i)) continue;
-      misreadingFlags.push(
-        `⚠ known IPADIC failure: 「${m.surface}」 read as ${m.reading} — ${m.note}; verify before accepting`
-      );
+      flagged.push({
+        rawIndex: i,
+        text: `⚠ known IPADIC failure: 「${m.surface}」 read as ${m.reading} — ${m.note}; verify before accepting`,
+      });
     }
 
     tokens.push(token);
   }
 
+  // Correct the numeral/counter irregularities IPADIC cannot see, and 日本's
+  // にっぽん default. This MERGES tokens (八《はち》日《にち》 → 八日《ようか》),
+  // which is why it must run before the invariant check below rather than
+  // after — merging preserves the concatenated surface, and that is precisely
+  // the property worth re-asserting on the rewritten array rather than the
+  // original one.
+  const corrected = correctReadings(tokens);
+
   // Reject rather than throw. A single pathological sentence out of 250k must
   // not take the run down, but it must also never reach the queue — so it is
   // dropped here and counted, and the run reports the count loudly at the end.
-  if (tokens.map((t) => t.surface).join('') !== japanese) return null;
+  if (corrected.tokens.map((t) => t.surface).join('') !== japanese) return null;
 
-  return { tokens, raw, unknownReadings, misreadingFlags };
+  // Recount rather than carry the pre-merge tally forward: a correction can
+  // absorb a token, and this number drives a score penalty.
+  unknownReadings = corrected.tokens.filter((t) => t.readingUnknown).length;
+
+  // Retire any flag the correction pass has already resolved. The two overlap
+  // by construction — 日本人/ニッポンジン is both a KNOWN_MISREADING and a thing
+  // correctNipponReading fixes — and leaving both in place charged the
+  // candidate −4 for a defect it no longer had, then told the reviewer to
+  // verify furigana that was already right.
+  // Retire by INDEX. Keying this by the corrected surface — as it did at first —
+  // could never retire a counter flag at all, because a merge's surface (`9月`)
+  // is by construction not the flag's surface (`月`). The reviewer was still
+  // charged −4 and told to verify 「月」 on a sentence where 9月 had already been
+  // corrected to くがつ, which is precisely what this retirement was written to
+  // stop. `sourceIndex` maps the flag's raw index to the token that absorbed it.
+  const misreadingFlags = flagged
+    .filter((f) => !corrected.correctedIndices.has(corrected.sourceIndex[f.rawIndex]))
+    .map((f) => f.text);
+
+  return {
+    tokens: corrected.tokens,
+    raw,
+    unknownReadings,
+    misreadingFlags,
+    corrections: corrected.corrections,
+    rawToToken: corrected.sourceIndex,
+  };
 }
 
 /* ═══════════════════════ Corpus word-frequency table ═════════════════════ */
@@ -704,7 +982,13 @@ function usesWord(english: string, word: string): boolean {
   // Trailing \b is always required, so a bare prefix fragment never matches.
   // The leading \b is dropped only for long keywords, which is what lets a
   // compound head match ("holi|day", "birth|day").
-  const lead = word.length >= 4 ? '' : '\\b';
+  // A suffix match additionally needs at least three letters in front of it.
+  // Without that, `round` (a sense of 円) matched inside "a|round" and, being
+  // longer than `yen`, won the longest-keyword tiebreak — so 「１万円ぐらい」/
+  // "It will cost around 10,000 yen" was hinted `round`. Real compound heads
+  // all clear the bar ("after|noon", "birth|day", "Japan|ese"); "a|round" does
+  // not. Swept over the whole N5 queue this changes exactly one hint.
+  const lead = word.length >= 4 ? '(\\b|(?<=[a-z]{3}))' : '\\b';
   return new RegExp(`${lead}${stem}${infl}${adj}\\b`, 'i').test(english);
 }
 
@@ -717,6 +1001,19 @@ function usesWord(english: string, word: string): boolean {
  * heuristic being honest, not failing.
  */
 function inferSense(english: string, senses: string[]): string | null {
+  // A kanji with a single parsed sense has no sense QUESTION, so a hint here
+  // carries no information — and it is not merely inert, because senseKey feeds
+  // `sensePenalty` during selection. On a monosemous kanji that penalty inverts:
+  // it charges the candidates whose translation names the kanji's only meaning
+  // and exempts the ones whose translation does not. On 右 [right (direction)]
+  // the two exempt candidates were both idioms where 右 is not the direction at
+  // all (「右から左へ」, 「右に出る者はいない」) — precisely the sentences a 右
+  // page should not be featuring, promoted over the literal ones.
+  //
+  // 41 of the 82 N5 kanji parse to one sense, and they accounted for 43 of the
+  // 62 penalty firings in the queue before this line existed.
+  if (senses.length < 2) return null;
+
   let best: string | null = null;
   let bestLen = 0;
   for (const sense of senses) {
@@ -743,6 +1040,43 @@ interface Ranked {
   targetWordKey: string;
   /** Inferred sense of the target kanji, or null when we could not tell. */
   senseKey: string | null;
+}
+
+/* ══════════════════════ Near-duplicate detection ═════════════════════════ */
+
+/** Character trigrams of a sentence, for cheap textual overlap. */
+function trigrams(s: string): Set<string> {
+  const out = new Set<string>();
+  const chars = [...s];
+  for (let i = 0; i + 3 <= chars.length; i++) out.add(chars.slice(i, i + 3).join(''));
+  return out;
+}
+
+/** English reduced to comparable form — case and punctuation carry no meaning here. */
+function englishKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * True when two candidates say the same thing.
+ *
+ * Two independent tests, because the pairs in the corpus fail in two different
+ * ways. Near-identical Japanese catches 小学校/小学生 — one character apart,
+ * different words, same sentence. Identical English catches the pair whose
+ * Japanese diverges more than the trigram test tolerates but which still
+ * teaches nothing new (シンガポールからやって来ました / シンガポールから来ました,
+ * both "I'm from Singapore").
+ */
+function isNearDuplicate(
+  a: { japanese: string; english: string | null; grams: Set<string> },
+  b: { japanese: string; english: string | null; grams: Set<string> }
+): boolean {
+  if (a.english && b.english && englishKey(a.english) === englishKey(b.english)) return true;
+
+  let shared = 0;
+  for (const g of a.grams) if (b.grams.has(g)) shared++;
+  const union = a.grams.size + b.grams.size - shared;
+  return union > 0 && shared / union >= NEAR_DUPLICATE_JACCARD;
 }
 
 function parseArgs(): { level: Level; kanji: string | null } {
@@ -946,16 +1280,23 @@ async function main() {
       for (const k of [entry.kanji, ...c.dictKanji.filter((x) => x !== entry.kanji)]) {
         const idx = tok.raw.findIndex((t) => t.pos !== '記号' && t.surface_form.includes(k));
         if (idx === -1) continue;
+        // `idx` addresses `raw`; the token list is shorter wherever a reading
+        // correction merged a numeral into its counter.
+        const ti = tok.rawToToken[idx];
         if (k === entry.kanji) {
           targetToken = tok.raw[idx];
-          targetTokenIndex = idx;
+          targetTokenIndex = ti;
         }
-        const reading = tok.tokens[idx].reading;
+        const reading = tok.tokens[ti].reading;
         // A KanjiTarget with no reading would have to carry an empty string,
         // which reads as data rather than as absence. The token's
         // `readingUnknown` flag is the honest record, so the target is simply
         // omitted and the candidate is penalised below.
-        if (reading) targets.push({ kanji: k, word: tok.raw[idx].surface_form, reading });
+        // `word` comes from the CORRECTED token, not from `raw`: after a merge
+        // the reading covers the whole numeral+counter (八日 → ようか), and
+        // pairing it with raw's bare 八 would put the two back into exactly the
+        // disagreement this block exists to prevent.
+        if (reading) targets.push({ kanji: k, word: tok.tokens[ti].surface, reading });
       }
 
       // ── Target-usage signals.
@@ -1004,6 +1345,14 @@ async function main() {
         scoreHere(WEIGHTS.knownMisreadingEach, flag);
       }
 
+      // Corrections carry zero weight — they are not evidence about the
+      // sentence, they are a record of what we rewrote before the reviewer saw
+      // it. Worth showing precisely because it is otherwise invisible: the
+      // queue would look as though IPADIC had got it right all along.
+      for (const fix of tok.corrections) {
+        scoreHere(0, `✎ reading corrected: 「${fix.surface}」 ${fix.was} → ${fix.now}`);
+      }
+
       const senseKey = inferSense(c.english ?? '', senses);
 
       ranked.push({ cand: c, tok, score: points, lines, targets, targetWordKey, senseKey });
@@ -1047,24 +1396,55 @@ async function main() {
         : Math.max(WEIGHTS.duplicateSenseFloor, WEIGHTS.duplicateSenseEach * seen);
     };
 
+    // Trigram sets are built once per candidate, not per comparison — the inner
+    // loop below is O(remaining × selected) per pick.
+    const textOf = new Map<Ranked, { japanese: string; english: string | null; grams: Set<string> }>();
+    const textFor = (r: Ranked) => {
+      let t = textOf.get(r);
+      if (!t) {
+        t = { japanese: r.cand.text, english: r.cand.english ?? null, grams: trigrams(r.cand.text) };
+        textOf.set(r, t);
+      }
+      return t;
+    };
+    const pickedText: { japanese: string; english: string | null; grams: Set<string> }[] = [];
+
+    /** Repeat charge for a sentence that restates one already selected. */
+    const nearDuplicatePenalty = (r: Ranked) => {
+      if (pickedText.length === 0) return 0;
+      const t = textFor(r);
+      let hits = 0;
+      for (const p of pickedText) if (isNearDuplicate(t, p)) hits++;
+      return WEIGHTS.nearDuplicateEach * hits;
+    };
+
     while (selected.length < EMIT_PER_KANJI && remaining.length > 0) {
       let bestIdx = 0;
       let bestScore = -Infinity;
       let bestWordPenalty = 0;
       let bestSensePenalty = 0;
+      let bestDupePenalty = 0;
       for (let i = 0; i < remaining.length; i++) {
         const wp = wordPenalty(remaining[i]);
         const sp = sensePenalty(remaining[i]);
-        const adjusted = remaining[i].score + wp + sp;
+        const dp = nearDuplicatePenalty(remaining[i]);
+        const adjusted = remaining[i].score + wp + sp + dp;
         if (adjusted > bestScore) {
           bestScore = adjusted;
           bestIdx = i;
           bestWordPenalty = wp;
           bestSensePenalty = sp;
+          bestDupePenalty = dp;
         }
       }
 
       const pick = remaining.splice(bestIdx, 1)[0];
+      pickedText.push(textFor(pick));
+      if (bestDupePenalty !== 0) {
+        pick.lines.push(
+          `${bestDupePenalty.toFixed(1)} diversity: restates a sentence already selected for this kanji`
+        );
+      }
       const seen = usedWord.get(pick.targetWordKey) ?? 0;
       usedWord.set(pick.targetWordKey, seen + 1);
       if (bestWordPenalty !== 0) {
@@ -1122,7 +1502,8 @@ async function main() {
           hasAudio: pick.cand.hasAudio,
           isTanaka: pick.cand.isTanaka,
         },
-        score: Math.round((pick.score + bestWordPenalty + bestSensePenalty) * 10) / 10,
+        score:
+          Math.round((pick.score + bestWordPenalty + bestSensePenalty + bestDupePenalty) * 10) / 10,
         scoreBreakdown: pick.lines,
         rank: selected.length + 1,
         senseHint: pick.senseKey,

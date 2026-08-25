@@ -1,4 +1,257 @@
 {
   "level": "N5",
-  "decisions": []
+  "decisions": [
+    {
+      "candidateId": "tatoeba-1678421-12528092",
+      "targetKanji": "食",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "English has a typo: \"How should I eat ths?\". Source text, so it cannot be corrected.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.298Z"
+    },
+    {
+      "candidateId": "tatoeba-226503-63848",
+      "targetKanji": "中",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "「お話し中すみません」 is \"sorry to interrupt\", not \"May I cut in?\".",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.307Z"
+    },
+    {
+      "candidateId": "tatoeba-10979899-13690714",
+      "targetKanji": "高",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"By this point today is that child also a highschool student?\" is not grammatical English.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.313Z"
+    },
+    {
+      "candidateId": "tatoeba-172888-241585",
+      "targetKanji": "女",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"A woman is going into it now\" — \"it\" has no antecedent when the sentence stands alone.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.320Z"
+    },
+    {
+      "candidateId": "tatoeba-169511-244975",
+      "targetKanji": "三",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "An English proverb substituted for a Japanese one; it translates nothing in the source.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.326Z"
+    },
+    {
+      "candidateId": "tatoeba-3256381-6478547",
+      "targetKanji": "本",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "Fragment. Loses the question — \"is Galileo Galilei his real name?\".",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.333Z"
+    },
+    {
+      "candidateId": "tatoeba-214732-52026",
+      "targetKanji": "時",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "JP states that they will be able to meet from time to time; EN turns it into an invitation.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.339Z"
+    },
+    {
+      "candidateId": "tatoeba-7610676-6664321",
+      "targetKanji": "午",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "午後 is the afternoon, not the evening — the translation contradicts the meaning 午 is teaching.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.352Z"
+    },
+    {
+      "candidateId": "tatoeba-144626-269938",
+      "targetKanji": "七",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "Proverb substituted, and its number differs from the 七十五 the sentence is demonstrating.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.358Z"
+    },
+    {
+      "candidateId": "tatoeba-213774-51061",
+      "targetKanji": "高",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"The idea made my soul rise\" is not idiomatic English.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.367Z"
+    },
+    {
+      "candidateId": "tatoeba-772446-770836",
+      "targetKanji": "語",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "Dangling relative clause; \"who was outside\" attaches to the balcony and reverses who is where.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.373Z"
+    },
+    {
+      "candidateId": "tatoeba-125591-278401",
+      "targetKanji": "雨",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "通り雨 is a passing shower, not a tropical storm.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.380Z"
+    },
+    {
+      "candidateId": "tatoeba-207800-45054",
+      "targetKanji": "北",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"above London\" for 北 teaches the wrong English word for the kanji being learned.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.386Z"
+    },
+    {
+      "candidateId": "tatoeba-207801-45056",
+      "targetKanji": "北",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"lies just above London\" for 北 — same defect as its sibling sentence.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:13:14.393Z"
+    },
+    {
+      "candidateId": "tatoeba-218159-55471",
+      "targetKanji": "円",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"This is five thousand yen in the Japanese Yen\" is ungrammatical and tautological. Both sides flagged non-native.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:34:05.113Z"
+    },
+    {
+      "candidateId": "tatoeba-823590-239301",
+      "targetKanji": "百",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "An English proverb substituted for a Japanese one; it translates nothing, and 百 = hundred survives nowhere in the English.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:34:05.184Z"
+    },
+    {
+      "candidateId": "tatoeba-174511-34917",
+      "targetKanji": "木",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "Proverb substituted rather than translated, and the sentence is above-N1 (枯 is never taught).",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:34:05.213Z"
+    },
+    {
+      "candidateId": "tatoeba-10756611-61285",
+      "targetKanji": "万",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"for a rainy day\" is an English idiom swapped in for 万一 (\"in case of emergency\"); teaches nothing of 万 = ten thousand.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T11:34:05.223Z"
+    },
+    {
+      "candidateId": "tatoeba-11044887-12613072",
+      "targetKanji": "入",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "English invents \"the porch door\", absent from the Japanese, and reverses the direction: the cat entered the veranda, it did not come in from it. Rank 1 for 入.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.787Z"
+    },
+    {
+      "candidateId": "tatoeba-122693-281309",
+      "targetKanji": "十",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "Subject mismatch: 「日本に来てから十年になります」 is first person, rendered \"since he came to Japan\". tatoeba-122378-281625 renders the identical construction correctly with \"I\". Rank 1 for 十.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.798Z"
+    },
+    {
+      "candidateId": "tatoeba-198679-35872",
+      "targetKanji": "雨",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "\"rainshower\" is not a word — \"rain shower\" or \"shower\". Same class of source typo as the 食 \"ths\" rejection.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.805Z"
+    },
+    {
+      "candidateId": "tatoeba-142612-271958",
+      "targetKanji": "西",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "西洋人 is \"Westerner\", not \"European\". The mistranslation lands directly on the sense of 西 this slot is teaching.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.811Z"
+    },
+    {
+      "candidateId": "tatoeba-9606290-10063648",
+      "targetKanji": "白",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "Dangling \"it\" with no antecedent, and a meaning inversion: 白日の下に晒される is exposure to public scrutiny, whereas \"see the light of day\" is being finally realised.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.817Z"
+    },
+    {
+      "candidateId": "tatoeba-3402115-3402100",
+      "targetKanji": "三",
+      "verdict": "rejected",
+      "rejectReason": "unnatural-japanese",
+      "note": "Typo in the JAPANESE source: 「電話をかけなくてははらない」 should be ならない. Verbatim licensed text, so it cannot be corrected.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.824Z"
+    },
+    {
+      "candidateId": "tatoeba-10049868-61015",
+      "targetKanji": "半",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "「約半リットル」 rendered \"one pint\": drops 半 — the target kanji — and silently changes the unit.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.831Z"
+    },
+    {
+      "candidateId": "tatoeba-218421-55732",
+      "targetKanji": "東",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "古今東西 rendered \"a universal truth that transcends time\": 東西 is dropped entirely, so the target kanji has no counterpart in the English.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.837Z"
+    },
+    {
+      "candidateId": "tatoeba-2280800-2280778",
+      "targetKanji": "友",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "「トムは高校時代の友人です」 rendered \"Tom and I went to the same high school\" — 友人 is dropped and the English asserts something the Japanese does not.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.851Z"
+    },
+    {
+      "candidateId": "tatoeba-219694-57015",
+      "targetKanji": "読",
+      "verdict": "rejected",
+      "rejectReason": "bad-translation",
+      "note": "「楽しく読めます」 rendered \"This book will give you great pleasure\" — the target kanji 読 has no counterpart in the English.",
+      "reviewer": "audit-2026-08-25",
+      "decidedAt": "2026-08-25T12:04:02.857Z"
+    }
+  ]
 }

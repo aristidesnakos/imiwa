@@ -19,6 +19,7 @@
     "validate:subscribe": "tsx --tsconfig tsconfig.json scripts/validate-subscribe.ts",
     "sentences:publish": "tsx --tsconfig tsconfig.json scripts/sentences/publish.ts",
     "validate:sentences": "tsx --tsconfig tsconfig.json scripts/sentences/validate-published.ts",
+    "validate:readings": "tsx --tsconfig tsconfig.json scripts/sentences/validate-readings.ts",
     "validate:announcements": "tsx --tsconfig tsconfig.json scripts/announcements/validate.ts",
     "announcements:status": "tsx --tsconfig tsconfig.json scripts/announcements/status.ts"
   },
