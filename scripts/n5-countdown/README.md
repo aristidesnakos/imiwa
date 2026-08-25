@@ -70,14 +70,147 @@ openers + 82 kanji sheets + one tracker, about 98 pages.
 
 ## Known gap before this can be sold
 
-Every kanji sheet has room reserved for 2–3 high-frequency vocabulary words and one
-example sentence, and that space is currently empty. `data/sentences/published/N5.json`
-is `[]` and there is no vocabulary source in the repo. Do not fill it by hand —
-unreviewed readings in front of paying learners is the one failure this product cannot
-survive. Wire up a licensed source (JMdict, or work the Tatoeba review queue) and the
-layout takes it without a redesign.
+**Vocabulary: closed 25 Aug 2026** — see the content-layer section below.
+**Sentences: still open.** `data/sentences/published/N5.json` is `[]`; the queue has 8
+reviewed-ready candidates per character and nobody has worked it. 82 accepted sentences
+is the remaining gate.
 
 ## Attribution
 
 Stroke data is KanjiVG © Ulrich Apel, CC BY-SA 3.0. Share-alike, so the credit has to
 travel on every sheet that carries a diagram — not on a colophon at the back.
+
+## The content layer — vocabulary and sentences
+
+Added 25 Aug 2026. Both layers fail to nothing: no word block if there is no
+word, no sentence block if no human has accepted a sentence. Neither prints a
+placeholder, for the same reason `ExampleSentencesSection` renders nothing on
+the site — an empty state advertises a gap the reader would not otherwise
+notice, and on a page someone paid for it reads as unfinished rather than
+sparse.
+
+| file | reads | writes | needs network |
+|---|---|---|---|
+| `build_vocab.py` | `JMdict_e`, `lib/constants/n5-kanji.ts`, `schedule.json`, `n5-vocab-rejects.json` | `n5-vocab.json` | yes, once |
+| `content.py` | `n5-vocab.json`, `data/sentences/published/N5.json` | — | no |
+
+```bash
+curl -O http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz && gunzip JMdict_e.gz
+python3 build_vocab.py --jmdict JMdict_e --kanji ../../lib/constants/n5-kanji.ts \
+        --schedule schedule.json --rejects n5-vocab-rejects.json --out n5-vocab.json
+```
+
+`n5-vocab.json` is committed (~55 kB) so the book builds offline and so a
+dictionary refresh shows up as a reviewable diff rather than as a silent change
+in what 82 pages say.
+
+### Nothing Japanese is authored anywhere in this folder
+
+Words are verbatim JMdict with their entry sequence attached. Sentences are
+verbatim Tatoeba with their sentence ids. Readings and meanings are verbatim
+`lib/constants/n5-kanji.ts`. The generator selects and lays out; it never
+writes Japanese. That is a product rule first — unreviewed readings in front of
+paying learners is the failure this book cannot survive — and a licence
+position second: CC BY-SA 4.0's ShareAlike triggers on *modification*, so
+reproducing entries unmodified keeps our own material out of scope. Rewriting a
+gloss to fit a column would forfeit that. Never do it; drop the word instead.
+
+### The four selection gates
+
+1. **Containment** — every kanji in the word is one of the 82 this book
+   teaches. A learner can therefore write every word on the page using only
+   characters they have been taught. It costs real words (日曜日 dies on 曜) and
+   the trade is correct: a word you cannot write is a reading exercise.
+2. **Frequency** — JMdict's own `ke_pri` tags, no outside list. Outside JLPT
+   frequency lists are unofficial scrapes with no grant — the Tanos pattern.
+3. **Usability** — archaic, obsolete, rare, slang, vulgar, derogatory and
+   "usually written in kana" entries are dropped.
+4. **Schedule awareness** — words whose *other* kanji are already taught by
+   this sheet's week rank first. This is the one rule that cannot exist without
+   the schedule, and it is why this vocabulary is not the vocabulary a
+   dictionary page would show.
+
+### Five bugs worth not rediscovering
+
+Each of these produced plausible output and no error.
+
+- **`ke_pri` vs `re_pri`.** Priority is tagged per *spelling* and per *reading*.
+  じゅういち carries news1/nf01, so pooling the reading's tags onto the entry's
+  headwords marked 一一 a top-500 word and printed 「一一 (じゅういち) eleven」
+  on the sheet for 一. Same mechanism produced ３千 and 一九. Use `ke_pri` only.
+- **`misc` pooled across senses.** JMdict's 先生 has "teacher" as sense 1 and
+  later senses tagged archaic and jocular. A union over senses marked the whole
+  entry archaic and dropped the most important word containing 先 — invisibly,
+  because a dropped word looks like a word that was never a candidate. Gate on
+  the first sense, which is the only one printed.
+- **`misc` codes vs expanded text.** JMdict_e resolves its entities, so a misc
+  element reads `"archaic"`, never `"arch"`. A filter written against the code
+  list matches nothing and reports no error. Gate 3 was inert for four runs.
+- **`'verb' in 'adverb (fukushi)'`** is true. A substring test promoted every
+  adverb to a core part of speech, which is how 大いに ("very") beat 大きい
+  ("big") to the first slot on the sheet for 大. Match POS by prefix.
+- **nfXX is newspaper frequency.** It ranks 円高, 白書, 出土, 大半 and 二百十日
+  above 高い, 書く, 出る, 大きい and 百 — and all five led their sheets. `ichi1`
+  (Ichimango, general vocabulary) is the learner-frequency signal and leads
+  absolutely; the newspaper band only orders what is left.
+
+### `n5-vocab-rejects.json` is a decision log, not a config file
+
+It lives in its own file for the reason `data/sentences/decisions/` is separate
+from `data/sentences/queue/`: **refreshing the dictionary must never destroy a
+human judgement.** A word struck because its only gloss was "second week's
+memorial services" stays struck through the next JMdict release. `preferred` is
+the mirror — 先生 and 先月 tie on every signal JMdict carries, and only a person
+knows which one a learner needs first.
+
+Striking a word is *selection*. It edits no Japanese and adds none.
+
+### Sentences come from `published/`, never from `queue/`
+
+`data/sentences/queue/N5.json` holds 8 scored, tokenized candidates for each of
+the 82 characters. Taking rank 1 and shipping is the wrong move: the ranker
+scores naturalness, level and length and cannot see that a sentence is a poor
+demonstration of the character it was chosen for. `target-kanji-unused` exists
+as a reject reason in `lib/sentences/types.ts` because that failure was common
+enough to need a name.
+
+`published/N5.json` is `[]` today, so the book currently ships with no sentence
+block. `--sentences=queue` renders the candidates for review and stamps every
+one of them UNREVIEWED on the page. `--mode full` refuses to run with it.
+
+**Do not remove that stamp and do not make `queue` the default.**
+
+### Attribution is per page, not per book
+
+Three licences, three obligations, all discharged in the footer of the sheet
+that carries the material:
+
+| source | licence | why it must be on the page |
+|---|---|---|
+| KanjiVG | CC BY-SA 3.0 | share-alike; the credit travels with the diagram |
+| JMdict | CC BY-SA 4.0 | EDRDG requires the acknowledgement "on each screen display"; a page that can be printed alone must carry it alone |
+| Tatoeba | CC BY 2.0 FR | per *contributor* — Tatoeba does not own the sentences and cannot waive its contributors' attribution |
+
+That last row is why `sentence_credit()` names a person rather than the project,
+and why licence is read per side: a CC0 Japanese sentence paired with a CC BY
+English translation is a real case in the corpus. A null contributor is common
+and expected (40.2% are unadopted Tanaka Corpus imports) and renders as project
+credit alone, never as "unknown".
+
+One consequence for the storefront: **CC BY-SA 4.0 §2(a)(5)(iii) forbids
+applying Effective Technological Measures to the licensed material.** A
+watermark or a stamped buyer name is fine — it restricts nothing. A
+download-disabled, stream-only delivery would not be.
+
+### Layout notes
+
+Stroke diagrams are sized to fit one row rather than fixed, so the block is the
+same height for a 4-stroke character and a 13-stroke one. Fixed sizes wrapped to
+a second row above ten strokes, which pushed the review boxes off the bottom of
+the sheet for 電 — and made page height depend on the character, so no two
+sheets aligned in a 98-page book.
+
+The reading-type mark (`on` / `kun` / `special`) is the one thing on a
+vocabulary row that is ours rather than JMdict's, so it sits in its own margin
+column and never mixes into the gloss text. Interleaving our annotation with
+licensed text is exactly what would turn the entry into Adapted Material.

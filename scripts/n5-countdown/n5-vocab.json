@@ -1,0 +1,3048 @@
+{
+ "source": "JMdict",
+ "sourceUrl": "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz",
+ "license": "CC BY-SA 4.0",
+ "rightsHolder": "Electronic Dictionary Research and Development Group",
+ "attribution": "This publication includes material from the JMdict (EDICT etc.) dictionary files in accordance with the licence provisions of the Electronic Dictionary Research and Development Group. See www.edrdg.org/",
+ "perKanji": 3,
+ "gates": {
+  "containment": "every kanji in the word is one of the 82 N5 characters",
+  "frequency": "JMdict ichi1/news1/spec1 or nf01-nf12",
+  "excludedMisc": [
+   "archaic",
+   "children's language",
+   "dated term",
+   "derogatory",
+   "internet slang",
+   "jocular",
+   "manga slang",
+   "obscure",
+   "obsolete",
+   "proverb",
+   "rare term",
+   "rude or x-rated",
+   "slang",
+   "usually written using kana alone",
+   "vulgar"
+  ],
+  "maxWordLength": 4
+ },
+ "words": {
+  "日": [
+   {
+    "word": "日",
+    "reading": "ひ",
+    "gloss": [
+     "day",
+     "days"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1463770"
+   },
+   {
+    "word": "本日",
+    "reading": "ほんじつ",
+    "gloss": [
+     "today",
+     "this day"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.15,
+    "jmdict_seq": "1523110"
+   },
+   {
+    "word": "日本一",
+    "reading": "にほんいち",
+    "gloss": [
+     "Japan's best",
+     "number one in Japan"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 16,
+    "jmdict_seq": "1730040"
+   }
+  ],
+  "本": [
+   {
+    "word": "本",
+    "reading": "もと",
+    "gloss": [
+     "origin",
+     "source",
+     "beginning"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1260670"
+   },
+   {
+    "word": "本日",
+    "reading": "ほんじつ",
+    "gloss": [
+     "today",
+     "this day"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.15,
+    "jmdict_seq": "1523110"
+   },
+   {
+    "word": "一本",
+    "reading": "いっぽん",
+    "gloss": [
+     "one long cylindrical thing",
+     "one film, TV show, etc.",
+     "one goal, home run, etc."
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 13,
+    "jmdict_seq": "1166600"
+   }
+  ],
+  "一": [
+   {
+    "word": "一",
+    "reading": "いち",
+    "gloss": [
+     "one",
+     "1"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.33,
+    "jmdict_seq": "1160790"
+   },
+   {
+    "word": "一本",
+    "reading": "いっぽん",
+    "gloss": [
+     "one long cylindrical thing",
+     "one film, TV show, etc.",
+     "one goal, home run, etc."
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 13,
+    "jmdict_seq": "1166600"
+   },
+   {
+    "word": "一人",
+    "reading": "ひとり",
+    "gloss": [
+     "one person"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": false,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1576150"
+   }
+  ],
+  "二": [
+   {
+    "word": "二",
+    "reading": "に",
+    "gloss": [
+     "two",
+     "2"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1461140"
+   },
+   {
+    "word": "二日",
+    "reading": "ふつか",
+    "gloss": [
+     "2nd day of the month"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1462900"
+   },
+   {
+    "word": "二人",
+    "reading": "ふたり",
+    "gloss": [
+     "two persons",
+     "two people",
+     "pair"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": false,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1582670"
+   }
+  ],
+  "三": [
+   {
+    "word": "三",
+    "reading": "さん",
+    "gloss": [
+     "three",
+     "3"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1579350"
+   },
+   {
+    "word": "三日",
+    "reading": "みっか",
+    "gloss": [
+     "3rd day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1301330"
+   },
+   {
+    "word": "三本",
+    "reading": "さんぼん",
+    "gloss": [
+     "three (long cylindrical things)"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 22,
+    "jmdict_seq": "1301640"
+   }
+  ],
+  "四": [
+   {
+    "word": "四",
+    "reading": "し",
+    "gloss": [
+     "four",
+     "4"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1579470"
+   },
+   {
+    "word": "四日",
+    "reading": "よっか",
+    "gloss": [
+     "4th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1307320"
+   },
+   {
+    "word": "四本",
+    "reading": "よんほん",
+    "gloss": [
+     "four (long cylindrical things)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "2005490"
+   }
+  ],
+  "五": [
+   {
+    "word": "五",
+    "reading": "ご",
+    "gloss": [
+     "five",
+     "5"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1268060"
+   },
+   {
+    "word": "五日",
+    "reading": "いつか",
+    "gloss": [
+     "5th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1268570"
+   },
+   {
+    "word": "五月",
+    "reading": "ごがつ",
+    "gloss": [
+     "May"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 11,
+    "jmdict_seq": "1268170"
+   }
+  ],
+  "六": [
+   {
+    "word": "六",
+    "reading": "ろく",
+    "gloss": [
+     "six",
+     "6"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1585310"
+   },
+   {
+    "word": "六日",
+    "reading": "むいか",
+    "gloss": [
+     "6th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1561470"
+   },
+   {
+    "word": "六月",
+    "reading": "ろくがつ",
+    "gloss": [
+     "June"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 11,
+    "jmdict_seq": "1561330"
+   }
+  ],
+  "七": [
+   {
+    "word": "七",
+    "reading": "しち",
+    "gloss": [
+     "seven"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1319210"
+   },
+   {
+    "word": "七日",
+    "reading": "なのか",
+    "gloss": [
+     "7th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1579630"
+   },
+   {
+    "word": "二十七日",
+    "reading": "にじゅうしちにち",
+    "gloss": [
+     "27th day of the month"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "2738430"
+   }
+  ],
+  "八": [
+   {
+    "word": "八",
+    "reading": "はち",
+    "gloss": [
+     "eight",
+     "8"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1583090"
+   },
+   {
+    "word": "八日",
+    "reading": "ようか",
+    "gloss": [
+     "8th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1476920"
+   },
+   {
+    "word": "八月",
+    "reading": "はちがつ",
+    "gloss": [
+     "August"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 11,
+    "jmdict_seq": "1476730"
+   }
+  ],
+  "九": [
+   {
+    "word": "九",
+    "reading": "きゅう",
+    "gloss": [
+     "nine",
+     "9"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1578150"
+   },
+   {
+    "word": "九日",
+    "reading": "ここのか",
+    "gloss": [
+     "9th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1243850"
+   },
+   {
+    "word": "九月",
+    "reading": "くがつ",
+    "gloss": [
+     "September"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 11,
+    "jmdict_seq": "1243660"
+   }
+  ],
+  "十": [
+   {
+    "word": "十",
+    "reading": "じゅう",
+    "gloss": [
+     "ten",
+     "10"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1579840"
+   },
+   {
+    "word": "十日",
+    "reading": "とおか",
+    "gloss": [
+     "10th day of the month"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1335000"
+   },
+   {
+    "word": "二十日",
+    "reading": "はつか",
+    "gloss": [
+     "20th day of the month"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1600850"
+   }
+  ],
+  "百": [
+   {
+    "word": "百",
+    "reading": "ひゃく",
+    "gloss": [
+     "hundred",
+     "100"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1488000"
+   },
+   {
+    "word": "何百",
+    "reading": "なんびゃく",
+    "gloss": [
+     "hundreds"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.18,
+    "jmdict_seq": "1189290"
+   }
+  ],
+  "千": [
+   {
+    "word": "千",
+    "reading": "せん",
+    "gloss": [
+     "thousand",
+     "1,000"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1388740"
+   },
+   {
+    "word": "何千",
+    "reading": "なんぜん",
+    "gloss": [
+     "many thousands"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.22,
+    "jmdict_seq": "1189120"
+   }
+  ],
+  "万": [
+   {
+    "word": "万",
+    "reading": "まん",
+    "gloss": [
+     "10,000",
+     "ten thousand"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1584460"
+   },
+   {
+    "word": "万一",
+    "reading": "まんいち",
+    "gloss": [
+     "(unlikely event of) emergency",
+     "the worst(-case scenario)"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.16,
+    "jmdict_seq": "1525780"
+   },
+   {
+    "word": "万年",
+    "reading": "まんねん",
+    "gloss": [
+     "ten thousand years",
+     "eternity"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1526310"
+   }
+  ],
+  "円": [
+   {
+    "word": "円",
+    "reading": "えん",
+    "gloss": [
+     "yen (currency of Japan)"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1175570"
+   },
+   {
+    "word": "円い",
+    "reading": "まるい",
+    "gloss": [
+     "round",
+     "circular",
+     "spherical"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1604230"
+   },
+   {
+    "word": "一円",
+    "reading": "いちえん",
+    "gloss": [
+     "one yen"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.1,
+    "jmdict_seq": "1161130"
+   }
+  ],
+  "時": [
+   {
+    "word": "時",
+    "reading": "とき",
+    "gloss": [
+     "time",
+     "hour",
+     "moment"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1315840"
+   },
+   {
+    "word": "一時",
+    "reading": "いちじ",
+    "gloss": [
+     "one o'clock"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1576100"
+   },
+   {
+    "word": "時間",
+    "reading": "じかん",
+    "gloss": [
+     "time"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1315920"
+   }
+  ],
+  "年": [
+   {
+    "word": "年",
+    "reading": "とし",
+    "gloss": [
+     "year"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1468060"
+   },
+   {
+    "word": "半年",
+    "reading": "はんとし",
+    "gloss": [
+     "half a year",
+     "six months"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1583190"
+   },
+   {
+    "word": "本年",
+    "reading": "ほんねん",
+    "gloss": [
+     "this (current) year"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.2,
+    "jmdict_seq": "1523120"
+   }
+  ],
+  "月": [
+   {
+    "word": "月",
+    "reading": "つき",
+    "gloss": [
+     "Moon"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1255430"
+   },
+   {
+    "word": "半月",
+    "reading": "はんげつ",
+    "gloss": [
+     "half-moon"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.16,
+    "jmdict_seq": "1583170"
+   },
+   {
+    "word": "年月日",
+    "reading": "ねんがっぴ",
+    "gloss": [
+     "date (year, month and day)"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.2,
+    "jmdict_seq": "1468550"
+   }
+  ],
+  "午": [
+   {
+    "word": "午後",
+    "reading": "ごご",
+    "gloss": [
+     "afternoon",
+     "p.m."
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1268990"
+   },
+   {
+    "word": "午前",
+    "reading": "ごぜん",
+    "gloss": [
+     "morning",
+     "a.m."
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1269060"
+   },
+   {
+    "word": "午前中",
+    "reading": "ごぜんちゅう",
+    "gloss": [
+     "in the morning",
+     "during the morning"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 30,
+    "jmdict_seq": "1269070"
+   }
+  ],
+  "半": [
+   {
+    "word": "半",
+    "reading": "はん",
+    "gloss": [
+     "half",
+     "semi-",
+     "partial"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1478750"
+   },
+   {
+    "word": "半ば",
+    "reading": "なかば",
+    "gloss": [
+     "middle",
+     "halfway",
+     "midway"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1478780"
+   },
+   {
+    "word": "半年",
+    "reading": "はんとし",
+    "gloss": [
+     "half a year",
+     "six months"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1583190"
+   }
+  ],
+  "人": [
+   {
+    "word": "人",
+    "reading": "ひと",
+    "gloss": [
+     "person",
+     "someone",
+     "somebody"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1580640"
+   },
+   {
+    "word": "二人",
+    "reading": "ふたり",
+    "gloss": [
+     "two persons",
+     "two people",
+     "pair"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1582670"
+   },
+   {
+    "word": "本人",
+    "reading": "ほんにん",
+    "gloss": [
+     "the person in question",
+     "the person themselves",
+     "said person"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1522750"
+   }
+  ],
+  "女": [
+   {
+    "word": "女",
+    "reading": "おんな",
+    "gloss": [
+     "woman",
+     "female"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1344930"
+   },
+   {
+    "word": "女らしい",
+    "reading": "おんならしい",
+    "gloss": [
+     "womanly",
+     "ladylike",
+     "feminine"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.39,
+    "jmdict_seq": "1344990"
+   },
+   {
+    "word": "女子",
+    "reading": "じょし",
+    "gloss": [
+     "woman",
+     "girl"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1345140"
+   }
+  ],
+  "男": [
+   {
+    "word": "男",
+    "reading": "おとこ",
+    "gloss": [
+     "man",
+     "male"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1419990"
+   },
+   {
+    "word": "男らしい",
+    "reading": "おとこらしい",
+    "gloss": [
+     "manly",
+     "masculine",
+     "like a man"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.37,
+    "jmdict_seq": "1420030"
+   },
+   {
+    "word": "男子",
+    "reading": "だんし",
+    "gloss": [
+     "boy"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1420070"
+   }
+  ],
+  "子": [
+   {
+    "word": "子",
+    "reading": "こ",
+    "gloss": [
+     "child",
+     "kid",
+     "teenager"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1307770"
+   },
+   {
+    "word": "女子",
+    "reading": "じょし",
+    "gloss": [
+     "woman",
+     "girl"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1345140"
+   },
+   {
+    "word": "男子",
+    "reading": "だんし",
+    "gloss": [
+     "boy"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1420070"
+   }
+  ],
+  "母": [
+   {
+    "word": "母",
+    "reading": "はは",
+    "gloss": [
+     "mother"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1514990"
+   },
+   {
+    "word": "お母さん",
+    "reading": "おかあさん",
+    "gloss": [
+     "mother",
+     "mom",
+     "mum"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1002650"
+   },
+   {
+    "word": "父母",
+    "reading": "ふぼ",
+    "gloss": [
+     "father and mother",
+     "parents"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1497690"
+   }
+  ],
+  "父": [
+   {
+    "word": "父",
+    "reading": "ちち",
+    "gloss": [
+     "father"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1497610"
+   },
+   {
+    "word": "お父さん",
+    "reading": "おとうさん",
+    "gloss": [
+     "father",
+     "dad",
+     "papa"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1002590"
+   },
+   {
+    "word": "父母",
+    "reading": "ふぼ",
+    "gloss": [
+     "father and mother",
+     "parents"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1497690"
+   }
+  ],
+  "友": [
+   {
+    "word": "友",
+    "reading": "とも",
+    "gloss": [
+     "friend",
+     "companion",
+     "comrade"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1539980"
+   },
+   {
+    "word": "友だち",
+    "reading": "ともだち",
+    "gloss": [
+     "friend",
+     "companion"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1540170"
+   },
+   {
+    "word": "友人",
+    "reading": "ゆうじん",
+    "gloss": [
+     "friend"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1540150"
+   }
+  ],
+  "大": [
+   {
+    "word": "大きい",
+    "reading": "おおきい",
+    "gloss": [
+     "big",
+     "large",
+     "great"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1588880"
+   },
+   {
+    "word": "大きさ",
+    "reading": "おおきさ",
+    "gloss": [
+     "size",
+     "dimensions",
+     "volume"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1412910"
+   },
+   {
+    "word": "大人",
+    "reading": "おとな",
+    "gloss": [
+     "adult",
+     "grown-up"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1414170"
+   }
+  ],
+  "小": [
+   {
+    "word": "小さい",
+    "reading": "ちいさい",
+    "gloss": [
+     "small",
+     "little",
+     "tiny"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.24,
+    "jmdict_seq": "1347750"
+   },
+   {
+    "word": "大小",
+    "reading": "だいしょう",
+    "gloss": [
+     "size"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.12,
+    "jmdict_seq": "1414110"
+   },
+   {
+    "word": "小学校",
+    "reading": "しょうがっこう",
+    "gloss": [
+     "primary school",
+     "elementary school",
+     "grade school"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": false,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1347870"
+   }
+  ],
+  "高": [
+   {
+    "word": "高さ",
+    "reading": "たかさ",
+    "gloss": [
+     "height",
+     "altitude",
+     "elevation"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1283200"
+   },
+   {
+    "word": "高い",
+    "reading": "たかい",
+    "gloss": [
+     "high",
+     "tall"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.08,
+    "jmdict_seq": "1283190"
+   },
+   {
+    "word": "高校",
+    "reading": "こうこう",
+    "gloss": [
+     "senior high school",
+     "high school"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1283500"
+   }
+  ],
+  "長": [
+   {
+    "word": "長さ",
+    "reading": "ながさ",
+    "gloss": [
+     "length"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1429770"
+   },
+   {
+    "word": "長い",
+    "reading": "ながい",
+    "gloss": [
+     "long (distance, length)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.15,
+    "jmdict_seq": "1429750"
+   },
+   {
+    "word": "長男",
+    "reading": "ちょうなん",
+    "gloss": [
+     "eldest son (may be the only son)",
+     "first-born son"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1430080"
+   }
+  ],
+  "白": [
+   {
+    "word": "白",
+    "reading": "しろ",
+    "gloss": [
+     "white"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1474900"
+   },
+   {
+    "word": "白い",
+    "reading": "しろい",
+    "gloss": [
+     "white"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.16,
+    "jmdict_seq": "1474910"
+   },
+   {
+    "word": "白人",
+    "reading": "はくじん",
+    "gloss": [
+     "white person",
+     "Caucasian"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1475250"
+   }
+  ],
+  "暑": [
+   {
+    "word": "暑さ",
+    "reading": "あつさ",
+    "gloss": [
+     "heat (of the weather)",
+     "hotness"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.09,
+    "jmdict_seq": "1343480"
+   },
+   {
+    "word": "暑い",
+    "reading": "あつい",
+    "gloss": [
+     "hot",
+     "warm",
+     "sultry"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.34,
+    "jmdict_seq": "1343460"
+   }
+  ],
+  "天": [
+   {
+    "word": "天",
+    "reading": "てん",
+    "gloss": [
+     "sky"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1438210"
+   },
+   {
+    "word": "雨天",
+    "reading": "うてん",
+    "gloss": [
+     "rainy weather"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.22,
+    "jmdict_seq": "1172100"
+   },
+   {
+    "word": "天の川",
+    "reading": "あまのがわ",
+    "gloss": [
+     "Milky Way"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1582020"
+   }
+  ],
+  "火": [
+   {
+    "word": "火",
+    "reading": "ひ",
+    "gloss": [
+     "fire",
+     "flame",
+     "blaze"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1193610"
+   },
+   {
+    "word": "火山",
+    "reading": "かざん",
+    "gloss": [
+     "volcano"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1193910"
+   },
+   {
+    "word": "出火",
+    "reading": "しゅっか",
+    "gloss": [
+     "outbreak of fire"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 22,
+    "jmdict_seq": "1338330"
+   }
+  ],
+  "水": [
+   {
+    "word": "水",
+    "reading": "みず",
+    "gloss": [
+     "water (esp. cool or cold)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1371260"
+   },
+   {
+    "word": "大水",
+    "reading": "おおみず",
+    "gloss": [
+     "flood"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.37,
+    "jmdict_seq": "1414210"
+   },
+   {
+    "word": "水分",
+    "reading": "すいぶん",
+    "gloss": [
+     "water",
+     "liquid",
+     "fluid"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.11,
+    "jmdict_seq": "1372010"
+   }
+  ],
+  "木": [
+   {
+    "word": "木",
+    "reading": "き",
+    "gloss": [
+     "tree",
+     "shrub",
+     "bush"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1534520"
+   },
+   {
+    "word": "大木",
+    "reading": "たいぼく",
+    "gloss": [
+     "large tree"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1415090"
+   }
+  ],
+  "土": [
+   {
+    "word": "土",
+    "reading": "つち",
+    "gloss": [
+     "earth",
+     "soil",
+     "dirt"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1445270"
+   },
+   {
+    "word": "本土",
+    "reading": "ほんど",
+    "gloss": [
+     "mainland",
+     "the country proper"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 21,
+    "jmdict_seq": "1627340"
+   },
+   {
+    "word": "土日",
+    "reading": "どにち",
+    "gloss": [
+     "weekend",
+     "Saturday and Sunday"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1898600"
+   }
+  ],
+  "山": [
+   {
+    "word": "山",
+    "reading": "やま",
+    "gloss": [
+     "mountain",
+     "hill"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1302680"
+   },
+   {
+    "word": "火山",
+    "reading": "かざん",
+    "gloss": [
+     "volcano"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1193910"
+   },
+   {
+    "word": "小山",
+    "reading": "こやま",
+    "gloss": [
+     "hill",
+     "knoll"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 19,
+    "jmdict_seq": "1348160"
+   }
+  ],
+  "川": [
+   {
+    "word": "川",
+    "reading": "かわ",
+    "gloss": [
+     "river",
+     "stream"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1390020"
+   },
+   {
+    "word": "小川",
+    "reading": "おがわ",
+    "gloss": [
+     "stream",
+     "brook",
+     "creek"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1348460"
+   },
+   {
+    "word": "天の川",
+    "reading": "あまのがわ",
+    "gloss": [
+     "Milky Way"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1582020"
+   }
+  ],
+  "雨": [
+   {
+    "word": "雨",
+    "reading": "あめ",
+    "gloss": [
+     "rain"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1171900"
+   },
+   {
+    "word": "小雨",
+    "reading": "こさめ",
+    "gloss": [
+     "light rain",
+     "drizzle"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.19,
+    "jmdict_seq": "1347810"
+   },
+   {
+    "word": "雨天",
+    "reading": "うてん",
+    "gloss": [
+     "rainy weather"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.22,
+    "jmdict_seq": "1172100"
+   }
+  ],
+  "東": [
+   {
+    "word": "東",
+    "reading": "ひがし",
+    "gloss": [
+     "east"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1447440"
+   },
+   {
+    "word": "東西",
+    "reading": "とうざい",
+    "gloss": [
+     "east and west"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1447910"
+   },
+   {
+    "word": "北東",
+    "reading": "ほくとう",
+    "gloss": [
+     "northeast"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1584190"
+   }
+  ],
+  "西": [
+   {
+    "word": "西",
+    "reading": "にし",
+    "gloss": [
+     "west"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1380840"
+   },
+   {
+    "word": "東西",
+    "reading": "とうざい",
+    "gloss": [
+     "east and west"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1447910"
+   },
+   {
+    "word": "南西",
+    "reading": "なんせい",
+    "gloss": [
+     "southwest"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1582600"
+   }
+  ],
+  "南": [
+   {
+    "word": "南",
+    "reading": "みなみ",
+    "gloss": [
+     "south"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1459870"
+   },
+   {
+    "word": "南北",
+    "reading": "なんぼく",
+    "gloss": [
+     "north and south",
+     "north to south"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1460600"
+   },
+   {
+    "word": "南西",
+    "reading": "なんせい",
+    "gloss": [
+     "southwest"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1582600"
+   }
+  ],
+  "北": [
+   {
+    "word": "北",
+    "reading": "きた",
+    "gloss": [
+     "north"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1520670"
+   },
+   {
+    "word": "南北",
+    "reading": "なんぼく",
+    "gloss": [
+     "north and south",
+     "north to south"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1460600"
+   },
+   {
+    "word": "北東",
+    "reading": "ほくとう",
+    "gloss": [
+     "northeast"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1584190"
+   }
+  ],
+  "行": [
+   {
+    "word": "行う",
+    "reading": "おこなう",
+    "gloss": [
+     "to perform",
+     "to do",
+     "to conduct oneself"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1589060"
+   },
+   {
+    "word": "行く",
+    "reading": "いく",
+    "gloss": [
+     "to go",
+     "to move (towards)",
+     "to head (towards)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1578850"
+   },
+   {
+    "word": "先行",
+    "reading": "せんこう",
+    "gloss": [
+     "going ahead",
+     "going first"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 15,
+    "jmdict_seq": "1387640"
+   }
+  ],
+  "来": [
+   {
+    "word": "来る",
+    "reading": "くる",
+    "gloss": [
+     "to come (spatially or temporally)",
+     "to approach",
+     "to arrive"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.16,
+    "jmdict_seq": "1547720"
+   },
+   {
+    "word": "来年",
+    "reading": "らいねん",
+    "gloss": [
+     "next year"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1548220"
+   },
+   {
+    "word": "出来高",
+    "reading": "できだか",
+    "gloss": [
+     "yield",
+     "crop",
+     "production"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 16,
+    "jmdict_seq": "1340520"
+   }
+  ],
+  "見": [
+   {
+    "word": "見つかる",
+    "reading": "みつかる",
+    "gloss": [
+     "to be found",
+     "to be discovered"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.11,
+    "jmdict_seq": "1604550"
+   },
+   {
+    "word": "見る",
+    "reading": "みる",
+    "gloss": [
+     "to see",
+     "to look",
+     "to watch"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.14,
+    "jmdict_seq": "1259290"
+   },
+   {
+    "word": "一見",
+    "reading": "いっけん",
+    "gloss": [
+     "look",
+     "glimpse",
+     "glance"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.19,
+    "jmdict_seq": "1162170"
+   }
+  ],
+  "出": [
+   {
+    "word": "出す",
+    "reading": "だす",
+    "gloss": [
+     "to take out",
+     "to get out"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1338180"
+   },
+   {
+    "word": "出る",
+    "reading": "でる",
+    "gloss": [
+     "to leave",
+     "to exit",
+     "to go out"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.12,
+    "jmdict_seq": "1338240"
+   },
+   {
+    "word": "出入り",
+    "reading": "でいり",
+    "gloss": [
+     "going in and out",
+     "entering and exiting"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.13,
+    "jmdict_seq": "1339910"
+   }
+  ],
+  "入": [
+   {
+    "word": "入る",
+    "reading": "いる",
+    "gloss": [
+     "to enter",
+     "to go in",
+     "to get in"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1465580"
+   },
+   {
+    "word": "入れる",
+    "reading": "いれる",
+    "gloss": [
+     "to put in",
+     "to let in",
+     "to take in"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1465610"
+   },
+   {
+    "word": "入国",
+    "reading": "にゅうこく",
+    "gloss": [
+     "entry into a country"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1466130"
+   }
+  ],
+  "読": [
+   {
+    "word": "読み",
+    "reading": "よみ",
+    "gloss": [
+     "reading"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.08,
+    "jmdict_seq": "1456130"
+   },
+   {
+    "word": "読む",
+    "reading": "よむ",
+    "gloss": [
+     "to read"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.12,
+    "jmdict_seq": "1456360"
+   },
+   {
+    "word": "読書",
+    "reading": "どくしょ",
+    "gloss": [
+     "reading (books)"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1456420"
+   }
+  ],
+  "書": [
+   {
+    "word": "書く",
+    "reading": "かく",
+    "gloss": [
+     "to write",
+     "to compose",
+     "to pen"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1343950"
+   },
+   {
+    "word": "読書",
+    "reading": "どくしょ",
+    "gloss": [
+     "reading (books)"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1456420"
+   },
+   {
+    "word": "読み書き",
+    "reading": "よみかき",
+    "gloss": [
+     "reading and writing"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.24,
+    "jmdict_seq": "1456250"
+   }
+  ],
+  "話": [
+   {
+    "word": "話",
+    "reading": "はなし",
+    "gloss": [
+     "talk",
+     "speech",
+     "chat"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1600900"
+   },
+   {
+    "word": "話す",
+    "reading": "はなす",
+    "gloss": [
+     "to talk",
+     "to speak",
+     "to converse"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.21,
+    "jmdict_seq": "1562350"
+   },
+   {
+    "word": "電話",
+    "reading": "でんわ",
+    "gloss": [
+     "telephone call",
+     "phone call"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": false,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1443840"
+   }
+  ],
+  "聞": [
+   {
+    "word": "聞く",
+    "reading": "きく",
+    "gloss": [
+     "to hear"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1591110"
+   },
+   {
+    "word": "聞こえる",
+    "reading": "きこえる",
+    "gloss": [
+     "to be heard",
+     "to be audible",
+     "to reach one's ears"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1591150"
+   }
+  ],
+  "食": [
+   {
+    "word": "食べる",
+    "reading": "たべる",
+    "gloss": [
+     "to eat"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1358280"
+   },
+   {
+    "word": "外食",
+    "reading": "がいしょく",
+    "gloss": [
+     "eating out",
+     "dining out"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": false,
+    "freq_rank": 0.1,
+    "jmdict_seq": "1203830"
+   },
+   {
+    "word": "食後",
+    "reading": "しょくご",
+    "gloss": [
+     "after a meal"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": false,
+    "freq_rank": 30,
+    "jmdict_seq": "1358450"
+   }
+  ],
+  "生": [
+   {
+    "word": "生きる",
+    "reading": "いきる",
+    "gloss": [
+     "to live",
+     "to exist"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1378520"
+   },
+   {
+    "word": "生かす",
+    "reading": "いかす",
+    "gloss": [
+     "to make (the best) use of",
+     "to put to good use",
+     "to leverage (skills, attributes, experience, etc.)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.12,
+    "jmdict_seq": "1587070"
+   },
+   {
+    "word": "学生",
+    "reading": "がくせい",
+    "gloss": [
+     "student (esp. a university student)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1206900"
+   }
+  ],
+  "気": [
+   {
+    "word": "気",
+    "reading": "き",
+    "gloss": [
+     "spirit",
+     "mind",
+     "heart"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1221520"
+   },
+   {
+    "word": "気まぐれ",
+    "reading": "きまぐれ",
+    "gloss": [
+     "whim",
+     "caprice",
+     "fancy"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.31,
+    "jmdict_seq": "1591410"
+   },
+   {
+    "word": "人気",
+    "reading": "にんき",
+    "gloss": [
+     "popularity",
+     "public favor"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1367010"
+   }
+  ],
+  "休": [
+   {
+    "word": "休み",
+    "reading": "やすみ",
+    "gloss": [
+     "rest",
+     "recess",
+     "respite"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1227500"
+   },
+   {
+    "word": "休む",
+    "reading": "やすむ",
+    "gloss": [
+     "to be absent",
+     "to take a day off"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.2,
+    "jmdict_seq": "1227560"
+   },
+   {
+    "word": "休日",
+    "reading": "きゅうじつ",
+    "gloss": [
+     "holiday",
+     "day off"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1228040"
+   }
+  ],
+  "国": [
+   {
+    "word": "国",
+    "reading": "くに",
+    "gloss": [
+     "country",
+     "state"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1592250"
+   },
+   {
+    "word": "大国",
+    "reading": "たいこく",
+    "gloss": [
+     "large country",
+     "major nation",
+     "great power"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1413710"
+   },
+   {
+    "word": "国土",
+    "reading": "こくど",
+    "gloss": [
+     "country",
+     "territory",
+     "domain"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1286890"
+   }
+  ],
+  "学": [
+   {
+    "word": "学ぶ",
+    "reading": "まなぶ",
+    "gloss": [
+     "to learn",
+     "to study",
+     "to take lessons in"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1206530"
+   },
+   {
+    "word": "大学",
+    "reading": "だいがく",
+    "gloss": [
+     "university",
+     "college"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1413240"
+   },
+   {
+    "word": "学校",
+    "reading": "がっこう",
+    "gloss": [
+     "school"
+    ],
+    "reading_type": "special",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1206730"
+   }
+  ],
+  "校": [
+   {
+    "word": "学校",
+    "reading": "がっこう",
+    "gloss": [
+     "school"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1206730"
+   },
+   {
+    "word": "高校",
+    "reading": "こうこう",
+    "gloss": [
+     "senior high school",
+     "high school"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1283500"
+   },
+   {
+    "word": "校長",
+    "reading": "こうちょう",
+    "gloss": [
+     "principal",
+     "head teacher",
+     "headmaster"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1279590"
+   }
+  ],
+  "中": [
+   {
+    "word": "中",
+    "reading": "なか",
+    "gloss": [
+     "inside",
+     "interior"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1423310"
+   },
+   {
+    "word": "中間",
+    "reading": "ちゅうかん",
+    "gloss": [
+     "middle",
+     "midway",
+     "halfway"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1423680"
+   },
+   {
+    "word": "中学",
+    "reading": "ちゅうがく",
+    "gloss": [
+     "junior high school",
+     "middle school",
+     "lower secondary school"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1423640"
+   }
+  ],
+  "上": [
+   {
+    "word": "上がり",
+    "reading": "あがり",
+    "gloss": [
+     "rise",
+     "increase",
+     "ascent"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.08,
+    "jmdict_seq": "1352190"
+   },
+   {
+    "word": "上げる",
+    "reading": "あげる",
+    "gloss": [
+     "to raise",
+     "to elevate"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.42,
+    "jmdict_seq": "1352320"
+   },
+   {
+    "word": "上下",
+    "reading": "じょうげ",
+    "gloss": [
+     "top and bottom",
+     "high and low",
+     "above and below"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1352710"
+   }
+  ],
+  "下": [
+   {
+    "word": "下げる",
+    "reading": "さげる",
+    "gloss": [
+     "to hang",
+     "to suspend",
+     "to wear (e.g. decoration)"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1184170"
+   },
+   {
+    "word": "下る",
+    "reading": "くだる",
+    "gloss": [
+     "to descend",
+     "to go down",
+     "to come down"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.17,
+    "jmdict_seq": "1184450"
+   },
+   {
+    "word": "上下",
+    "reading": "じょうげ",
+    "gloss": [
+     "top and bottom",
+     "high and low",
+     "above and below"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1352710"
+   }
+  ],
+  "前": [
+   {
+    "word": "前",
+    "reading": "ぜん",
+    "gloss": [
+     "last (i.e. immediately preceding)",
+     "previous",
+     "ex-"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1392570"
+   },
+   {
+    "word": "この前",
+    "reading": "このまえ",
+    "gloss": [
+     "the other day",
+     "previously",
+     "before"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "2216900"
+   },
+   {
+    "word": "午前",
+    "reading": "ごぜん",
+    "gloss": [
+     "morning",
+     "a.m."
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1269060"
+   }
+  ],
+  "後": [
+   {
+    "word": "後",
+    "reading": "あと",
+    "gloss": [
+     "behind",
+     "rear"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1269320"
+   },
+   {
+    "word": "後ろ",
+    "reading": "うしろ",
+    "gloss": [
+     "back",
+     "behind",
+     "rear"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1269410"
+   },
+   {
+    "word": "午後",
+    "reading": "ごご",
+    "gloss": [
+     "afternoon",
+     "p.m."
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1268990"
+   }
+  ],
+  "間": [
+   {
+    "word": "間",
+    "reading": "あいだ",
+    "gloss": [
+     "space (between)",
+     "gap",
+     "interval"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1215230"
+   },
+   {
+    "word": "この間",
+    "reading": "このあいだ",
+    "gloss": [
+     "the other day",
+     "lately",
+     "recently"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1004690"
+   },
+   {
+    "word": "時間",
+    "reading": "じかん",
+    "gloss": [
+     "time"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1315920"
+   }
+  ],
+  "外": [
+   {
+    "word": "外",
+    "reading": "そと",
+    "gloss": [
+     "outside",
+     "exterior"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1203250"
+   },
+   {
+    "word": "外す",
+    "reading": "はずす",
+    "gloss": [
+     "to remove",
+     "to take off",
+     "to detach"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.14,
+    "jmdict_seq": "1203270"
+   },
+   {
+    "word": "外国",
+    "reading": "がいこく",
+    "gloss": [
+     "foreign country"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1203620"
+   }
+  ],
+  "名": [
+   {
+    "word": "名",
+    "reading": "な",
+    "gloss": [
+     "name",
+     "given name"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1531330"
+   },
+   {
+    "word": "名前",
+    "reading": "なまえ",
+    "gloss": [
+     "name"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1531710"
+   },
+   {
+    "word": "本名",
+    "reading": "ほんみょう",
+    "gloss": [
+     "real name"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1523240"
+   }
+  ],
+  "分": [
+   {
+    "word": "分ける",
+    "reading": "わける",
+    "gloss": [
+     "to divide (into)",
+     "to split (into)",
+     "to part"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1503000"
+   },
+   {
+    "word": "分",
+    "reading": "ぶん",
+    "gloss": [
+     "part",
+     "portion",
+     "share"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1502860"
+   },
+   {
+    "word": "十分",
+    "reading": "じゅうぶん",
+    "gloss": [
+     "enough",
+     "sufficient",
+     "plenty"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1335080"
+   }
+  ],
+  "今": [
+   {
+    "word": "今",
+    "reading": "いま",
+    "gloss": [
+     "now",
+     "the present time",
+     "just now"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.07,
+    "jmdict_seq": "1288850"
+   },
+   {
+    "word": "今まで",
+    "reading": "いままで",
+    "gloss": [
+     "until now",
+     "till now",
+     "up to now"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.08,
+    "jmdict_seq": "1587590"
+   },
+   {
+    "word": "今月",
+    "reading": "こんげつ",
+    "gloss": [
+     "this month"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1289100"
+   }
+  ],
+  "金": [
+   {
+    "word": "お金",
+    "reading": "おかね",
+    "gloss": [
+     "money"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1001820"
+   },
+   {
+    "word": "金",
+    "reading": "かね",
+    "gloss": [
+     "money"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1242590"
+   },
+   {
+    "word": "大金",
+    "reading": "たいきん",
+    "gloss": [
+     "large amount of money",
+     "great cost"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.14,
+    "jmdict_seq": "1413500"
+   }
+  ],
+  "電": [
+   {
+    "word": "電話",
+    "reading": "でんわ",
+    "gloss": [
+     "telephone call",
+     "phone call"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1443840"
+   },
+   {
+    "word": "電気",
+    "reading": "でんき",
+    "gloss": [
+     "electricity"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1443000"
+   },
+   {
+    "word": "電子",
+    "reading": "でんし",
+    "gloss": [
+     "electron"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1443320"
+   }
+  ],
+  "語": [
+   {
+    "word": "語る",
+    "reading": "かたる",
+    "gloss": [
+     "to talk about",
+     "to speak of",
+     "to tell"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.09,
+    "jmdict_seq": "1270990"
+   },
+   {
+    "word": "語",
+    "reading": "ご",
+    "gloss": [
+     "word",
+     "term"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.19,
+    "jmdict_seq": "1270910"
+   },
+   {
+    "word": "国語",
+    "reading": "こくご",
+    "gloss": [
+     "national language"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.08,
+    "jmdict_seq": "1286370"
+   }
+  ],
+  "車": [
+   {
+    "word": "車",
+    "reading": "くるま",
+    "gloss": [
+     "car",
+     "automobile",
+     "vehicle"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1323080"
+   },
+   {
+    "word": "電車",
+    "reading": "でんしゃ",
+    "gloss": [
+     "train",
+     "electric train"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.04,
+    "jmdict_seq": "1443530"
+   },
+   {
+    "word": "外車",
+    "reading": "がいしゃ",
+    "gloss": [
+     "foreign car",
+     "imported car"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.2,
+    "jmdict_seq": "1203760"
+   }
+  ],
+  "何": [
+   {
+    "word": "何",
+    "reading": "なに",
+    "gloss": [
+     "what"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1577100"
+   },
+   {
+    "word": "何より",
+    "reading": "なにより",
+    "gloss": [
+     "above anything else",
+     "above all",
+     "more than anything"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1188530"
+   },
+   {
+    "word": "何時",
+    "reading": "なんじ",
+    "gloss": [
+     "what time"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1188770"
+   }
+  ],
+  "毎": [
+   {
+    "word": "毎日",
+    "reading": "まいにち",
+    "gloss": [
+     "every day",
+     "daily"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1524720"
+   },
+   {
+    "word": "毎年",
+    "reading": "まいとし",
+    "gloss": [
+     "every year",
+     "yearly",
+     "annually"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.03,
+    "jmdict_seq": "1584360"
+   },
+   {
+    "word": "毎月",
+    "reading": "まいつき",
+    "gloss": [
+     "every month",
+     "each month",
+     "monthly"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.05,
+    "jmdict_seq": "1584350"
+   }
+  ],
+  "右": [
+   {
+    "word": "右",
+    "reading": "みぎ",
+    "gloss": [
+     "right",
+     "right-hand side"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1171010"
+   },
+   {
+    "word": "左右",
+    "reading": "さゆう",
+    "gloss": [
+     "left and right",
+     "right and left"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1290810"
+   },
+   {
+    "word": "右下",
+    "reading": "みぎした",
+    "gloss": [
+     "lower right"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1171060"
+   }
+  ],
+  "左": [
+   {
+    "word": "左",
+    "reading": "ひだり",
+    "gloss": [
+     "left",
+     "left-hand side"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.01,
+    "jmdict_seq": "1290800"
+   },
+   {
+    "word": "左右",
+    "reading": "さゆう",
+    "gloss": [
+     "left and right",
+     "right and left"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.06,
+    "jmdict_seq": "1290810"
+   },
+   {
+    "word": "左上",
+    "reading": "ひだりうえ",
+    "gloss": [
+     "upper left"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 30,
+    "jmdict_seq": "1290920"
+   }
+  ],
+  "先": [
+   {
+    "word": "先",
+    "reading": "さき",
+    "gloss": [
+     "point",
+     "tip",
+     "end"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.25,
+    "jmdict_seq": "1387210"
+   },
+   {
+    "word": "先生",
+    "reading": "せんせい",
+    "gloss": [
+     "teacher",
+     "instructor",
+     "master"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1387990"
+   },
+   {
+    "word": "先月",
+    "reading": "せんげつ",
+    "gloss": [
+     "last month"
+    ],
+    "reading_type": "on",
+    "all_taught_by_week": true,
+    "freq_rank": 0.02,
+    "jmdict_seq": "1387500"
+   }
+  ],
+  "刀": [
+   {
+    "word": "刀",
+    "reading": "かたな",
+    "gloss": [
+     "sword (esp. Japanese single-edged)",
+     "katana"
+    ],
+    "reading_type": "kun",
+    "all_taught_by_week": true,
+    "freq_rank": 0.12,
+    "jmdict_seq": "1446420"
+   }
+  ]
+ }
+}

@@ -1,0 +1,196 @@
+{
+  "_comment": [
+    "Words struck from the N5 Countdown's vocabulary layer by hand.",
+    "",
+    "This is a DECISION LOG, not a filter constant, and it is separate from",
+    "build_vocab.py for the same reason data/sentences/decisions/ is separate",
+    "from data/sentences/queue/: refreshing the dictionary must never destroy a",
+    "human judgement. A word struck out because its only gloss is 'second",
+    "week's memorial services' stays struck through the next JMdict release.",
+    "",
+    "Striking a word is SELECTION. Nothing here edits Japanese, and nothing",
+    "here adds any. Every word that survives is still verbatim JMdict with its",
+    "entry sequence attached — which is also what keeps the licence position",
+    "intact, since CC BY-SA 4.0's ShareAlike triggers on modification, and",
+    "choosing not to reprint an entry is not modifying it.",
+    "",
+    "Each entry is [word, reason]. The rules in build_vocab.py catch the",
+    "systematic failures; these are the residue that only reads as wrong to",
+    "someone who knows what a beginner should meet."
+  ],
+  "_reasons": {
+    "funerary": "Buddhist memorial-service vocabulary. Correct Japanese, wrong first encounter.",
+    "almanac": "Lunar-calendar or almanac term a native speaker rarely uses.",
+    "newspaper": "Ranked by newspaper frequency, not learner frequency. Financial or政治 register.",
+    "specialist": "Technical, sporting or trade vocabulary.",
+    "redundant": "Teaches nothing the sheet's other words do not already show.",
+    "register": "Rude, archaic or otherwise wrong to hand a beginner unexplained.",
+    "derived": "A derived form displacing the base word a learner needs first."
+  },
+  "rejected": [
+    "二七日",
+    "七七日",
+    "二百十日",
+    "十六日",
+    "二十六日",
+    "十八日",
+    "二十八日",
+    "十九日",
+    "九九",
+    "円み",
+    "午",
+    "円高",
+    "白書",
+    "土木",
+    "出土",
+    "大半",
+    "山川",
+    "日食",
+    "月食",
+    "見聞",
+    "生る",
+    "聞かす",
+    "見出し",
+    "休する",
+    "毎",
+    "毎に",
+    "お前",
+    "下り",
+    "上り",
+    "気まま",
+    "一行",
+    "先だって",
+    "一つ一つ",
+    "小火",
+    "食う",
+    "年をとる",
+    "大げさ",
+    "女子高",
+    "間食",
+    "本木",
+    "聞き書き",
+    "何十",
+    "気がかり",
+    "あくる日",
+    "五分",
+    "十七日",
+    "二十九日",
+    "大火",
+    "わが国",
+    "中でも",
+    "出入",
+    "行き来",
+    "ひと時",
+    "天ぷら",
+    "日にち"
+  ],
+  "_rationale": {
+    "二七日 / 七七日": "funerary — 'second week's memorial services', '49th day after death'. Both carry JMdict newspaper priority tags because a newspaper prints dates.",
+    "二百十日": "almanac — the 210th day from the start of spring in the lunar calendar. Led the sheet for 百.",
+    "十六日 … 十九日": "redundant — the sheet already shows 六日, 八日, 九日. A larger date compound adds a digit, not a character.",
+    "九九": "specialist — the multiplication table. A real word, and not what 九 is for.",
+    "円み": "derived — 'roundness'. 円 is taught as yen and circle; 円い covers the shape.",
+    "午": "register — JMdict's 午 alone is the zodiac Horse. 午前 and 午後 are the words.",
+    "円高 / 白書 / 大半": "newspaper — yen appreciation, government white paper, the majority. All three led their sheets before the ichi1-over-nfXX rule; these are what survived it.",
+    "土木 / 出土": "specialist — civil engineering, archaeological excavation.",
+    "山川 / 日食 / 月食 / 見聞": "specialist — and 日食 displaced 食べる on the sheet for 食.",
+    "生る": "register — 'to bear fruit', an archaic reading of 生 that competes with 生きる and 生まれる.",
+    "聞かす / 見出し / 下り / 上り / 年をとる": "derived — causatives, headline nouns and train-direction nouns standing where 聞く, 見る and the plain forms belong.",
+    "休する": "register — archaic suru-verb.",
+    "毎 / 毎に": "register — 毎 is a bound morpheme in practice; 毎日 and 毎年 are the words.",
+    "お前": "register — a rude second person. Not a word to hand a learner with no note attached, and this book carries no notes.",
+    "気まま": "register — 'willful, self-indulgent'. 気 wants 電気 and 人気.",
+    "一行": "specialist — 'a party (of travellers)', not the 一行 = one line a learner would guess.",
+    "先だって": "register — formal written 'the other day'.",
+    "一つ一つ": "redundant — a reduplication that occupies a slot 一つ should hold.",
+    "小火": "specialist — ぼや, a small fire, an irregular reading with no general use.",
+    "食う": "register — coarse 'to eat' sitting next to 食べる."
+  },
+  "preferred": {
+    "先": [
+      "先生"
+    ],
+    "生": [
+      "学生"
+    ],
+    "何": [
+      "何時"
+    ],
+    "毎": [
+      "毎日"
+    ],
+    "行": [
+      "行く"
+    ],
+    "見": [
+      "見る"
+    ],
+    "読": [
+      "読む"
+    ],
+    "聞": [
+      "聞く"
+    ],
+    "話": [
+      "話す"
+    ],
+    "書": [
+      "書く"
+    ],
+    "出": [
+      "出る"
+    ],
+    "入": [
+      "入る"
+    ],
+    "休": [
+      "休む"
+    ],
+    "食": [
+      "食べる"
+    ],
+    "来": [
+      "来る"
+    ],
+    "分": [
+      "分かる"
+    ],
+    "白": [
+      "白い"
+    ],
+    "高": [
+      "高い"
+    ],
+    "長": [
+      "長い"
+    ],
+    "暑": [
+      "暑い"
+    ],
+    "小": [
+      "小さい"
+    ],
+    "大": [
+      "大きい"
+    ],
+    "上": [
+      "上げる"
+    ],
+    "下": [
+      "下さい"
+    ],
+    "時": [
+      "時間"
+    ],
+    "友": [
+      "友だち"
+    ],
+    "百": [
+      "百"
+    ],
+    "千": [
+      "千"
+    ]
+  },
+  "_preferred_note": "Words a person insisted on, applied before the ranker. Same durability contract as `rejected`: a JMdict refresh must not undo a human decision. A word listed here that no longer exists in the dictionary is silently skipped rather than faked."
+}
