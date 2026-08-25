@@ -252,6 +252,87 @@
       "note": "「楽しく読めます」 rendered \"This book will give you great pleasure\" — the target kanji 読 has no counterpart in the English.",
       "reviewer": "audit-2026-08-25",
       "decidedAt": "2026-08-25T12:04:02.857Z"
+    },
+    {
+      "candidateId": "tatoeba-231233-68601",
+      "targetKanji": "八",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「あのレースは八百長だった」 / \"The race was fixed\". 八百長 is fixing a match; neither 八 nor 百 nor 長 has a counterpart in the English. Held three publishing slots at once — 八#2, 百#2, 長#3.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:48.960Z"
+    },
+    {
+      "candidateId": "tatoeba-223820-61156",
+      "targetKanji": "八",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「このゲームは八百長だ」 / \"This game is fixed\". The same idiom as tatoeba-231233-68601 and rejected for the same reason. It sits at 八#8 and 百#6 today rather than in a publishing slot, but keeping one 八百長 while rejecting the other would be incoherent, and a regenerated queue can promote it.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:48.969Z"
+    },
+    {
+      "candidateId": "tatoeba-148059-266500",
+      "targetKanji": "九",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「十中八九ジェーンは来るだろう」 / \"It is probable that Jane will come\". 十中八九 is \"in all likelihood\"; the English carries none of the three numerals. Held 九#2 and 十#3.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:48.980Z"
+    },
+    {
+      "candidateId": "tatoeba-9250570-3405512",
+      "targetKanji": "四",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「トムが四六時中電話してくるの」 / \"Tom calls me all the time\". 四六時中 is \"around the clock\" (4 × 6 = 24); \"all the time\" contains neither number. Held 四#2 and 六#2.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:48.989Z"
+    },
+    {
+      "candidateId": "tatoeba-2170253-7766958",
+      "targetKanji": "六",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "The second 四六時中 sentence, \"…only thinks about work all the time\". Same idiom and same ruling as tatoeba-9250570-3405512; at 六#8 today, but rejected with its sibling so a regeneration cannot promote it into a publishing slot.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:48.997Z"
+    },
+    {
+      "candidateId": "tatoeba-11013735-10022868",
+      "targetKanji": "山",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「時間なんて山ほどあった」 / \"We had plenty of time\". 山ほど is a quantity idiom — the English says \"plenty\", never \"mountain\". Rank 1 for 山, so this is the most expensive entry in the class.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:49.005Z"
+    },
+    {
+      "candidateId": "tatoeba-2527114-1164166",
+      "targetKanji": "千",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「トムはレタスを千切りにした」 / \"Tom shredded the lettuce\". 千切り is julienne; the thousand is figurative and absent from the English. Rank 3 for 千.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:49.017Z"
+    },
+    {
+      "candidateId": "tatoeba-149063-265494",
+      "targetKanji": "上",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「車のバッテリーが上がってるよ」 / \"My car battery is dead\". バッテリーが上がる is a battery going flat — the one sense of 上 in which nothing goes up. Rank 2 for 上.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:49.027Z"
+    },
+    {
+      "candidateId": "tatoeba-187801-24940",
+      "targetKanji": "何",
+      "verdict": "rejected",
+      "rejectReason": "target-kanji-unused",
+      "note": "「何とおっしゃいましたか」 / \"I beg your pardon?\". 何 is doing its ordinary \"what\" job in the Japanese, but the idiomatic English paraphrases it away entirely, so the pair teaches the reader nothing about the character. Rank 3 for 何.",
+      "reviewer": "ari",
+      "decidedAt": "2026-08-25T12:54:49.040Z"
     }
   ]
 }

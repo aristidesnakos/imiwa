@@ -150,9 +150,20 @@ export interface SentenceCandidate {
    * means "could not tell" and is common and fine — abstract kanji rarely name
    * their sense in the translation.
    *
-   * The reviewer is the authority: `ReviewDecision.senseTag` overrides this.
-   * The principled upgrade path, once JMdict is integrated for layer 3, is to
-   * map the target word to its JMdict sense rather than guessing from English.
+   * The reviewer is the authority: `ReviewDecision.senseTag` overrides this,
+   * and there is no dictionary upgrade path that retires them.
+   *
+   * JMdict specifically cannot do this job, and it is worth stating so that
+   * nobody spends a week on 63 MB of it discovering that. JMdict maps a WORD to
+   * that word's senses; what this field needs is the sense a CHARACTER carries
+   * INSIDE a compound, which JMdict does not carry at any granularity. 名前 has
+   * one JMdict sense, "name", and reading 前 out of it yields the sense "before"
+   * — wrong, and unfixable from the entry. In the other direction 今日 / 毎日 /
+   * 先日 are three JMdict entries with three senses between them, but one sense
+   * of 日; feeding those in collapses straight into the `targetWordKey`
+   * word-diversity penalty the ranker already applies and adds nothing this
+   * field is for. Closing the gap needs per-character-in-compound sense data,
+   * which would have to be authored, not imported.
    */
   senseHint: string | null;
 }
@@ -177,6 +188,35 @@ export interface ReviewQueue {
   /** How many candidates each kanji should end up with after review. */
   targetPerKanji: number;
   entries: KanjiQueueEntry[];
+}
+
+/* ──────────────────────────── The sense vocabulary ───────────────────────── */
+
+/**
+ * Split a kanji's `meaning` field into the senses a reviewer may tag with.
+ *
+ * The comma in a `meaning` string is not always a separator. Our data writes a
+ * gloss and its numeral as one sense — 二 is `"two, 2"` — and writes thousands
+ * separators inside a single gloss — 万 is `"ten thousand, 10,000"`. Splitting
+ * on a bare comma turns one sense into three, two of which are the same sense
+ * and one of which is a bare numeral, so the reviewer's picker offered "two, 2"
+ * / "two" / "2" as if they were distinct pedagogical senses of 二.
+ *
+ * The guard is that a comma followed by digits is INSIDE a sense, not between
+ * two. Numeric-only fragments are then dropped: "2" alone is a spelling of a
+ * sense, never a sense.
+ *
+ * Case is preserved for display; callers that match on it lowercase their own
+ * copy. Kept in this module rather than beside either caller because the ranker
+ * (scripts/sentences/select.ts) and the reviewer UI must agree — a sense the
+ * reviewer can tag but the ranker never scores, or the reverse, makes the
+ * spread guarantee in publish.ts quietly untrue.
+ */
+export function splitSenses(meaning: string): string[] {
+  return meaning
+    .split(/,(?!\s*\d)/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0 && !/^[\d,.\s]+$/.test(s));
 }
 
 /* ────────────────────────────── The decisions ────────────────────────────── */
@@ -210,12 +250,26 @@ export interface ReviewDecision {
   /** Free-text elaboration. Optional even on reject. */
   note?: string;
   /**
-   * Corrected token readings, keyed by token index. The ONLY thing a reviewer
-   * may edit. `japanese` and `english` are verbatim source text and editing
-   * them would (a) break the licence's no-modification posture and (b) make
-   * the attribution a lie. The UI must not offer to edit them.
+   * Corrected token readings, keyed `<surface>#<occurrence>` — `日#2` is the
+   * second 日 token in the sentence, 1-based. NOT the token index.
+   *
+   * The index is the obvious key and it silently breaks the promise the essay
+   * at the top of this file makes. Decisions outlive queue regeneration, and
+   * `lib/sentences/reading-corrections.ts` MERGES tokens (八《はち》 + 日《にち》
+   * → 八日《ようか》), so adding one row to its irregular-counter table
+   * renumbers the tokens of every sentence that row touches. The decision still
+   * loads under its stable pair id, and a positional correction then lands on
+   * an unrelated token as confident, plausible, wrong furigana. A surface key
+   * either resolves to the same token or to nothing at all — see
+   * `lib/sentences/correction-keys.ts`, which owns the format and the
+   * deliberately loud failure path.
+   *
+   * This is the ONLY thing a reviewer may edit. `japanese` and `english` are
+   * verbatim source text and editing them would (a) break the licence's
+   * no-modification posture and (b) make the attribution a lie. The UI must not
+   * offer to edit them.
    */
-  readingCorrections?: Record<number, string>;
+  readingCorrections?: Record<string, string>;
   /**
    * Which sense of the kanji this sentence actually demonstrates. Confirms or
    * overrides `SentenceCandidate.senseHint`, which is a heuristic guess.

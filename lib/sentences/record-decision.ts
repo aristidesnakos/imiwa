@@ -19,7 +19,9 @@ import type {
   Level,
   RejectReason,
   ReviewDecision,
+  Token,
 } from './types';
+import { describeUnresolvedKey, resolveCorrectionKey } from './correction-keys';
 import { REJECT_REASONS } from './reject-reasons';
 import {
   currentReviewer,
@@ -40,7 +42,7 @@ export interface DecisionInput {
   verdict: DecisionVerdict;
   rejectReason?: RejectReason;
   note?: string;
-  readingCorrections?: Record<number, string>;
+  readingCorrections?: Record<string, string>;
   senseTag?: string;
   reviewer?: string;
   /** Explicit consent to replace an existing decision. Defaults to false. */
@@ -70,36 +72,45 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  * both break the licence's no-modification posture and make the per-contributor
  * attribution a lie. See docs/prd/example-sentences-phase0-findings.md §3.
  *
- * Indices are validated against the real token array when the queue is present,
- * so a correction can never be written for a token that does not exist.
+ * Keys are `<surface>#<occurrence>` and are validated against the real token
+ * array when the queue is present, so a correction can never be written for a
+ * token that does not exist. That check is the front door of the loud-failure
+ * design in `correction-keys.ts`: a key rejected here never reaches the log, so
+ * publish never has to refuse it later.
+ *
+ * When the queue file is absent there is nothing to validate against, and the
+ * corrections pass through unchecked — the same posture the rest of this
+ * function takes toward a missing queue.
  */
 function validateReadingCorrections(
   raw: unknown,
-  tokenCount: number | null
+  tokens: Token[] | null
 ):
-  | { code: 'ok'; value: Record<number, string> | undefined }
+  | { code: 'ok'; value: Record<string, string> | undefined }
   | { code: 'invalid'; message: string } {
   if (raw === undefined || raw === null) return { code: 'ok', value: undefined };
   if (!isPlainObject(raw)) {
-    return { code: 'invalid', message: 'readingCorrections must be an object keyed by token index' };
+    return {
+      code: 'invalid',
+      message: 'readingCorrections must be an object keyed <surface>#<occurrence>, e.g. 日#2',
+    };
   }
 
-  const out: Record<number, string> = {};
+  const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw)) {
-    const index = Number(key);
-    if (!Number.isInteger(index) || index < 0) {
-      return { code: 'invalid', message: `readingCorrections key "${key}" is not a token index` };
-    }
-    if (tokenCount !== null && index >= tokenCount) {
+    if (tokens !== null && resolveCorrectionKey(tokens, key) < 0) {
       return {
         code: 'invalid',
-        message: `readingCorrections index ${index} is out of range (candidate has ${tokenCount} tokens)`,
+        message: `readingCorrections key ${describeUnresolvedKey(key)}`,
       };
     }
     if (typeof value !== 'string' || value.trim() === '') {
-      return { code: 'invalid', message: `readingCorrections[${index}] must be a non-empty string` };
+      return {
+        code: 'invalid',
+        message: `readingCorrections["${key}"] must be a non-empty string`,
+      };
     }
-    out[index] = value.trim();
+    out[key] = value.trim();
   }
 
   return { code: 'ok', value: Object.keys(out).length > 0 ? out : undefined };
@@ -176,7 +187,7 @@ export function recordDecision(level: Level, input: DecisionInput): RecordDecisi
 
   const corrections = validateReadingCorrections(
     input.readingCorrections,
-    candidate ? candidate.tokens.length : null
+    candidate ? candidate.tokens : null
   );
   if (corrections.code === 'invalid') {
     return { code: 'invalid', message: corrections.message };

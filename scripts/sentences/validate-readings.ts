@@ -21,6 +21,14 @@
  *           catching — the wrong readings look completely plausible on the
  *           page, and nothing else in the pipeline would notice.
  *
+ *   PART 3  Pin the correction-KEY round trip, then sweep the decision log.
+ *           `ReviewDecision.readingCorrections` is keyed `<surface>#<n>` rather
+ *           than by token index precisely BECAUSE the pass in PART 1 merges
+ *           tokens and renumbers everything after the merge. The key format and
+ *           this module are therefore one contract and are validated together:
+ *           the load-bearing case is a key taken before a merge still naming
+ *           the same token after it, where a raw index is off by one.
+ *
  * Why this matters more than it looks: the furigana IPADIC gets wrong is never
  * flagged, never null, and never crashes. 「九時」 renders きゅうじ perfectly
  * happily. Before this pass existed, 42 of 514 N5 candidates carried a wrong
@@ -30,11 +38,19 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import {
+  correctionKey,
+  resolveCorrectionKey,
+  toIndexed,
+  toKeyed,
+} from '../../lib/sentences/correction-keys';
 import { correctReadings, parseNumeral } from '../../lib/sentences/reading-corrections';
-import type { Level, ReviewQueue, Token } from '../../lib/sentences/types';
+import type { DecisionLog, Level, ReviewQueue, Token } from '../../lib/sentences/types';
 
 const LEVELS: Level[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const QUEUE_DIR = join(resolve(__dirname, '..', '..'), 'data', 'sentences', 'queue');
+const DATA_DIR = join(resolve(__dirname, '..', '..'), 'data', 'sentences');
+const QUEUE_DIR = join(DATA_DIR, 'queue');
+const DECISIONS_DIR = join(DATA_DIR, 'decisions');
 
 let failures = 0;
 const fail = (msg: string): void => {
@@ -432,6 +448,197 @@ function sweepQueues(): void {
   if (swept === 0) console.log('  – no queue files on disk; sweep skipped');
 }
 
+/* ═════════ PART 3 — correction keys survive what indices do not ═════════ */
+
+const ok = (msg: string): void => console.log(`  ✓ ${msg}`);
+
+/**
+ * Pin the key format itself: build a key for a token, resolve it back, and
+ * assert the round trip lands on the token it named.
+ *
+ * The repeated-surface cases are the ones that make the occurrence number
+ * load-bearing — 日 appears twice in almost every date, and a key that only
+ * carried the surface would resolve to the first one every time.
+ */
+function runCorrectionKeys(): void {
+  console.log('\nCorrection keys (surface + occurrence)');
+
+  // ── Round trip over an array with a repeated surface.
+  const repeated = [T('日', 'ひ'), T('は'), T('日', 'ひ')];
+  const first = correctionKey(repeated, 0);
+  const second = correctionKey(repeated, 2);
+  if (first !== '日#1') fail(`correctionKey(tokens, 0) = ${first}, want 日#1`);
+  else ok('the first 日 keys as 日#1');
+  if (second !== '日#2') fail(`correctionKey(tokens, 2) = ${second}, want 日#2`);
+  else ok('the second 日 keys as 日#2');
+  for (const [key, want] of [
+    [first, 0],
+    [second, 2],
+    ['は#1', 1],
+  ] as [string, number][]) {
+    const got = resolveCorrectionKey(repeated, key);
+    if (got === want) ok(`resolve("${key}") = ${got}`);
+    else fail(`resolve("${key}") = ${got}, want ${want}`);
+  }
+
+  // ── A key naming a surface this sentence does not contain resolves to
+  //    NOTHING. -1 is the whole design: see correction-keys.ts. A best-effort
+  //    nearest match would put a human's kana on a token they never saw.
+  for (const key of ['月#1', '日#3', '日', '日#0', '日#x', '#1']) {
+    const got = resolveCorrectionKey(repeated, key);
+    if (got === -1) ok(`resolve("${key}") = -1 — names no token, and says so`);
+    else fail(`resolve("${key}") = ${got}, want -1`);
+  }
+
+  // ── A surface containing the separator. Tatoeba text is arbitrary and 「#」 is
+  //    an ordinary thing to write, so the occurrence number is parsed off the
+  //    END of the key, never the first separator.
+  const hashy = [T('#'), T('1'), T('#')];
+  const hashKey = correctionKey(hashy, 2);
+  if (hashKey !== '##2') fail(`correctionKey over a 「#」 surface = ${hashKey}, want ##2`);
+  else ok('a 「#」 surface keys as ##2 (occurrence parsed at the LAST #)');
+  if (resolveCorrectionKey(hashy, hashKey) === 2) ok('resolve("##2") = 2');
+  else fail(`resolve("##2") = ${resolveCorrectionKey(hashy, hashKey)}, want 2`);
+
+  // ── toKeyed / toIndexed round trip, and unresolved keys coming BACK rather
+  //    than being dropped.
+  const keyed = toKeyed(repeated, { 0: 'にち', 2: 'び' });
+  if (keyed['日#1'] === 'にち' && keyed['日#2'] === 'び') ok('toKeyed distinguishes the two 日');
+  else fail(`toKeyed produced ${JSON.stringify(keyed)}`);
+  const back = toIndexed(repeated, { ...keyed, '月#1': 'つき' });
+  if (back.corrections[0] === 'にち' && back.corrections[2] === 'び') {
+    ok('toIndexed restores both corrections to their own tokens');
+  } else {
+    fail(`toIndexed produced ${JSON.stringify(back.corrections)}`);
+  }
+  if (back.unresolved.length === 1 && back.unresolved[0] === '月#1') {
+    ok('toIndexed RETURNS the unresolved key instead of dropping it');
+  } else {
+    fail(`toIndexed unresolved = ${JSON.stringify(back.unresolved)}`);
+  }
+
+  /* ── THE CASE THIS FORMAT EXISTS FOR ─────────────────────────────────────
+   *
+   * A correction recorded against a token AFTER a numeral, and then the
+   * irregular-counter table grows a row that merges 八 + 日. The merge removes
+   * one token, so every index past it shifts down by one — the decision still
+   * loads under its stable pair id, and a positional correction would write the
+   * reviewer's kana onto the wrong word, plausibly and silently.
+   */
+  const preMerge = [
+    T('八', 'はち'),
+    T('日', 'にち'),
+    T('に'),
+    T('学校', 'がっこう'),
+    T('へ'),
+    T('行く', 'いく'),
+  ];
+  const targetIndex = 3; // 学校
+  const key = correctionKey(preMerge, targetIndex);
+  const postMerge = correctReadings(preMerge).tokens;
+
+  if (postMerge.length !== preMerge.length - 1) {
+    fail(`the 八日 merge did not fire — ${render(postMerge)}`);
+  } else {
+    const resolved = resolveCorrectionKey(postMerge, key);
+    if (postMerge[resolved]?.surface === preMerge[targetIndex].surface) {
+      ok(`"${key}" still names 「${preMerge[targetIndex].surface}」 after the 八日 merge (index ${targetIndex} → ${resolved})`);
+    } else {
+      fail(
+        `"${key}" resolved to ${resolved} (「${postMerge[resolved]?.surface}」) after the merge, ` +
+          `want the token 「${preMerge[targetIndex].surface}」`
+      );
+    }
+    // And the counterfactual, so the justification is pinned and not merely
+    // asserted in a comment: the raw index now points at a DIFFERENT token.
+    if (postMerge[targetIndex]?.surface !== preMerge[targetIndex].surface) {
+      ok(
+        `index ${targetIndex} would now be 「${postMerge[targetIndex]?.surface}」 — ` +
+          'which is exactly the silent mis-write the key format removes'
+      );
+    } else {
+      fail(`index ${targetIndex} did not shift — this case no longer proves anything`);
+    }
+  }
+}
+
+/**
+ * Sweep the committed decision logs: every `readingCorrections` key on every
+ * decision must resolve against its candidate's tokens in the queue.
+ *
+ * publish.ts refuses to write a level containing a stranded key, so this is CI
+ * finding out before a publish does. A decision whose candidate has left the
+ * queue entirely is an ORPHAN — retained on purpose, unpublishable, and with no
+ * tokens to check against — so it is counted, not failed.
+ */
+function sweepDecisionCorrections(): void {
+  console.log('\nDecision sweep (every correction key must name a real token)');
+
+  let logsSeen = 0;
+  let keysChecked = 0;
+  let orphanDecisions = 0;
+
+  for (const level of LEVELS) {
+    const decisionsFile = join(DECISIONS_DIR, `${level}.json`);
+    if (!existsSync(decisionsFile)) continue;
+    logsSeen += 1;
+
+    const log = JSON.parse(readFileSync(decisionsFile, 'utf8')) as DecisionLog;
+    const queueFile = join(QUEUE_DIR, `${level}.json`);
+    const queue = existsSync(queueFile)
+      ? (JSON.parse(readFileSync(queueFile, 'utf8')) as ReviewQueue)
+      : null;
+
+    const tokensById = new Map<string, Token[]>();
+    for (const entry of queue?.entries ?? []) {
+      for (const candidate of entry.candidates) tokensById.set(candidate.id, candidate.tokens);
+    }
+
+    for (const decision of log.decisions) {
+      const corrections = decision.readingCorrections;
+      if (!corrections || Object.keys(corrections).length === 0) continue;
+
+      const tokens = tokensById.get(decision.candidateId);
+      if (!tokens) {
+        orphanDecisions += 1;
+        continue;
+      }
+
+      keysChecked += Object.keys(corrections).length;
+      const { unresolved } = toIndexed(tokens, corrections);
+      for (const strandedKey of unresolved) {
+        fail(
+          `${level} ${decision.candidateId}: reading correction "${strandedKey}" names no ` +
+            'token in the queue — the queue was regenerated after it was recorded'
+        );
+      }
+    }
+  }
+
+  if (logsSeen === 0) {
+    console.log('  – no decision logs on disk; sweep skipped');
+    return;
+  }
+  if (keysChecked === 0) {
+    // Said out loud rather than printing nothing: today every decision in the
+    // log is a rejection with no corrections on it, so this sweep passes
+    // vacuously — and a reader has to be able to tell "ran, found nothing to
+    // check" apart from "did not run".
+    console.log(
+      `  ✓ ${logsSeen} decision log(s) read; no reading corrections recorded yet — ` +
+        'the key check passes vacuously'
+    );
+  } else {
+    console.log(`  ✓ ${keysChecked} correction key(s) across ${logsSeen} log(s) all resolve`);
+  }
+  if (orphanDecisions > 0) {
+    console.log(
+      `  – ${orphanDecisions} decision(s) with corrections are orphaned (candidate not in ` +
+        'the queue); nothing to resolve against, so not checked'
+    );
+  }
+}
+
 /* ═════════════════════════════ Entry point ════════════════════════════════ */
 
 function main(): void {
@@ -441,6 +648,8 @@ function main(): void {
   runCases('Readings that MUST be corrected', MUST_CORRECT);
   runCases('Readings that MUST NOT be touched', MUST_NOT_TOUCH);
   sweepQueues();
+  runCorrectionKeys();
+  sweepDecisionCorrections();
 
   if (failures > 0) {
     console.error(`\n${failures} failure(s). See lib/sentences/reading-corrections.ts.`);

@@ -25,6 +25,13 @@
  * The same validator backs `pnpm validate:sentences`, so CI checks exactly what
  * publish enforced rather than a second, drifting copy of the rules.
  *
+ * One refusal happens before the validator can see it, because it is about the
+ * decision log rather than the assembled set: a reading correction whose
+ * `<surface>#<occurrence>` key resolves to no token in the candidate's CURRENT
+ * tokens. That means selection was re-run and the token the reviewer corrected
+ * no longer exists — so the sentence is stopped, not partially corrected. See
+ * `applyCorrections`.
+ *
  * ─────────────────────────────────────────────────────────────────────────────
  * SELECTION: RANK, BUT SPREAD SENSES FIRST
  * ─────────────────────────────────────────────────────────────────────────────
@@ -56,6 +63,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { describeUnresolvedKey, toIndexed } from '../../lib/sentences/correction-keys';
 import { validatePublished, formatIssues } from '../../lib/sentences/validate';
 import type {
   DecisionLog,
@@ -95,12 +103,35 @@ function parseArgs(argv: string[]): { level: Level; dryRun: boolean } {
  * — the validator re-checks that afterwards regardless. Correcting a token also
  * clears `readingUnknown`: the human supplied the reading the tokenizer could
  * not, which is precisely what that flag was waiting for.
+ *
+ * Corrections are keyed `<surface>#<occurrence>`, not by token index, and are
+ * resolved against THIS candidate's current tokens — see the header of
+ * `lib/sentences/correction-keys.ts` for why an index cannot survive queue
+ * regeneration. A key that resolves to nothing means the token a human judged
+ * no longer exists, so the reviewer's kana has no home. Every such key is
+ * pushed onto `problems`, and the caller stops the publish outright: applying
+ * the resolvable subset would ship a sentence carrying part of a human
+ * judgement and, in the slot the missing part was meant to fix, the tokenizer's
+ * reading that a human already said was wrong.
  */
-function applyCorrections(tokens: Token[], corrections?: Record<number, string>): Token[] {
+function applyCorrections(
+  candidateId: string,
+  tokens: Token[],
+  corrections: Record<string, string> | undefined,
+  problems: string[]
+): Token[] {
   if (!corrections || Object.keys(corrections).length === 0) return tokens;
 
+  const { corrections: byIndex, unresolved } = toIndexed(tokens, corrections);
+  if (unresolved.length > 0) {
+    for (const key of unresolved) {
+      problems.push(`${candidateId}: reading correction ${describeUnresolvedKey(key)}`);
+    }
+    return tokens;
+  }
+
   return tokens.map((token, index) => {
-    const corrected = corrections[index]?.trim();
+    const corrected = byIndex[index]?.trim();
     if (!corrected) return token;
     return { surface: token.surface, reading: corrected };
   });
@@ -109,7 +140,8 @@ function applyCorrections(tokens: Token[], corrections?: Record<number, string>)
 function toExampleSentence(
   candidate: SentenceCandidate,
   decision: ReviewDecision,
-  reviewedFor: string[]
+  reviewedFor: string[],
+  problems: string[]
 ): ExampleSentence {
   return {
     id: candidate.id,
@@ -117,7 +149,12 @@ function toExampleSentence(
     targets: candidate.targets,
     reviewedFor,
     japanese: candidate.japanese,
-    tokens: applyCorrections(candidate.tokens, decision.readingCorrections),
+    tokens: applyCorrections(
+      candidate.id,
+      candidate.tokens,
+      decision.readingCorrections,
+      problems
+    ),
     english: candidate.english,
     level: candidate.level,
     source: candidate.source,
@@ -194,17 +231,32 @@ function main(): void {
     for (const candidate of entry.candidates) idsInQueue.add(candidate.id);
   }
 
-  const rejected = log.decisions.filter((d) => d.verdict === 'rejected').length;
+  const rejectedDecisions = log.decisions.filter((d) => d.verdict === 'rejected');
+  const rejected = rejectedDecisions.length;
   const accepted = log.decisions.filter((d) => d.verdict === 'accepted');
   // Retained in the log, absent from the queue. Evidence about the ranker, not
   // an error — but unpublishable, because the queue is where the text lives.
-  const orphaned = accepted.filter((d) => !idsInQueue.has(d.candidateId)).length;
+  //
+  // Counted over ALL decisions, and reported split, because the two orphan
+  // classes mean different things. An ACCEPTED orphan is missing output: a
+  // sentence a human approved that the site will not show. A REJECTED orphan
+  // has no output effect at all — but it is still review effort gone dormant,
+  // and a log that is entirely rejections (which is exactly today's N5 state)
+  // reported "orphaned 0" while several rejections had in fact fallen out of
+  // the queue. Under-reporting stale reviewer work is how a re-ranked queue
+  // quietly costs a second pass over sentences already judged.
+  const orphanedAccepted = accepted.filter((d) => !idsInQueue.has(d.candidateId)).length;
+  const orphanedRejected = rejectedDecisions.filter((d) => !idsInQueue.has(d.candidateId)).length;
 
   // The OUTPUT is a flat set keyed by sentence id: a sentence accepted while
   // reviewing 日 and again while reviewing 今 is emitted once, carrying both
   // kanji in `reviewedFor`. Emitting it twice would put two identical cards on
   // one page and duplicate its attribution.
   const published = new Map<string, ExampleSentence>();
+  // Reading corrections that no longer name a token. Collected across the whole
+  // run rather than thrown on the first one, so a re-ranked queue reports every
+  // stranded correction in one pass instead of one per re-run.
+  const correctionProblems: string[] = [];
   let kanjiWithFull = 0;
   let kanjiWithSome = 0;
   let shared = 0;
@@ -235,13 +287,32 @@ function main(): void {
         shared += 1;
         continue;
       }
-      published.set(candidate.id, toExampleSentence(candidate, decision, [entry.kanji]));
+      published.set(
+        candidate.id,
+        toExampleSentence(candidate, decision, [entry.kanji], correctionProblems)
+      );
     }
     if (chosen.length >= queue.targetPerKanji) kanjiWithFull += 1;
     else kanjiWithSome += 1;
   }
 
   const sentences = [...published.values()];
+
+  // A stranded correction is not a validator issue — the assembled sentence
+  // looks fine, which is the problem — so it gets its own refusal, ahead of the
+  // validator and ahead of any write.
+  if (correctionProblems.length > 0) {
+    for (const problem of correctionProblems) console.error(`  ✗ ${problem}`);
+    console.error(
+      `\nRefusing to write ${level}: ${correctionProblems.length} reading ` +
+        (correctionProblems.length === 1
+          ? 'correction no longer names a token'
+          : 'corrections no longer name a token') +
+        ' in the queue. The queue was regenerated after they were recorded; re-review the ' +
+        'affected sentences rather than dropping the corrections. Nothing was changed.'
+    );
+    process.exit(1);
+  }
 
   // Nothing reaches disk until every check passes. See the header.
   const issues = validatePublished(sentences, { queue });
@@ -258,7 +329,10 @@ function main(): void {
   console.log(`  decisions read            ${log.decisions.length}`);
   console.log(`    accepted                ${accepted.length}`);
   console.log(`    rejected                ${rejected}`);
-  console.log(`    orphaned (kept in log)  ${orphaned}`);
+  console.log(
+    `    orphaned (kept in log)  ${orphanedAccepted + orphanedRejected}` +
+      ` (${orphanedAccepted} accepted — unpublishable, ${orphanedRejected} rejected — no output effect)`
+  );
   console.log(`  kanji with ${queue.targetPerKanji} sentences     ${kanjiWithFull}`);
   console.log(`  kanji with fewer          ${kanjiWithSome}`);
   console.log(`  reviewed for >1 kanji     ${shared} (emitted once, shown on each)`);

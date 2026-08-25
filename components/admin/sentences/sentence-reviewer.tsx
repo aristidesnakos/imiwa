@@ -45,6 +45,8 @@ import { cn } from '@/lib/utils';
 import { Attribution } from '@/components/sentences/attribution';
 import { Furigana, HAS_KANJI } from '@/components/sentences/furigana';
 import { REJECT_REASONS, REJECT_REASON_LABELS } from '@/lib/sentences/reject-reasons';
+import { describeUnresolvedKey, toIndexed, toKeyed } from '@/lib/sentences/correction-keys';
+import { splitSenses } from '@/lib/sentences/types';
 import type {
   CandidateId,
   KanjiQueueEntry,
@@ -64,12 +66,18 @@ type Armed = 'reject' | 'sense' | null;
  * the heuristic `senseHint` promoted to first position so that `s` then `1`
  * confirms the guess in two keystrokes.
  *
- * The hint is included even when it is not one of the comma-split senses —
- * the inference does not always land on a clean split — but it is never
- * silently written as `senseTag`. `senseTag` means "a human adjudicated this",
- * and promoting a guess that is null 78% of the time into an authoritative
- * field would repeat, in a new place, the mistake of recording a judgement
- * nobody made.
+ * The hint is included even when it is not one of the split senses — the
+ * inference does not always land on a clean split — but it is never silently
+ * written as `senseTag`. `senseTag` means "a human adjudicated this", and
+ * promoting a guess that is null 78% of the time into an authoritative field
+ * would repeat, in a new place, the mistake of recording a judgement nobody
+ * made.
+ *
+ * The split is `splitSenses`, shared with the ranker, and NOT a bare `,`. A
+ * bare comma split offered 二 as three senses — "two, 2" / "two" / "2" — three
+ * buttons for one sense, one of them a bare numeral. The reviewer's options
+ * have to be the senses the ranker believes in, or the sense spread publish.ts
+ * guarantees is measured against a vocabulary nobody else uses.
  */
 function senseOptionsFor(meaning: string, hint: string | null): string[] {
   const options: string[] = [];
@@ -82,8 +90,19 @@ function senseOptionsFor(meaning: string, hint: string | null): string[] {
     seen.add(key);
     options.push(trimmed);
   };
+  // The DICTIONARY senses first, then the ranker's hint if it is not already
+  // one of them. The hint used to lead, which put a heuristic guess on key `1` —
+  // the fastest key on the fastest path — and `senseTag` is what publish.ts
+  // spreads the shipping top 3 across. That made `s` `1` the one route by which
+  // a wrong hint reached a learner's page under a human's name.
+  //
+  // When the hint IS a real sense (the common case) this changes nothing but
+  // its position. When it is not — 名前 hinting "before" for 前, which JMdict
+  // cannot fix because it maps word→word-sense and never
+  // character-sense-in-compound — it lands last, where taking it is a choice
+  // rather than a reflex.
+  for (const part of splitSenses(meaning)) push(part);
   if (hint) push(hint);
-  for (const part of meaning.split(',')) push(part);
   return options.slice(0, 9);
 }
 
@@ -124,15 +143,51 @@ export function SentenceReviewer({
         .map((d) => [d.candidateId, d.note as string])
     )
   );
+  /**
+   * THE KEY BOUNDARY, half one.
+   *
+   * A persisted correction is keyed `<surface>#<occurrence>` so it survives the
+   * queue being regenerated (see lib/sentences/correction-keys.ts). The editing
+   * state below is keyed by TOKEN INDEX, which is right for what it is —
+   * transient state against the token array this component is holding right
+   * now, and what `<Furigana corrections>` takes. The two forms meet here on
+   * load and in `submit` on save, and nowhere else.
+   *
+   * A key that resolves to no token is NOT dropped quietly: the reviewer
+   * corrected a token that re-segmentation has since removed, so the correction
+   * is real work that no longer applies, and they are the only one who can
+   * settle it. It stays out of the editing state — there is no token to attach
+   * it to — and is reported at the top of the page.
+   */
+  const loaded = useMemo(() => {
+    const byId = new Map(candidates.map((c) => [c.id, c]));
+    const drafts: Record<CandidateId, Record<number, string>> = {};
+    const stranded: { candidateId: CandidateId; japanese: string; keys: string[] }[] = [];
+
+    for (const decision of Object.values(initialDecisions)) {
+      if (!decision.readingCorrections) continue;
+      const candidate = byId.get(decision.candidateId);
+      if (!candidate) continue; // a decision for another kanji's candidate
+      const { corrections, unresolved } = toIndexed(
+        candidate.tokens,
+        decision.readingCorrections
+      );
+      if (Object.keys(corrections).length > 0) drafts[decision.candidateId] = corrections;
+      if (unresolved.length > 0) {
+        stranded.push({
+          candidateId: decision.candidateId,
+          japanese: candidate.japanese,
+          keys: unresolved,
+        });
+      }
+    }
+
+    return { drafts, stranded };
+  }, [candidates, initialDecisions]);
+
   const [readingDrafts, setReadingDrafts] = useState<
     Record<CandidateId, Record<number, string>>
-  >(() =>
-    Object.fromEntries(
-      Object.values(initialDecisions)
-        .filter((d) => d.readingCorrections)
-        .map((d) => [d.candidateId, d.readingCorrections as Record<number, string>])
-    )
-  );
+  >(() => loaded.drafts);
   const [senseTags, setSenseTags] = useState<Record<CandidateId, string>>(() =>
     Object.fromEntries(
       Object.values(initialDecisions)
@@ -211,6 +266,18 @@ export function SentenceReviewer({
     cardRefs.current[activeIndex]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, [activeIndex]);
 
+  // Also logged, not only rendered: publish.ts refuses to write a level with a
+  // stranded correction in it, and whoever hits that in the terminal should be
+  // able to find the same sentence here.
+  useEffect(() => {
+    for (const item of loaded.stranded) {
+      console.warn(
+        `sentence-reviewer: ${item.candidateId} has reading corrections that no longer ` +
+          `name a token — ${item.keys.map(describeUnresolvedKey).join('; ')}`
+      );
+    }
+  }, [loaded.stranded]);
+
   /* ── persistence ─────────────────────────────────────────────────────────── */
 
   const submit = useCallback(
@@ -223,7 +290,11 @@ export function SentenceReviewer({
       const previous = decisions;
       const existing = decisions[candidate.id];
       const note = notes[candidate.id]?.trim() || undefined;
-      const corrections = readingDrafts[candidate.id];
+      // THE KEY BOUNDARY, half two: index-form editing state becomes the
+      // durable `<surface>#<occurrence>` form the decision log stores. Nothing
+      // below this line handles indices.
+      const draft = readingDrafts[candidate.id];
+      const corrections = draft ? toKeyed(candidate.tokens, draft) : undefined;
       const hasCorrections = corrections && Object.keys(corrections).length > 0;
       const senseTag = senseTags[candidate.id]?.trim() || undefined;
 
@@ -470,7 +541,7 @@ export function SentenceReviewer({
       {error ? (
         <div
           role="alert"
-          className="mx-auto mt-4 max-w-4xl rounded-md border border-destructive-ink/40 bg-destructive/10 px-4 py-3 text-sm text-destructive-ink"
+          className="mx-auto mt-4 max-w-4xl rounded-md border border-[color:color-mix(in_srgb,var(--destructive-ink)_40%,var(--background))] bg-[color-mix(in_srgb,var(--destructive)_10%,var(--background))] px-4 py-3 text-sm text-destructive-ink"
         >
           <p className="font-semibold">Not saved</p>
           <p className="mt-1">{error}</p>
@@ -498,6 +569,33 @@ export function SentenceReviewer({
               </Button>
             </div>
           ) : null}
+        </div>
+      ) : null}
+
+      {loaded.stranded.length > 0 ? (
+        // The tint is `color-mix`, not `bg-destructive/10`, and the border
+        // carries the `color:` hint. An opacity modifier on one of these tokens
+        // compiles to NOTHING — the value is a bare `var(--x)` holding a hex,
+        // which Tailwind cannot fold alpha into — so the two sibling alerts in
+        // this file render with no tint and a full-strength border they never
+        // asked for. See the design-tokens section of CLAUDE.md.
+        <div
+          role="alert"
+          className="mx-auto mt-4 max-w-4xl rounded-md border border-[color:color-mix(in_srgb,var(--destructive-ink)_40%,var(--background))] bg-[color-mix(in_srgb,var(--destructive)_10%,var(--background))] px-4 py-3 text-sm text-destructive-ink"
+        >
+          <p className="font-semibold">Saved reading corrections no longer apply</p>
+          <p className="mt-1">
+            The queue was regenerated and these tokens no longer exist, so the corrections
+            below are not loaded and publish will refuse this level until they are
+            re-recorded. Open each sentence and correct the token again.
+          </p>
+          <ul className="mt-2 space-y-1 text-xs">
+            {loaded.stranded.map((item) => (
+              <li key={item.candidateId}>
+                <span lang="ja">{item.japanese}</span> — {item.keys.join(', ')}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
@@ -734,9 +832,20 @@ const CandidateCard = forwardRef<HTMLElement, CandidateCardProps>(function Candi
         ref={ref}
         onClick={onFocus}
         className={cn(
-          'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors hover:bg-accent/40',
+          // Three dead-alpha classes used to live on this row. `accent` and
+          // `destructive` are bare `var(--x)` holding a hex, so Tailwind cannot
+          // fold alpha into them and `hover:bg-accent/40`, `border-destructive/30`
+          // and `bg-destructive/5` all compiled to NOTHING. The row had no hover
+          // at all and a rejected row showed no tint and a full-strength border —
+          // in a tool whose whole job is telling accepted from rejected at a
+          // glance, over hundreds of cards. See the design-tokens section of
+          // CLAUDE.md. The emerald pair below is stock Tailwind (baselined) but
+          // it is a real Tailwind colour, so its alpha does work.
+          'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors',
+          'hover:bg-[color-mix(in_srgb,var(--accent)_40%,var(--background))]',
           decision?.verdict === 'accepted' && 'border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20',
-          decision?.verdict === 'rejected' && 'border-destructive/30 bg-destructive/5 opacity-70'
+          decision?.verdict === 'rejected' &&
+            'border-[color:color-mix(in_srgb,var(--destructive)_30%,var(--background))] bg-[color-mix(in_srgb,var(--destructive)_5%,var(--background))] opacity-70'
         )}
       >
         <StatusDot decision={decision} />
@@ -879,7 +988,7 @@ const CandidateCard = forwardRef<HTMLElement, CandidateCardProps>(function Candi
       ) : null}
 
       {armed === 'reject' ? (
-        <div className="mt-3 rounded-md border border-destructive-ink/40 bg-destructive/5 p-3">
+        <div className="mt-3 rounded-md border border-[color:color-mix(in_srgb,var(--destructive-ink)_40%,var(--background))] bg-[color-mix(in_srgb,var(--destructive)_5%,var(--background))] p-3">
           <p className="mb-2 text-xs font-semibold text-destructive-ink">
             Pick a reason — press its number, or Esc to cancel
           </p>

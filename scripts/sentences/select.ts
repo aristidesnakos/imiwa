@@ -99,14 +99,71 @@
  *      mind, air, atmosphere, mood"; 気分 renders as "I feel like going out",
  *      which names none of them. No amount of string matching recovers that.
  *
- * The principled fix is a Japanese word→sense map, i.e. JMdict — already
- * licence-cleared for the dictionary-entries layer in
- * docs/prd/content-source-licence-investigation.md §1. Until that lands, the
- * REVIEWER is the authority: `ReviewDecision.senseTag` overrides the hint, and
- * the publish step should enforce sense spread from tags, not from hints.
+ * THERE IS NO DICTIONARY THAT FIXES THIS, and this file used to claim there
+ * was. It named JMdict as "the principled fix", which is wrong and expensive to
+ * disprove — 63 MB of it — so the correction belongs here rather than in a
+ * changelog. JMdict maps a WORD to that word's senses. What this needs is the
+ * sense a CHARACTER carries INSIDE a compound, which JMdict does not record at
+ * any granularity. 名前 is one JMdict entry meaning "name"; reading 前 out of it
+ * gives the sense "before", which is the exact failure this hint has today and
+ * the entry contains nothing that would prevent it. From the other side, 今日 /
+ * 毎日 / 先日 are three entries with three senses between them and one sense of
+ * 日 — feeding those in collapses into the `targetWordKey` word-diversity
+ * penalty a few lines below and adds nothing this field exists for. Closing the
+ * gap needs per-character-in-compound sense data, which would have to be
+ * authored rather than imported.
+ *
+ * So the REVIEWER is the authority permanently, not provisionally:
+ * `ReviewDecision.senseTag` overrides the hint, and the publish step enforces
+ * sense spread from tags, not from hints.
  *
  * Deliberately conservative: a wrong hint is worse than no hint, because the
  * reviewer trusts it. When in doubt this abstains.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ONE SENTENCE, THREE PAGES — THE CROSS-KANJI REUSE CHARGE
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Every penalty above this one reasons about a single kanji's eight slots. That
+ * is not the whole product. A sentence containing three target kanji enters
+ * three pools, scores well in all three for exactly the same reasons, and lands
+ * in all three shipping sets. 「あのレースは八百長だった」 did precisely that —
+ * 八#2, 百#2, 長#3 — so one sentence held three of N5's publishing slots, three
+ * kanji pages each spent a third of their budget on one idea, and a learner
+ * working through the level met the same sentence three times. It was not alone:
+ * 13 sentences held 3 or 4 publishing slots apiece.
+ *
+ * So the run carries one map — Japanese sentence id → publishing slots already
+ * claimed — and `WEIGHTS.crossKanjiReuseEach` charges a candidate that already
+ * holds two of them when it comes up for a third.
+ *
+ * CAP AT 2, NOT 1, because a two-way share is frequently the right answer.
+ * 八百長 genuinely demonstrates both 八 and 百; forcing the second page onto a
+ * worse sentence to avoid a repeat buys the learner nothing. Three is where it
+ * stops being a property of the compound and starts being a hole in the level's
+ * variety.
+ *
+ * The charge applies ONLY when the pick under consideration would itself land in
+ * a publishing slot (rank ≤ `TARGET_PER_KANJI`). Ranks 4–8 exist to give the
+ * reviewer something to reject; a widely-reused sentence sitting at rank 6 costs
+ * the learner nothing, and starving the reviewer of candidates costs more than
+ * the repetition would. It is a score charge and not an exclusion, and finite
+ * for the same reason `nearDuplicateEach` is: a kanji whose pool genuinely holds
+ * nothing else must still fill its slots with what it has.
+ *
+ * WHAT IT COSTS, AND THE ORDER IT IS PAID IN. The charge is order-dependent —
+ * whichever kanji is scored first claims the shared sentence and every later one
+ * pays — so kanji are processed STARVED FIRST: ascending pool size
+ * (`totalCandidates`), ties broken by inventory position so a re-run cannot
+ * reshuffle anything. A kanji with a dozen usable candidates has no second-best
+ * worth the name and should claim 八百長 ahead of a kanji with eight hundred,
+ * which will not miss it. The entries are sorted back into inventory order
+ * before the queue is written: a queue that re-orders itself between runs is a
+ * diff the reviewer has to read and, worse, looks like data loss.
+ *
+ * `--kanji` mode processes exactly one kanji, so the map never reaches two and
+ * the charge never fires. That is correct — single-kanji mode reports, it does
+ * not publish.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -145,6 +202,7 @@ import {
   type Candidate as CoverageCandidate,
 } from './coverage';
 import type {
+  DecisionLog,
   KanjiQueueEntry,
   KanjiTarget,
   ReviewQueue,
@@ -154,7 +212,7 @@ import type {
   SentenceSource,
   Token,
 } from '../../lib/sentences/types';
-import { candidateId } from '../../lib/sentences/types';
+import { candidateId, splitSenses } from '../../lib/sentences/types';
 import type { AppliedCorrection } from '../../lib/sentences/reading-corrections';
 import { correctReadings } from '../../lib/sentences/reading-corrections';
 
@@ -292,7 +350,63 @@ const WEIGHTS = {
    * pool genuinely holds nothing else should still fill its slots.
    */
   nearDuplicateEach: -30,
+
+  /**
+   * Charge for a sentence that already fills `CROSS_KANJI_SLOT_CAP` publishing
+   * slots on OTHER kanji's pages and is up for one more. Unlike every other
+   * penalty here this one is RUN-level, not per-kanji: see the header section on
+   * cross-kanji reuse for the 八百長 case that motivated it.
+   *
+   * Sized between `duplicateWordEach` (−18) and `nearDuplicateEach` (−30), and
+   * that ordering is the argument. Restating a sentence already selected for
+   * THIS kanji is the worst of the three — both copies land on one page, side by
+   * side, and the second is pure waste. Reuse across pages is milder than that,
+   * because the sentence is at least apt for the kanji it is being considered
+   * for and no single page looks repetitive. But it is worse than a repeated
+   * word, because a repeated word at least ships a second sentence, whereas this
+   * ships the same sentence again on a page the learner reaches later and
+   * remembers.
+   *
+   * Escalates: a candidate holding three slots is charged twice this, four slots
+   * three times. Finite at every step, so it can still lose — which is the
+   * point. A kanji whose pool holds nothing but reused sentences fills its slots
+   * with them.
+   */
+  crossKanjiReuseEach: -24,
+
+  /**
+   * Charge for a candidate a reviewer has ALREADY REJECTED for this kanji, when
+   * it is up for one of the `TARGET_PER_KANJI` slots that actually ship.
+   *
+   * Run-level like `crossKanjiReuseEach`, and slot-aware for the same reason:
+   * ranks 4–8 are reviewer material, not learner material. A rejected candidate
+   * is WELCOME down there. It is the evidence that the ranker and the human
+   * disagree, and a hard exclusion would delete exactly the evidence the
+   * decision log exists to keep. What it must not do is hold a slot that ships.
+   *
+   * Sized at −60 because, unlike every other penalty in this table, it has to
+   * actually win the argument. Across the current N5 queue the rank-1-to-rank-4
+   * score gap tops out at 39.9 (p90 25.3), so −60 clears the whole observed
+   * spread and reliably lands a rejected candidate below `TARGET_PER_KANJI`.
+   *
+   * Still finite, and that is deliberate: a kanji whose pool holds nothing but
+   * rejections fills its publishing slots with them rather than shipping fewer
+   * sentences than it has candidates. The breakdown line says so when it does.
+   *
+   * Keyed by (pair id, kanji), NEVER by pair id alone. A decision records the
+   * kanji the reviewer had on screen — rejecting a sentence as a poor
+   * demonstration of 日 says nothing about it as a demonstration of 本 — and
+   * `publish.ts` draws the same distinction on the accept side.
+   */
+  reviewerRejectedPublishing: -60,
 } as const;
+
+/**
+ * Publishing slots one Tatoeba sentence may hold across the whole run before
+ * `crossKanjiReuseEach` starts charging it. Two, not one — a compound like 八百長
+ * legitimately demonstrates both of its kanji.
+ */
+const CROSS_KANJI_SLOT_CAP = 2;
 
 /**
  * Trigram-overlap threshold above which two sentences are "the same one".
@@ -304,6 +418,33 @@ const WEIGHTS = {
  * penalty fired exactly zero times across all 650 candidates.
  */
 const NEAR_DUPLICATE_JACCARD = 0.45;
+
+/**
+ * Rejections already recorded for this level, as `${candidateId}::${kanji}`.
+ *
+ * Selection READS the decision log. It never writes it, and it never filters on
+ * it — the log is a record of human judgement, and a ranker that deleted its
+ * inputs on the strength of it would be unable to show anyone that it had been
+ * overruled. All this set does is feed `WEIGHTS.reviewerRejectedPublishing`,
+ * which demotes a rejected candidate out of the publishing ranks and leaves it
+ * visible at 4–8.
+ *
+ * A missing file is normal: the first selection run for a level happens before
+ * anyone has reviewed anything, and an empty set is the correct answer then.
+ */
+function loadDecisionLog(level: Level): DecisionLog | null {
+  const path = resolve(__dirname, '../../data/sentences/decisions', `${level}.json`);
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, 'utf8')) as DecisionLog;
+}
+
+function rejectionKeys(log: DecisionLog | null): Set<string> {
+  const out = new Set<string>();
+  for (const d of log?.decisions ?? []) {
+    if (d.verdict === 'rejected') out.add(`${d.candidateId}::${d.targetKanji}`);
+  }
+  return out;
+}
 
 /**
  * IPADIC's known silent misreadings, from Phase 0 §4.
@@ -908,19 +1049,26 @@ function frequencyBonus(count: number): number {
  */
 
 /**
- * Split a `meaning` field into senses.
+ * Split a `meaning` field into senses, lowercased for matching.
  *
- * Two traps in the real data, both hit on the first N5 run:
- *   - "10,000" and "2, 3" — a comma followed by a digit is a THOUSANDS
- *     SEPARATOR or a numeral gloss, not a sense boundary.
- *   - "two, 2" / "four, 4" — the numeral is a restatement of the word, not a
- *     second sense. Numeric-only senses are dropped.
+ * The splitting rule itself lives in `lib/sentences/types.ts` as `splitSenses`
+ * and is deliberately NOT duplicated here. It used to be, and the reviewer UI
+ * had a third copy that split on a bare comma — so 二 ("two, 2") scored as one
+ * sense in the ranker and offered the reviewer three to tag. A sense the
+ * reviewer can tag but the ranker never scores makes the spread guarantee in
+ * publish.ts quietly untrue, which is the kind of defect that shows up only as
+ * a page that teaches the same meaning three times.
+ *
+ * Two traps in the real data, both hit on the first N5 run, and both handled
+ * there: "10,000" and "2, 3" (a comma followed by a digit is a thousands
+ * separator or a numeral gloss, not a sense boundary), and "two, 2" (the
+ * numeral restates the word rather than adding a sense).
+ *
+ * Lowercasing is this caller's business, not the shared rule's — the reviewer
+ * UI shows senses to a human and needs the original case.
  */
 function parseSenses(meaning: string): string[] {
-  return meaning
-    .split(/,(?!\s*\d)/)
-    .map(s => s.trim().toLowerCase())
-    .filter(s => s.length > 0 && !/^[\d,.\s]+$/.test(s));
+  return splitSenses(meaning).map((s) => s.toLowerCase());
 }
 
 /**
@@ -1079,7 +1227,7 @@ function isNearDuplicate(
   return union > 0 && shared / union >= NEAR_DUPLICATE_JACCARD;
 }
 
-function parseArgs(): { level: Level; kanji: string | null } {
+function parseArgs(): { level: Level; kanji: string | null; force: boolean } {
   const argv = process.argv.slice(2);
   const at = (flag: string) => {
     const i = argv.indexOf(flag);
@@ -1092,12 +1240,16 @@ function parseArgs(): { level: Level; kanji: string | null } {
         `  npx tsx --tsconfig tsconfig.json scripts/sentences/select.ts --level N5`
     );
   }
-  return { level: level as Level, kanji: at('--kanji') };
+  return {
+    level: level as Level,
+    kanji: at('--kanji'),
+    force: process.argv.includes('--force'),
+  };
 }
 
 async function main() {
   assertInventory();
-  const { level, kanji: onlyKanji } = parseArgs();
+  const { level, kanji: onlyKanji, force } = parseArgs();
   const targetRank = LEVEL_RANK[level];
 
   const inventory = KANJI_INVENTORY.filter(
@@ -1215,6 +1367,45 @@ async function main() {
 
   // ── Pass 2: score, tokenize, diversify ──────────────────────────────────
   const entries: KanjiQueueEntry[] = [];
+
+  /**
+   * Publishing slots claimed so far, keyed by JAPANESE sentence id — RUN-level
+   * state, the only such state in this loop.
+   *
+   * Keyed by `cand.id` rather than by `candidateId(jp, en)`. The pair id is what
+   * publishes, but the pair is not what the learner recognises: two pages
+   * carrying the same Japanese sentence under two different English translations
+   * are still the same sentence met twice, and Tatoeba links several
+   * translations to a popular Japanese sentence routinely. The JP id is the
+   * coarser key, and coarser is what a dedup wants.
+   */
+  const publishingSlots = new Map<number, number>();
+
+  /**
+   * Rejections already on record, consulted by `rejectedPenalty` below. Loaded
+   * once per run: the log is a file the reviewer owns and selection only reads.
+   */
+  const decisionLog = loadDecisionLog(level);
+  const rejections = rejectionKeys(decisionLog);
+
+  /**
+   * Position in the level's inventory, which is the order the queue is WRITTEN
+   * in — see the sort back to it after the loop.
+   */
+  const inventoryOrder = new Map(inventory.map((e, i) => [e.kanji, i]));
+
+  /**
+   * Starved kanji first. `crossKanjiReuseEach` is order-dependent by
+   * construction: the first kanji to reach a shared sentence claims it and every
+   * later one pays, so the kanji with the least to fall back on should go first.
+   * Ties break on inventory position — arbitrary, but fixed, which is what
+   * matters when the alternative is a queue that reshuffles every regeneration.
+   */
+  const processingOrder = [...inventory].sort(
+    (a, b) =>
+      byKanji.get(a.kanji)!.length - byKanji.get(b.kanji)!.length ||
+      inventoryOrder.get(a.kanji)! - inventoryOrder.get(b.kanji)!
+  );
   const stats = {
     reconstructionFailures: 0,
     tokensEmitted: 0,
@@ -1238,9 +1429,17 @@ async function main() {
     multiSenseKanji: 0,
     /** Of those, how many got ≥2 distinct senses into the shipping top 3. */
     multiSenseSpread: 0,
+    /**
+     * Publishing slots a previously-rejected candidate was demoted OUT of, and
+     * the ones it held anyway because the pool had nothing better. The second
+     * number is the one to watch: it is the ranker telling you a kanji is out of
+     * material, not that the penalty failed.
+     */
+    rejectedDemoted: 0,
+    rejectedPublishedAnyway: 0,
   };
 
-  for (const entry of inventory) {
+  for (const entry of processingOrder) {
     const pool = byKanji.get(entry.kanji)!;
     const totalCandidates = pool.length;
 
@@ -1409,6 +1608,40 @@ async function main() {
     };
     const pickedText: { japanese: string; english: string | null; grams: Set<string> }[] = [];
 
+    /**
+     * Repeat charge for a sentence already publishing on other kanji's pages.
+     *
+     * The only run-level penalty here, and the only one that cares WHICH slot is
+     * being filled: ranks 4–8 are reviewer material, not learner material, so
+     * reuse there is free. `selected.length` is the count before this pick, so
+     * `< TARGET_PER_KANJI` is exactly "this pick would publish".
+     *
+     * In `--kanji` mode a sentence can claim at most one slot (one kanji, one
+     * pool, one appearance in it), so `held` never reaches the cap and this
+     * always returns 0. Intended: that mode reports and writes nothing.
+     */
+    const reusePenalty = (r: Ranked) => {
+      if (selected.length >= TARGET_PER_KANJI) return 0;
+      const held = publishingSlots.get(r.cand.id) ?? 0;
+      if (held < CROSS_KANJI_SLOT_CAP) return 0;
+      return WEIGHTS.crossKanjiReuseEach * (held - CROSS_KANJI_SLOT_CAP + 1);
+    };
+
+    /**
+     * Repeat charge for a candidate a reviewer already rejected for THIS kanji.
+     *
+     * Same slot-awareness as `reusePenalty`, and for the same reason:
+     * `selected.length` is the count BEFORE this pick, so `< TARGET_PER_KANJI`
+     * is exactly "this pick would publish". Once the three shipping slots are
+     * full the charge stops, and rejected candidates sort into 4–8 on their own
+     * merits — which is where the reviewer should still see them.
+     */
+    const rejectedPenalty = (r: Ranked) => {
+      if (selected.length >= TARGET_PER_KANJI) return 0;
+      const key = `${candidateId(r.cand.id, r.cand.englishId)}::${entry.kanji}`;
+      return rejections.has(key) ? WEIGHTS.reviewerRejectedPublishing : 0;
+    };
+
     /** Repeat charge for a sentence that restates one already selected. */
     const nearDuplicatePenalty = (r: Ranked) => {
       if (pickedText.length === 0) return 0;
@@ -1424,22 +1657,52 @@ async function main() {
       let bestWordPenalty = 0;
       let bestSensePenalty = 0;
       let bestDupePenalty = 0;
+      let bestReusePenalty = 0;
+      let bestRejectedPenalty = 0;
       for (let i = 0; i < remaining.length; i++) {
         const wp = wordPenalty(remaining[i]);
         const sp = sensePenalty(remaining[i]);
         const dp = nearDuplicatePenalty(remaining[i]);
-        const adjusted = remaining[i].score + wp + sp + dp;
+        const rp = reusePenalty(remaining[i]);
+        const xp = rejectedPenalty(remaining[i]);
+        const adjusted = remaining[i].score + wp + sp + dp + rp + xp;
         if (adjusted > bestScore) {
           bestScore = adjusted;
           bestIdx = i;
           bestWordPenalty = wp;
           bestSensePenalty = sp;
           bestDupePenalty = dp;
+          bestReusePenalty = rp;
+          bestRejectedPenalty = xp;
         }
       }
 
       const pick = remaining.splice(bestIdx, 1)[0];
       pickedText.push(textFor(pick));
+
+      // Read the tally BEFORE claiming this slot, so the breakdown line reports
+      // the pages that already carry the sentence rather than counting itself.
+      const heldElsewhere = publishingSlots.get(pick.cand.id) ?? 0;
+      if (selected.length < TARGET_PER_KANJI) {
+        publishingSlots.set(pick.cand.id, heldElsewhere + 1);
+      }
+      if (bestReusePenalty !== 0) {
+        pick.lines.push(
+          `${bestReusePenalty.toFixed(1)} diversity: this sentence already fills a publishing slot ` +
+            `on ${heldElsewhere} other kanji page(s) in this level`
+        );
+      }
+      if (bestRejectedPenalty !== 0) {
+        // Reaching here means the charge was applied and the candidate STILL
+        // won the slot — the pool had nothing unrejected left to promote. The
+        // line has to exist regardless: the self-check below sums every
+        // breakdown line against `score` and aborts the write if they disagree.
+        stats.rejectedPublishedAnyway += 1;
+        pick.lines.push(
+          `${bestRejectedPenalty.toFixed(1)} review: already rejected for ${entry.kanji}, ` +
+            `and still the best candidate left for a publishing slot`
+        );
+      }
       if (bestDupePenalty !== 0) {
         pick.lines.push(
           `${bestDupePenalty.toFixed(1)} diversity: restates a sentence already selected for this kanji`
@@ -1503,7 +1766,15 @@ async function main() {
           isTanaka: pick.cand.isTanaka,
         },
         score:
-          Math.round((pick.score + bestWordPenalty + bestSensePenalty + bestDupePenalty) * 10) / 10,
+          Math.round(
+            (pick.score +
+              bestWordPenalty +
+              bestSensePenalty +
+              bestDupePenalty +
+              bestReusePenalty +
+              bestRejectedPenalty) *
+              10
+          ) / 10,
         scoreBreakdown: pick.lines,
         rank: selected.length + 1,
         senseHint: pick.senseKey,
@@ -1522,6 +1793,13 @@ async function main() {
       if (shipping.size >= 2) stats.multiSenseSpread++;
     }
 
+    // Rejected candidates that survived into ranks 4–8, which is where they are
+    // SUPPOSED to be: still visible to the reviewer as evidence the ranker and
+    // the human disagree, but not holding a slot a learner sees.
+    for (let i = TARGET_PER_KANJI; i < selected.length; i++) {
+      if (rejections.has(`${selected[i].id}::${entry.kanji}`)) stats.rejectedDemoted += 1;
+    }
+
     entries.push({
       kanji: entry.kanji,
       level,
@@ -1530,6 +1808,11 @@ async function main() {
       totalCandidates,
     });
   }
+
+  // Back into inventory order. `processingOrder` above exists only so the
+  // starved kanji get first claim on a shared sentence; it must not reach the
+  // file, where a re-ordered queue is a gratuitous diff that reads as data loss.
+  entries.sort((a, b) => inventoryOrder.get(a.kanji)! - inventoryOrder.get(b.kanji)!);
 
   // ── Single-kanji mode: report, write nothing ────────────────────────────
   //
@@ -1615,6 +1898,49 @@ async function main() {
     process.exit(1);
   }
 
+  /**
+   * REGENERATING AFTER REVIEW DESTROYS REVIEW WORK — so it has to be asked for.
+   *
+   * The queue is the only place a sentence's TEXT lives. An ACCEPTED decision
+   * whose candidate is no longer in the queue therefore cannot be published:
+   * `publish.ts` counts it as an orphan and the sentence silently never reaches
+   * a learner. Rejected orphans cost nothing at publish time, so they do not
+   * gate anything here.
+   *
+   * This matters most at exactly the moment it is easiest to get wrong: a level
+   * is reviewed end-to-end over hours, and then someone re-runs selection to
+   * pick up a ranker tweak. The old behaviour was to overwrite without a word.
+   * `--force` is still there for the case where losing them is the intent.
+   */
+  const acceptedIds = (decisionLog?.decisions ?? []).filter((d) => d.verdict === 'accepted');
+  if (acceptedIds.length > 0) {
+    const idsInNewQueue = new Set<string>();
+    for (const e of entries) for (const c of e.candidates) idsInNewQueue.add(c.id);
+    const wouldOrphan = acceptedIds.filter((d) => !idsInNewQueue.has(d.candidateId));
+    if (wouldOrphan.length > 0 && !force) {
+      console.error(
+        `\n✗ this queue would orphan ${wouldOrphan.length} of ${acceptedIds.length} ACCEPTED ` +
+          `decision(s) — refusing to write.\n` +
+          `  Accepted sentences that fall out of the queue can never be published: the queue is\n` +
+          `  the only place the text lives. Nothing has been written; the existing queue and the\n` +
+          `  decision log are untouched.\n`
+      );
+      for (const d of wouldOrphan.slice(0, 20)) {
+        console.error(`    ${d.targetKanji}  ${d.candidateId}  (reviewed by ${d.reviewer})`);
+      }
+      if (wouldOrphan.length > 20) console.error(`    … and ${wouldOrphan.length - 20} more`);
+      console.error(
+        `\n  Publish what is already reviewed first, or re-run with --force to discard them.\n`
+      );
+      process.exit(1);
+    }
+    if (wouldOrphan.length > 0) {
+      console.log(
+        `\n⚠ --force: discarding ${wouldOrphan.length} accepted decision(s) from the queue.\n`
+      );
+    }
+  }
+
   const outPath = resolve(__dirname, '../../data/sentences/queue', `${level}.json`);
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, `${JSON.stringify(queue, null, 2)}\n`, 'utf8');
@@ -1663,6 +1989,17 @@ async function main() {
     `  multi-sense kanji spanning ≥2 senses in the top ${TARGET_PER_KANJI}: ` +
       `${stats.multiSenseSpread} / ${stats.multiSenseKanji}`
   );
+  console.log(
+    `  recorded rejections read    ${rejections.size} ` +
+      `(${stats.rejectedDemoted} demoted to ranks ${TARGET_PER_KANJI + 1}–${EMIT_PER_KANJI}, ` +
+      `${stats.rejectedPublishedAnyway} still holding a publishing slot)`
+  );
+  if (stats.rejectedPublishedAnyway > 0) {
+    console.log(
+      `    ↳ those kanji are out of material, not mis-ranked: the charge applied and ` +
+        `nothing unrejected outscored them. Search the queue for “review: already rejected”.`
+    );
+  }
   if (stats.reconstructionFailures > 0) {
     console.log(
       `\n⚠ ${stats.reconstructionFailures} candidate(s) dropped because the tokenizer did not ` +
