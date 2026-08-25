@@ -1,0 +1,6 @@
+svg/
+schedule.json
+*.html
+*.pdf
+*.png
+__pycache__/
