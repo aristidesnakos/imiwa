@@ -38,11 +38,17 @@ export async function GET(request: NextRequest) {
   }
 
   // Fetch stroke order SVG
-  const strokeOrderSvg = await fetchKanjiStrokeOrder(character);
+  const strokeOrder = await fetchKanjiStrokeOrder(character);
+  const strokeOrderSvg = strokeOrder?.svg ?? null;
   const strokeCount = strokeOrderSvg ? extractStrokeCount(strokeOrderSvg) : null;
 
   // Generate HTML for practice sheet
-  const html = generatePracticeSheetHTML(kanjiData, strokeOrderSvg, strokeCount);
+  const html = generatePracticeSheetHTML(
+    kanjiData,
+    strokeOrderSvg,
+    strokeCount,
+    strokeOrder?.notice ?? null
+  );
 
   return new NextResponse(html, {
     headers: {
@@ -51,7 +57,20 @@ export async function GET(request: NextRequest) {
   });
 }
 
-async function fetchKanjiStrokeOrder(character: string): Promise<string | null> {
+// KanjiVG's copyright notice is an XML comment sitting above the root element
+// of every source file. It is returned separately from the diagram rather than
+// carried on the SVG string because the same diagram is inlined nine times per
+// sheet, and nine copies of the notice is not what "keep intact" asks for.
+const KANJIVG_NOTICE_PATTERN = /<!--[\s\S]*?-->/;
+
+interface StrokeOrderAsset {
+  /** The diagram, resized for the sheet. Safe to inline more than once. */
+  svg: string;
+  /** KanjiVG's own copyright comment, verbatim, or null if upstream dropped it. */
+  notice: string | null;
+}
+
+async function fetchKanjiStrokeOrder(character: string): Promise<StrokeOrderAsset | null> {
   try {
     // codePointAt, not charCodeAt: KanjiVG filenames are the full code point, and
     // charCodeAt would hand back a lone surrogate for anything above U+FFFF —
@@ -74,18 +93,24 @@ async function fetchKanjiStrokeOrder(character: string): Promise<string | null> 
 
     const svgContent = await response.text();
 
+    // Lifted before the slice below throws away everything preceding <svg>.
+    // This sheet is a copy of the Work that leaves the site on paper, so
+    // CC BY-SA 3.0 4(c) applies to it: the notice has to survive into the
+    // document. It previously did not — the slice removed it and an explicit
+    // comment-strip removed any that survived.
+    const notice = svgContent.match(KANJIVG_NOTICE_PATTERN)?.[0] ?? null;
+
     // Clean SVG
     let cleanedSvg = svgContent;
     const svgStart = cleanedSvg.indexOf('<svg');
     if (svgStart > 0) {
       cleanedSvg = cleanedSvg.substring(svgStart);
     }
-    cleanedSvg = cleanedSvg.replace(/<!--[\s\S]*?-->/g, '');
     cleanedSvg = cleanedSvg
       .replace(/width="[^"]*"/g, 'width="100%"')
       .replace(/height="[^"]*"/g, 'height="100%"');
 
-    return cleanedSvg;
+    return { svg: cleanedSvg, notice };
   } catch (error) {
     console.error(`Failed to fetch stroke order for ${character}:`, error);
     return null;
@@ -101,7 +126,8 @@ function extractStrokeCount(svg: string): number {
 function generatePracticeSheetHTML(
   kanjiData: KanjiWithLevel,
   strokeOrderSvg: string | null,
-  strokeCount: number | null
+  strokeCount: number | null,
+  licenceNotice: string | null
 ): string {
   return `
 <!DOCTYPE html>
@@ -259,6 +285,19 @@ function generatePracticeSheetHTML(
       opacity: 0.3;
     }
 
+    /* Attribution travels with the sheet, not just with the website. The
+       diagram is CC BY-SA 3.0 and this page is printed and handed out, so a
+       credit that only exists in the site footer does not reach the person
+       holding the paper. Small, but never display:none and never print-hidden. */
+    .sheet-credit {
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid #ccc;
+      font-size: 8px;
+      line-height: 1.5;
+      color: #666;
+    }
+
     @media print {
       body {
         padding: 0;
@@ -271,6 +310,7 @@ function generatePracticeSheetHTML(
   </style>
 </head>
 <body>
+${licenceNotice ?? ''}
   <div class="page-container">
     <!-- Header Section -->
     <div class="header-section">
@@ -328,6 +368,16 @@ function generatePracticeSheetHTML(
         `).join('')}
       </table>
     </div>
+
+    <!-- Attribution Section -->
+    <p class="sheet-credit">
+      Stroke order diagram from the KanjiVG project (kanjivg.tagaini.net), copyright
+      &copy; 2009&ndash;2026 Ulrich Apel, released under the Creative Commons
+      Attribution-Share Alike 3.0 licence (creativecommons.org/licenses/by-sa/3.0/).
+      The diagram has been rescaled and, in the practice grid, lightened; those
+      modified diagrams are shared under the same licence.
+      Practice sheet from michikanji.com.
+    </p>
   </div>
 </body>
 </html>`;

@@ -26,11 +26,18 @@ export class StrokeOrderService {
     }
   }
 
+  // The XML declaration and the internal-subset DOCTYPE are dropped because
+  // neither is legal inside an HTML document once this string is injected into
+  // the page. The KanjiVG copyright comment above them is NOT dropped, and must
+  // not be: CC BY-SA 3.0 4(c) requires every copy we distribute to keep the
+  // Work's copyright notices intact, and this string is such a copy. It used to
+  // be stripped alongside the other two, which read as tidying and was in fact
+  // a licence breach on every kanji page. An HTML comment is inert in the DOM
+  // and costs a few hundred bytes that are not on any measured budget.
   private cleanSVG(rawSvg: string): string {
     return rawSvg
       .replace(/<\?xml[^>]*\?>/g, '')
       .replace(/<!DOCTYPE[^>]*\[[\s\S]*?\]>/g, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
       .trim();
   }
 

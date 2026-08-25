@@ -18,7 +18,7 @@ governs the sentence work.
 ## 0. Finding first: we have a live compliance gap, today
 
 `components/sections/Footer.tsx:124-145` carries a correct KanjiVG attribution —
-copyright © 2009-2012 Ulrich Apel, CC BY-SA 3.0.
+copyright © 2009-2026 Ulrich Apel, CC BY-SA 3.0.
 
 **That footer does not render on the kanji detail pages.** `Footer` is imported by
 `app/page.tsx`, `app/not-found.tsx`, `app/subscribed/page.tsx`, `app/advertise/page.tsx`

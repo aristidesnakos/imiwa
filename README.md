@@ -150,7 +150,7 @@ Counts are the characters actually in this dataset, not the official JLPT lists:
 
 Third-party content carries obligations that are load-bearing, not decorative:
 
-- **KanjiVG** stroke diagrams — CC BY-SA 3.0, © 2009–2012 Ulrich Apel. Attribution must travel with
+- **KanjiVG** stroke diagrams — CC BY-SA 3.0, © 2009–2026 Ulrich Apel. Attribution must travel with
   the copies distributed, so it renders in the site-wide footer, including on every kanji page.
 - **Tatoeba** sentences — CC BY 2.0 FR. Tatoeba does not own the sentences and cannot waive its
   contributors' attribution rights, so individual contributors are credited on each sentence in

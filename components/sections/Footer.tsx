@@ -141,7 +141,7 @@ const Footer = () => {
               >
                 the KanjiVG project
               </Link>
-              , which is copyright © 2009-2012 Ulrich Apel and released under the{' '}
+              , which is copyright © 2009-2026 Ulrich Apel and released under the{' '}
               <Link 
                 href="https://creativecommons.org/licenses/by-sa/3.0/" 
                 target="_blank" 
