@@ -372,7 +372,7 @@ ${licenceNotice ?? ''}
     <!-- Attribution Section -->
     <p class="sheet-credit">
       Stroke order diagram from the KanjiVG project (kanjivg.tagaini.net), copyright
-      &copy; 2009&ndash;2026 Ulrich Apel, released under the Creative Commons
+      &copy; 2009&ndash;2011 Ulrich Apel, released under the Creative Commons
       Attribution-Share Alike 3.0 licence (creativecommons.org/licenses/by-sa/3.0/).
       The diagram has been rescaled and, in the practice grid, lightened; those
       modified diagrams are shared under the same licence.

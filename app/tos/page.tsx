@@ -138,7 +138,7 @@ export default function TermsOfService() {
           </p>
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li>
-              <strong>Kanji stroke diagrams</strong> derive from the KanjiVG project, copyright © 2009-2026 Ulrich Apel,
+              <strong>Kanji stroke diagrams</strong> derive from the KanjiVG project, copyright © 2009–2011 Ulrich Apel,
               licensed under{' '}
               <Link href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="underline">
                 CC BY-SA 3.0
