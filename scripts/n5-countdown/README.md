@@ -214,3 +214,97 @@ The reading-type mark (`on` / `kun` / `special`) is the one thing on a
 vocabulary row that is ours rather than JMdict's, so it sits in its own margin
 column and never mixes into the gloss text. Interleaving our annotation with
 licensed text is exactly what would turn the entry into Adapted Material.
+
+
+## The print book — `kdpbook.py`, `kdpcover.py`, `audit_print.py`
+
+Added 25 Aug 2026. This is the thing that gets **sold**; `book.py` is now the
+free lead magnet and `freepack.py` is unchanged.
+
+| file | reads | writes |
+|---|---|---|
+| `kdpbook.py --mode full` | `schedule.json`, `n5-vocab.json`, `svg/` | `N5-Practice-print-interior.pdf` (198pp) |
+| `kdpcover.py` | the interior PDF, `public/assets/tan-brush.png` | `N5-Practice-cover.pdf` (17.6959 x 11.25in) |
+| `audit_print.py` | both PDFs | nothing; exits non-zero on a violation |
+
+```bash
+python3 kdpbook.py --mode full && python3 kdpcover.py && python3 audit_print.py
+```
+
+Run the audit every time. Do not upload a file it has not passed.
+
+### Two pages per character, and the parity invariant
+
+Every character is a **facing spread**: reference on the verso, all writing on
+the recto. The reader looks left and writes right, the reference never goes
+under their hand, and every square sits on a page where the gutter is on the
+left — which matters because KDP will not spiral-bind and the book does not lie
+flat.
+
+That only works if reference pages land on **even** page numbers. Page 1 is a
+recto, so every block between spreads must be an even number of pages: front
+matter 4, each week `2 + 2n` (opener, n spreads, week review), back matter 2.
+`main()` asserts it. Add one page anywhere and every spread after it straddles a
+page turn instead of facing — invisible in a one-page-at-a-time PDF viewer,
+obvious and unfixable in print.
+
+The interior went from 99 pages to 198 this way. 99 was thin against a 173-page
+comparable, and page count is the currency this category compares on; two pages
+per character is what the comparable spends, and it buys 132 writing squares per
+character instead of 60.
+
+### Undated is enforced, not intended
+
+`schedule.json` carries `start`, `end` and `days_to_test` for every week.
+`kdpbook.py` reads none of them, and `assert_undated()` greps the finished HTML
+for ISO dates, month names, weekday names and any year outside the licence
+notices, refusing to emit a PDF if it finds one. It has already caught prose
+("useful to find out on a Sunday"). A dated book is worthless the day after the
+test and an Amazon listing keeps its reviews forever, so this is the one mistake
+that cannot be corrected after launch.
+
+### Four print failures that produced a valid-looking file
+
+Each of these left a PDF that opened fine and was wrong.
+
+- **Chromium rounds a millimetre page box up to a whole device pixel.** The
+  interior came out 8.513 x 11.013in; the cover, 0.014in wide. Declare page
+  boxes in **inches**, and for the cover re-place the render into an exact
+  MediaBox with `show_pdf_page`.
+- **A decorative element overflowed the cover page box by 1.1in**, and Chromium
+  scaled the *entire cover down 5.7%* to fit. The file was still exactly the
+  right size — but every fold had moved half an inch, which prints the spine
+  text across the back cover. `.panel { overflow:hidden }` is load-bearing.
+  Check `scrollWidth` with the **viewport set to the page box**: scrollWidth is
+  floored at the viewport width, so a wider viewport hides the overflow, and
+  `getBoundingClientRect` is no substitute — it reports the unclipped box of an
+  element `overflow:hidden` has already contained.
+- **Table borders stroke ON the box edge**, so half the line sits outside it. The
+  inside margin measured 0.739in against KDP's 0.75in requirement for a 151-300
+  page book. `M_IN` is 19.6mm, not the 19.05mm that 0.75in converts to.
+- **`overflow:hidden` clips silently.** The week-13 sheet ran 82 cells at 10
+  across, overflowed, and printed 80. "All eighty-two, once" was a lie for one
+  build and nothing said so.
+
+### The KanjiVG year was never 2026
+
+Every KanjiVG file carries `Copyright (C) 2009/2010/2011 Ulrich Apel.` — checked
+verbatim against all 82 N5 files and a 23-character sample across the rest of the
+corpus, 105 of 105 identical. The project README gives no years at all. The site
+said 2009-2012, then 2009-2026 in five places; both were wrong, and the second
+was worse, because CC BY-SA 3.0 4(c) makes that notice the thing we are required
+to keep intact. Fixed in `e8f31fd`. The notice is reproduced in full on the
+book's copyright page and credited on all 164 pages carrying a diagram.
+
+### Geometry, for when the page count changes
+
+Spine width is `pages x 0.002252in` (white paper), so **the cover file is only
+valid for one interior**. `kdpcover.py` reads the page count out of the rendered
+interior rather than taking it as a constant, and renders its two sample cards
+from that same PDF, so a cover cannot show a page the book no longer contains.
+
+### The title, subtitle and series name live in three files
+
+KDP matches the cover against the listing, so the subtitle string is duplicated
+in `kdpbook.py` (title page), `kdpcover.py` (front cover subhead) and the Amazon
+listing. Edit all three together. `SERIES` is likewise set in both generators.
