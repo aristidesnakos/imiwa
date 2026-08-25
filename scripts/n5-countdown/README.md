@@ -285,6 +285,16 @@ Each of these left a PDF that opened fine and was wrong.
 - **`overflow:hidden` clips silently.** The week-13 sheet ran 82 cells at 10
   across, overflowed, and printed 80. "All eighty-two, once" was a lie for one
   build and nothing said so.
+- **A margin audit is not a collision audit.** Every element sat comfortably
+  inside the trim while `REVIEW` printed on top of the running credit line on all
+  82 practice pages. Distance to the paper edge is a different question from
+  distance to the next thing on the page, and only the first was being asked.
+  `audit_overlap()` now checks type against type and rules against type, with a
+  1.5mm near-miss floor. Two exclusions keep it from drowning in false positives:
+  grid glyphs (text inside cells that legitimately share a row) and spans sharing
+  a baseline (full-width CJK punctuation carries far more side bearing than
+  advance width, so 「）」 and the 「、」 after it overlap as boxes while reading
+  perfectly).
 
 ### The KanjiVG year was never 2026
 
@@ -294,7 +304,35 @@ corpus, 105 of 105 identical. The project README gives no years at all. The site
 said 2009-2012, then 2009-2026 in five places; both were wrong, and the second
 was worse, because CC BY-SA 3.0 4(c) makes that notice the thing we are required
 to keep intact. Fixed in `e8f31fd`. The notice is reproduced in full on the
-book's copyright page and credited on all 164 pages carrying a diagram.
+book's copyright page.
+
+### Attribution is per page on a loose SHEET, and per book in a BOOK
+
+Different obligations, because different media — and conflating them put 164
+pages of small print under the practice grids for one build.
+
+`freepack.py` and `app/api/kanji-sheets/route.ts` **must keep their per-sheet
+credit.** A single practice sheet leaves the site as a loose page with no
+colophon attached to it, so a credit anywhere else does not travel with the work.
+
+`kdpbook.py` must not. A 198-page perfect-bound book cannot be separated from its
+copyright page, and both licences ask for credit appropriate to the medium:
+
+- **CC BY-SA 3.0 §4(c)** requires copyright notices be kept intact and says the
+  credit "may be implemented in any reasonable manner", "reasonable to the medium
+  or means You are utilizing". KanjiVG's own notice asks to be attributed "in
+  your own copyright header" — which is precisely what a copyright page is.
+- **EDRDG's "on each screen display"** clause — cited by an earlier version of
+  this README as the reason for per-page credit — applies specifically to
+  **web-based dictionary servers**. For apps EDRDG accepts an About screen; for
+  software packages, the documentation. A printed book has no screens; its front
+  matter is the analogue. EDRDG's own suggested acknowledgement wording is
+  printed verbatim on page 2, read from `n5-vocab.json` so it cannot drift.
+
+Page 2 therefore carries KanjiVG's notice in full, the link, the statement that
+our per-stroke renderings are themselves CC BY-SA 3.0, and EDRDG's
+acknowledgement. Nothing else in the book carries a credit line.
+**Do not "tidy" the free sheets to match.**
 
 ### Geometry, for when the page count changes
 
@@ -302,6 +340,13 @@ Spine width is `pages x 0.002252in` (white paper), so **the cover file is only
 valid for one interior**. `kdpcover.py` reads the page count out of the rendered
 interior rather than taking it as a constant, and renders its two sample cards
 from that same PDF, so a cover cannot show a page the book no longer contains.
+
+### The review boxes are in the header, not at the foot
+
+They were at the foot and collided with the running credit line. The empty right
+end of the ORDER row looks like the obvious home for them and is not: it is wide
+open at 4 strokes and completely full at 14. The header block is the same height
+on all 82 sheets whatever the stroke count.
 
 ### The title, subtitle and series name live in three files
 
