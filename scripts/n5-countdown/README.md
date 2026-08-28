@@ -34,6 +34,42 @@ python3 schedule.py && python3 book.py && python3 freepack.py
 Stroke diagrams come from KanjiVG over jsDelivr and are cached in `svg/` (gitignored),
 so only the first run needs the network.
 
+### One generator, five levels
+
+`schedule.py --level N4` reads `lib/constants/n4-kanji.ts` and writes
+`schedule-n4.json`. **N5 keeps the name `schedule.json`** because `book.py`,
+`freepack.py` and `kdpbook.py` all read that exact string and the N5 book is
+built, verified and waiting on a printed proof; renaming its input for symmetry
+would be a change with no upside.
+
+Do not fork this file per level. There are five levels — 82, 171, 383, 259 and
+1004 characters — and a fork drifts the moment one of them gets a fix.
+
+**Week titles work two different ways, because the levels are not shaped alike.**
+N5's 82 characters arrive in 11 broad source groups, so `THEME_TITLES['N5']`
+gives each group a title and a week names the one or two themes it covers. N4's
+171 arrive in **62** groups averaging under three characters, so a 14-character
+week spans five of them and `humanise()` joins them into an unreadable string:
+
+    Basics/Fundamentals · Education/School · Numbers/Quantities/Measuring ·
+    Response/Answer · Structure/Shape · Collection/Gathering · Separation/Division ·
+    Sound/Noise · Verification/Testing · Image/Photography · Wealth/Gems ·
+    Concepts/Relations
+
+Only 14 strings are ever printed, so for levels like that the 14 week openers
+are written by hand in `WEEK_TITLES` instead of titling 62 groups nobody sees.
+
+**Every hand-written title carries an `anchor`** — the first character the
+allocator is expected to place in that week — and `build()` asserts all of them.
+A title restates the allocation, and the rule this generator lives by is that it
+must *derive* from its inputs rather than restate them. The anchor is what makes
+the shortcut safe: when the kanji list changes and the weeks shift, the build
+stops with the week number rather than printing a title that describes a
+different set of characters. That is the 81→82 failure wearing a new costume.
+Verified the way the README asks: by moving one anchor and watching W07 fail.
+
+Weeks 13 and 14 teach nothing, so they carry `anchor: None`.
+
 ## Rules the code encodes, and why
 
 **The even split leads; semantic groups bend to it.** `allocate()` cuts the ordered

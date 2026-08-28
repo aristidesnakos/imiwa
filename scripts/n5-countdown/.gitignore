@@ -1,5 +1,6 @@
 svg/
 schedule.json
+schedule-*.json
 *.html
 *.pdf
 *.png
