@@ -63,3 +63,5 @@ package-lock.json
 
 # Tatoeba corpus dumps — fetched by scripts/sentences/, never vendored
 .tatoeba-cache/
+
+./engagement-log.csv

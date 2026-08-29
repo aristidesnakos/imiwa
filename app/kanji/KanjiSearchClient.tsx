@@ -84,13 +84,18 @@ function KanjiSection({ title, kanji, search, description, isKanjiLearned, toggl
       </div>
       
       {/* Kanji Grid */}
-      <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4">
+      {/* The scroll marker goes on the grid, but the click goal goes on the
+          <Link> below and NOT here: the grid also contains the check-off
+          buttons, and DataFast's delegated click handler would count those as
+          kanji opens. */}
+      <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4" data-fast-scroll="hub_scroll_grid">
         {kanji.map((k, index) => {
           const isLearned = isKanjiLearned(k.kanji);
           return (
             <div key={`${k.kanji}-${k.level}-${index}`} className="relative">
               <Link
                 href={`/kanji/${encodeURIComponent(k.kanji)}`}
+                data-fast-goal="hub_kanji_click"
                 className={`group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center block ${
                   isLearned ? 'border-emerald-300 bg-emerald-50' : ''
                 }`}
@@ -345,6 +350,7 @@ export function KanjiSearchClient() {
             </p>
             <Button
               variant="outline"
+              data-fast-goal="hub_load_more"
               onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
             >
               Show {Math.min(PAGE_SIZE, filtered.length - visibleCount)} more

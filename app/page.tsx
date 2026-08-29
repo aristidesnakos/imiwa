@@ -132,9 +132,30 @@ export default function LandingPage() {
         </section>
 
         {/* Features */}
+        {/* DataFast scroll markers (`data-fast-scroll`) start here and continue
+            to the closing CTA. They are the input to the "Homepage scroll
+            depth" funnel in DataFast, which answers the one question this page
+            has never been able to answer: how far down does a visitor actually
+            get before leaving.
+
+            The marker is on the HEADING BLOCK, never on the <section>. The
+            DataFast script registers its IntersectionObserver with
+            `threshold: [0, t]` and fires on `isIntersecting`, so it fires the
+            moment the FIRST PIXEL of the observed element enters the viewport —
+            not at the 50% the docs describe. On a full-height section that
+            means the goal fires as the previous section scrolls off, which
+            measures "they left the hero", not "they read the features". A
+            heading block is short enough that first-pixel and read-it are the
+            same event.
+
+            Also: the script clears its `fired` flag when the element leaves the
+            viewport, so scrolling back up and down re-fires the goal. Funnel
+            steps count VISITORS, so this does not distort the funnel — but it
+            does inflate raw goal completions and monthly event usage. Read the
+            funnel, not the goal counter. */}
         <section className="border-t border-japan-sakura-waters/10 bg-background py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
+            <div className="mx-auto mb-12 max-w-2xl text-center" data-fast-scroll="home_scroll_features">
               <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
                 Everything you need to read and write kanji
               </h2>
@@ -166,7 +187,7 @@ export default function LandingPage() {
         {/* JLPT Levels */}
         <section className="bg-japan-soft-mist/60 py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
+            <div className="mx-auto mb-12 max-w-2xl text-center" data-fast-scroll="home_scroll_levels">
               <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
                 Study by JLPT level
               </h2>
@@ -204,7 +225,7 @@ export default function LandingPage() {
         {/* Popular Kanji */}
         <section className="bg-background py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
+            <div className="mx-auto mb-12 max-w-2xl text-center" data-fast-scroll="home_scroll_popular">
               <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
                 Popular JLPT kanji
               </h2>
@@ -268,7 +289,7 @@ export default function LandingPage() {
             step, and a light rule on top of it reads as an artifact. */}
         <section className="border-t border-border bg-gradient-to-b from-japan-soft-mist to-[color-mix(in_srgb,var(--sakura-waters)_25%,var(--temple-stone))] py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-8 max-w-2xl text-center">
+            <div className="mx-auto mb-8 max-w-2xl text-center" data-fast-scroll="home_scroll_newsletter">
               {/* coral-sunset-INK, never coral-sunset: the fill is 2.7:1 here and
                   cannot legally carry a label. The ink is 4.70:1 against the top
                   of the gradient, which this line sits on. See app/globals.css. */}
@@ -310,7 +331,7 @@ export default function LandingPage() {
                 height={160}
                 className="w-24 md:w-28 drop-shadow-lg"
               />
-              <h2 className="mt-5 text-2xl font-bold text-white md:text-3xl">
+              <h2 className="mt-5 text-2xl font-bold text-white md:text-3xl" data-fast-scroll="home_scroll_final_cta">
                 Ready to start writing kanji?
               </h2>
               <p className="mt-3 max-w-xl text-japan-sakura-waters">
@@ -333,7 +354,11 @@ export default function LandingPage() {
                 size="lg"
                 className="mt-8 bg-japan-coral-sunset-ink text-white hover:brightness-90 focus-visible:ring-white focus-visible:ring-offset-japan-deep-ocean"
               >
-                <Link href="/kanji" onClick={() => handleExploreClick('homepage_footer_cta')}>
+                <Link
+                  href="/kanji"
+                  data-fast-goal="home_final_cta_click"
+                  onClick={() => handleExploreClick('homepage_footer_cta')}
+                >
                   Start learning now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

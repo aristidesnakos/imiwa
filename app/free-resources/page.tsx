@@ -193,7 +193,10 @@ export default function FreeResourcesPage() {
                 </p>
               </div>
 
-              <h2 className="mb-3 text-xl font-semibold text-japan-deep-ocean md:text-2xl">
+              <h2
+                className="mb-3 text-xl font-semibold text-japan-deep-ocean md:text-2xl"
+                data-fast-scroll="resources_scroll_packs"
+              >
                 Prefer the whole set in one file?
               </h2>
 
@@ -207,6 +210,7 @@ export default function FreeResourcesPage() {
                 <a
                   href={PACK_DOWNLOADS.starter}
                   download={PACK_FILENAMES.starter}
+                  data-fast-goal="resources_pack_download"
                   className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
                 >
                   <Download aria-hidden />
@@ -243,7 +247,7 @@ export default function FreeResourcesPage() {
             title here would skip a heading level. Same reasoning as the
             homepage band; see app/page.tsx. */}
         <section className="mt-12" aria-labelledby="weekly-story-heading">
-          <div className="mx-auto mb-6 max-w-2xl text-center">
+          <div className="mx-auto mb-6 max-w-2xl text-center" data-fast-scroll="resources_scroll_newsletter">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
               Free weekly newsletter
             </p>
