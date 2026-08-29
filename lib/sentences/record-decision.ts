@@ -22,6 +22,7 @@ import type {
   Token,
 } from './types';
 import { describeUnresolvedKey, resolveCorrectionKey } from './correction-keys';
+import { KANA_ONLY } from './validate';
 import { REJECT_REASONS } from './reject-reasons';
 import {
   currentReviewer,
@@ -110,7 +111,22 @@ function validateReadingCorrections(
         message: `readingCorrections["${key}"] must be a non-empty string`,
       };
     }
-    out[key] = value.trim();
+    // Kana, checked HERE and not only at publish. `validate.ts` has always
+    // rejected a non-kana reading, but that is the end of the pipeline: the
+    // reviewer got a green save, and the failure surfaced much later, in a
+    // terminal, as a refusal that took every other sentence in the level with
+    // it. The correction-key check above already proves this path can validate
+    // against the candidate's real tokens; this is its missing sibling.
+    const reading = value.trim();
+    if (!KANA_ONLY.test(reading)) {
+      return {
+        code: 'invalid',
+        message:
+          `readingCorrections["${key}"] must be kana — got ${JSON.stringify(reading)}. ` +
+          `A reading is hiragana, katakana, ー or the iteration marks, and nothing else.`,
+      };
+    }
+    out[key] = reading;
   }
 
   return { code: 'ok', value: Object.keys(out).length > 0 ? out : undefined };
