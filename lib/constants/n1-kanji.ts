@@ -871,6 +871,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "豚", onyomi: "ぶた", kunyomi: "", meaning: "pig (Sus scrofa domesticus), pork, fatso" },
   { kanji: "酢", onyomi: "す", kunyomi: "", meaning: "vinegar, Vinegar" },
   { kanji: "酪", onyomi: "らく", kunyomi: "", meaning: "acidic drink made from fermented milk (cow, sheep, mare; one of the five flavors in Buddhism)" },
+  { kanji: "瓜", onyomi: "か", kunyomi: "うり", meaning: "melon, gourd, cucumber" },
 
   // Animals
   { kanji: "丑", onyomi: "ちゅう", kunyomi: "うし", meaning: "sign of the ox or cow, 1-3AM, second sign of Chinese zodiac" },
@@ -921,6 +922,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "芽", onyomi: "め", kunyomi: "", meaning: "sprout, shoot, bud" },
   { kanji: "茉", onyomi: "マツ", kunyomi: "", meaning: "jasmine" },
   { kanji: "菌", onyomi: "きん", kunyomi: "", meaning: "fungus, germ, bacterium" },
+  { kanji: "葛", onyomi: "かつ", kunyomi: "くず、かずら", meaning: "kudzu, arrowroot, Pueraria" },
 
   // Entertainment/Arts
   { kanji: "伶", onyomi: "れい", kunyomi: "", meaning: "actor" },

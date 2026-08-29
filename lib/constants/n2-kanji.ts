@@ -127,6 +127,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "承", onyomi: "しょう", kunyomi: "うけたまわ（る）", meaning: "acquiesce, hear, listen to, be informed, receive" },
   { kanji: "召", onyomi: "しょう", kunyomi: "め（す）", meaning: "seduce, call, send for, wear, put on, ride in, buy, eat, drink, catch (cold)" },
   { kanji: "詞", onyomi: "し", kunyomi: "", meaning: "part of speech, word, poetry" },
+  { kanji: "嘘", onyomi: "きょ", kunyomi: "うそ", meaning: "lie, falsehood" },
 
   // Rewards/Competition/Achievement
   { kanji: "賞", onyomi: "しょう", kunyomi: "", meaning: "prize, reward, praise" },
@@ -170,6 +171,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "鎖", onyomi: "さ", kunyomi: "くさり", meaning: "chain, irons, connection" },
   { kanji: "軸", onyomi: "じく", kunyomi: "", meaning: "axis, pivot, stem, stalk, counter for picture scrolls" },
   { kanji: "玉", onyomi: "ぎょく", kunyomi: "たま", meaning: "jewel, ball" },
+  { kanji: "製", onyomi: "せい", kunyomi: "", meaning: "manufacture, make, -made" },
 
   // Shapes/Forms/Geometry
   { kanji: "角", onyomi: "かく", kunyomi: "かど、つの", meaning: "angle, corner, square, horn, antlers" },
