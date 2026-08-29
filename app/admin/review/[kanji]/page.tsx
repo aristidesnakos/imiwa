@@ -86,6 +86,7 @@ export default async function ReviewKanjiPage({
         next: index < allEntries.length - 1 ? allEntries[index + 1].kanji : null,
         nextUndecided,
       }}
+      targetPerKanji={queue.targetPerKanji}
       overall={{ decided: overall.decided, total: overall.total }}
     />
   );

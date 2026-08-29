@@ -111,6 +111,8 @@ export interface SentenceReviewerProps {
   entry: KanjiQueueEntry;
   initialDecisions: DecisionMap;
   nav: { prev: string | null; next: string | null; nextUndecided: string | null };
+  /** How many accepted sentences actually reach a learner's page. */
+  targetPerKanji: number;
   overall: { decided: number; total: number };
 }
 
@@ -119,6 +121,7 @@ export function SentenceReviewer({
   entry,
   initialDecisions,
   nav,
+  targetPerKanji,
   overall,
 }: SentenceReviewerProps) {
   const router = useRouter();
@@ -532,6 +535,7 @@ export function SentenceReviewer({
       <StickyHeader
         entry={entry}
         counts={counts}
+        targetPerKanji={targetPerKanji}
         overall={{ decided: decidedElsewhere + counts.decided, total: overall.total }}
         nav={nav}
         saving={saving}
@@ -680,6 +684,7 @@ export function SentenceReviewer({
 function StickyHeader({
   entry,
   counts,
+  targetPerKanji,
   overall,
   nav,
   saving,
@@ -687,6 +692,7 @@ function StickyHeader({
 }: {
   entry: KanjiQueueEntry;
   counts: { accepted: number; rejected: number; decided: number; total: number };
+  targetPerKanji: number;
   overall: { decided: number; total: number };
   nav: { prev: string | null; next: string | null; nextUndecided: string | null };
   saving: boolean;
@@ -716,8 +722,27 @@ function StickyHeader({
               <Loader2 className="h-3 w-3 animate-spin" /> saving
             </span>
           ) : null}
+          {/*
+            * ACCEPTED, not decided, is the number that ends a kanji. Only
+            * `targetPerKanji` sentences ever reach a learner, so once this
+            * reads 3/3 there is nothing further to gain here and ] is the next
+            * move. The decided count below still matters — it is how much of
+            * the queue has been seen — but on its own it answered the wrong
+            * question, because 8/8 decided and 0 accepted looks like progress.
+            */}
+          <span title="Accepted sentences — only this many ever ship">
+            ships{' '}
+            <strong className={counts.accepted >= targetPerKanji ? 'text-foreground' : ''}>
+              {counts.accepted}
+            </strong>
+            /{targetPerKanji}
+            {counts.accepted >= targetPerKanji ? ' ✓' : ''}
+          </span>
+          <span aria-hidden className="text-border">
+            ·
+          </span>
           <span>
-            this kanji <strong className="text-foreground">{counts.decided}</strong>/
+            seen <strong className="text-foreground">{counts.decided}</strong>/
             {counts.total}
           </span>
           <span aria-hidden className="text-border">
