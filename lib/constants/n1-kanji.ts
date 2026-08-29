@@ -56,6 +56,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "郡", onyomi: "ぐん", kunyomi: "", meaning: "district, county, district (of 2-20 50-home neighbourhoods or townships, in the ritsuryō period)" },
   { kanji: "酌", onyomi: "しゃく", kunyomi: "", meaning: "pouring alcohol, person pouring alcohol (esp. a woman)" },
   { kanji: "酸", onyomi: "さん", kunyomi: "", meaning: "acid, sourness, sour taste" },
+  { kanji: "魂", onyomi: "こん", kunyomi: "たましい", meaning: "soul, spirit" },
 
   // People/Relationships/Family
   { kanji: "丙", onyomi: "へい", kunyomi: "", meaning: "third class, 3rd, 3rd calendar sign" },
