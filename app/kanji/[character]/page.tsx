@@ -452,28 +452,35 @@ export default async function KanjiDetailPage({ params }: Props) {
             which is the normal state until a level has been through review. */}
         <ExampleSentencesSection kanji={kanjiData.kanji} sentences={exampleSentences} />
 
-        {/* Tan thumbs-up accent. Centred, and centring on this page means exactly
-            one thing: a moment rather than content. The hero is the only other
+        {/* Tan thumbs-up accent — only for kanji with no example sentences yet
+            (most kanji today: every level above N5 is unreviewed). Where
+            sentences exist, ExampleSentencesSection closes with its own
+            mascot sign-off instead, scoped to what the reader just read
+            rather than floating at the end of the page unconnected to
+            anything. Centred, and centring on this page means exactly one
+            thing: a moment rather than content. The hero is the only other
             place it is used. */}
-        <div className="flex flex-col items-center gap-2 mt-16">
-          <Image
-            src="/assets/tan-thumbsup.png"
-            alt="Tan the tanuki mascot giving a thumbs up"
-            width={160}
-            height={160}
-            className="w-32 md:w-40 drop-shadow-sm"
-          />
-          <p className="text-sm text-gray-600">Nice — one more kanji learned!</p>
-          {/* The one place a reader is guaranteed to be in a learning mindset.
-              Server-rendered and always visible, unlike the nav links, so it is
-              also the crawlable inbound link to /kanji/review. */}
-          <Link
-            href="/kanji/review"
-            className="text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
-          >
-            Review what you&rsquo;ve learned →
-          </Link>
-        </div>
+        {exampleSentences.length === 0 && (
+          <div className="flex flex-col items-center gap-2 mt-16">
+            <Image
+              src="/assets/tan-thumbsup.png"
+              alt="Tan the tanuki mascot giving a thumbs up"
+              width={160}
+              height={160}
+              className="w-32 md:w-40 drop-shadow-sm"
+            />
+            <p className="text-sm text-gray-600">Nice — one more kanji learned!</p>
+            {/* The one place a reader is guaranteed to be in a learning mindset.
+                Server-rendered and always visible, unlike the nav links, so it is
+                also the crawlable inbound link to /kanji/review. */}
+            <Link
+              href="/kanji/review"
+              className="text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
+            >
+              Review what you&rsquo;ve learned →
+            </Link>
+          </div>
+        )}
 
         {/* Related Kanji — last content section, before the commercial blocks. */}
         <RelatedKanjiSection
