@@ -401,16 +401,16 @@ export default async function KanjiDetailPage({ params }: Props) {
             treatment as every other band on the page. */}
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Stroke Order */}
-          <section className="space-y-4" aria-labelledby="writing-heading">
-            <h2 id="writing-heading" className={SECTION_HEADING}>
+          <section className="space-y-4 text-center" aria-labelledby="writing-heading">
+            <h2 id="writing-heading" className={`${SECTION_HEADING} text-center`}>
               How to write <span lang="ja">{kanjiData.kanji}</span>
             </h2>
             <StrokeOrderViewer kanji={kanjiData.kanji} />
           </section>
 
           {/* Kanji Information */}
-          <section className="space-y-4" aria-labelledby="readings-heading">
-            <h2 id="readings-heading" className={SECTION_HEADING}>
+          <section className="space-y-4 text-center" aria-labelledby="readings-heading">
+            <h2 id="readings-heading" className={`${SECTION_HEADING} text-center`}>
               Meaning and readings
             </h2>
 

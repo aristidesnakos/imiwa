@@ -67,14 +67,8 @@ export function KanjiActionBar({ kanji, level }: Props) {
   return (
     <section className="mt-12" aria-label={`Practice ${kanji} on paper`}>
       <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span
-            aria-hidden
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-700"
-          >
-            <Printer className="h-4 w-4" />
-          </span>
-          <p className="truncate text-sm text-gray-700">
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
+          <p className="truncate text-center text-sm text-gray-700">
             Practice <span lang="ja">{kanji}</span> on paper — a printable tracing grid with
             stroke order
           </p>
@@ -125,7 +119,7 @@ export function KanjiActionBar({ kanji, level }: Props) {
           link's pull ever needs measuring, the honest instrument is the
           request log for the PDF, not a `use client` on the whole bar. */}
       {level === 'N5' && (
-        <p className="mt-2 pl-1 text-xs sm:pl-14">
+        <p className="mt-2 text-center text-xs">
           <a
             href={PACK_DOWNLOADS.n5Kanji}
             download={PACK_FILENAMES.n5Kanji}
