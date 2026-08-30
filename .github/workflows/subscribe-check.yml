@@ -1,0 +1,80 @@
+name: Subscribe Consent Check
+
+# Guards the double-opt-in email consent model (lib/email/subscribe-token.ts,
+# lib/analytics/email-signup-sources.ts, app/api/subscribe/**).
+#
+# The contact record created here is our only consent record, and the
+# promises `pnpm validate:subscribe` asserts are the ones that matter
+# legally, not just functionally:
+#
+#   - a contact is NEVER created without a valid, unexpired, correctly-signed
+#     token;
+#   - a forged token cannot subscribe anyone, including via the `alg: none`
+#     algorithm-confusion hole `jsonwebtoken` opens if `algorithms` is not
+#     pinned on verify;
+#   - an expired token still verifies its signature (so the re-subscribe form
+#     stays attributed) but is refused as consent;
+#   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send.
+#
+# This migration replaced a Kit proxy that had a fallback minting
+# `state: active` subscribers with no confirmation step at all — exactly the
+# kind of bug that survives a migration silently, hence the gate.
+#
+# It reads TypeScript directly and needs no build, so it runs in seconds.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'lib/email/subscribe-token.ts'
+      - 'lib/analytics/email-signup-sources.ts'
+      - 'app/api/subscribe/**'
+      - 'app/subscribed/**'
+      - 'app/confirm/**'
+      - 'scripts/validate-subscribe.ts'
+      - '.github/workflows/subscribe-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/email/subscribe-token.ts'
+      - 'lib/analytics/email-signup-sources.ts'
+      - 'app/api/subscribe/**'
+      - 'app/subscribed/**'
+      - 'app/confirm/**'
+      - 'scripts/validate-subscribe.ts'
+      - '.github/workflows/subscribe-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: subscribe-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-subscribe:
+    name: Validate the double opt-in consent model
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate consent token model
+        run: pnpm validate:subscribe

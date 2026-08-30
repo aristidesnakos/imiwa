@@ -71,3 +71,18 @@ jobs:
       # exist yet" trains people to ignore the signal.
       - name: Validate published sentences
         run: pnpm validate:sentences
+
+      # Guards lib/sentences/reading-corrections.ts: pins the cases a naive
+      # implementation gets wrong, then sweeps every committed queue asserting
+      # the pass is idempotent. A queue regenerated without it wired in fails
+      # here immediately — the wrong readings look plausible on the page and
+      # nothing else in the pipeline notices.
+      - name: Validate reading corrections
+        run: pnpm validate:readings
+
+      # Guards lib/sentences/ruby.ts: pins the furigana-split shapes, then
+      # sweeps every committed queue and published file for idempotence. This
+      # class of defect never crashes and never renders as obviously wrong —
+      # it teaches a learner a reading/kanji alignment that does not exist.
+      - name: Validate furigana splits
+        run: pnpm validate:furigana
