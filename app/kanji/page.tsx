@@ -72,7 +72,7 @@ export default function KanjiPage() {
       <section
         className="container mx-auto px-8 pb-12"
         aria-label="Complete kanji index"
-        data-fast-scroll="hub_scroll_index"
+        data-fast-scroll="kanji_scroll_index"
       >
         <details className="mt-4 border-t border-gray-200 pt-6">
           <summary className="cursor-pointer text-lg font-semibold text-gray-800">
@@ -87,7 +87,7 @@ export default function KanjiPage() {
               <h2 className="text-base font-semibold text-gray-700 mb-2">
                 JLPT {group.level} Kanji ({group.kanji.length})
               </h2>
-              <ul className="flex flex-wrap gap-1.5" data-fast-goal="hub_index_click">
+              <ul className="flex flex-wrap gap-1.5" data-fast-goal="kanji_index_click">
                 {group.kanji.map((k) => (
                   <li key={k.kanji}>
                     <Link

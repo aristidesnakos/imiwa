@@ -7,7 +7,7 @@ import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
 import { buttonVariants } from '@/components/ui/button';
 import EmailCapture from '@/components/EmailCapture';
 import Image from 'next/image';
-import { PACK_DOWNLOADS, PACK_FILENAMES } from '@/lib/commerce/links';
+import { PACK_DOWNLOADS, PACK_DOWNLOAD_GOALS, PACK_FILENAMES } from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = getSEOTags({
@@ -210,7 +210,8 @@ export default function FreeResourcesPage() {
                 <a
                   href={PACK_DOWNLOADS.starter}
                   download={PACK_FILENAMES.starter}
-                  data-fast-goal="resources_pack_download"
+                  data-fast-goal={PACK_DOWNLOAD_GOALS.starter}
+                  data-fast-goal-source="free_resources_page"
                   className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
                 >
                   <Download aria-hidden />

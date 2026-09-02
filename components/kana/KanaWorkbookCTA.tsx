@@ -58,7 +58,6 @@ export function KanaWorkbookCTA({ className = '' }: KanaWorkbookCTAProps) {
                   void trackConversion({
                     name: PACK_DOWNLOAD_GOALS.kana,
                     properties: {
-                      product: 'kana_workbook_beginners',
                       source: 'kana_sheets_page',
                       destination: PACK_DESTINATION,
                     },

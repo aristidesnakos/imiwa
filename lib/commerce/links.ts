@@ -112,13 +112,32 @@ export function hasAmazonListing(): boolean {
  * part that is allowed to change without renaming anything: filter on it when
  * you want the split, ignore it when you want the total.
  *
+ * 2 Sep 2026: the three pack downloads were firing under three different
+ * naming systems — `pack_kana_download_clicked`, `pack_n5_download_clicked` and
+ * `resources_pack_download` — depending on which page the button sat on. They
+ * are now one grammar, `<place>_<thing>_<action>`, and they stay THREE names.
+ *
+ * The line between a name and a property is whether the split changes a
+ * decision. These three are three different offers on three different pages:
+ * the kana pack under the kana sheets, the N5 pack under the N5 sheets, the
+ * 87-page starter pack on the hub. Any one of them can be rewritten, moved or
+ * killed on its own, so each needs its own series. The destination — which host
+ * serves the PDF — never changes a decision by itself, so it stays a property.
+ *
+ * The pooled total is still available: three numbers added. The reverse is not
+ * — a pooled goal cannot be split back apart without tool support we have not
+ * verified. Addition is free; division is not.
+ *
  * NOTE: renaming these starts the counters from zero — DataFast keys history on
  * the goal name, so the old series does not carry over. Note the switchover date
- * in DataFast so the discontinuity is legible later.
+ * in DataFast so the discontinuity is legible later, and repoint the
+ * "Downloaded the pack" step in both /free-resources funnels at
+ * `resources_pack_starter_download` — that hub button is the one they measure.
  */
 export const PACK_DOWNLOAD_GOALS = {
-  kana: 'pack_kana_download_clicked',
-  n5Kanji: 'pack_n5_download_clicked',
+  kana: 'resources_pack_kana_download',
+  n5Kanji: 'resources_pack_n5_download',
+  starter: 'resources_pack_starter_download',
 } as const;
 
 /** Recorded as a property on the goals above, never as part of their name. */

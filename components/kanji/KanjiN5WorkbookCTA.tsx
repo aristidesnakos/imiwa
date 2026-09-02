@@ -90,7 +90,6 @@ export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) 
                   void trackConversion({
                     name: PACK_DOWNLOAD_GOALS.n5Kanji,
                     properties: {
-                      product: 'kanji_n5_workbook',
                       source: 'n5_kanji_sheets_page',
                       destination: PACK_DESTINATION,
                     },
