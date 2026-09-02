@@ -57,6 +57,10 @@ BACK_X = BLEED
 SPINE_X = BLEED + TRIM_W
 FRONT_X = SPINE_X + SPINE
 
+# KDP compares the artwork against the listing metadata, so this has to be the
+# same string as the KDP author field and as AUTHOR in kdpbook.py -- edit both.
+AUTHOR = 'Ari Nakos'
+
 CREAM, PAPER_W = '#FAF6EE', '#FFFDF8'
 SAGE, SAGE_PALE, SAGE_DEEP = '#C0D8B4', '#DCEBD4', '#9CB49C'
 TERRA, TERRA_INK = '#CC543C', '#9B3A26'
@@ -152,14 +156,19 @@ body {{ font-family:'Noto Sans CJK JP',sans-serif; color:{BODY};
 /* ── front ──────────────────────────────────────────────────────────── */
 .blob {{ position:absolute; right:-1.1in; bottom:0.6in; width:7.4in; height:7.4in;
          border-radius:50%; background:{SAGE_PALE}; }}
-.fpad {{ position:absolute; left:0.55in; right:0.55in; top:0.85in; }}
+/* 0.78in, not 0.85in: the byline added below costs about 0.24in of vertical
+   rhythm, and the stats row already sits only 0.28in clear of the top of the
+   rear sample card. Reclaiming it here and at .stats keeps the block the same
+   height instead of pushing type down onto the artwork. */
+.fpad {{ position:absolute; left:0.55in; right:0.55in; top:0.70in; }}
 .kicker {{ font-size:15pt; letter-spacing:.26em; text-transform:uppercase;
            color:{TERRA_INK}; font-weight:700; }}
 h1 {{ font-size:58pt; line-height:1.03; color:{INK}; margin-top:0.16in; }}
 h1 em {{ font-style:normal; color:{TERRA_INK}; }}
-.sub {{ font-size:15pt; line-height:1.5; color:{BODY}; margin-top:0.22in;
+.sub {{ font-size:15pt; line-height:1.5; color:{BODY}; margin-top:0.17in;
         max-width:5.4in; }}
-.stats {{ display:flex; gap:0.34in; margin-top:0.26in; }}
+.byline {{ font-size:14pt; color:{INK}; margin-top:0.13in; letter-spacing:.02em; }}
+.stats {{ display:flex; gap:0.34in; margin-top:0.06in; }}
 .stat {{ font-size:11.5pt; color:{MUTED}; line-height:1.25; }}
 .stat b {{ display:block; font-family:'Noto Serif CJK JP',serif; font-size:23pt;
            color:{TERRA_INK}; }}
@@ -265,6 +274,7 @@ h1 em {{ font-style:normal; color:{TERRA_INK}; }}
          string in two places and must be edited together. -->
     <div class="sub">All 82 JLPT N5 Characters &mdash; Stroke Order Diagrams,
       Writing Grids, and the Words That Use Them</div>
+    <div class="byline serif">{AUTHOR}</div>
     <div class="stats">
       <div class="stat"><b>82</b>characters</div>
       <div class="stat"><b>132</b>squares each</div>

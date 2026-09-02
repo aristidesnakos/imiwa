@@ -262,6 +262,32 @@ def audit_cover():
             if r.intersects(band):
                 fails.append(('in barcode band', lab, round(r.x0/I,3), round(r.y1/I,3)))
 
+    # Type printed over the cover art. The interior has audit_overlap(); the cover
+    # had nothing equivalent, and it is the same defect in a more expensive place:
+    # the front cover's type column ends about a third of an inch above the top of
+    # the rear sample card, so any line added to that block pushes the stats row
+    # onto the artwork. Adding the byline did exactly that -- two labels landed on
+    # the card by 0.09in -- and every existing check passed the file.
+    #
+    # An image's rect is its bounding box including transparent padding (the tan
+    # brush's box is larger than the visible brush), so treat a hit as "look at
+    # this", not proof. The clearance line below is the number worth watching:
+    # it was 0.37in before the byline and 0.20in after.
+    art = [r for r, lab in items if lab == '<image>']
+    clear = None
+    for r, lab in items:
+        if lab in ('<draw>', '<image>'):
+            continue
+        for ir in art:
+            ov = r & ir
+            if not ov.is_empty and ov.width > 0.5 and ov.height > 0.5:
+                fails.append(('type over cover art', lab, round(r.x0/I,3), round(r.y0/I,3)))
+            elif r.y1 <= ir.y0 and r.x1 > ir.x0 and r.x0 < ir.x1:
+                g = (ir.y0 - r.y1) / I
+                clear = g if clear is None else min(clear, g)
+    if clear is not None:
+        print(f'tightest clearance between a line of type and the art below it: {clear:.3f}in')
+
     print(f'spine panel {spine_l/I:.4f}..{spine_r/I:.4f}in, safe {spine_safe.x0/I:.4f}..{spine_safe.x1/I:.4f}in')
     print(f'barcode band cleared: x {band.x0/I:.3f}..{band.x1/I:.3f}, y {band.y0/I:.3f}..{band.y1/I:.3f}')
     if fails:

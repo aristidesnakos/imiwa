@@ -118,6 +118,11 @@ TITLE = 'N5 Kanji: Stroke Order &amp; Writing Practice'
 # The Amazon series name. Set once here so the title page, the copyright page and
 # the listing cannot drift apart -- KDP matches the cover against the listing.
 SERIES = 'MichiKanji Stroke Order Workbooks'
+# The author as KDP's metadata will carry it. KDP compares the listing against
+# the artwork, so this string appears on the cover, the title page and the
+# copyright page, and is duplicated in kdpcover.py -- edit both.
+# MichiKanji stays on as the imprint, which is what the "Published by" line is.
+AUTHOR = 'Ari Nakos'
 
 
 def stroke_paths(char):
@@ -220,6 +225,7 @@ body {{ font-family:'Noto Sans CJK JP',sans-serif; color:{INK}; background:#fff;
 .title-pg h1 {{ font-size:38pt; line-height:1.08; margin-top:9mm; }}
 .title-pg h1 em {{ font-style:normal; color:{TERRA_INK}; }}
 .title-pg .sub {{ font-size:13pt; color:#6E5C4E; margin-top:7mm; line-height:1.6; }}
+.title-pg .byline {{ margin-top:11mm; font-size:14pt; color:{INK}; }}
 .title-pg .series {{ margin-top:16mm; font-size:9.5pt; letter-spacing:.14em;
                      text-transform:uppercase; color:#8A7666; }}
 .title-pg .dom {{ margin-top:3mm; font-size:10pt; color:{TERRA_INK}; }}
@@ -432,6 +438,7 @@ def title_page():
   <!-- Same string as the cover subhead and the Amazon subtitle. Edit all three. -->
   <div class="sub">All 82 JLPT N5 Characters &mdash; Stroke Order Diagrams,<br>
     Writing Grids, and the Words That Use Them</div>
+  <div class="byline serif">{AUTHOR}</div>
   <div class="series">{SERIES} &middot; Book 1</div>
   <div class="dom">michikanji.com</div>
 </div>"""
@@ -452,11 +459,12 @@ def copyright_page(page_no):
   <div class="legal">
     <h2 class="serif">{TITLE}</h2>
     <p>{SERIES} &middot; Book 1 &middot; First edition</p>
+    <p>{AUTHOR}</p>
     <p>Published by MichiKanji &middot; michikanji.com</p>
 
     <h3>Copyright</h3>
     <p>Compilation, selection and sequence of characters, page design, writing
-      grids, review structure and all explanatory text &copy; 2026 MichiKanji.
+      grids, review structure and all explanatory text &copy; 2026 {AUTHOR}.
       All rights reserved. No part of this compilation may be reproduced in any
       form without written permission, except as noted below for the
       third-party material it incorporates.</p>
@@ -524,7 +532,10 @@ def how_to_page(page_no):
       the book is bound rather than spiralled, and on a right-hand page your
       writing hand travels away from the spine instead of over it.</span></div>
   </div>
-  <h3>The four boxes at the bottom of the writing page</h3>
+  <!-- Says WHERE the boxes are, so it is a hard dependency on the layout: they
+       moved from the foot to the header on 25 Aug 2026 and this line did not
+       follow. Re-read it against a rendered practice page before shipping. -->
+  <h3>The four boxes at the top of the writing page</h3>
   <p>Tick them <b>one day, three days, one week and three weeks</b> after you
     first write the character. Those gaps are the whole method, and they are the
     reason this is a fourteen-week book rather than a fortnight of cramming.
