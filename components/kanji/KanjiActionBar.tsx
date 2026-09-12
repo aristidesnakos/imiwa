@@ -50,6 +50,7 @@
 
 import { Printer } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
+import { BookCTA } from '@/components/commerce/BookCTA';
 import { PACK_DOWNLOADS, PACK_FILENAMES } from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
@@ -114,10 +115,24 @@ export function KanjiActionBar({ kanji, level }: Props) {
           lighthouserc.js; the file is a Server Component precisely so a link
           costs bytes and nothing else. Click-through for this one used to be
           readable off the Gumroad referrer — it is not any more, now that the
-          pack is served from this domain, and adding a click handler here
-          would mean a client boundary on 1,896 pages to learn it. If this
-          link's pull ever needs measuring, the honest instrument is the
-          request log for the PDF, not a `use client` on the whole bar. */}
+          pack is served from this domain.
+
+          CORRECTION, 12 Sep 2026: the sentence that used to end this note said
+          measuring it would mean a client boundary on 1,896 pages. That is true
+          of an `onClick` and only of an `onClick`. DataFast's script puts ONE
+          listener on `document` and resolves
+          `event.target.closest('[data-fast-goal]')`, so a `data-fast-goal`
+          attribute on this anchor would track it from a Server Component for
+          ~40 bytes of HTML and no script at all — which is how
+          `kanji_index_click` already works in app/kanji/page.tsx. The paid book
+          line below uses exactly that.
+
+          So this link stays untracked by CHOICE, not by constraint, and the
+          choice is now a weak one: the pack's true pull is understated
+          sitewide, and the one surface where free and paid sit two lines apart
+          is the one place their ratio could be read. Left alone here only
+          because adding it in the same change as the book would confound the
+          book's first clean cycle. Add it after 26 Sep 2026. */}
       {level === 'N5' && (
         <p className="mt-2 text-center text-xs">
           <a
@@ -130,6 +145,20 @@ export function KanjiActionBar({ kanji, level }: Props) {
           </a>
         </p>
       )}
+
+      {/* The paid book, N5 only for the same reason the pack line above is:
+          the book covers the N5 set, so offering it under 個 or 憂 would be a
+          promise the product does not keep. That costs almost no reach — the
+          three most-read detail pages (日 595, 本 261, 時 215 pageviews/month)
+          are all N5.
+
+          Below the free pack, and text rather than a button, for the reason
+          the pack line is text: two buttons in one row is a choice, and a
+          choice is slower than an action. Renders nothing until
+          AMAZON_BOOK_URL is filled in, so this costs an unlisted book zero
+          bytes. Tracked as `kanji_detail_book_click` with no client boundary
+          — see components/commerce/BookCTA.tsx. */}
+      {level === 'N5' && <BookCTA surface="kanjiDetail" variant="line" />}
     </section>
   );
 }

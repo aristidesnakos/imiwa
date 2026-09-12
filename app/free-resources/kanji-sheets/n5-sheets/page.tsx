@@ -3,6 +3,7 @@ import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { KanjiN5WorkbookCTA } from '@/components/kanji/KanjiN5WorkbookCTA';
+import { BookCTA } from '@/components/commerce/BookCTA';
 
 export const metadata: Metadata = getSEOTags({
   title: 'N5 Kanji Practice Sheets Generator | Printable Japanese Worksheets',
@@ -92,6 +93,15 @@ export default function N5KanjiSheetsPage() {
 
         {/* CTA Banner for Premium Workbook */}
         <KanjiN5WorkbookCTA />
+
+        {/* The paid book, BELOW the free pack and quieter than it. Renders
+            nothing until AMAZON_BOOK_URL is filled in. The order is a decision,
+            not an oversight: the pack CTA above converts ~20% of this page's
+            visitors and produces the best cohort on the site (bounce 29%,
+            session 9m58s), and that is not worth trading for a $5.83-net sale
+            at this volume. It does mean `n5_sheets_book_click` is a LOWER
+            bound on what the book could do from this page. */}
+        <BookCTA surface="n5Sheets" variant="card" />
 
         <section className="bg-cyan-50 p-6 rounded-md border border-cyan-200 mb-6" aria-labelledby="instructions">
           <h3 id="instructions" className="text-lg font-medium text-cyan-900 mb-4 flex items-center gap-2">

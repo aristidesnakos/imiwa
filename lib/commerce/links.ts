@@ -142,3 +142,134 @@ export const PACK_DOWNLOAD_GOALS = {
 
 /** Recorded as a property on the goals above, never as part of their name. */
 export const PACK_DESTINATION = 'michikanji_site';
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * THE BOOK — GOAL NAMES, TAGS, AND THE PER-SURFACE URL
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Amazon is off-site. DataFast can record the click OUT and can never record
+ * the sale, so these names measure intent leaving michikanji.com and nothing
+ * more. What happens after the click is joined back by hand — see
+ * `data/book-sales/README.md`.
+ *
+ * ONE BOOK, THREE NAMES. The same rule that kept the three pack downloads
+ * apart keeps these apart: a split you would act on separately belongs in the
+ * name, and the surfaces lead to different decisions.
+ *
+ *   · `n5_sheets_book_click` — the print-intent page. High if the people who
+ *     print sheets will also buy a bound one → the book belongs on every print
+ *     surface and N4 is justified by our own traffic. Low, on a page whose FREE
+ *     pack CTA takes ~20% of visitors → people who want free print material do
+ *     not convert to a paperback; stop giving the book that slot.
+ *
+ *   · `kanji_detail_book_click` — the ~1,896-page template, 51,550 impressions
+ *     a month at average position 9.68. High → those pages are a commercial
+ *     asset and the title/meta work to land searchers on them stops being an
+ *     SEO hobby and becomes a revenue project. Low → they are reference
+ *     lookups, the line goes, and the N5 plan's "link it from the kanji pages"
+ *     is answered *no*. This is the highest-value number on the list.
+ *
+ * A funnel step matches a goal NAME and ignores properties (verified: the
+ * dashboard's step editor takes a goal name, and the shipped script sends
+ * properties as event metadata). Pooling these behind one name with a `source`
+ * property would make both questions above unanswerable in a funnel, and a
+ * pooled series cannot be divided back later. Addition is free; division is not.
+ *
+ * The cost of the split, stated so nobody rediscovers it: there is no single
+ * "book clicks" series, so the book can never be the #1 KPI without pooling.
+ * Recovering that would take a second, pooled goal fired from the same element
+ * — and the shipped script reads ONE `data-fast-goal` per element and resolves
+ * only the NEAREST such ancestor, so dual-firing needs JavaScript, which means
+ * a client boundary on 1,896 pages. Not worth it. Read three numbers and add.
+ *
+ * NOT HERE, ON PURPOSE: the sheets INDEX (`/free-resources/kanji-sheets`). Its
+ * only job is to send a visitor to a level page; an offer placed high competes
+ * with that, and placed low it reads a near-zero that cannot be told apart
+ * from "nobody scrolled". Its name is decided — `kanji_sheets_book_click` —
+ * and it is not defined until something renders it, because an unused goal name
+ * is a permanent line in a list that never shrinks.
+ */
+export type BookSurface = 'n5Sheets' | 'kanjiDetail';
+
+export const BOOK_CLICK_GOALS = {
+  n5Sheets: 'n5_sheets_book_click',
+  kanjiDetail: 'kanji_detail_book_click',
+} as const satisfies Record<BookSurface, string>;
+
+/**
+ * Scroll markers for the book offer. Deliberately only ONE.
+ *
+ * On `/free-resources/kanji-sheets/n5-sheets` the card sits below an 82-cell
+ * grid and a full-width free-pack block, so "did they ever see it" is a real
+ * question with a real answer, and a click rate without it cannot separate a
+ * placement problem from a copy problem. ~331 pageviews a month, and scroll
+ * goals re-fire on viewport re-entry, so budget ~600–700 events a month.
+ *
+ * The detail pages get NO marker. The line sits immediately under the action
+ * bar, well above the example sentences, so "seen" is close to certain and the
+ * marker would buy a predictable answer for ~3–4k events a month against the
+ * N5 subset's ~2k pageviews. If `kanji_detail_book_click` comes back near zero,
+ * THEN add `kanji_detail_scroll_book` to tell unseen from unconvincing — that
+ * is a second-cycle question and the event budget is better spent then.
+ *
+ * The marker goes on the heading block, never on the section: the shipped
+ * script registers its observer with `threshold: [0, t]` and fires on the
+ * first intersecting pixel regardless of the threshold attribute, so a marker
+ * on a full-height section records "they left the section above it".
+ */
+export const BOOK_SCROLL_GOALS: Partial<Record<BookSurface, string>> = {
+  n5Sheets: 'n5_sheets_scroll_book',
+};
+
+/**
+ * How long the heading must stay in view before the marker fires, in ms.
+ *
+ * `data-fast-scroll-delay` is the only real dwell control in the script — it
+ * re-reads the element's rect after the timeout and drops the goal if the
+ * visitor has already scrolled past. `data-fast-scroll-threshold` does not
+ * gate the fire at all; it only changes recorded metadata. Here the difference
+ * between "glanced past on the way to the instructions" and "considered the
+ * offer" is exactly the distinction the funnel is built to report.
+ */
+export const BOOK_SCROLL_DELAY_MS = 1500;
+
+/** Recorded as a property on the goals above, never as part of their name. */
+export const BOOK_DESTINATION = 'amazon';
+
+/**
+ * Amazon Attribution tags, one per surface. Empty until they exist.
+ *
+ * Amazon Attribution has been open to KDP authors since 2022 in the US, CA,
+ * UK, DE, ES, FR and IT, and it reports clicks, detail-page views, purchases
+ * and sales PER TAG on a 14-day last-touch window. If Ari's account is
+ * eligible, that turns the reconciliation below from a date-coincidence table
+ * into real attribution — and because a tag is per link, each surface can
+ * carry its own, so Amazon's purchase counts line up one-to-one with the goal
+ * names above.
+ *
+ * A tag is a query blob (`?maas=…&ref_=aa_maas`, plus `aa_*` campaign params).
+ * It goes HERE, on the individual link, and never into `AMAZON_BOOK_URL` —
+ * that constant is the identity of the product, and a tracking blob baked into
+ * it would travel into canonical URLs, JSON-LD and anything else that ever
+ * reads it. Verify eligibility in the ad console at listing time; leaving these
+ * empty is a supported state, not a TODO that breaks anything.
+ */
+export const BOOK_ATTRIBUTION_TAGS: Record<BookSurface, string> = {
+  n5Sheets: '',
+  kanjiDetail: '',
+};
+
+/**
+ * The listing URL for one surface, with that surface's Attribution tag if it
+ * has one.
+ *
+ * Returns the bare URL when the tag is empty, so nothing has to change here
+ * for the site to go live before Attribution is set up — or if it never is.
+ */
+export function bookUrlFor(surface: BookSurface): string {
+  const tag = BOOK_ATTRIBUTION_TAGS[surface].trim().replace(/^[?&]/, '');
+  if (!tag) return AMAZON_BOOK_URL;
+  return `${AMAZON_BOOK_URL}${AMAZON_BOOK_URL.includes('?') ? '&' : '?'}${tag}`;
+}
+
