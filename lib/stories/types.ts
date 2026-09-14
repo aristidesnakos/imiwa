@@ -113,3 +113,34 @@ export interface Episode {
   panels: Panel[];
   quiz: QuizQuestion[];
 }
+
+/**
+ * An episode that is written but not yet drawn.
+ *
+ * Season one is six scripts; two have art. The other four are real, scheduled
+ * work rather than a vague intention, and a hub that says "a new episode every
+ * week" while listing two is asking to be taken on faith. So they are listed,
+ * with what they will teach.
+ *
+ * Deliberately NOT an `Episode` with optional fields. An `Episode` renders a
+ * page, enters the sitemap and carries a `datePublished`; every one of those is
+ * wrong for something that does not exist yet, and modelling the difference as
+ * "some fields are missing" is how a half-built episode eventually gets
+ * prerendered. This type cannot be passed anywhere an `Episode` is expected.
+ *
+ * No `slug`, and that is the point: a slug is a URL, and there is no URL. When
+ * the art lands, the importer generates the real `Episode` and the entry here
+ * is deleted — `validate:stories` fails if both claim the same number.
+ */
+export interface UpcomingEpisode {
+  number: number;
+  titleEn: string;
+  titleJa: string;
+  /**
+   * The words it teaches, for display only. Strings rather than `TargetWord`s
+   * because these link nowhere: a card in this list is the one card on the page
+   * that is not a link, and a reader who clicks a word inside it and lands
+   * somewhere unrelated learns that the cards here are unreliable.
+   */
+  teaches: string[];
+}

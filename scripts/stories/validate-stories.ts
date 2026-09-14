@@ -21,7 +21,7 @@
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-import { EPISODES } from '../../lib/stories';
+import { EPISODES, UPCOMING } from '../../lib/stories';
 import type { Episode } from '../../lib/stories/types';
 import { N5_KANJI } from '../../lib/constants/n5-kanji';
 import { N4_KANJI } from '../../lib/constants/n4-kanji';
@@ -212,6 +212,42 @@ function main(): void {
     }
   }
 
+  // The coming-soon list. It renders on the hub, so it is content, and the one
+  // way it goes wrong is silently: an episode is imported and its placeholder
+  // is left behind, so the hub advertises an episode it is already linking to.
+  const published = new Set(EPISODES.map(e => e.number));
+  const seen = new Set<number>();
+  for (const u of UPCOMING) {
+    if (published.has(u.number)) {
+      issues.push(
+        `episode ${u.number} is both published and listed as upcoming — ` +
+          `delete its entry from UPCOMING in lib/stories/index.ts`,
+      );
+    }
+    if (seen.has(u.number)) issues.push(`episode ${u.number} is listed twice in UPCOMING`);
+    seen.add(u.number);
+    if (!u.titleEn.trim() || !u.titleJa.trim()) {
+      issues.push(`upcoming episode ${u.number} is missing a title`);
+    }
+    if (u.teaches.length === 0) {
+      issues.push(`upcoming episode ${u.number} lists no words — the card would be a bare title`);
+    }
+  }
+
+  // Published and upcoming together are one contiguous season. A gap means an
+  // episode number nothing accounts for, which is the same defect the published
+  // contiguity check catches, one list over.
+  if (UPCOMING.length > 0) {
+    const all = [...published, ...seen].sort((a, b) => a - b);
+    all.forEach((n, i) => {
+      if (n !== i + 1) {
+        issues.push(
+          `published and upcoming episodes do not form a contiguous season: saw ${all.join(', ')}`,
+        );
+      }
+    });
+  }
+
   const panels = EPISODES.reduce((n, e) => n + e.panels.length, 0);
   const lines = EPISODES.reduce(
     (n, e) => n + e.panels.reduce((m, p) => m + p.lines.length, 0),
@@ -227,7 +263,7 @@ function main(): void {
 
   console.log(
     `${EPISODES.length} episode(s), ${panels} panels, ${lines} lines, ` +
-      `${taught.size} kanji taught — 0 issues.`,
+      `${taught.size} kanji taught, ${UPCOMING.length} upcoming — 0 issues.`,
   );
 }
 

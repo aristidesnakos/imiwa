@@ -95,10 +95,15 @@ Follow `/kanji/[character]`: `generateStaticParams`, `revalidate = 86400`, `dyna
 **`/stories/[slug]`** — the episode. Block order from `episode-spec.md` §A2, with the two things that
 only work on a page:
 
-- **Furigana toggle** — the thing email can't do. Default on.
-- **Answers in a `<details>`** — a real collapsible, not "scroll to the bottom."
+- **Furigana toggle** — the thing email can't do. Default on. *(Not built yet.)*
+- **Answers in a `<details>`** — a real collapsible, not "scroll to the bottom." *(Built. The
+  questions render too: gating them behind the email form hid the one block of substantive text a
+  ~70-character episode had to offer, which is the opposite of what §4's thin-content guard asks
+  for. The email is still the offer — it sends the same quiz as a card — but it is no longer the
+  only way to see it.)*
 
-Then the page-only additions: the derived vocab table, and the assembled grammar notes.
+Then the page-only additions: the derived vocab table, and the assembled grammar notes. **Neither is
+built**, and between them they are the remaining gap against §4's thin-content guard.
 
 **`/stories`** — the hub, and the page actually built to rank. It carries the category query
 ("easy Japanese stories for beginners", "N5 graded reader", "Japanese reading practice N5"): what
@@ -116,10 +121,19 @@ ranking work; individual episodes do the internal-linking work. Do not treat the
   **no dedup**. Don't copy that pattern into the stories block.
 - **Internal links are the whole point.** Every episode links its 3–5 target kanji in-content. Do
   **not** link every kanji in the story — it wrecks readability and inflates link count for no gain.
-- **Reciprocal links come later, deliberately.** A "stories featuring this kanji" block on
-  `/kanji/[character]` closes the loop, but it touches ~1,890 pages against a **9.0 kB** script
-  budget on `/kanji` that has already drifted ~32 kB past its recorded baseline. Not in this build.
-  Re-baseline that route first.
+- **Reciprocal links shipped, and the reason they were deferred was wrong.** ~~A "stories featuring
+  this kanji" block on `/kanji/[character]` closes the loop, but it touches ~1,890 pages against a
+  **9.0 kB** script budget on `/kanji`.~~ That 9.0 kB figure is not derivable from `lighthouserc.js`
+  and should not be quoted anywhere: `/kanji/.+` is gated at 260 kB of script against a 228 kB
+  baseline and 440 kB of total transfer against 363 kB. `StoryAppearancesSection` is a **server
+  component with no client boundary**, so its cost against the script budget is zero and its cost
+  against the byte budget is a few hundred bytes of markup on the ~10 pages that have a story.
+  What the budget does rule out is showing the strip — one composited export is 1.3 MB — so the
+  block is text, and stays text.
+
+  It is also the section's only inbound path besides the nav. The kanji pages carry essentially all
+  organic traffic; the hub has none yet. Deferring the link until "there is a story corpus worth
+  linking to" had the dependency backwards.
 - **Thin-content guard.** A strict-N5 story is ~300 JP characters. The derived vocab table and
   assembled grammar notes are what take the page from thin to substantive — they are load-bearing
   for ranking, not decoration.
@@ -155,6 +169,11 @@ hand-encoding is how you eventually ship `%25E5%25B1%25B1` and a 404.
 
 Kit stops holding your content. The typed file is the source of truth; the email is generated from
 it and links to the page.
+
+**Built, in a narrower form than this section describes.** `lib/email/quiz-email.ts` generates the
+quiz card — the three questions and the answer key — from the typed episode, and the confirmation
+flow sends it. The weekly teaser below is still unbuilt, and so is the reply prompt, which has never
+existed in any `script.json`: it is a field this document proposes, not one the importer dropped.
 
 The email carries: title, the first 2–3 lines of the story as a hook, the reply prompt, and a link to
 the full episode. Every constraint in `episode-spec.md` §A1 still applies to it — it's still an email,

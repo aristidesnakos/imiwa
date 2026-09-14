@@ -7,13 +7,58 @@
  * Adding an episode means committing its generated file *and* adding a line
  * here, so the build fails loudly rather than rendering an empty shelf.
  */
-import type { Episode, PanelLine, TargetWord } from './types';
+import type { Episode, PanelLine, TargetWord, UpcomingEpisode } from './types';
 // Relative paths, not the `@/` alias: `pnpm validate:stories` runs this module
 // under tsx from scripts/, exactly as lib/sentences/validate.ts does.
 import { EPISODE as EP01 } from '../../data/stories/ep-01';
 import { EPISODE as EP02 } from '../../data/stories/ep-02';
 
 export const EPISODES: readonly Episode[] = [EP01, EP02];
+
+/**
+ * The rest of season one: written, validated against the N5 list upstream, and
+ * waiting on art.
+ *
+ * Hand-maintained, and that is the cheaper side of the trade. The alternative
+ * is reading `strips/season-01.json`, which lives outside this repo — so it
+ * would be either an untraceable `fs` read (the trap `lib/sentences/
+ * published.ts` documents) or a second generated file to keep in step. Four
+ * entries deleted one at a time over four weeks is less machinery than either.
+ *
+ * Delete an entry when its episode is imported. `validate:stories` fails if a
+ * number appears in both lists, so this cannot be forgotten silently.
+ */
+export const UPCOMING: readonly UpcomingEpisode[] = [
+  {
+    number: 3,
+    titleEn: 'Tan goes to school',
+    titleJa: 'タンは 学校に 行きます',
+    teaches: ['学校', '先生', '学生', '日本語'],
+  },
+  {
+    number: 4,
+    titleEn: 'A rainy day off',
+    titleJa: 'あめの 休みの 日',
+    teaches: ['雨', '天気', '休み', '日'],
+  },
+  {
+    number: 5,
+    titleEn: 'The train east',
+    titleJa: '東へ 行く 電車',
+    teaches: ['電車', '東', '行く', '来る'],
+  },
+  {
+    number: 6,
+    titleEn: "Tan's family and friends",
+    titleJa: 'タンの かぞくと ともだち',
+    teaches: ['父', '母', '友だち', '男の子', '女の子'],
+  },
+];
+
+/** Oldest first — the order they will actually arrive in. */
+export function upcomingInOrder(): UpcomingEpisode[] {
+  return [...UPCOMING].sort((a, b) => a.number - b.number);
+}
 
 export function episodeBySlug(slug: string): Episode | undefined {
   return EPISODES.find(e => e.slug === slug);

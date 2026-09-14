@@ -8,7 +8,7 @@ import { SITE_URL, SITE_NAME } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
 import EmailCapture from '@/components/EmailCapture';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
-import { EPISODES, episodesNewestFirst } from '@/lib/stories';
+import { EPISODES, episodesNewestFirst, upcomingInOrder } from '@/lib/stories';
 
 /**
  * The hub — and the page in this pair actually built to rank.
@@ -53,6 +53,7 @@ export const metadata: Metadata = getSEOTags({
 export default function StoriesHubPage() {
   const episodes = episodesNewestFirst();
   const latest = episodes[0];
+  const upcoming = upcomingInOrder();
 
   const jsonLd = [
     {
@@ -218,6 +219,45 @@ export default function StoriesHubPage() {
               </li>
             ))}
           </ul>
+
+          {/*
+            The rest of season one. Listed rather than hidden because the page
+            two paragraphs up promises a new episode every week, and a shelf
+            with two things on it does not support that claim — these four are
+            written and validated, they are waiting on art.
+
+            Not links, and no art: there is no page to link to, and the panel
+            crop above is what makes a card look clickable. They also stay out
+            of the sitemap and out of the ItemList above, both of which are
+            built from EPISODES — a URL that does not exist is a soft 404, and
+            a soft 404 on a page built to rank is a bad trade for a teaser.
+          */}
+          {upcoming.length > 0 && (
+            <div className="mt-10">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.12em] text-japan-mountain-mist">
+                Coming soon
+              </h3>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {upcoming.map(episode => (
+                  <li
+                    key={episode.number}
+                    className="rounded-xl border border-dashed border-border bg-japan-soft-mist px-4 py-3"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-japan-mountain-mist">
+                      Episode {episode.number}
+                    </p>
+                    <p lang="ja" className="mt-1 font-semibold text-japan-ink-black">
+                      {episode.titleJa}
+                    </p>
+                    <p className="text-sm text-japan-mountain-mist">{episode.titleEn}</p>
+                    <p lang="ja" className="pt-1 text-sm text-japan-ink-black">
+                      {episode.teaches.join('・')}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         {/*

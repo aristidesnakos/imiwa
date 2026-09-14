@@ -79,11 +79,21 @@ rather than cheaper.
 
 **Out — carried over from the existing kill list, none of it reopened by this change.** Cron or send
 automation before the pilot validates. Any database, accounts, or server-side user state. Paywall or
-quiz gate. A second domain. N4 escalation. Audio. The reciprocal "stories featuring this kanji" block
-on `/kanji/[character]` (deferred until there is a story corpus worth linking to — *not* blocked on
-bytes. The "9.0 kB headroom" v1.0 cited is not derivable from `lighthouserc.js`, which gives that
-route ~32 kB of script headroom: a 260 kB budget against a 228 kB baseline. Do not quote 9.0 kB as a
-constraint anywhere.)
+quiz gate. A second domain. N4 escalation. Audio.
+
+~~The reciprocal "stories featuring this kanji" block on `/kanji/[character]`.~~ **Shipped
+2026-09-14**, and the deferral was a mistake worth naming: the block was held back "until there is a
+story corpus worth linking to", but the kanji pages carry essentially all organic traffic and the
+hub carries none, so the corpus was never the thing gating it — the link is what gives a new section
+its first readers. It is a server component with no client boundary, so it costs nothing against the
+script budget. The byte note stands and is unrelated: the "9.0 kB headroom" v1.0 cited is not
+derivable from `lighthouserc.js`, which gives that route ~32 kB of script headroom (260 kB against a
+228 kB baseline). Do not quote 9.0 kB as a constraint anywhere. What the byte budget does rule out is
+showing the strip, so the block is text.
+
+**The quiz gate is gone too, and that is not a reversal of the "no quiz gate" line above — it is
+that line finally being true.** The episode page shipped with the quiz withheld behind the email
+form. It now renders, and the email sends the same card (§6).
 
 ## 3. Sending identity
 
