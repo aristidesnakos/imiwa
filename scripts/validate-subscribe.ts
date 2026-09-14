@@ -35,6 +35,7 @@ import {
   mintConfirmToken,
   verifyConfirmToken,
 } from '../lib/email/subscribe-token';
+import { mintUnsubscribeToken, verifyUnsubscribeToken } from '../lib/email/unsubscribe-token';
 import {
   EMAIL_SIGNUP_SOURCES,
   isEmailSignupSource,
@@ -213,6 +214,57 @@ check(
   nonString.status === 'valid' && nonString.payload.episode === undefined
 );
 
+// --- The unsubscribe token --------------------------------------------------
+//
+// A separate token from the confirm one, signed with the same secret, so the
+// `typ` claim is the only thing standing between "this link confirms a signup"
+// and "this link removes someone from the list" — worth checking explicitly.
+
+const unsubGood = mintUnsubscribeToken(EMAIL, SECRET);
+const unsubResult = verifyUnsubscribeToken(unsubGood, SECRET);
+
+check('a freshly minted unsubscribe token verifies', unsubResult.status === 'valid');
+check(
+  'the address survives the unsubscribe round trip',
+  unsubResult.status === 'valid' && unsubResult.payload.email === EMAIL
+);
+check(
+  'an unsubscribe token signed with a different secret is rejected',
+  verifyUnsubscribeToken(mintUnsubscribeToken(EMAIL, OTHER_SECRET), SECRET).status === 'invalid'
+);
+check(
+  'an unsubscribe token has no expiry claim',
+  (jwt.decode(unsubGood) as Record<string, unknown> | null)?.exp === undefined
+);
+
+const unsubNoneToken =
+  Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url') +
+  '.' +
+  Buffer.from(JSON.stringify({ email: 'attacker@example.com', typ: 'unsub' })).toString(
+    'base64url'
+  ) +
+  '.';
+check(
+  'an alg:none unsubscribe token cannot unsubscribe anyone',
+  verifyUnsubscribeToken(unsubNoneToken, SECRET).status === 'invalid'
+);
+
+// A confirm token and an unsubscribe token both carry `email`. Without the
+// `typ` claim being checked on both sides, a leaked confirm link could double
+// as an unsubscribe link for the same address, or vice versa.
+check(
+  'a confirm token cannot be replayed as an unsubscribe token',
+  verifyUnsubscribeToken(mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET), SECRET)
+    .status === 'invalid'
+);
+check(
+  'an unsubscribe token cannot be replayed as a confirm token',
+  verifyConfirmToken(mintUnsubscribeToken(EMAIL, SECRET), SECRET).status === 'invalid'
+);
+
+check('garbage is rejected by the unsubscribe verifier', verifyUnsubscribeToken('not-a-token', SECRET).status === 'invalid');
+check('an empty token is rejected by the unsubscribe verifier', verifyUnsubscribeToken('', SECRET).status === 'invalid');
+
 // --- The source list ------------------------------------------------------
 
 check('there is at least one signup source', EMAIL_SIGNUP_SOURCES.length > 0);
@@ -244,6 +296,8 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · an expired token keeps a trustworthy source but is never treated as consent
   · a source outside EMAIL_SIGNUP_SOURCES cannot reach an email we send
   · a malformed episode claim is dropped rather than refusing a real consent
+  · an unsubscribe token is a separate, non-expiring token that cannot be
+    replayed as a confirm token, and vice versa
 
 PASS — ${passed}/${total} checks passed
 `);

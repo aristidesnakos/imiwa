@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAudienceId } from '@/lib/email/audience';
 import { getTokenSecret, verifyConfirmToken } from '@/lib/email/subscribe-token';
+import { mintUnsubscribeToken } from '@/lib/email/unsubscribe-token';
 import { episodeBySlug, episodesNewestFirst } from '@/lib/stories';
 import { quizEmailHtml, quizEmailSubject, quizEmailText } from '@/lib/email/quiz-email';
 import { sendEmail } from '@/lib/resend';
+import { SITE_URL } from '@/lib/seo/site';
 import config from '@/config';
 
 export const runtime = 'nodejs';
@@ -31,31 +32,38 @@ const RESEND_API = 'https://api.resend.com';
  * Scanners do not POST. Costs one page and no storage.
  *
  * ---------------------------------------------------------------------------
- * Why plain fetch and not the SDK
+ * Why plain fetch and not the SDK, and why there is no audience id
  * ---------------------------------------------------------------------------
  *
- * `resend` is a caret range (^4.8.0), so an install can move it underneath us,
- * and its contacts surface has been moving. Verified against the INSTALLED
- * types in node_modules/resend/dist/index.d.ts on 2026-08-24:
+ * `resend` is a caret range (^4.8.0), so an install can move it underneath us.
+ * The block that used to live here — verified against the installed 4.8.0
+ * types on 2026-08-24 — asserted contacts were audience-scoped with no custom
+ * properties and no segments. That was accurate for the installed SDK's types
+ * but not for the API: Resend migrated contacts to a global model (re-verified
+ * against the live API docs on 2026-09-14):
  *
- *   - a contact is exactly {created_at, id, email, first_name?, last_name?,
- *     unsubscribed} and is audience-scoped (`:507`, `:516`);
- *   - there is NO custom-property field, so `source` cannot be stored here —
- *     DataFast already has it from capture time;
- *   - the string "segment" appears ZERO times in the whole type surface;
- *   - a broadcast targets exactly one `audience_id` (`:397`).
+ *   - `POST /contacts` takes no `audience_id` — contacts are global, in 0..n
+ *     segments;
+ *   - `properties`, `segments` and `topics` now exist on a contact;
+ *   - Audiences were renamed Segments.
+ *
+ * `RESEND_AUDIENCE_ID` and `lib/email/audience.ts` are gone as of this change.
+ * There is exactly one list; `source` still lives in DataFast
+ * (`trackEmailSignup(source)` at capture time), not on the contact — see the
+ * reopened M7 in `docs/prd/story-delivery-resend.md` before adding it there.
  *
  * The wire format is snake_case even though the SDK's options are camelCase.
- * Re-verify both against the live docs and the installed .d.ts before changing
- * anything here.
+ * Re-verify against the live docs before changing anything here — Resend's
+ * migration guide and changelog do not document how long the legacy
+ * `/audiences/{id}/contacts` path keeps working, which is exactly why this
+ * moved to the endpoint documented as current rather than staying on it.
  */
 export async function POST(request: NextRequest) {
   const secret = getTokenSecret();
-  const audienceId = getAudienceId();
 
-  if (!process.env.RESEND_API_KEY || !secret || !audienceId) {
+  if (!process.env.RESEND_API_KEY || !secret) {
     console.error(
-      '[api/subscribe/confirm] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET / RESEND_AUDIENCE_ID missing)'
+      '[api/subscribe/confirm] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET missing)'
     );
     return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
   }
@@ -93,7 +101,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const res = await fetch(`${RESEND_API}/audiences/${audienceId}/contacts`, {
+  const res = await fetch(`${RESEND_API}/contacts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -132,6 +140,16 @@ export async function POST(request: NextRequest) {
     episodesNewestFirst()[0];
 
   if (episode) {
+    // Signed, long-lived, and specific to this address — not the confirm
+    // token. This is the ONLY email in the flow that carries it: the
+    // confirmation email is transactional and pre-consent (the recipient
+    // isn't a contact yet), and must never grow an unsubscribe link or a
+    // `topic_id` for the same reason — either would let something suppress
+    // the one send that establishes consent in the first place.
+    const unsubscribeUrl = `${SITE_URL}/api/unsubscribe?token=${encodeURIComponent(
+      mintUnsubscribeToken(result.payload.email, secret)
+    )}`;
+
     try {
       await sendEmail({
         to: result.payload.email,
@@ -142,6 +160,14 @@ export async function POST(request: NextRequest) {
         // question about a quiz answer is the single most valuable signal this
         // list produces, and it has to reach a person.
         replyTo: config.resend.supportEmail,
+        // Interim unsubscribe mechanism ahead of Resend Topics — see
+        // app/api/unsubscribe/route.ts. `List-Unsubscribe-Post` is what makes
+        // Gmail/Yahoo/Outlook show a one-click "Unsubscribe" button (RFC 8058)
+        // instead of just a mailto link.
+        headers: {
+          'List-Unsubscribe': `<${unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
       });
     } catch (error) {
       console.error('[api/subscribe/confirm] Quiz email failed after subscribing:', error);

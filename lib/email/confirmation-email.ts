@@ -31,6 +31,13 @@ import config from '@/config';
  * because email clients strip <style> blocks. Colours are literals here on
  * purpose: `lib/` is outside the palette validator's scope and email clients
  * do not resolve CSS custom properties.
+ *
+ * This send must never carry a `topic_id` or a `List-Unsubscribe` header,
+ * even after Resend Topics exist. The recipient is not a contact yet — they
+ * only become one in `/api/subscribe/confirm` — so a topic-scoped or
+ * suppressible send could silently be dropped, breaking double opt-in on the
+ * one email this product is legally obliged to deliver. `quiz-email.ts`
+ * carries the unsubscribe header; this one deliberately does not.
  */
 
 /** Where the confirmation link points. A page with a button, not a bare GET. */

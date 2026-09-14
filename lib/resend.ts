@@ -23,6 +23,7 @@ if (process.env.RESEND_API_KEY) {
  * @param {string} text - The plain text content of the email.
  * @param {string} html - The HTML content of the email.
  * @param {string} replyTo - The email address to set as the "Reply-To" address.
+ * @param {Record<string, string>} headers - Extra headers, e.g. `List-Unsubscribe`.
  * @returns {Promise} A Promise that resolves when the email is sent.
  */
 export const sendEmail = async ({
@@ -31,12 +32,14 @@ export const sendEmail = async ({
   text,
   html,
   replyTo,
+  headers,
 }: {
   to: string;
   subject: string;
   text?: string;
   html?: string;
   replyTo?: string;
+  headers?: Record<string, string>;
 }): Promise<any> => {
   if (!resend) {
     console.warn('Resend service not available. Skipping email send.');
@@ -63,6 +66,7 @@ export const sendEmail = async ({
       text,
       html,
       replyTo,
+      headers,
     });
 
     if (error) {

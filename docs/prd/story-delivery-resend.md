@@ -1,8 +1,26 @@
 # Story Delivery on Our Own Domain — Resend PRD (Option C)
 
-**Version 1.1** · Created 2026-08-24 · Revised 2026-08-24 · Owner: Ari Nakos
-**Status:** Approved in principle 2026-08-24. Nothing built. Kit is still the wired ESP and the
-capture path is still unmerged, so no visitor can subscribe to anything today.
+**Version 1.2** · Created 2026-08-24 · Revised 2026-09-14 · Owner: Ari Nakos
+**Status:** Built and merged. `RESEND_API_KEY` and `EMAIL_TOKEN_SECRET` must both be live in
+production (Vercel) and a deploy must have picked them up before `/api/subscribe` answers 200 instead
+of 503 — verify with a real subscribe attempt on production, not by checking that the vars are set.
+
+**v1.2 — Resend moved contacts to a global model out from under M7/M8, mid-migration.** M7's decision
+("one audience; `source` is not stored in Resend at all") was correct for the installed `resend@4.8.0`
+SDK's *types*, but those types describe an audience-scoped contact shape the live API no longer
+requires: `POST /contacts` takes no `audience_id` (re-verified against the current API docs
+2026-09-14), contacts are global and sit in 0..n **Segments** (Audiences, renamed), and a contact can
+now carry `properties`, `segments` and `topics` — none of which existed when M7 was written three
+weeks earlier. **`RESEND_AUDIENCE_ID` and `lib/email/audience.ts` are deleted**, not carried forward;
+re-verify `app/api/subscribe/confirm/route.ts`'s header comment before trusting any of §5's contact
+snippets, which still show the old audience-scoped calls. **M7's "source is not stored in Resend" is
+reopened, not re-decided** — `properties` now exists, which was the one thing M7 said didn't. Whether
+a `source` property is worth adding is Ari's call, not a correction to make silently. **M7's
+"no unsubscribe mechanism" gap is now partially closed**: `app/api/unsubscribe/route.ts` is a signed,
+non-expiring link carried as a `List-Unsubscribe` / `List-Unsubscribe-Post` header on the quiz email
+only (RFC 8058 one-click) — an interim measure, not Topics-based suppression. The confirmation email
+still carries neither a `topic_id` nor an unsubscribe link, deliberately: see
+`lib/email/confirmation-email.ts`'s header comment.
 
 **v1.1 — corrections from a pre-implementation review against the codebase.** Two findings would have
 shipped broken and are fixed in place: **M7's contact-property segmentation does not exist in the
@@ -150,8 +168,8 @@ before starting: **M1 gates everything else.**
 | M4 | **Delete the single-opt-in fallback** | `app/api/subscribe/route.ts:81–93` | The `POST /v4/subscribers` retry mints a `state: active` subscriber that skips consent (phase-0 risk #6). It exists only to work around a Kit form-add quirk. With Kit gone it has no reason to exist, and shipping it into a new stack would carry a consent bug across a migration |
 | M5 | Tighten `source` validation | `app/api/subscribe/route.ts` | Today any non-empty string passes. Validate against `EmailSignupSource` — at **`lib/analytics/index.ts:256`**, not `lib/analytics.ts` (line right, path stale). Two implementation notes v1.0 glossed: it is a *type*, erased at runtime, so validation needs a `const` array to check against — export the array and derive the type from it; and `lib/analytics/index.ts` is a browser module (nine `window`/`document` references), so put that array where a route handler can import it without pulling client code into the server bundle. Justification corrected: this is worth doing because an unvalidated free string reaches an email we send, **not** because Resend needs it — see M7 |
 | M6 | Update `EmailCapture` copy **and its doc comment** | `components/EmailCapture.tsx` | The defaults deliberately refuse to promise a confirmation email because Kit's behaviour for a returning address was unknowable from our side. After cutover we send that email ourselves, so the promise becomes true and the copy can say so plainly. The 30-line comment block explaining why it could not is now wrong and must be rewritten, not left to rot |
-| M7 | **Drop `referrer` segmentation — do not replace it** | Resend | **Corrected in v1.1: the mechanism v1.0 specified does not exist.** In the installed `resend@4.8.0` a contact is exactly `{id, email, first_name, last_name, unsubscribed}` scoped to an `audienceId` (`node_modules/resend/dist/index.d.ts:507`, `:516`); the string "segment" appears **zero** times in the shipped type surface, and `Broadcast.audience_id` (`:397`) is the only targeting handle there is. There is no custom-property field to put `source` in. It is also not needed: per-surface signup CTR is **already** measured by DataFast at capture time via `trackEmailSignup(source)` (`lib/analytics/index.ts:259`). A Resend-side `source` would only add per-surface *send* targeting, which nothing at forty subscribers wants. **Decision: one audience; `source` is not stored in Resend at all.** If per-surface sending is ever genuinely needed, the mechanism is one audience per source (M8), not a property. Update every doc saying "referrer, not tags" to say the surface lives in DataFast, not in the ESP |
-| M8 | Env vars | Vercel + `.env.example` | Remove `KIT_API_KEY`, `KIT_FORM_ID`. Add `RESEND_AUDIENCE_ID` — singular, one audience, per the corrected M7 (no segment id; the concept does not exist in 4.8.0) — and `EMAIL_TOKEN_SECRET`. Read the audience id through one helper rather than `process.env` at the call site, so that if per-surface sending ever arrives it becomes a source→id map in one place. `RESEND_API_KEY` is already set in Vercel (confirmed 2026-08-24) |
+| M7 | **Drop `referrer` segmentation — do not replace it** | Resend | **Corrected in v1.1, reopened in v1.2.** v1.1's finding — that the installed `resend@4.8.0` SDK's types describe an audience-scoped contact with no custom-property field — was accurate for those types but is no longer accurate for the live API: contacts are now global (no `audience_id`) and can carry `properties`, `segments` and `topics` (re-verified 2026-09-14). Per-surface signup CTR is still measured by DataFast at capture time via `trackEmailSignup(source)` (`lib/analytics/index.ts:259`), so nothing is *broken* by leaving `source` out of Resend. But the reason v1.1 gave for that choice — "there is no custom-property field" — is now false, and whether a `source` property is worth adding (it would let a broadcast target "finished an episode" vs. "browsed the hub", which DataFast cannot do) is a decision for Ari, not something this doc should silently re-affirm. **Standing decision unless revisited: one list; `source` is not stored in Resend.** Do not create a Segment or Topic until there is a reason to send to a subset — a Segment is addable later without touching the signup path |
+| M8 | Env vars | Vercel + `.env.example` | **Shipped 2026-09-14, corrected from v1.1's plan.** `KIT_API_KEY`/`KIT_FORM_ID` are still set in Vercel and unread — removal is a standalone cleanup, no code depends on them. `RESEND_AUDIENCE_ID` was added per v1.1's plan and then **deleted** the same day once M7 reopened: there is no audience id in the global-contacts model, so there is nothing for a helper to read. `EMAIL_TOKEN_SECRET` is added (Production + Preview) and now signs both the confirm token and the non-expiring unsubscribe token (`lib/email/unsubscribe-token.ts`). `RESEND_API_KEY` is present in Production as a **Secret**-type var, which the CLI reads back as an empty string — this is expected and not a misconfiguration; validity is confirmed by a real subscribe attempt, not by reading the value. **As of this revision, no redeploy has picked up `EMAIL_TOKEN_SECRET` yet — production is still 503ing.** |
 | M9 | Cancel the Kit trial before **2026-09-03** | Kit dashboard | It converts to paid if ignored. Archive form `9824359` |
 | M10 | Rewrite `episode-spec.md` §A8, §A7 items 4–9, **and §A5** | docs | Kit composer → Resend broadcast preview and test send. §A5 was missed in v1.0: it names Kit by vendor ("Kit rewrites links for click tracking, then the client may re-encode") inside the mechanism that justifies the encoding rule, and turning click tracking off changes that paragraph's premise. **Keep the rule** — pre-encode every URL, always — and fix the reason it gives |
 | M11 | **Locate — or author — the `michikanji-episode` skill** | skill | **It could not be found**: not in `~/.claude/skills/` (16 skills, none by that name), not in `~/.claude/plugins/`, not in `.claude/skills/` (which holds only `track-datafast-goal.md`). v1.0 says "update", which nobody can act on. Either find where it actually lives, or treat this as *create* and author the pre-send checks against Resend from `episode-spec.md` §A7. Still the one deliverable outside the repo |
@@ -397,10 +415,19 @@ already holds payment records and DataFast already holds visitor records. Resend
 | Record | Where it lives | Who runs it |
 |---|---|---|
 | Pending, unconfirmed signup | **Nowhere** — the signed token *is* the record, and it expires | — |
-| Confirmed subscriber | Resend Audience | Resend |
-| Unsubscribe state | Resend, via `{{{RESEND_UNSUBSCRIBE_URL}}}` | Resend |
+| Confirmed subscriber | Resend, global contact list (no Audience id, corrected v1.2) | Resend |
+| Unsubscribe state | The contact's `unsubscribed` flag, flipped by `app/api/unsubscribe/route.ts` | Us, via the Resend contacts API |
 | Which surface someone signed up from | DataFast, at capture time (`trackEmailSignup`) | DataFast |
 | Anything at all | ~~Our database~~ | There isn't one |
+
+**v1.2 correction: `{{{RESEND_UNSUBSCRIBE_URL}}}` does not apply to this product and never did.**
+That merge tag is a Broadcast-send feature. §5's design sends individual transactional-style calls
+through `POST /emails` (the confirmation email, then the quiz card) — never a Broadcast — so there is
+no Resend-hosted unsubscribe page in this flow regardless of the contacts-model migration. §5 Phase 4
+step 10's "silently does nothing if the variable is absent" was describing a code path this product
+does not exercise. The actual mechanism is `app/api/unsubscribe/route.ts`: a signed, non-expiring
+token carried as a `List-Unsubscribe` header (RFC 8058 one-click) on the quiz email, which PATCHes the
+contact's `unsubscribed` flag directly. Item 6 below is satisfied by this, not by the merge tag.
 
 ### The GitHub-list idea, and why to drop it
 
@@ -447,8 +474,10 @@ than that, and two items below are genuinely unmet today, with Kit, before any o
    means the *audience* no longer records which surface someone consented through. DataFast has it,
    but as analytics, not as a consent artefact. At one audience and one offer this is immaterial;
    revisit it the moment a second, materially different offer points at the same audience.
-6. **Unsubscribe must work before episode 1**, and it is checked by sending a real one to yourself —
-   `{{{RESEND_UNSUBSCRIBE_URL}}}` silently does nothing if the variable is absent from the body
-   (§5 Phase 4 step 10).
+6. **Unsubscribe must work before episode 1.** Shipped 2026-09-14 as `app/api/unsubscribe/route.ts` —
+   see the v1.2 correction above; this is not the `{{{RESEND_UNSUBSCRIBE_URL}}}` mechanism §5 Phase 4
+   originally assumed. Still unchecked: sending a real one to yourself and confirming the contact's
+   `unsubscribed` flag actually flips in the Resend dashboard, and confirming Gmail/Outlook render a
+   one-click "Unsubscribe" button rather than falling back to nothing.
 
 None of this needs a database. All of it needs deciding before the first send rather than after it.
