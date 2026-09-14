@@ -194,8 +194,11 @@ The two `EmailSignupSource` entries (`story-episode-quiz`, `story-hub`) are spli
 subscriber read six panels first and the other did not, and per-surface rate is the only read on who
 actually engages. The quiz card is the email offer and is therefore **not** copied into `public/`.
 
-The `/stories` Lighthouse budgets in `lighthouserc.js` are **provisional** — derived on paper, not
-measured. Re-baseline them after the first local run.
+The `/stories` Lighthouse budgets in `lighthouserc.js` were re-baselined on measured runs
+(2026-09-14): the hub is 300 kB and an episode 367 kB of total transfer, so an episode page is
+*lighter* than a kanji detail page despite carrying six panels — `next/image` serves a responsive
+size, never the 1092px master. The paper budgets they replaced were 2-2.5x too loose to gate
+anything.
 
 ### Design tokens — read this before touching colour
 

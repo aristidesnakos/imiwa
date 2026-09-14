@@ -185,16 +185,23 @@ export default function StoriesHubPage() {
               <li key={episode.slug}>
                 <Link
                   href={`/stories/${episode.slug}`}
-                  className="group block overflow-hidden rounded-xl border border-border bg-card transition-colors hover:bg-japan-soft-mist"
+                  className="group block overflow-hidden rounded-xl border border-border bg-card transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <Image
-                    src={episode.panels[0].art}
-                    alt=""
-                    width={1092}
-                    height={1092}
-                    sizes="(min-width: 640px) 45vw, 92vw"
-                    className="aspect-[2/1] w-full object-cover object-top"
-                  />
+                  {/*
+                    Panel art reserves its top quarter as empty space for the
+                    speech bubble StoryPanel composites in CSS, so a top-anchored
+                    crop is sky and no character. Anchor at 70%: by construction
+                    the subject of a panel sits in its lower half.
+                  */}
+                  <div className="relative aspect-[2/1] w-full">
+                    <Image
+                      src={episode.panels[0].art}
+                      alt=""
+                      fill
+                      sizes="(min-width: 640px) 45vw, 92vw"
+                      className="object-cover [object-position:center_70%]"
+                    />
+                  </div>
                   <div className="space-y-1 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-japan-mountain-mist">
                       Episode {episode.number} · JLPT {episode.level}

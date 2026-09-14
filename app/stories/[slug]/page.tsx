@@ -11,7 +11,7 @@ import EmailCapture from '@/components/EmailCapture';
 import { CTASection } from '@/components/CTASection';
 import { StoryPanel } from '@/components/stories/StoryPanel';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
-import { EPISODES, episodeBySlug, transcript } from '@/lib/stories';
+import { EPISODES, episodeBySlug, episodeLines } from '@/lib/stories';
 
 /**
  * One episode of The Travels of Tan.
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${episode.titleEn} — ${episode.titleJa}`,
       description: `Episode ${episode.number} of The Travels of Tan. Six panels, all JLPT ${episode.level}, with translations.`,
       type: 'article',
-      images: [{ url: `${SITE_URL}${episode.ogImage}`, width: 1200, height: 1200 }],
+      images: [{ url: `${SITE_URL}${episode.ogImage}`, width: 1080, height: 1080 }],
     },
     canonicalUrlRelative: `/stories/${episode.slug}`,
   });
@@ -65,7 +65,7 @@ export default async function EpisodePage({ params }: Props) {
   const episode = episodeBySlug(slug);
   if (!episode) notFound();
 
-  const lines = transcript(episode);
+  const lines = episodeLines(episode);
   const previous = EPISODES.find(e => e.number === episode.number - 1);
   const next = EPISODES.find(e => e.number === episode.number + 1);
 
@@ -169,15 +169,23 @@ export default async function EpisodePage({ params }: Props) {
         </div>
 
         {/*
-          The comic itself. Three columns on a desktop mirrors the square export;
-          one column on a phone, because a 33vw panel makes the Japanese
-          unreadable and the whole point is that it is readable.
+          The comic. Column counts are driven by one measured number: the
+          Japanese face is 5.3% of the panel width, so panel width IS legibility.
+
+          `main` is capped at max-w-4xl (832px of content), and three columns
+          inside that cap gave a 261px panel and a 13.5px face — measured, and
+          *smaller* than the 16.2px the same page renders on a 375px phone. The
+          third column therefore only appears at `xl`, where the section breaks
+          out of the cap by 8rem a side to pay for it (346px panel, 18.4px).
+          Two columns start at `md` rather than `sm` for the same reason: the
+          640-767px band was the worst on the page at 14.6px, and one column
+          there is 30px.
         */}
-        <section aria-labelledby="comic-heading">
+        <section aria-labelledby="comic-heading" className="xl:-mx-32">
           <h2 id="comic-heading" className="sr-only">
             The comic
           </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {episode.panels.map((panel, i) => (
               <StoryPanel key={panel.id} panel={panel} priority={i === 0} />
             ))}
@@ -185,11 +193,13 @@ export default async function EpisodePage({ params }: Props) {
         </section>
 
         {/*
-          The transcript. Not a redundant copy of the bubbles: the bubbles are
-          positioned over art and are read panel-by-panel, while this is the
-          version a crawler, a screen reader and a translator get to use — and
-          it is what takes a ~300-character strict-N5 story from thin to
-          substantive as a page.
+          The transcript IS a second copy of the bubbles, and saying otherwise
+          misleads the next editor: the bubbles are real DOM text inside each
+          figure, so a screen reader meets every line here for the second time.
+          It stays because reading the story in sequence, away from the art, is
+          a different act from reading it panel by panel — and because it is
+          what a translator and a crawler get to use. The heading below says so
+          out loud rather than presenting it as new material.
         */}
         <section className={SECTION_BAND} aria-labelledby="transcript-heading">
           <h2 id="transcript-heading" className={`${SECTION_HEADING} mb-6`}>
@@ -228,7 +238,7 @@ export default async function EpisodePage({ params }: Props) {
               <li key={target.kanji}>
                 <Link
                   href={`/kanji/${encodeURIComponent(target.kanji)}`}
-                  className="flex items-baseline gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-japan-soft-mist"
+                  className="flex items-baseline gap-3 rounded-lg border border-border bg-card px-4 py-3 transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <span lang="ja" className="text-2xl font-semibold">
                     {target.word}
@@ -264,7 +274,7 @@ export default async function EpisodePage({ params }: Props) {
           <EmailCapture
             source="story-episode-quiz"
             title="Get the quiz card for this episode"
-            description={`Three questions on ${episode.titleJa}, drawn from the words above, with the answer key on the back. We'll email it to you, along with each new episode as it goes up.`}
+            description={`Three questions on ${episode.titleEn}, drawn from the words above, with the answer key on the back. We'll email it to you, along with each new episode as it goes up.`}
             cta="Send me the quiz"
             successTitle="On its way"
             successMessage="Check your inbox — confirm the address and the quiz card follows."

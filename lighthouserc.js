@@ -221,43 +221,33 @@ module.exports = {
           totalKb: 660, // 573 kB baseline, +15%
           perfScore: 0.6,
         }),
-        // ---------------------------------------------------------------
-        // PROVISIONAL — these two have no measured baseline yet.
-        //
-        // Every other number in this file came out of 27 local and CI runs and
-        // is trustworthy to the byte. These two were derived on paper from the
-        // committed asset weights (six WebP panels, 32-61 kB each) plus the
-        // shared bundle the kanji detail route already measures, then given
-        // room. They gate "something got dramatically heavier", nothing finer.
-        //
-        // Run the suite locally after the first `pnpm build` that includes
-        // these routes and tighten both to baseline + the same ~15% every other
-        // entry here uses. Until then, do not read a pass as evidence of
-        // anything: a budget nobody measured is a budget nobody can trust.
-        // ---------------------------------------------------------------
+        // Measured 2026-09-14: 3 runs per route, local `pnpm start`, same 4x CPU
+        // emulation as every other entry here. Byte budgets are baseline +~15%
+        // and are the gate to trust; timings keep the generous ceilings the rest
+        // of this file uses, because TBT/LCP are the noisy pair under emulation.
         route({
           matchingUrlPattern: '^http://localhost:3000/stories$',
-          lcp: 4500,
-          fcp: 2200,
-          cls: 0.1,
-          tbt: 600,
-          scriptKb: 270,
-          totalKb: 700,
-          perfScore: 0.8,
+          lcp: 3100, // ~2.20s baseline, ~1.4x
+          fcp: 1800, // ~0.92s baseline — same FCP as `/`, same ceiling
+          cls: 0.1, // 0.000 measured; hold Google's "good" boundary
+          tbt: 600, // 34-42ms measured; CPU-noise room, not a real limit
+          scriptKb: 255, // 223 kB baseline, +14%
+          totalKb: 345, // 300 kB baseline, +15%
+          perfScore: 0.85, // 0.99 measured
         }),
         route({
           // Anchored so it does NOT also match /stories itself.
           matchingUrlPattern: '^http://localhost:3000/stories/.+',
-          lcp: 4500,
-          fcp: 2200,
-          cls: 0.1,
-          tbt: 600,
-          scriptKb: 270,
-          // Six panels of art. next/image serves a responsive size rather than
-          // the 1092px master, so the real figure should land well under this —
-          // which is exactly what the first measured run is for.
-          totalKb: 900,
-          perfScore: 0.75,
+          lcp: 3900, // 2.38s median, 2.81s worst run
+          fcp: 2000, // 1.03s median, 1.22s worst run
+          cls: 0.1, // 0.000 measured
+          tbt: 600, // 47-53ms measured
+          scriptKb: 255, // 223 kB baseline, +14%
+          // Six WebP panels, but next/image serves a responsive size rather
+          // than the 1092px master — the whole page lands under the kanji
+          // detail route, not over it, which the paper budget got badly wrong.
+          totalKb: 425, // 367 kB baseline, +16%
+          perfScore: 0.85, // 0.98 measured
         }),
         route({
           matchingUrlPattern: '^http://localhost:3000/kanji/.+',
