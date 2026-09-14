@@ -4,6 +4,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
+import { EPISODES } from '@/lib/stories';
 
 // Static pages, each with the date its content actually last changed.
 //
@@ -17,6 +18,10 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // Indexable and canonical, but both of its in-app links sit behind localStorage
   // checks a crawler never satisfies — without this entry it is an orphan.
   { path: '/kanji/review', lastmod: '2026-07-31', priority: '0.6' },
+  // The hub, not the episodes: those carry their own publication dates and are
+  // emitted below. Priority matches /kanji because it does the same job for a
+  // different query class — it is a category page written to rank, not an index.
+  { path: '/stories', lastmod: '2026-09-14', priority: '0.9' },
   { path: '/free-resources', lastmod: '2026-06-14', priority: '0.7' },
   { path: '/free-resources/kana-sheets', lastmod: '2026-01-10', priority: '0.7' },
   { path: '/free-resources/kanji-sheets', lastmod: '2026-06-14', priority: '0.7' },
@@ -42,6 +47,13 @@ export async function GET() {
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>${priority}</priority>
+  </url>`).join('')}
+  ${EPISODES.map(episode => `
+  <url>
+    <loc>${baseUrl}/stories/${episode.slug}</loc>
+    <lastmod>${episode.publishedAt}</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
   </url>`).join('')}
   ${[...N5_KANJI, ...N4_KANJI, ...N3_KANJI, ...N2_KANJI, ...N1_KANJI].map(kanji => `
   <url>

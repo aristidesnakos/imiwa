@@ -30,7 +30,31 @@ export const EMAIL_SIGNUP_SOURCES = [
   'homepage-weekly-story',
   /** The printables hub — the page that ranks for "free printable kanji worksheets". */
   'free-resources',
+  /**
+   * The quiz gate at the foot of a single Travels-of-Tan episode. Someone here
+   * read six panels of Japanese before they saw the form.
+   */
+  'story-episode-quiz',
+  /** The form on the /stories hub — read nothing yet, browsing the shelf. */
+  'story-hub',
 ] as const;
+
+/**
+ * The two story sources above are split deliberately, and the split is the
+ * point rather than bookkeeping.
+ *
+ * The open question these pages exist to answer is *who* engages — and the
+ * honest way to ask it is behaviour, not a survey. A subscriber from
+ * `story-episode-quiz` finished an episode and wanted to be tested on it; a
+ * subscriber from `story-hub` liked the idea of the thing. Those are different
+ * people with different intent, and per-surface signup rate in DataFast reads
+ * the difference directly. Collapsed into one `stories` source, it would not be
+ * recoverable afterwards.
+ *
+ * Adding a third story surface means asking first whether it distinguishes a
+ * different intent. If it does not, reuse one of these — a split that answers
+ * no question just halves both numbers.
+ */
 
 export type EmailSignupSource = (typeof EMAIL_SIGNUP_SOURCES)[number];
 

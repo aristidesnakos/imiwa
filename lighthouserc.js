@@ -166,7 +166,17 @@ module.exports = {
       //   /kanji/日    a prerendered kanji detail page — the ~1,890-page
       //                template that carries essentially all organic traffic.
       //                Percent-encoded because the segment is a CJK character.
-      url: [`${HOST}/`, `${HOST}/kanji`, `${HOST}/kanji/%E6%97%A5`],
+      //   /stories     the story hub — the page written to rank for the
+      //                category query
+      //   /stories/<s> one episode: six images plus a client-side email form,
+      //                the heaviest image payload on the site
+      url: [
+        `${HOST}/`,
+        `${HOST}/kanji`,
+        `${HOST}/kanji/%E6%97%A5`,
+        `${HOST}/stories`,
+        `${HOST}/stories/tan-climbs-the-mountain`,
+      ],
       settings: {
         // --no-sandbox / --disable-dev-shm-usage are required for Chrome in a
         // containerised CI runner.
@@ -210,6 +220,44 @@ module.exports = {
           scriptKb: 384, // 340 kB baseline, +13% — the real gate for this route
           totalKb: 660, // 573 kB baseline, +15%
           perfScore: 0.6,
+        }),
+        // ---------------------------------------------------------------
+        // PROVISIONAL — these two have no measured baseline yet.
+        //
+        // Every other number in this file came out of 27 local and CI runs and
+        // is trustworthy to the byte. These two were derived on paper from the
+        // committed asset weights (six WebP panels, 32-61 kB each) plus the
+        // shared bundle the kanji detail route already measures, then given
+        // room. They gate "something got dramatically heavier", nothing finer.
+        //
+        // Run the suite locally after the first `pnpm build` that includes
+        // these routes and tighten both to baseline + the same ~15% every other
+        // entry here uses. Until then, do not read a pass as evidence of
+        // anything: a budget nobody measured is a budget nobody can trust.
+        // ---------------------------------------------------------------
+        route({
+          matchingUrlPattern: '^http://localhost:3000/stories$',
+          lcp: 4500,
+          fcp: 2200,
+          cls: 0.1,
+          tbt: 600,
+          scriptKb: 270,
+          totalKb: 700,
+          perfScore: 0.8,
+        }),
+        route({
+          // Anchored so it does NOT also match /stories itself.
+          matchingUrlPattern: '^http://localhost:3000/stories/.+',
+          lcp: 4500,
+          fcp: 2200,
+          cls: 0.1,
+          tbt: 600,
+          scriptKb: 270,
+          // Six panels of art. next/image serves a responsive size rather than
+          // the 1092px master, so the real figure should land well under this —
+          // which is exactly what the first measured run is for.
+          totalKb: 900,
+          perfScore: 0.75,
         }),
         route({
           matchingUrlPattern: '^http://localhost:3000/kanji/.+',

@@ -59,6 +59,13 @@ const Header = () => {
             itemAs="div"
             linkClassName="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium"
           />
+          {/* Stories sits before Free Resources: it is content, and the
+              printables are a download. Crawlable from every page on the site,
+              which is the only inbound link /stories has until an episode
+              ranks on its own. */}
+          <Link href="/stories" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
+            Stories
+          </Link>
           <Link
             href="/free-resources"
             className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium"

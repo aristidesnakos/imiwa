@@ -19,6 +19,7 @@ import { CTASection } from '@/components/CTASection';
 import Header from '@/components/sections/Header';
 import { RelatedKanjiSection } from '@/components/kanji/RelatedKanjiSection';
 import { ExampleSentencesSection } from '@/components/kanji/ExampleSentencesSection';
+import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSection';
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { sentencesForKanji } from '@/lib/sentences/published';
@@ -451,6 +452,11 @@ export default async function KanjiDetailPage({ params }: Props) {
         {/* Example sentences (layer 4). Renders nothing when there are none —
             which is the normal state until a level has been through review. */}
         <ExampleSentencesSection kanji={kanjiData.kanji} sentences={exampleSentences} />
+
+        {/* Stories featuring this character. Renders nothing for the ~1,880
+            kanji no episode teaches yet — see StoryAppearancesSection for why
+            this is a text link and not the strip. */}
+        <StoryAppearancesSection kanji={kanjiData.kanji} />
 
         {/* Tan thumbs-up accent — only for kanji with no example sentences yet
             (most kanji today: every level above N5 is unreviewed). Where

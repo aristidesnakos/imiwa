@@ -40,6 +40,7 @@ pnpm validate:sentences      # published example sentences against lib/sentences
 pnpm validate:announcements  # announcement config + a replay of the acknowledgement model
 pnpm announcements:status    # human-readable state of the announcement queue
 pnpm validate:palette        # brand-palette alignment in app/ and components/
+pnpm validate:stories        # episode data: strict N5, bubble geometry, targets, quiz, assets
 ```
 
 `validate:announcements` does more than check a config shape — it replays the acknowledgement model
@@ -157,6 +158,44 @@ The review dashboard under `/admin` is a **local developer tool** that writes fl
 and has no auth. `lib/sentences/local-only.ts` provides two guards that must be the first statement
 of every admin route handler (`blockedResponse()`) and every admin page/layout
 (`assertLocalOnlyPage()`). Gating only the APIs ships broken UI against dead endpoints.
+
+### Story episodes (`/stories`) — The Travels of Tan
+
+A weekly six-panel comic, every word inside JLPT N5. `strips/ep-NN/script.json` in the *strips* repo
+(outside this one) is the single source of truth; `scripts/stories/import-episode.py` derives
+`data/stories/ep-NN.ts` and re-encodes the art into `public/stories/<slug>/`. **The generated data
+files are not editable** — edit the script and re-import, or the page and the strip posted to
+Pinterest end up saying different things with nothing reporting it.
+
+`lib/stories/index.ts` is the registry and uses **static imports, not `fs`**, for the same reason
+`lib/sentences/published.ts` does. Its imports are relative rather than `@/`, because
+`pnpm validate:stories` runs it under tsx from `scripts/`.
+
+**The panel art carries no text.** ChatGPT draws scenes only; `build.py` composites the Japanese
+into the social exports, and `components/stories/StoryPanel.tsx` does the same job in CSS for the
+page, reading the same percentage geometry out of `bubble`. Text in an image is not crawlable,
+selectable or screen-readable, and the whole SEO case for these pages is that the Japanese is text.
+The type scale is in `cqw` against a `container-type: inline-size` panel — ported from the strip's
+own ratios (a 27px face in a 506px cell), because a panel here is fluid and the strip is not.
+
+`pnpm validate:stories` is the contract. Its first assertion — every kanji in the dialogue is on the
+N5 list — is the promise the whole section makes to a beginner. `validate.py` upstream checks it too;
+this checks it again after the import, because the two can diverge. It also catches what the strip
+pipeline tolerates: narration lines in `script.json` carry a bubble tail that `build.py` ignores, so
+the importer normalises it to `null` and the validator asserts tail-vs-speaker agreement.
+
+**The link from `/kanji/[character]` is text and must stay text.** `StoryAppearancesSection` is a
+server component with no client boundary, so it costs nothing against the script budget. It cannot
+show the strip: `/kanji/.+` is gated at 440 kB total transfer against a 363 kB baseline, and one
+composited export is 1.3 MB. It renders `null` for the ~1,880 characters no episode teaches — no
+heading, no empty state, exactly like `ExampleSentencesSection`.
+
+The two `EmailSignupSource` entries (`story-episode-quiz`, `story-hub`) are split deliberately: one
+subscriber read six panels first and the other did not, and per-surface rate is the only read on who
+actually engages. The quiz card is the email offer and is therefore **not** copied into `public/`.
+
+The `/stories` Lighthouse budgets in `lighthouserc.js` are **provisional** — derived on paper, not
+measured. Re-baseline them after the first local run.
 
 ### Design tokens — read this before touching colour
 

@@ -21,6 +21,13 @@
     --temple-stone: #FAF8F5;    /* Card backgrounds, traditional stone */
     --ink-black: #1A1A1A;       /* Primary text, calligraphy ink */
     --soft-mist: #F5F7FA;       /* Subtle backgrounds, morning mist */
+    /* Speech-bubble paper. The one deliberate pure white in the palette: a
+       bubble has to separate from the cream art behind it, and temple-stone is
+       that same cream. It is a token rather than a literal so the hard rule
+       ("components use the brand palette") holds without an exception, and so
+       the strip exports and the site can be changed together. Matches the #fff
+       that build.py composites into the Pinterest/Instagram versions. */
+    --speech-paper: #FFFFFF;
     
     /* Map to shadcn/ui variables for consistency */
     --background: var(--temple-stone);

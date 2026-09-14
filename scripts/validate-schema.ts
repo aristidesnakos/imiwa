@@ -756,7 +756,62 @@ function relative(p: string): string {
   return path.relative(REPO_ROOT, p);
 }
 
-function validatePage(absPath: string, opts: { kanjiChar: string | null; requireSiteGraph: boolean }): void {
+/**
+ * A story episode's LearningResource block.
+ *
+ * `Article` describes a piece of writing about something; an episode is a
+ * thing you practise with, and the two properties that actually distinguish it
+ * — the level it is pitched at and the words it teaches — have no home on
+ * Article. Google does not currently render a rich result from
+ * LearningResource, which is fine: the reason to emit it is that it is the
+ * accurate description, and accurate entity data is what "this site is about
+ * JLPT N5 reading" is built out of.
+ *
+ * Asserted here rather than trusted, on the same principle as every other type
+ * in this file: an unasserted type rots. These pages are generated from typed
+ * data, so the failure mode is not a typo — it is someone changing the page
+ * template and quietly dropping the block.
+ */
+function validateLearningResource(file: string, node: Node, expectedPageUrl: string): void {
+  const T = 'LearningResource';
+  for (const field of ['name', 'description', 'educationalLevel', 'teaches', 'datePublished']) {
+    requireField(file, T, node, field);
+  }
+  requireEquals(
+    file,
+    T,
+    'url',
+    asString(node.url),
+    expectedPageUrl,
+    'The entity URL must be the page it describes, on the canonical www host.'
+  );
+  requireCanonicalHost(file, T, 'url', node.url);
+
+  const published = asString(node.datePublished);
+  if (published !== null && !ISO_DATE_RE.test(published)) {
+    fail({
+      file,
+      schemaType: T,
+      field: 'datePublished',
+      expected: 'an ISO date (YYYY-MM-DD)',
+      actual: JSON.stringify(published),
+    });
+  }
+
+  const level = asString(node.educationalLevel);
+  if (level !== null && !/^JLPT N[1-5]$/.test(level)) {
+    fail({
+      file,
+      schemaType: T,
+      field: 'educationalLevel',
+      expected: '"JLPT N1".."JLPT N5"',
+      actual: JSON.stringify(level),
+      hint: 'The level is the one claim these pages make that a reader can check. Keep it in one spelling.',
+    });
+  }
+}
+
+function validatePage(absPath: string, opts: { kanjiChar: string | null; storySlug?: string | null; requireSiteGraph: boolean }): void {
   const file = relative(absPath);
   const html = fs.readFileSync(absPath, 'utf8');
   const { entities, blockCount } = extractJsonLd(file, html);
@@ -807,6 +862,34 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; require
   }
   for (const org of orgs) validateOrganization(file, org);
   for (const site of sites) validateWebSite(file, site);
+
+  if (opts.storySlug) {
+    const expectedStoryUrl = `${SITE_URL}/stories/${opts.storySlug}`;
+    const resources = entitiesOfType(entities, 'LearningResource');
+    if (resources.length === 0) {
+      fail({
+        file,
+        schemaType: 'LearningResource',
+        field: '(block)',
+        expected: 'one LearningResource entity',
+        actual: `absent — page has ${entities.map(typeOf).join(', ')}`,
+        hint: 'Story episodes describe themselves as a graded reader; see app/stories/[slug]/page.tsx.',
+      });
+    }
+    for (const resource of resources) validateLearningResource(file, resource, expectedStoryUrl);
+
+    const storyCrumbs = entitiesOfType(entities, 'BreadcrumbList');
+    if (storyCrumbs.length === 0) {
+      fail({
+        file,
+        schemaType: 'BreadcrumbList',
+        field: '(block)',
+        expected: 'one BreadcrumbList entity',
+        actual: `absent — page has ${entities.map(typeOf).join(', ')}`,
+      });
+    }
+    for (const crumbs of storyCrumbs) validateBreadcrumbList(file, crumbs);
+  }
 
   if (opts.kanjiChar === null) return;
 
@@ -1105,9 +1188,14 @@ function main(): void {
   }
 
   // ─ every non-kanji prerendered page ─
+  // `/stories/<slug>.html` — an episode. `/stories.html` is the hub and gets
+  // the generic treatment: it is a CollectionPage, not a LearningResource.
+  const storiesDir = path.join(BUILD_APP_DIR, 'stories');
   for (const abs of otherPages) {
+    const isStoryEpisode = path.dirname(abs) === storiesDir && abs.endsWith('.html');
     validatePage(abs, {
       kanjiChar: null,
+      storySlug: isStoryEpisode ? path.basename(abs, '.html') : null,
       requireSiteGraph: PAGES_REQUIRING_SITE_GRAPH.includes(path.relative(BUILD_APP_DIR, abs)),
     });
   }

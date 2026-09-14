@@ -40,6 +40,14 @@ const Footer = () => {
                   All Kanji
                 </Link>
               </li>
+              <li>
+                {/* The header nav is desktop-only in practice (its mobile Menu
+                    button opens nothing), so this footer link is how a phone
+                    reaches /stories at all. */}
+                <Link href="/stories" className="text-sm text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors">
+                  Japanese Stories
+                </Link>
+              </li>
               {/* Extends "Learn" rather than adding a fifth column, which would
                   break the md:grid-cols-4 layout. The footer is site-wide, so
                   this is the only nav surface mobile users actually get. */}

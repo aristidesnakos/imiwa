@@ -18,6 +18,7 @@
     "validate:palette": "tsx --tsconfig tsconfig.json scripts/validate-palette.ts",
     "validate:subscribe": "tsx --tsconfig tsconfig.json scripts/validate-subscribe.ts",
     "sentences:publish": "tsx --tsconfig tsconfig.json scripts/sentences/publish.ts",
+    "validate:stories": "tsx --tsconfig tsconfig.json scripts/stories/validate-stories.ts",
     "validate:sentences": "tsx --tsconfig tsconfig.json scripts/sentences/validate-published.ts",
     "validate:readings": "tsx --tsconfig tsconfig.json scripts/sentences/validate-readings.ts",
     "validate:furigana": "tsx --tsconfig tsconfig.json scripts/sentences/validate-furigana.ts",

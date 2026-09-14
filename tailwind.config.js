@@ -83,7 +83,9 @@ module.exports = {
   				'cherry-blossom': 'var(--cherry-blossom)',
   				'temple-stone': 'var(--temple-stone)',
   				'ink-black': 'var(--ink-black)',
-  				'soft-mist': 'var(--soft-mist)'
+  				'soft-mist': 'var(--soft-mist)',
+  				// See app/globals.css — the one deliberate pure white.
+  				'speech-paper': 'var(--speech-paper)'
   			}
   		},
   		backgroundImage: {
