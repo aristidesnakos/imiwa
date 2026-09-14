@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import rateLimit from '@/middlewares/rateLimiter';
 import { isEmailSignupSource } from '@/lib/analytics/email-signup-sources';
+import { episodeBySlug } from '@/lib/stories';
 import { getTokenSecret, mintConfirmToken } from '@/lib/email/subscribe-token';
 import {
   confirmationEmailHtml,
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
     const source = typeof body?.source === 'string' ? body.source.trim() : '';
+    const episodeSlug = typeof body?.episode === 'string' ? body.episode.trim() : '';
 
     if (!email || !EMAIL_REGEX.test(email)) {
       return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
@@ -78,7 +80,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
     }
 
-    const token = mintConfirmToken({ email, source }, secret);
+    // Resolved against the registry, not shape-checked and forwarded. This
+    // value decides which episode's quiz card we send, so an unknown slug must
+    // not travel inside a token we sign — it is dropped here, and the confirm
+    // flow falls back to the latest episode. An absent episode is normal: every
+    // surface except an episode page has none.
+    const episode = episodeSlug && episodeBySlug(episodeSlug) ? episodeSlug : undefined;
+
+    const token = mintConfirmToken({ email, source, episode }, secret);
 
     await sendEmail({
       to: email,

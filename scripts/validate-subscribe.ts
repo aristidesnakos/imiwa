@@ -156,6 +156,63 @@ check(
 
 check('the TTL is the documented 48 hours', CONFIRM_TOKEN_TTL_SECONDS === 48 * 60 * 60);
 
+// --- The episode claim ----------------------------------------------------
+//
+// `episode` decides which quiz card a new subscriber is sent. It is the one
+// field a caller supplies that is neither the address nor the surface, so it
+// gets the same treatment: shape-checked on the way out of the token, and never
+// able to break consent on the way in.
+
+const EPISODE = 'tan-climbs-the-mountain';
+
+const withEpisode = verifyConfirmToken(
+  mintConfirmToken({ email: EMAIL, source: SOURCE, episode: EPISODE }, SECRET),
+  SECRET
+);
+check(
+  'an episode survives the round trip',
+  withEpisode.status === 'valid' && withEpisode.payload.episode === EPISODE
+);
+
+const withoutEpisode = verifyConfirmToken(
+  mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET),
+  SECRET
+);
+check(
+  'a signup with no episode carries none, rather than an empty string',
+  withoutEpisode.status === 'valid' && withoutEpisode.payload.episode === undefined
+);
+
+// A malformed episode must DROP the field, not refuse the token. The address
+// and the source are both intact and signature-verified; refusing consent over
+// a cosmetic claim would lose a real subscriber to a typo, and the fallback
+// (send the latest episode) is already correct for every source that has none.
+for (const bad of ['../../etc/passwd', 'Tan Climbs', 'ep 01', '', 'UPPER-CASE']) {
+  const forged = verifyConfirmToken(
+    jwt.sign({ email: EMAIL, source: SOURCE, episode: bad }, SECRET, {
+      algorithm: 'HS256',
+      expiresIn: 3600,
+    }),
+    SECRET
+  );
+  check(
+    `a malformed episode (${JSON.stringify(bad)}) is dropped, and consent still stands`,
+    forged.status === 'valid' && forged.payload.episode === undefined
+  );
+}
+
+const nonString = verifyConfirmToken(
+  jwt.sign({ email: EMAIL, source: SOURCE, episode: 42 }, SECRET, {
+    algorithm: 'HS256',
+    expiresIn: 3600,
+  }),
+  SECRET
+);
+check(
+  'a non-string episode is dropped, and consent still stands',
+  nonString.status === 'valid' && nonString.payload.episode === undefined
+);
+
 // --- The source list ------------------------------------------------------
 
 check('there is at least one signup source', EMAIL_SIGNUP_SOURCES.length > 0);
@@ -186,6 +243,7 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · forged, wrong-secret, malformed and alg:none tokens are all refused
   · an expired token keeps a trustworthy source but is never treated as consent
   · a source outside EMAIL_SIGNUP_SOURCES cannot reach an email we send
+  · a malformed episode claim is dropped rather than refusing a real consent
 
 PASS — ${passed}/${total} checks passed
 `);

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAudienceId } from '@/lib/email/audience';
 import { getTokenSecret, verifyConfirmToken } from '@/lib/email/subscribe-token';
+import { episodeBySlug, episodesNewestFirst } from '@/lib/stories';
+import { quizEmailHtml, quizEmailSubject, quizEmailText } from '@/lib/email/quiz-email';
+import { sendEmail } from '@/lib/resend';
+import config from '@/config';
 
 export const runtime = 'nodejs';
 
@@ -108,6 +112,40 @@ export async function POST(request: NextRequest) {
     const detail = await res.text();
     console.error('[api/subscribe/confirm] Resend contact create failed:', res.status, detail);
     return NextResponse.json({ error: 'Failed to confirm subscription.' }, { status: 502 });
+  }
+
+  // The welcome email, and the thing every capture surface has been promising:
+  // the quiz card for the episode they signed up from, with the answers.
+  //
+  // AFTER contact creation and deliberately non-fatal. The consent record is the
+  // contact, and it now exists; failing the confirmation because a welcome email
+  // bounced would tell someone who just consented that it did not work, and a
+  // retry would be a no-op create followed by the same failure. So this logs and
+  // the redirect happens either way.
+  //
+  // `episode` is absent for the hub and every non-story surface, and can also be
+  // a slug retired since the token was minted. Both fall back to the latest
+  // episode rather than sending nothing: `/stories` promises a quiz card too,
+  // and the newest episode is the honest answer to "which one".
+  const episode =
+    (result.payload.episode ? episodeBySlug(result.payload.episode) : undefined) ??
+    episodesNewestFirst()[0];
+
+  if (episode) {
+    try {
+      await sendEmail({
+        to: result.payload.email,
+        subject: quizEmailSubject(episode),
+        text: quizEmailText(episode),
+        html: quizEmailHtml(episode),
+        // Same reasoning as the consent email: a learner replying with a
+        // question about a quiz answer is the single most valuable signal this
+        // list produces, and it has to reach a person.
+        replyTo: config.resend.supportEmail,
+      });
+    } catch (error) {
+      console.error('[api/subscribe/confirm] Quiz email failed after subscribing:', error);
+    }
   }
 
   return NextResponse.redirect(new URL('/subscribed', request.url), { status: 303 });

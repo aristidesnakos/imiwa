@@ -128,6 +128,22 @@ function validate(episode: Episode): void {
     if (!q.askEn.trim()) fail(episode, `quiz ${i + 1} has no English question`);
   });
 
+  // 5b. The answers are not all in the same position.
+  //
+  //     Every question in all six season-one scripts was authored with the
+  //     correct option written first, which is the natural way to write one and
+  //     produces a card answerable without reading a word of it. A learner
+  //     notices that faster than we would, and the quiz is the one thing on the
+  //     page claiming to test them. Position is not difficulty, so this asserts
+  //     only that the episode does not hand out a single rule that solves it.
+  if (episode.quiz.length > 1 && new Set(episode.quiz.map(q => q.answer)).size === 1) {
+    fail(
+      episode,
+      `every quiz answer is option ${episode.quiz[0].answer + 1} — the card is ` +
+        `guessable without reading it. Vary the position in script.json and re-import.`,
+    );
+  }
+
   // 6. Slug shape. These are URL segments and they are ASCII on purpose, so
   //    nothing in the story routes ever needs encoding.
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(episode.slug)) {
@@ -135,6 +151,14 @@ function validate(episode: Episode): void {
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(episode.publishedAt)) {
     fail(episode, `publishedAt "${episode.publishedAt}" is not an ISO date`);
+  } else if (episode.publishedAt > new Date().toISOString().slice(0, 10)) {
+    // A future date does not hold an episode back — nothing gates on it, and
+    // `dynamicParams = false` means the page is prerendered the moment it is in
+    // the registry. What it does is put a future `lastmod` in the sitemap and a
+    // future `datePublished` in the JSON-LD for a page that is already live,
+    // which is a claim we cannot support. Order comes from `number`; the date
+    // only ever records when the thing actually went up.
+    fail(episode, `publishedAt "${episode.publishedAt}" is in the future, but the page is already live`);
   }
 
   // 7. The art exists. A generated data file referencing a panel nobody

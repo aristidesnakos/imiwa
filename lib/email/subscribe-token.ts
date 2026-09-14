@@ -40,9 +40,31 @@ import {
 /** 48 hours, in seconds. Long enough for an inbox checked once a weekend. */
 export const CONFIRM_TOKEN_TTL_SECONDS = 48 * 60 * 60;
 
+/**
+ * A story slug, shape-checked. Deliberately NOT resolved against the episode
+ * registry here: this module is imported by `/api/subscribe`, by
+ * `/api/subscribe/confirm` and by `pnpm validate:subscribe`, and pulling
+ * `lib/stories` in would drag every episode's data into all three to check one
+ * string. Resolution belongs at the point of use, where an unknown slug has an
+ * obvious answer (send the latest episode instead) rather than being a token
+ * validity question.
+ *
+ * The shape check still matters. It is the same rule `validate:stories` applies
+ * to `slug`, and it is what stops an arbitrary caller-supplied string from
+ * riding inside a token we sign.
+ */
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 export interface SubscribeTokenPayload {
   email: string;
   source: EmailSignupSource;
+  /**
+   * Which episode the signup came from, when it came from one. Absent for the
+   * hub and every non-story surface — those have no particular episode to send,
+   * and `undefined` is the honest representation of that rather than a
+   * sentinel.
+   */
+  episode?: string;
 }
 
 export type VerifyResult =
@@ -69,7 +91,14 @@ export function mintConfirmToken(
   secret: string
 ): string {
   return jwt.sign(
-    { email: payload.email, source: payload.source },
+    {
+      email: payload.email,
+      source: payload.source,
+      // Omitted rather than sent as null when there is no episode: a claim that
+      // is absent cannot be misread, and `verifyConfirmToken` treats an absent
+      // and an unusable value identically anyway.
+      ...(payload.episode ? { episode: payload.episode } : {}),
+    },
     secret,
     { algorithm: 'HS256', expiresIn: CONFIRM_TOKEN_TTL_SECONDS }
   );
@@ -92,7 +121,7 @@ export function verifyConfirmToken(token: string, secret: string): VerifyResult 
 
   if (typeof decoded !== 'object' || decoded === null) return { status: 'invalid' };
 
-  const { email, source, exp } = decoded as Record<string, unknown>;
+  const { email, source, episode, exp } = decoded as Record<string, unknown>;
 
   // Re-validate the payload rather than trusting our own past self. A source
   // retired from EMAIL_SIGNUP_SOURCES must not confirm just because a token
@@ -101,7 +130,13 @@ export function verifyConfirmToken(token: string, secret: string): VerifyResult 
   if (!isEmailSignupSource(source)) return { status: 'invalid' };
   if (typeof exp !== 'number') return { status: 'invalid' };
 
-  const payload: SubscribeTokenPayload = { email, source };
+  // A malformed `episode` drops the field rather than invalidating the token.
+  // The alternative refuses consent over a cosmetic claim — the address and the
+  // source are both intact, and the worst case of dropping it is that the
+  // subscriber gets the latest episode's quiz instead of a specific one.
+  const validEpisode = typeof episode === 'string' && SLUG_RE.test(episode) ? episode : undefined;
+
+  const payload: SubscribeTokenPayload = { email, source, ...(validEpisode ? { episode: validEpisode } : {}) };
   const expired = exp * 1000 <= Date.now();
 
   return expired ? { status: 'expired', payload } : { status: 'valid', payload };

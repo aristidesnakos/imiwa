@@ -65,6 +65,10 @@ export function confirmationEmailHtml(token: string): string {
   const url = confirmUrl(token);
   return `<!doctype html>
 <html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="color-scheme" content="light only" />
+</head>
 <body style="margin:0;padding:0;background:${TEMPLE_STONE};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TEMPLE_STONE};padding:32px 16px;">
     <tr>

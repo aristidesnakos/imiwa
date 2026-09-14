@@ -28,6 +28,18 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+/** Multiple-choice labels. Three options today; the validator allows more. */
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+/**
+ * Quiz options are the one field in an episode that is not reliably Japanese: a
+ * reading question's options are kana, a meaning question's are English words.
+ * `lang="ja"` on "small" makes a screen reader pronounce it with a Japanese
+ * voice, so the attribute has to follow the string rather than the field.
+ */
+const JAPANESE_RE = /[\u3040-\u30ff\u4e00-\u9fff]/u;
+const langOf = (text: string) => (JAPANESE_RE.test(text) ? 'ja' : 'en');
+
 export function generateStaticParams() {
   return EPISODES.map(e => ({ slug: e.slug }));
 }
@@ -254,27 +266,110 @@ export default async function EpisodePage({ params }: Props) {
         </section>
 
         {/*
-          The gate, and the only thing on this page that asks for anything.
+          The quiz, rendered. It used to be withheld behind the email form on
+          the theory that the practice was the thing worth trading an address
+          for. Two problems with that. The page is ~70 Japanese characters of
+          dialogue against a spec target of 250-350, so the one block of real
+          text it could add was the one being hidden — and a thin page is a page
+          that does not rank, which costs more than a signup is worth. And the
+          form promised a card the send path could not yet produce.
 
-          It sits here rather than at the top on purpose: someone who reaches it
-          has read six panels of Japanese and a transcript, which makes them a
-          materially different person from a visitor who bounced at panel two.
-          That difference is the whole reason this surface has its own
-          `EmailSignupSource` — per-surface signup rate is how "who actually
-          engages" gets answered with behaviour rather than a guess.
+          Answers go in a `<details>` rather than at the foot of the page:
+          "scroll past the answers" is not a gate, and a reader who has to pass
+          them to reach the next episode has already read them.
 
-          What is gated is the quiz card, not the story. The story is free,
-          crawlable and shareable; the practice is what a serious learner wants
-          and a browser does not, and that asymmetry is the filter.
+          Server-rendered, no client boundary, so the whole block costs nothing
+          against this route's script budget.
         */}
         <section className={SECTION_BAND} aria-labelledby="quiz-heading">
           <h2 id="quiz-heading" className={`${SECTION_HEADING} mb-6`}>
             Test yourself on this episode
           </h2>
+          <ol className="space-y-6">
+            {episode.quiz.map((question, i) => (
+              <li key={i} className="rounded-lg border border-border bg-card px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-japan-mountain-mist">
+                  Question {i + 1}
+                </p>
+                <p
+                  lang={langOf(question.prompt)}
+                  className="mt-2 text-xl font-semibold [word-break:keep-all]"
+                >
+                  {question.prompt}
+                </p>
+                {question.ask && (
+                  <p lang="ja" className="mt-1 text-base [word-break:keep-all]">
+                    {question.ask}
+                  </p>
+                )}
+                <p className="mt-1 text-sm text-japan-mountain-mist">{question.askEn}</p>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {question.options.map((option, j) => (
+                    <li
+                      key={j}
+                      className="flex items-baseline gap-2 rounded-md border border-border bg-japan-soft-mist px-3 py-2"
+                    >
+                      <span className="text-sm font-semibold text-japan-mountain-mist">
+                        {OPTION_LETTERS[j]}
+                      </span>
+                      <span lang={langOf(option)} className="[word-break:keep-all]">
+                        {option}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+
+          <details className="mt-6 rounded-lg border border-border bg-japan-soft-mist px-4 py-3">
+            <summary className="cursor-pointer font-medium text-japan-deep-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              Show the answers
+            </summary>
+            <ol className="mt-3 space-y-2">
+              {episode.quiz.map((question, i) => (
+                <li key={i}>
+                  <span className="text-japan-mountain-mist">Question {i + 1}: </span>
+                  <span className="font-semibold text-japan-mountain-mist">
+                    {OPTION_LETTERS[question.answer]}
+                  </span>
+                  <span className="text-japan-mountain-mist"> — </span>
+                  <span
+                    lang={langOf(question.options[question.answer])}
+                    className="font-semibold [word-break:keep-all]"
+                  >
+                    {question.options[question.answer]}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </details>
+        </section>
+
+        {/*
+          The offer, and the only thing on this page that asks for anything.
+
+          It sits here rather than at the top on purpose: someone who reaches it
+          has read six panels of Japanese, a transcript and a quiz, which makes
+          them a materially different person from a visitor who bounced at panel
+          two. That difference is the whole reason this surface has its own
+          `EmailSignupSource` — per-surface signup rate is how "who actually
+          engages" gets answered with behaviour rather than a guess.
+
+          `episode` is passed so the confirmation flow can send THIS episode's
+          quiz rather than a generic welcome. It travels inside the signed token
+          and is re-validated against the registry on the way back out; see
+          lib/email/subscribe-token.ts.
+        */}
+        <section className={SECTION_BAND} aria-labelledby="subscribe-heading">
+          <h2 id="subscribe-heading" className={`${SECTION_HEADING} mb-6`}>
+            Get the next episode by email
+          </h2>
           <EmailCapture
             source="story-episode-quiz"
-            title="Get the quiz card for this episode"
-            description={`Three questions on ${episode.titleEn}, drawn from the words above, with the answer key on the back. We'll email it to you, along with each new episode as it goes up.`}
+            episode={episode.slug}
+            title="One episode a week, with its quiz"
+            description={`Confirm your address and I'll send you this episode's quiz card — the three questions above with the answer key — then a new episode every week.`}
             cta="Send me the quiz"
             successTitle="On its way"
             successMessage="Check your inbox — confirm the address and the quiz card follows."

@@ -48,6 +48,18 @@ interface EmailCaptureProps {
    * EMAIL_SIGNUP_SOURCES in lib/analytics/email-signup-sources.
    */
   source: EmailSignupSource;
+  /**
+   * The story slug this capture sits on, when it sits on one. It travels into
+   * the signed confirm token and decides which episode's quiz card the
+   * confirmation flow sends — so a reader who finishes episode 2 is tested on
+   * episode 2, not on whatever went up most recently.
+   *
+   * A plain string rather than an `Episode`: this is a client component, and
+   * importing `lib/stories` here would pull every episode's panels, dialogue
+   * and quiz into the client bundle to read one field. Server pages pass
+   * `episode.slug`; the server re-validates it.
+   */
+  episode?: string;
   title?: string;
   description?: string;
   cta?: string;
@@ -66,6 +78,7 @@ interface EmailCaptureProps {
 
 export function EmailCapture({
   source,
+  episode,
   title = 'Get new study material by email',
   description = 'Drop your email and we’ll send new study material as it’s published.',
   cta = 'Sign me up',
@@ -102,7 +115,7 @@ export function EmailCapture({
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source }),
+        body: JSON.stringify({ email, source, episode }),
       });
 
       if (!res.ok) {

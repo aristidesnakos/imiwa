@@ -178,11 +178,19 @@ selectable or screen-readable, and the whole SEO case for these pages is that th
 The type scale is in `cqw` against a `container-type: inline-size` panel — ported from the strip's
 own ratios (a 27px face in a 506px cell), because a panel here is fluid and the strip is not.
 
+**Episode order is `number`, never `publishedAt`.** Nothing gates on the date: `dynamicParams = false`
+means an episode is prerendered the moment it is in the registry, so a future date does not hold one
+back — it just puts a future `lastmod` in the sitemap and a future `datePublished` in the JSON-LD for
+a page that is already live. Episode 2 shipped that way. `validate:stories` now rejects a future
+`publishedAt`, and the field only ever records when the thing actually went up.
+
 `pnpm validate:stories` is the contract. Its first assertion — every kanji in the dialogue is on the
 N5 list — is the promise the whole section makes to a beginner. `validate.py` upstream checks it too;
 this checks it again after the import, because the two can diverge. It also catches what the strip
 pipeline tolerates: narration lines in `script.json` carry a bubble tail that `build.py` ignores, so
-the importer normalises it to `null` and the validator asserts tail-vs-speaker agreement.
+the importer normalises it to `null` and the validator asserts tail-vs-speaker agreement — and that
+an episode's three quiz answers are not all in the same position, which all eighteen questions in
+season one were, making every card answerable without reading it.
 
 **The link from `/kanji/[character]` is text and must stay text.** `StoryAppearancesSection` is a
 server component with no client boundary, so it costs nothing against the script budget. It cannot
@@ -190,9 +198,24 @@ show the strip: `/kanji/.+` is gated at 440 kB total transfer against a 363 kB b
 composited export is 1.3 MB. It renders `null` for the ~1,880 characters no episode teaches — no
 heading, no empty state, exactly like `ExampleSentencesSection`.
 
+**The quiz renders on the page; the email is the reason to subscribe, not the only way to see it.**
+It was originally withheld behind the form, which hid the one block of real text a ~70-character
+episode could add and promised a card no send path could produce. Both are fixed: the questions and
+a `<details>` answer key are server-rendered, and confirming a subscription sends that episode's quiz
+as an email generated from the same typed data (`lib/email/quiz-email.ts`). The composited
+`out/<slug>-quiz.png` is still **not** copied into `public/` and is not attached either — that module's
+header records why (Outlook blocks images; the file is outside this repo, so reading it needs the
+`fs` path Next cannot trace).
+
+Which episode gets sent travels inside the signed confirm token as an optional `episode` slug,
+resolved against the registry on the way in and shape-checked on the way out. A malformed slug is
+**dropped, never fatal** — refusing consent over a cosmetic claim would lose a real subscriber, and
+the fallback (the latest episode) is already correct for every surface that has no episode.
+`pnpm validate:subscribe` asserts both halves.
+
 The two `EmailSignupSource` entries (`story-episode-quiz`, `story-hub`) are split deliberately: one
 subscriber read six panels first and the other did not, and per-surface rate is the only read on who
-actually engages. The quiz card is the email offer and is therefore **not** copied into `public/`.
+actually engages.
 
 The `/stories` Lighthouse budgets in `lighthouserc.js` were re-baselined on measured runs
 (2026-09-14): the hub is 300 kB and an episode 367 kB of total transfer, so an episode page is
