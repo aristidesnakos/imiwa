@@ -28,6 +28,12 @@
        the strip exports and the site can be changed together. Matches the #fff
        that build.py composites into the Pinterest/Instagram versions. */
     --speech-paper: #FFFFFF;
+    /* Narration paper. Narration is not speech: build.py composites a square
+       sage box with no tail, and this is that exact colour, sampled from the
+       committed export. It was previously mixed from --sakura-waters, which is
+       blue — so the page rendered a pale blue box where the Pinterest strip
+       showed sage, which is precisely the drift StoryPanel exists to prevent. */
+    --narration-paper: #DCEBD4;
     
     /* Map to shadcn/ui variables for consistency */
     --background: var(--temple-stone);

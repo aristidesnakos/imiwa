@@ -85,7 +85,8 @@ module.exports = {
   				'ink-black': 'var(--ink-black)',
   				'soft-mist': 'var(--soft-mist)',
   				// See app/globals.css — the one deliberate pure white.
-  				'speech-paper': 'var(--speech-paper)'
+  				'speech-paper': 'var(--speech-paper)',
+  				'narration-paper': 'var(--narration-paper)'
   			}
   		},
   		backgroundImage: {
