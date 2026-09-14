@@ -51,6 +51,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 from PIL import Image
@@ -77,11 +78,20 @@ def first_kanji(word: str) -> str:
 
 
 def ts_str(value: str) -> str:
-    """A TypeScript single-quoted string literal. Japanese passes through as-is."""
-    return "'" + value.replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n') + "'"
+    """A TypeScript string literal.
+
+    JS shares JSON's escape grammar, so `json.dumps` covers what the previous
+    hand-rolled version missed — most importantly a bare CR, which is an
+    ECMAScript LineTerminator and terminates the literal exactly as \n does. A
+    CRLF script.json therefore used to emit a data file that failed `next
+    build`, and `scripts/` is excluded from tsconfig so nothing caught it here.
+    `ensure_ascii=False` keeps the Japanese readable in the generated diff.
+    """
+    return json.dumps(value, ensure_ascii=False)
 
 
-def encode_panels(ep_dir: Path, slug: str, script: dict) -> None:
+def encode_panels(ep_dir: Path, script: dict) -> None:
+    slug = script['slug']
     out_dir = REPO / 'public' / 'stories' / slug
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -93,8 +103,8 @@ def encode_panels(ep_dir: Path, slug: str, script: dict) -> None:
                 f"a story page with holes in it is worse than no story page."
             )
         im = Image.open(src).convert('RGB')
-        if max(im.size) > PANEL_MAX_PX:
-            im.thumbnail((PANEL_MAX_PX, PANEL_MAX_PX), Image.LANCZOS)
+        # thumbnail() returns early rather than upscaling, so this needs no guard.
+        im.thumbnail((PANEL_MAX_PX, PANEL_MAX_PX), Image.LANCZOS)
         dest = out_dir / f"{panel['id'].lower()}.webp"
         im.save(dest, 'WEBP', quality=PANEL_QUALITY, method=6)
         print(f'  art  {dest.relative_to(REPO)}  {dest.stat().st_size // 1024} kB')
@@ -114,7 +124,7 @@ def encode_panels(ep_dir: Path, slug: str, script: dict) -> None:
         print(f'  og   SKIPPED — {square.name} not built yet', file=sys.stderr)
 
 
-def emit_episode(script: dict, published: str) -> str:
+def emit_episode(script: dict, published: str, ep_dir: Path) -> str:
     slug = script['slug']
     num = script['episode']
 
@@ -156,7 +166,7 @@ def emit_episode(script: dict, published: str) -> str:
                     ja=ts_str(line['ja']),
                     en=ts_str(line['en']),
                     x=bub['x'], y=bub['y'], w=bub['w'],
-                    tail=ts_str(tail) if tail else 'null',
+                    tail=ts_str(tail) if tail is not None else 'null',
                 )
             )
         lines.append(
@@ -196,7 +206,7 @@ def emit_episode(script: dict, published: str) -> str:
     return f"""/**
  * GENERATED FILE — do not edit.
  *
- * Source: strips/{Path(script.get('_source_dir', f'ep-{num:02d}')).name}/script.json
+ * Source: strips/{ep_dir.name}/script.json
  * Regenerate: python3 scripts/stories/import-episode.py <path-to-ep-dir>
  *
  * Editing this by hand puts the site out of step with the strip that gets
@@ -235,20 +245,16 @@ def main() -> None:
 
     ep_dir = Path(args.ep_dir).resolve()
     script = json.loads((ep_dir / 'script.json').read_text(encoding='utf-8'))
-    script['_source_dir'] = str(ep_dir)
 
-    published = args.published
-    if published is None:
-        from datetime import date
-        published = date.today().isoformat()
+    published = args.published or date.today().isoformat()
 
     print(f"episode {script['episode']}: {script['slug']}")
     if not args.data_only:
-        encode_panels(ep_dir, script['slug'], script)
+        encode_panels(ep_dir, script)
 
     dest = REPO / 'data' / 'stories' / f"ep-{script['episode']:02d}.ts"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(emit_episode(script, published), encoding='utf-8')
+    dest.write_text(emit_episode(script, published, ep_dir), encoding='utf-8')
     print(f'  data {dest.relative_to(REPO)}')
     print('\nNow add it to lib/stories/index.ts if it is new, then run pnpm validate:stories.')
 
