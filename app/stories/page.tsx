@@ -272,6 +272,7 @@ export default function StoriesHubPage() {
           </h2>
           <EmailCapture
             source="story-hub"
+            arrivalSource="short-quiz"
             title="Get each episode as it goes up"
             description={
               latest

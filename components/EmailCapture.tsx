@@ -60,6 +60,28 @@ interface EmailCaptureProps {
    * `episode.slug`; the server re-validates it.
    */
   episode?: string;
+  /**
+   * The source to use INSTEAD of `source` when the visitor arrived from a
+   * YouTube Short — that is, when the URL carries `?from=short`, which the
+   * clickable link in a Short's description carries.
+   *
+   * The spoken, on-screen CTA is the bare `michikanji.com/stories`, so a viewer
+   * who types it arrives with no parameters and counts as `story-hub` like any
+   * other direct visit. That is the honest reading: a typed URL carries no
+   * referrer and nothing to attribute it with. Only the description click can
+   * be attributed, and this is what attributes it.
+   *
+   * Why a client-side swap rather than a second page or a server-read search
+   * param: `/stories` and `/stories/[slug]` are statically generated with `dynamicParams =
+   * false`, and reading a search param on the server would opt every episode
+   * page out of static rendering to serve one query string. The form is
+   * already a client component, so the cheapest correct place to read the
+   * arrival is here.
+   *
+   * Absent this prop the query string changes nothing, so no other surface can
+   * be re-sourced by a stray `?from=` a visitor pastes.
+   */
+  arrivalSource?: EmailSignupSource;
   title?: string;
   description?: string;
   cta?: string;
@@ -79,6 +101,7 @@ interface EmailCaptureProps {
 export function EmailCapture({
   source,
   episode,
+  arrivalSource,
   title = 'Get new study material by email',
   description = 'Drop your email and we’ll send new study material as it’s published.',
   cta = 'Sign me up',
@@ -89,6 +112,15 @@ export function EmailCapture({
 }: EmailCaptureProps) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<Status>('idle');
+  // Read after mount, never during render: `window` does not exist on the
+  // server, and resolving this during the first client render would produce
+  // markup that disagrees with the prerendered HTML.
+  const [effectiveSource, setEffectiveSource] = useState<EmailSignupSource>(source);
+  useEffect(() => {
+    if (!arrivalSource) return;
+    const from = new URLSearchParams(window.location.search).get('from');
+    if (from === 'short') setEffectiveSource(arrivalSource);
+  }, [arrivalSource]);
   const [errorMessage, setErrorMessage] = useState(GENERIC_ERROR);
   const errorId = useId();
   const successRef = useRef<HTMLDivElement>(null);
@@ -115,7 +147,7 @@ export function EmailCapture({
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source, episode }),
+        body: JSON.stringify({ email, source: effectiveSource, episode }),
       });
 
       if (!res.ok) {
@@ -130,7 +162,7 @@ export function EmailCapture({
       // analytics request pin the form in 'sending' — disabled, no error —
       // after the signup actually worked.
       setStatus('success');
-      trackEmailSignup(source).catch(() => {
+      trackEmailSignup(effectiveSource).catch(() => {
         // Analytics must never affect the subscription outcome.
       });
     } catch {

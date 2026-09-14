@@ -37,6 +37,19 @@ export const EMAIL_SIGNUP_SOURCES = [
   'story-episode-quiz',
   /** The form on the /stories hub — read nothing yet, browsing the shelf. */
   'story-hub',
+  /**
+   * The same episode-page form, reached from a YouTube Short via /tan.
+   *
+   * Deliberately NOT folded into `story-episode-quiz`, and the split is the
+   * whole point rather than bookkeeping: a Short viewer arrives having watched
+   * a 28-second video and typed a URL by hand, while a `story-episode-quiz`
+   * subscriber read six panels of Japanese on the page before the form came
+   * into view. Those are different levels of intent reached by different
+   * effort, and YouTube is on trial here — a channel that cannot be shown to
+   * produce subscribers gets stopped after eight Shorts. Collapsed into one
+   * source that evidence does not exist.
+   */
+  'short-quiz',
 ] as const;
 
 /**
