@@ -1,9 +1,21 @@
 # Story Delivery on Our Own Domain — Resend PRD (Option C)
 
-**Version 1.2** · Created 2026-08-24 · Revised 2026-09-14 · Owner: Ari Nakos
-**Status:** Built and merged. `RESEND_API_KEY` and `EMAIL_TOKEN_SECRET` must both be live in
+**Version 1.3** · Created 2026-08-24 · Revised 2026-09-15 · Owner: Ari Nakos
+**Status:** Capture is built. `RESEND_API_KEY`, `EMAIL_TOKEN_SECRET` and
+`RESEND_WEEKLY_STORIES_SEGMENT_ID` must all be live in
 production (Vercel) and a deploy must have picked them up before `/api/subscribe` answers 200 instead
 of 503 — verify with a real subscribe attempt on production, not by checking that the vars are set.
+
+**v1.3 — Shared renderer and reviewed Broadcast drafts.** Each published episode now renders to one
+text-plus-image email from `lib/email/quiz-email.ts`: JPEG panel derivatives plus the selectable
+Japanese/English dialogue, quiz and answers. `scripts/stories/import-episode.py` emits the JPEGs and
+`validate:stories` requires them. A confirmed contact is added to the required Weekly Stories Segment;
+`pnpm stories:create-broadcast <slug>` creates a Resend Broadcast **draft only** for that segment.
+There is no cron, no send route, no contact loop and no automatic scheduling: an operator reviews the
+draft, sends a test and schedules it in the dashboard. The welcome email uses the same renderer and a
+visible, signed unsubscribe link. Its Resend idempotency key protects retries for 24 hours only; it is
+not permanent exactly-once delivery. GET unsubscribe now asks for confirmation; RFC 8058 POST remains
+one-click for mail clients. A postal address remains required before commercial sends.
 
 **v1.2 — Resend moved contacts to a global model out from under M7/M8, mid-migration.** M7's decision
 ("one audience; `source` is not stored in Resend at all") was correct for the installed `resend@4.8.0`
@@ -286,10 +298,17 @@ extension + sitemap → Lighthouse budgets for the new routes.
 10. Compose the broadcast from the episode data. The body **must** contain
     `{{{RESEND_UNSUBSCRIBE_URL}}}` — Resend handles the unsubscribe flow, but only if the variable is
     present.
-11. Run the rewritten `episode-spec.md` §A7 checklist. Items 1–3 and 10 are machine-checkable and
+11. Run `pnpm stories:create-broadcast <episode-slug>`. It creates a **draft only**, addressed to the
+    configured Weekly Stories Segment; it has no send or schedule mode. Do not run it twice after an
+    ambiguous network response — reconcile in the Resend dashboard first, because the Broadcast API
+    has no documented idempotency key.
+12. Review the draft in Resend, send a test, then run the rewritten `episode-spec.md` §A7 checklist.
+    Items 1–3 and 10 are machine-checkable and
     belong in `validate:stories`; items 4–9 (test sends to Gmail web, Gmail mobile, Outlook.com; clip
     check; dark mode; reply path) are Ari's, and are never reported as passed by anyone else.
-12. Schedule. Manual. No cron — unchanged kill decision.
+13. Schedule manually in the Resend dashboard. No cron — unchanged kill decision. Resend owns
+    broadcast queueing, throttling, unsubscribe filtering and scheduling; the application never pages
+    through contacts or calls `POST /emails` once per recipient.
 
 ### Deliberately not in Phase 4
 
@@ -415,7 +434,7 @@ already holds payment records and DataFast already holds visitor records. Resend
 | Record | Where it lives | Who runs it |
 |---|---|---|
 | Pending, unconfirmed signup | **Nowhere** — the signed token *is* the record, and it expires | — |
-| Confirmed subscriber | Resend, global contact list (no Audience id, corrected v1.2) | Resend |
+| Confirmed subscriber | Resend global contact list and Weekly Stories Segment | Resend |
 | Unsubscribe state | The contact's `unsubscribed` flag, flipped by `app/api/unsubscribe/route.ts` | Us, via the Resend contacts API |
 | Which surface someone signed up from | DataFast, at capture time (`trackEmailSignup`) | DataFast |
 | Anything at all | ~~Our database~~ | There isn't one |

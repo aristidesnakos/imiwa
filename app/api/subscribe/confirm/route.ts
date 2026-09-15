@@ -10,6 +10,7 @@ import config from '@/config';
 export const runtime = 'nodejs';
 
 const RESEND_API = 'https://api.resend.com';
+const NEWSLETTER_SEGMENT_ID = process.env.RESEND_WEEKLY_STORIES_SEGMENT_ID;
 
 /**
  * POST /api/subscribe/confirm
@@ -61,9 +62,9 @@ const RESEND_API = 'https://api.resend.com';
 export async function POST(request: NextRequest) {
   const secret = getTokenSecret();
 
-  if (!process.env.RESEND_API_KEY || !secret) {
+  if (!process.env.RESEND_API_KEY || !secret || !NEWSLETTER_SEGMENT_ID) {
     console.error(
-      '[api/subscribe/confirm] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET missing)'
+      '[api/subscribe/confirm] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET / RESEND_WEEKLY_STORIES_SEGMENT_ID missing)'
     );
     return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
   }
@@ -109,21 +110,29 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify({
       email: result.payload.email,
-      unsubscribed: false,
     }),
   });
 
-  // Creation is idempotent from our side: a replayed token inside the 48h
-  // window re-adds an address that is already there, which Resend treats as a
-  // no-op. That is the accepted trade for not storing a used-token list.
+  // A replayed token inside the 48h window must not overwrite an existing
+  // contact's unsubscribe state. We deliberately do not store used-token state.
   if (!res.ok) {
     const detail = await res.text();
     console.error('[api/subscribe/confirm] Resend contact create failed:', res.status, detail);
     return NextResponse.json({ error: 'Failed to confirm subscription.' }, { status: 502 });
   }
 
-  // The welcome email, and the thing every capture surface has been promising:
-  // the quiz card for the episode they signed up from, with the answers.
+  const segmentRes = await fetch(
+    `${RESEND_API}/contacts/${encodeURIComponent(result.payload.email)}/segments/${encodeURIComponent(NEWSLETTER_SEGMENT_ID)}`,
+    { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` } },
+  );
+  if (!segmentRes.ok) {
+    const detail = await segmentRes.text();
+    console.error('[api/subscribe/confirm] Resend segment add failed:', segmentRes.status, detail);
+    return NextResponse.json({ error: 'Failed to confirm subscription.' }, { status: 502 });
+  }
+
+  // The welcome email: the story, quiz and answers for the episode they signed
+  // up from.
   //
   // AFTER contact creation and deliberately non-fatal. The consent record is the
   // contact, and it now exists; failing the confirmation because a welcome email
@@ -134,7 +143,7 @@ export async function POST(request: NextRequest) {
   // `episode` is absent for the hub and every non-story surface, and can also be
   // a slug retired since the token was minted. Both fall back to the latest
   // episode rather than sending nothing: `/stories` promises a quiz card too,
-  // and the newest episode is the honest answer to "which one".
+  // the newest episode is the honest answer to "which one".
   const episode =
     (result.payload.episode ? episodeBySlug(result.payload.episode) : undefined) ??
     episodesNewestFirst()[0];
@@ -154,8 +163,9 @@ export async function POST(request: NextRequest) {
       await sendEmail({
         to: result.payload.email,
         subject: quizEmailSubject(episode),
-        text: quizEmailText(episode),
-        html: quizEmailHtml(episode),
+        text: quizEmailText(episode, unsubscribeUrl),
+        html: quizEmailHtml(episode, unsubscribeUrl),
+        idempotencyKey: `story-welcome/${result.payload.email}/${episode.slug}`,
         // Same reasoning as the consent email: a learner replying with a
         // question about a quiz answer is the single most valuable signal this
         // list produces, and it has to reach a person.

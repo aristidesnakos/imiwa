@@ -32,7 +32,8 @@ script is an authoring convenience; the validator is the contract.
 WHAT IT EMITS
 -------------
   data/stories/ep-NN.ts          the typed episode, generated
-  public/stories/<slug>/pN.webp  the raw panel art (no text — see below)
+  public/stories/<slug>/pN.webp  the raw panel art for the website
+  public/stories/<slug>/pN.jpg   the email-compatible panel derivative
   public/stories/<slug>/og.jpg   the composited square, for OpenGraph only
 
 The panel PNGs from ChatGPT carry NO text: the model draws scenes only and
@@ -63,6 +64,7 @@ REPO = Path(__file__).resolve().parents[2]
 # flat vector art with thick outlines stops improving visibly.
 PANEL_MAX_PX = 1092
 PANEL_QUALITY = 82
+EMAIL_PANEL_QUALITY = 82
 OG_PX = 1200
 OG_QUALITY = 86
 
@@ -108,6 +110,9 @@ def encode_panels(ep_dir: Path, script: dict) -> None:
         dest = out_dir / f"{panel['id'].lower()}.webp"
         im.save(dest, 'WEBP', quality=PANEL_QUALITY, method=6)
         print(f'  art  {dest.relative_to(REPO)}  {dest.stat().st_size // 1024} kB')
+        email_dest = out_dir / f"{panel['id'].lower()}.jpg"
+        im.save(email_dest, 'JPEG', quality=EMAIL_PANEL_QUALITY, optimize=True, progressive=True)
+        print(f'  email {email_dest.relative_to(REPO)}  {email_dest.stat().st_size // 1024} kB')
 
     # OpenGraph wants a single flat image, and it wants it in a format every
     # scraper has handled for a decade. JPEG, not WebP: X/Twitter's card

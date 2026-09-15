@@ -168,6 +168,10 @@ function validate(episode: Episode): void {
     if (!existsSync(join(PUBLIC_DIR, panel.art))) {
       fail(episode, `${panel.id} points at ${panel.art}, which is not in public/`);
     }
+    const emailArt = panel.art.replace(/\.webp$/, '.jpg');
+    if (!existsSync(join(PUBLIC_DIR, emailArt))) {
+      fail(episode, `${panel.id} email art ${emailArt} is not in public/`);
+    }
   }
   if (!existsSync(join(PUBLIC_DIR, episode.ogImage))) {
     fail(episode, `ogImage ${episode.ogImage} is not in public/`);

@@ -33,6 +33,7 @@ export const sendEmail = async ({
   html,
   replyTo,
   headers,
+  idempotencyKey,
 }: {
   to: string;
   subject: string;
@@ -40,6 +41,7 @@ export const sendEmail = async ({
   html?: string;
   replyTo?: string;
   headers?: Record<string, string>;
+  idempotencyKey?: string;
 }): Promise<any> => {
   if (!resend) {
     console.warn('Resend service not available. Skipping email send.');
@@ -59,15 +61,18 @@ export const sendEmail = async ({
     // every email went out with no Reply-To header at all — replies fell back
     // to the From address. camelCase is the SDK's contract; snake_case is the
     // wire's, and it applies only where we call the REST API with raw fetch.
-    const { data: result, error } = await resend.emails.send({
-      from: config.resend.fromAdmin,
-      to: [to],
-      subject,
-      text,
-      html,
-      replyTo,
-      headers,
-    });
+    const { data: result, error } = await resend.emails.send(
+      {
+        from: config.resend.fromAdmin,
+        to: [to],
+        subject,
+        text,
+        html,
+        replyTo,
+        headers,
+      },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
 
     if (error) {
       console.error('Error sending email:', error);

@@ -15,19 +15,19 @@ const RESEND_API = 'https://api.resend.com';
  * to send to a subset, but there is exactly one list today, so a signed link
  * that flips `unsubscribed` on the global contact is the whole feature.
  *
- * Both verbs perform the same unsubscribe, unauthenticated beyond the token:
+ * Both verbs are unauthenticated beyond the signed token:
  *
  *  - GET is what a person clicks from their mail client. It returns a small
- *    HTML page rather than JSON, because a human is the one looking at it.
+ *    confirmation page so an image/link scanner cannot silently unsubscribe a
+ *    reader merely by fetching the visible link.
  *  - POST is RFC 8058 one-click: Gmail/Yahoo/Outlook fetch a `List-Unsubscribe`
  *    URL with `List-Unsubscribe-Post: List-Unsubscribe=One-Click` as the body,
  *    with no human present, and expect a bare 2xx — this is also the shape the
  *    Gmail/Yahoo bulk-sender rules require. It must not redirect or render a
  *    confirmation page that a mail host's fetcher will never see.
  *
- * Unlike `/api/subscribe/confirm`, there is no scanner-prefetch concern here:
- * a prefetcher accidentally unsubscribing an address is a false negative on
- * mail delivery, not a false consent record.
+ * The confirmation page does not apply to RFC 8058 POST: mail hosts require a
+ * bare success response for their explicit one-click unsubscribe request.
  */
 async function unsubscribe(request: NextRequest): Promise<'ok' | 'invalid' | 'unconfigured' | 'upstream-error'> {
   const secret = getTokenSecret();
@@ -71,17 +71,15 @@ function page(title: string, body: string, status: number): NextResponse {
 }
 
 export async function GET(request: NextRequest) {
-  const outcome = await unsubscribe(request);
-  switch (outcome) {
-    case 'ok':
-      return page('Unsubscribed', "You won't receive any more emails from us. If this was a mistake, just subscribe again from the site.", 200);
-    case 'invalid':
-      return page('Invalid link', 'This unsubscribe link is invalid or malformed.', 400);
-    case 'unconfigured':
-      return page('Unavailable', 'Unsubscribing is temporarily unavailable. Please try again later.', 503);
-    case 'upstream-error':
-      return page('Something went wrong', 'We could not process this right now. Please try again later.', 502);
+  const token = request.nextUrl.searchParams.get('token') ?? '';
+  if (!token || verifyUnsubscribeToken(token, getTokenSecret()).status === 'invalid') {
+    return page('Invalid link', 'This unsubscribe link is invalid or malformed.', 400);
   }
+  const action = `${request.nextUrl.pathname}?token=${encodeURIComponent(token)}`;
+  return new NextResponse(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8" /><title>Unsubscribe — ${config.appName}</title></head><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:480px;margin:64px auto;padding:0 16px;"><h1 style="font-size:20px;">Unsubscribe from weekly stories?</h1><p>You will no longer receive story emails from us.</p><form method="post" action="${action}"><button type="submit">Unsubscribe</button></form></body></html>`,
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+  );
 }
 
 // RFC 8058 one-click: mail hosts expect a bare 2xx/4xx, never HTML.
