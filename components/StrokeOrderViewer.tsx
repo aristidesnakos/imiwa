@@ -224,53 +224,71 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
         {status}
       </div>
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
-          {/* gray-600, not gray-400. The spinner is non-text content that is the
-              sole indicator of the loading state, so WCAG 1.4.11 asks 3:1 of it;
-              gray-400 is 2.43:1 on this bg-gray-50 panel. gray-600 is 7.2:1. */}
-          <Loader2 className="w-8 h-8 animate-spin text-gray-600 mb-2" />
-          <div className="text-gray-600">Loading stroke order...</div>
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
-          <div className="text-gray-600 mb-4 text-center">
-            <div className="text-lg mb-2">Stroke order not available</div>
-            <div className="text-sm">This kanji may not be in the KanjiVG database</div>
-          </div>
-          <Button variant="outline" size="sm" onClick={loadStrokeOrder}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Retry
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* SVG Display */}
-          <div className="flex items-center justify-center h-64 bg-white border rounded-lg p-4">
-            {/* aria-labelledby rather than aria-label, even though the label is a
-                fixed English sentence: the kanji itself has to sit inside a
-                lang="ja" run or an English voice mangles or skips it, and an
-                aria-label is a flat string that inherits the document's lang="en"
-                with no way to mark the Japanese portion. Referencing real markup
-                is the only vehicle that carries the language switch, and it
-                matches how the rest of the page tags Japanese (see
-                app/kanji/[character]/page.tsx).
-
-                The KanjiVG files we inject carry no <title>/<desc> of their own
-                and the SVG proxy does not add one, so without this the site's
-                headline feature is an unnamed graphic. */}
-            {/* The label sits INSIDE the role="img" element, not beside it.
-                aria-labelledby does not remove its target from the accessibility
-                tree, and role="img" prunes only its own descendants — so a
-                sibling label is announced twice, once as ordinary text in
-                reading order and again as the image's name. Nested, the same
-                span computes the name and is then hidden by the
-                presentational-children rule.
-
-                Two ids because of that nesting: the wrapper cannot carry the
-                SVG (dangerouslySetInnerHTML forbids children), so the inner
-                element keeps diagramId for the animation lookups and the
-                wrapper takes diagramFigureId for role, name and aria-controls. */}
+      {/* Fixed three-row shape (diagram / controls / instructions) across
+          loading, error and loaded — only the CONTENTS of each row change,
+          never whether the row exists. A loading placeholder that reserved
+          only the diagram box's height left the controls and instructions
+          rows to appear from nothing once the KanjiVG proxy fetch resolved,
+          pushing the action bar, sentences and everything else below down.
+          Invisible on localhost, where that fetch is near-instant — it is
+          the dominant field CLS source on every kanji detail page, per
+          Search Console's Core Web Vitals report. Controls/instructions are
+          `invisible` (not absent) outside the loaded state so they still
+          occupy their row's height; they are not tab-reachable while hidden
+          this way, so no keyboard trap results. */}
+      <div className="space-y-4">
+        {/* Diagram / status box — always h-64 */}
+        <div
+          className={`flex items-center justify-center h-64 rounded-lg p-4 ${
+            loading || error ? 'bg-gray-50' : 'bg-white border'
+          }`}
+        >
+          {loading ? (
+            <div className="flex flex-col items-center justify-center">
+              {/* gray-600, not gray-400. The spinner is non-text content that is
+                  the sole indicator of the loading state, so WCAG 1.4.11 asks
+                  3:1 of it; gray-400 is 2.43:1 on this bg-gray-50 panel.
+                  gray-600 is 7.2:1. */}
+              <Loader2 className="w-8 h-8 animate-spin text-gray-600 mb-2" />
+              <div className="text-gray-600">Loading stroke order...</div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center">
+              <div className="text-gray-600 mb-4 text-center">
+                <div className="text-lg mb-2">Stroke order not available</div>
+                <div className="text-sm">This kanji may not be in the KanjiVG database</div>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadStrokeOrder}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          ) : (
+            // aria-labelledby rather than aria-label, even though the label is a
+            // fixed English sentence: the kanji itself has to sit inside a
+            // lang="ja" run or an English voice mangles or skips it, and an
+            // aria-label is a flat string that inherits the document's lang="en"
+            // with no way to mark the Japanese portion. Referencing real markup
+            // is the only vehicle that carries the language switch, and it
+            // matches how the rest of the page tags Japanese (see
+            // app/kanji/[character]/page.tsx).
+            //
+            // The KanjiVG files we inject carry no <title>/<desc> of their own
+            // and the SVG proxy does not add one, so without this the site's
+            // headline feature is an unnamed graphic.
+            //
+            // The label sits INSIDE the role="img" element, not beside it.
+            // aria-labelledby does not remove its target from the accessibility
+            // tree, and role="img" prunes only its own descendants — so a
+            // sibling label is announced twice, once as ordinary text in
+            // reading order and again as the image's name. Nested, the same
+            // span computes the name and is then hidden by the
+            // presentational-children rule.
+            //
+            // Two ids because of that nesting: the wrapper cannot carry the
+            // SVG (dangerouslySetInnerHTML forbids children), so the inner
+            // element keeps diagramId for the animation lookups and the
+            // wrapper takes diagramFigureId for role, name and aria-controls.
             <div
               id={diagramFigureId}
               role="img"
@@ -291,34 +309,40 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
                 dangerouslySetInnerHTML={{ __html: svg }}
               />
             </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex justify-center">
-            <Button
-              onClick={handleButtonClick}
-              variant="default"
-              size="sm"
-              disabled={strokeCount === 0}
-              aria-controls={diagramFigureId}
-            >
-              {getButtonContent()}
-            </Button>
-          </div>
-
-          {/* Instructions — the on-screen twin of the live region above, hidden
-              from assistive tech so the identical sentence is not read twice in
-              a row. Deliberately not wired to announce each stroke: the drawing
-              is the point, and a per-stroke commentary would bury the one thing
-              worth hearing (that the animation finished and can be replayed). */}
-          {/* gray-600 throughout, not gray-500. gray-500 is 4.56:1 on the page
-              background — passing AA by 1.3%, which is not a margin worth
-              keeping on the only instructions the Play button has. */}
-          <div className="text-xs text-gray-600 text-center" aria-hidden="true">
-            {getInstructionText()}
-          </div>
+          )}
         </div>
-      )}
+
+        {/* Controls — reserved even while loading/error (see note above);
+            the error state's own Retry button lives inside the box above,
+            so this row just stays invisible then. */}
+        <div className="flex justify-center">
+          <Button
+            onClick={handleButtonClick}
+            variant="default"
+            size="sm"
+            disabled={strokeCount === 0}
+            aria-controls={diagramFigureId}
+            className={loading || error ? 'invisible' : ''}
+          >
+            {getButtonContent()}
+          </Button>
+        </div>
+
+        {/* Instructions — the on-screen twin of the live region above, hidden
+            from assistive tech so the identical sentence is not read twice in
+            a row. Deliberately not wired to announce each stroke: the drawing
+            is the point, and a per-stroke commentary would bury the one thing
+            worth hearing (that the animation finished and can be replayed). */}
+        {/* gray-600 throughout, not gray-500. gray-500 is 4.56:1 on the page
+            background — passing AA by 1.3%, which is not a margin worth
+            keeping on the only instructions the Play button has. */}
+        <div
+          className={`text-xs text-gray-600 text-center ${loading || error ? 'invisible' : ''}`}
+          aria-hidden="true"
+        >
+          {getInstructionText()}
+        </div>
+      </div>
     </div>
   );
 }
