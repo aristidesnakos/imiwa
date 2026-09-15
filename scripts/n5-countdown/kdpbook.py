@@ -263,6 +263,19 @@ body {{ font-family:'Noto Sans CJK JP',sans-serif; color:{INK}; background:#fff;
           font-size:10.5pt; line-height:1.75; color:#5C4A3C; max-width:158mm; }}
 .howto b {{ color:{INK}; }}
 
+/* Week-opener word preview -- replaces the old repeated instructional
+   paragraph. Two-column so up to 9 characters (the biggest week) never
+   comes close to the review-page's vertical budget; verified visually,
+   not just by line-counting. */
+.preview {{ margin-top:12mm; border-top:1px solid {SAGE_DEEP}; padding-top:6mm; }}
+.preview .pgrid {{ display:grid; grid-template-columns:1fr 1fr; column-gap:9mm;
+                   row-gap:3.5mm; margin-top:4mm; }}
+.preview .pw {{ display:flex; align-items:baseline; gap:2.5mm; font-size:10.5pt;
+               color:#5C4A3C; }}
+.preview .pw .jp {{ font-size:15pt; color:{INK}; }}
+.preview .pw .rdg {{ color:#7A6858; font-size:9.5pt; }}
+.preview .pw .en {{ color:#5C4A3C; }}
+
 /* ── shared sheet furniture ───────────────────────────────────────────── */
 h3.lbl {{ font-size:8.5pt; letter-spacing:.14em; text-transform:uppercase;
           color:{TERRA_INK}; font-weight:700; margin-bottom:2.5mm; }}
@@ -589,22 +602,38 @@ def why_page(page_no):
 # ── week pages ────────────────────────────────────────────────────────────
 
 def week_page(w, page_no):
+    """Opener. The chips are the whole pitch for the week, so the body under
+    them earns its place by being ABOUT those specific characters rather than
+    restating the mechanic explained once on page 3 ('How to use this book').
+    Each preview word is pulled from n5-vocab.json and gated on
+    `all_taught_by_week`, so nothing shown here uses a kanji the reader has not
+    reached yet -- a forward-looking taste, not a comprehension test. A
+    character with no fully-decodable word yet (only 午 in the current
+    schedule) is silently skipped, same as an empty word block anywhere else
+    in this book: no placeholder, no apology.
+
+    No pointer to the week-review page either, on the same logic that removed
+    the paragraph it used to sit in: `week_review_page()` opens with its own
+    heading ("From the meaning alone") and its own lede explaining exactly
+    what to do there. Announcing it a week early told the reader nothing the
+    page does not tell them itself when they arrive.
+    """
     chips = ''.join(f'<div class="chip serif">{c}</div>' for c in w['new'])
     n = len(w['new'])
     if n:
+        rows = []
+        for c in w['new']:
+            words = VOCAB.get(c) or []
+            pick = next((x for x in words if x.get('all_taught_by_week')), None)
+            if pick:
+                rows.append(
+                    f'<div class="pw"><span class="jp serif" lang="ja">{pick["word"]}'
+                    f'</span><span class="rdg" lang="ja">{pick["reading"]}</span>'
+                    f'<span class="en">{pick["gloss"][0]}</span></div>')
         body = f"""<div class="chars">{chips}</div>
-  <div class="howto">
-    <b>Work through the week one character at a time.</b> Follow the stroke order
-    first &mdash; the order is not decoration, it is what makes the character come
-    out the right shape and what lets you read someone else&rsquo;s handwriting
-    later.<br><br>
-    <b>Then come back.</b> Each writing page has four review boxes: tick them one
-    day, three days, one week and three weeks after you first wrote the character.
-    Those gaps are the whole method.<br><br>
-    <b>End the week on the review page</b> at the end of this section, where the
-    only prompt is the meaning. If a character will not come back from its meaning
-    alone, it is not learned yet, and that is a useful thing to find out with
-    weeks in hand rather than in an exam hall.
+  <div class="preview">
+    <h3 class="lbl">Words this week&rsquo;s characters give you</h3>
+    <div class="pgrid">{''.join(rows)}</div>
   </div>"""
     else:
         body = f"""<div class="howto" style="margin-top:8mm;border-top:none;padding-top:0">
