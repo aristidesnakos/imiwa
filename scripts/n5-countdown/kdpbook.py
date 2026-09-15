@@ -692,7 +692,7 @@ def ref_page(k, w, page_no, index_no):
 
   {words_html}
 
-  {foot(page_no, f"Week {w['week']} &middot; {k['kanji']} &middot; write it on the facing page")}
+  {foot(page_no, f"Week {w['week']} &middot; {k['kanji']}")}
 </div>"""
 
 
