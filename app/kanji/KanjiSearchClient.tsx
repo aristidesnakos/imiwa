@@ -93,8 +93,18 @@ function KanjiSection({ title, kanji, search, description, isKanjiLearned, toggl
           const isLearned = isKanjiLearned(k.kanji);
           return (
             <div key={`${k.kanji}-${k.level}-${index}`} className="relative">
+              {/* prefetch={false}: this grid renders up to PAGE_SIZE (200) cards
+                  at once, and Next.js prefetches every <Link> that scrolls into
+                  view — each pull is a ~10 kB RSC payload for a page most
+                  visitors are browsing, not about to click. With a full tab's
+                  worth of cards in the initial viewport that alone blew the
+                  route's total-byte budget (resource-summary:total:size),
+                  which counts prefetches unlike the script-only budget. Search
+                  is the primary way through this page; a browsed click still
+                  fetches on demand, same as any unprefetched link. */}
               <Link
                 href={`/kanji/${encodeURIComponent(k.kanji)}`}
+                prefetch={false}
                 data-fast-goal="kanji_card_click"
                 className={`group p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center block ${
                   isLearned ? 'border-emerald-300 bg-emerald-50' : ''
