@@ -12,8 +12,9 @@ import type { Episode, PanelLine, TargetWord, UpcomingEpisode } from './types';
 // under tsx from scripts/, exactly as lib/sentences/validate.ts does.
 import { EPISODE as EP01 } from '../../data/stories/ep-01';
 import { EPISODE as EP02 } from '../../data/stories/ep-02';
+import { EPISODE as EP03 } from '../../data/stories/ep-03';
 
-export const EPISODES: readonly Episode[] = [EP01, EP02];
+export const EPISODES: readonly Episode[] = [EP01, EP02, EP03];
 
 /**
  * The rest of season one: written, validated against the N5 list upstream, and
@@ -29,12 +30,6 @@ export const EPISODES: readonly Episode[] = [EP01, EP02];
  * number appears in both lists, so this cannot be forgotten silently.
  */
 export const UPCOMING: readonly UpcomingEpisode[] = [
-  {
-    number: 3,
-    titleEn: 'Tan goes to school',
-    titleJa: 'タンは 学校に 行きます',
-    teaches: ['学校', '先生', '学生', '日本語'],
-  },
   {
     number: 4,
     titleEn: 'A rainy day off',

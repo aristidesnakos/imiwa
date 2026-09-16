@@ -143,7 +143,12 @@ def emit_episode(script: dict, published: str, ep_dir: Path) -> str:
             'word': t['word'],
             'reading': t['reading'],
             'en': t['en'],
-            'kanji': first_kanji(t['word']),
+            # An explicit `kanji` wins. The first-ideograph rule is right for
+            # 大きい but wrong for compounds whose focus character is not first:
+            # ep 3's 日本語 teaches 語 (日 is not a focus kanji there) and 学生
+            # teaches 生 (学 is already taught by 学校), and validate:stories
+            # rejects both of the links the rule would have produced.
+            'kanji': t.get('kanji') or first_kanji(t['word']),
         })
 
     lines = []
