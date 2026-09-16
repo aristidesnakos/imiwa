@@ -288,6 +288,25 @@ def audit_cover():
     if clear is not None:
         print(f'tightest clearance between a line of type and the art below it: {clear:.3f}in')
 
+    # Rules printed through type. audit_overlap() gained rule-vs-type after the
+    # REVIEW bug on the practice pages; the cover never got the same check, and the
+    # same defect shipped here: .bfoot's 1px top border crossed the series line on
+    # the 2 Sep cover and on every build before 15 Sep 2026. Type-vs-image was
+    # checked; type-vs-hairline was not. Filter: thin in one dimension, long in the
+    # other -- catches the sage footer rule (0.75pt x 7.3in) and the terracotta
+    # kicker bar (3pt x 0.61in) while excluding the roundels and bullet squares.
+    rules = [r for r, lab in items
+             if lab == '<draw>' and min(r.width, r.height) <= 4 and max(r.width, r.height) >= 30]
+    for r, lab in items:
+        if lab in ('<draw>', '<image>'):
+            continue
+        for rr in rules:
+            ov = r & rr
+            if not ov.is_empty and ov.width > 0.5 and ov.height > 0.2:
+                fails.append(('rule printed through type', lab,
+                              round(r.x0/I, 3), round(r.y0/I, 3)))
+    print(f'{len(rules)} hairline rule(s) checked against every line of type')
+
     print(f'spine panel {spine_l/I:.4f}..{spine_r/I:.4f}in, safe {spine_safe.x0/I:.4f}..{spine_safe.x1/I:.4f}in')
     print(f'barcode band cleared: x {band.x0/I:.3f}..{band.x1/I:.3f}, y {band.y0/I:.3f}..{band.y1/I:.3f}')
     if fails:

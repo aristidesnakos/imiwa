@@ -217,15 +217,23 @@ h1 em {{ font-style:normal; color:{TERRA_INK}; }}
               width:0.11in; height:0.11in; background:{SAGE_DEEP}; border-radius:1px; }}
 .bt {{ font-size:12.5pt; color:{INK}; font-weight:600; line-height:1.35; }}
 .bd {{ font-size:11pt; color:{BODY}; line-height:1.5; margin-top:0.03in; }}
-.bseries {{ position:absolute; left:0.72in; right:1.9in; bottom:2.66in;
+/* ONE bottom-anchored flow stack: series line, rule, lockup, credit, in document
+   order. These were three independent `bottom:` anchors (3.00 / 2.18 / 1.78in),
+   hand-tuned, so the footer's top border and the series text were positioned in
+   ignorance of each other -- and the border printed straight through the type on
+   every cover built before 15 Sep 2026, including the one shipped 2 Sep. In a flow
+   stack, longer copy pushes what is above it upward; it can never push anything
+   through anything. Keep it a stack: do NOT put a `bottom:` back on a child. */
+.bstack {{ position:absolute; left:0.72in; right:0.62in; bottom:1.78in; }}
+.bseries {{ padding-right:1.28in;
              font-size:11.5pt; line-height:1.55; color:{MUTED};
              font-family:'Noto Serif CJK JP',serif; font-style:italic; }}
-.bfoot {{ position:absolute; left:0.72in; right:0.62in; bottom:2.18in;
+.bfoot {{ margin-top:0.20in;
           border-top:1px solid {SAGE_DEEP}; padding-top:0.16in;
           display:flex; align-items:center; gap:0.16in; }}
 .bfoot .t {{ font-size:11.5pt; color:{INK}; font-weight:600; }}
 .bfoot .t span {{ display:block; font-size:10pt; color:{MUTED}; font-weight:400; }}
-.credit {{ position:absolute; left:0.72in; right:0.62in; bottom:1.78in;
+.credit {{ margin-top:0.18in;
            font-size:7.5pt; color:#A4937F; line-height:1.4; }}
 </style></head><body>
 <div class="grid"></div>
@@ -239,9 +247,9 @@ h1 em {{ font-style:normal; color:{TERRA_INK}; }}
       This is a workbook for the second one.</div>
     {bullets_html()}
   </div>
-  <div class="bseries">Book 1 of the MichiKanji Stroke Order Workbooks.
-    N5 first, then N4 &mdash; same pages, same fourteen weeks, the next set of
-    characters.</div>
+  <div class="bstack">
+  <div class="bseries">A MichiKanji Stroke Order Workbook. Every character on the
+    JLPT N5 list, one spread each, in the order you will meet them.</div>
   <div class="bfoot">
     <div class="roundel serif">探</div>
     <div class="t">MichiKanji<span>michikanji.com &mdash; animated stroke order for
@@ -251,6 +259,7 @@ h1 em {{ font-style:normal; color:{TERRA_INK}; }}
     CC BY-SA 3.0. Vocabulary from JMdict, &copy; Electronic Dictionary Research and
     Development Group, CC BY-SA 4.0. Not affiliated with or endorsed by the
     administrators of the JLPT.</div>
+  </div>
 </div>
 
 <!-- ── SPINE ──────────────────────────────────────────────────────── -->
@@ -288,7 +297,7 @@ h1 em {{ font-style:normal; color:{TERRA_INK}; }}
   <img class="tan" src="data:image/png;base64,{b64(TAN)}">
   <div class="lockup">
     <div class="roundel serif">探</div>
-    <div class="t">michikanji.com<span>Stroke Order Workbooks &middot; Book 1</span></div>
+    <div class="t">michikanji.com<span>Stroke Order Workbooks</span></div>
   </div>
 </div>
 </body></html>"""
