@@ -87,7 +87,7 @@ export const PACK_FILENAMES = {
  * An empty string, not `null` or `undefined`, so that `hasAmazonListing` is the
  * only place the "is it live yet" question gets answered.
  */
-export const AMAZON_BOOK_URL = '';
+export const AMAZON_BOOK_URL = 'https://www.amazon.com/dp/B0HK9GYNNS';
 
 /** True once `AMAZON_BOOK_URL` has been filled in. Gate book CTAs on this. */
 export function hasAmazonListing(): boolean {
