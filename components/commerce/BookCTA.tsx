@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { BookOpen } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -69,6 +70,51 @@ import { cn } from '@/lib/utils';
  * that never navigate.
  *
  * ─────────────────────────────────────────────────────────────────────────────
+ * THE `band` VARIANT: COPY LEADS, TAN CLOSES
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Under the kanji page's print strip this was, in turn, a plain underlined
+ * line and then an accent chip. Both were footnotes — the chip in particular
+ * read as a tag on the strip above it rather than as an offer of its own — so
+ * it is now a tinted module: headline, one line of substance, one button, and
+ * Tan at the trailing edge.
+ *
+ * ORDER. The copy leads and the mascot closes, bottom-right, like a margin
+ * illustration. Leading with Tan cost the block its left edge: the headline
+ * started after the mascot while the subtext and button started at the
+ * container, so three elements sat on two different left margins. One column
+ * for the words fixes that, and the flourish reads as a flourish.
+ *
+ * COLOUR, MEASURED RATHER THAN EYEBALLED. `--coral-sunset-ink` on a coral tint
+ * is 3.99:1, and on the 10% chip this replaces it was 4.32:1 — both under AA,
+ * both shipped. The ink stops clearing 4.5:1 as TEXT above roughly a 5% tint.
+ * Reversed, as the FILL with temple-stone on it, it is 4.75:1 and passes, and
+ * `hover:brightness-90` only deepens it (5.61:1). On the 18% band the headline
+ * (deep-ocean) is 9.60:1 and the subtext (mountain-mist) 5.48:1.
+ *
+ * WIDTH. The button is auto-width from `sm:` up and full-width below it. A
+ * full-width button at every size made the subordinate PAID ask wider and
+ * louder than the page's primary Print action — a hierarchy inversion that the
+ * colour alone (terracotta against Print's deep-ocean) already avoids without
+ * it. Full-width on a phone is still right: there it is the tap target, not a
+ * competitor, and the column is too narrow for anything else to sit beside it.
+ *
+ * THE POSE. `tan-brush` — Tan holding a writing brush — because the product is
+ * a book you write in. It is one of the two mascot files with a genuinely
+ * transparent background (see ExampleSentencesSection, which alternates the
+ * same two on sentence cards); the others carry a baked-in vignette that would
+ * show as a rectangle against the band.
+ *
+ * BYTES. `width={128}` is not the display size (64px, 80px from `sm:` up) —
+ * it is what makes `next/image` request `w=256`, the 2× derivative, which is
+ * ALSO the URL the sentence cards ask for at their own size. Same URL, one
+ * file, so a page carrying both pays for the mascot once. Measured off the dev
+ * server: 8.3 kB as AVIF, 14.2 kB as WebP, 29 kB if a browser takes neither.
+ * `/kanji/<char>` is gated at 440 kB of total transfer against a 363 kB
+ * baseline (lighthouserc.js), and the image is below the fold, so next/image's
+ * default lazy loading means a visit that does not scroll never fetches it.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
  * WHY THE GOAL NAME IS A PROP
  * ─────────────────────────────────────────────────────────────────────────────
  *
@@ -89,10 +135,10 @@ interface BookCTAProps {
   surface: BookSurface;
   /**
    * `card` — the full offer block, for a page whose job is finished.
-   * `line`  — one subordinate line of text, for a page whose job is the kanji
-   *           the reader came for.
+   * `band` — a tinted module for a page whose job is the kanji the reader came
+   *          for: copy leads, Tan closes. See the note above.
    */
-  variant: 'card' | 'line';
+  variant: 'card' | 'band';
   className?: string;
 }
 
@@ -102,21 +148,101 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
   const href = bookUrlFor(surface);
   const goal = BOOK_CLICK_GOALS[surface];
 
-  if (variant === 'line') {
+  if (variant === 'band') {
     return (
-      <p className={cn('mt-2 text-center text-xs', className)}>
+      <div
+        className={cn(
+          /* The 18% tint is written with `color-mix`, not an opacity suffix on
+             the coral token: a `/18` on one of these tokens compiles to NOTHING,
+             because the token is a bare hex custom property and Tailwind has no
+             channel values to fold the alpha into (CLAUDE.md, "Design tokens").
+             Silent — no error, no warning, just an unstyled div. (Writing the
+             suffixed class here even as an example is what `pnpm
+             validate:palette` greps for; it does not read comments.) */
+          'mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 rounded-lg bg-[color-mix(in_srgb,var(--coral-sunset)_18%,var(--temple-stone))] p-5 sm:gap-x-5',
+          className,
+        )}
+      >
+        {/* A two-column grid rather than a plain [copy | mascot] row, because the
+            two widths want different things and a grid can give them different
+            things without a second copy of the markup.
+
+            On a phone the copy spans BOTH columns and only the button shares a
+            row with Tan. A mascot column that runs the full height would reserve
+            its width against the headline and the subtext too — space that is
+            empty beside them, since Tan is bottom-aligned and 64px tall in a
+            block twice that. At 375px that cost the copy 80 of its 271 usable
+            pixels and pushed the subtext to three lines.
+
+            From `sm:` up the copy takes column one and Tan spans both rows
+            instead, adding no height of its own: the button goes back to sitting
+            directly under the line it follows rather than dropping 44px to meet
+            an 80px mascot.
+
+            `minmax(0,1fr)` and not `1fr`: a grid track's automatic minimum is
+            its content, so a long unbreakable string would push the column past
+            the viewport instead of wrapping — the grid's version of the
+            `min-w-0` a flex child needs. */}
+        <div className="col-start-1 col-end-3 row-start-1 sm:col-end-2">
+          <p className="text-base font-semibold text-japan-deep-ocean">
+            Prefer to write it in a real book?
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-japan-mountain-mist">
+            All 82 N5 characters, bound — stroke order and practice squares, facing pages.
+          </p>
+        </div>
+
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
           data-fast-goal={goal}
           data-fast-goal-destination={BOOK_DESTINATION}
-          className="rounded-sm font-medium text-japan-mountain-mist underline underline-offset-4 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className={cn(
+            buttonVariants({ size: 'default' }),
+            /* `hover:bg-japan-coral-sunset-ink` is not redundant with the resting
+               fill. `buttonVariants`' default variant carries `hover:bg-primary/90`,
+               and tailwind-merge only drops a class that CONFLICTS with a later
+               one: `hover:brightness-90` is a filter, not a background, so without
+               an explicit hover background of our own the button would repaint
+               itself deep-ocean the moment the pointer touched it. Naming the same
+               colour again is what removes the inherited hover.
+
+               And it is `brightness-90`, not `/90`: an alpha hover composites
+               against the coral band behind the button, which LIGHTENS the
+               terracotta and drops its text below the 4.75:1 it passes at. A
+               filter darkens regardless of what is behind it (5.61:1).
+
+               `justify-self-start` keeps `sm:w-auto` meaningful: a grid item
+               stretches to its track by default, which would silently restore
+               the full-width button this layout exists to avoid. */
+            'col-start-1 row-start-2 mt-4 w-full justify-self-start self-end bg-japan-coral-sunset-ink text-japan-temple-stone shadow-sm hover:bg-japan-coral-sunset-ink hover:brightness-90 sm:w-auto',
+          )}
         >
-          Or write in the paperback — all 82 N5 characters, bound
-          <span className="sr-only"> on Amazon (opens in a new tab)</span>
+          <BookOpen aria-hidden />
+          See it on Amazon
+          <span className="sr-only"> (opens in a new tab)</span>
         </a>
-      </p>
+
+        {/* Decorative, and declared so twice — empty `alt` for the accessibility
+            tree, `aria-hidden` for the handful of screen readers that still
+            announce a presentational image's filename. It carries no information
+            the copy beside it does not already carry.
+
+            `self-end` is the whole idea of this layout: Tan sits on the band's
+            bottom edge, level with the button, like an illustration in a margin
+            rather than an icon introducing the text. The row placement is what
+            keeps that from ADDING height on desktop — see the grid note
+            above. */}
+        <Image
+          src="/assets/tan-brush.png"
+          alt=""
+          aria-hidden="true"
+          width={128}
+          height={128}
+          className="col-start-2 row-start-2 mt-4 h-16 w-16 self-end sm:row-start-1 sm:row-end-3 sm:h-20 sm:w-20"
+        />
+      </div>
     );
   }
 

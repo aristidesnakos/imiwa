@@ -23,15 +23,24 @@
  * should read, as a single line.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * THE PACK LINE
+ * THE BOOK BAND
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * Under the strip, on N5 pages only, still sits one text link to the free N5
- * pack — same reasoning as before: it is the same artefact class as the
- * button above it, and it is subordinate to it for the same reason: the
- * reader came for THIS kanji. It is text, not a second button, for the same
- * reason too — two buttons in one row is a choice, and a choice is slower
- * than an action.
+ * Under the strip, on N5 pages only, sits the paid book. A free N5-pack link
+ * used to sit here too, styled identically to it — same small underlined text,
+ * same muted colour — so neither ever stood out from the other, and a reader
+ * had to read both to tell "free" from "paid" apart. The free pack lost its
+ * slot here (it is still offered at full strength on the N5 sheets hub page).
+ *
+ * What replaced it was first that same line with an accent chip around it, and
+ * a chip under a bordered strip reads as a label ON the strip, not as a second
+ * offer — on top of which its text failed AA at 4.32:1. It is now a tinted
+ * band: a headline, one line of substance, a terracotta button and Tan at the
+ * trailing edge. That is the heaviest thing on this page after the character
+ * itself, deliberately, and it is still quieter than Print — the band's button
+ * is auto-width on desktop and a different colour, so the primary free action
+ * keeps the row above to itself. See components/commerce/BookCTA.tsx, whose
+ * notes carry the measured contrast ratios.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * WHAT DOES *NOT* BELONG HERE
@@ -51,15 +60,14 @@
 import { Printer } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { BookCTA } from '@/components/commerce/BookCTA';
-import { PACK_DOWNLOADS, PACK_FILENAMES } from '@/lib/commerce/links';
 import { cn } from '@/lib/utils';
 
 interface Props {
   kanji: string;
   /**
-   * JLPT level of this character. Only N5 gets the pack line below the print
-   * strip, because N5 is the only level the pack actually covers — see the
-   * "THE PACK LINE" note above.
+   * JLPT level of this character. Only N5 gets the book band below the print
+   * strip, because N5 is the only level the book actually covers — see the
+   * "THE BOOK BAND" note above.
    */
   level: string;
 }
@@ -99,66 +107,17 @@ export function KanjiActionBar({ kanji, level }: Props) {
         </a>
       </div>
 
-      {/* One sheet is the thing this page can hand you. The whole set is the
-          thing worth an email address, and this is the moment of highest
-          intent for it — a reader who is about to print one character is the
-          reader who wants the other eighty.
+      {/* The paid book, N5 only: the book covers the N5 set, so offering it
+          under 個 or 憂 would be a promise the product does not keep. That
+          costs almost no reach — the three most-read detail pages (日 595,
+          本 261, 時 215 pageviews/month) are all N5.
 
-          N5 only, and not by accident: the pack contains the N5 set, so
-          offering it under 個 or 憂 would be a promise the file does not keep.
-          The other four levels get nothing here rather than a vaguer link,
-          because a CTA that resolves to "some sheets, somewhere" is how the
-          last one ended up with a 404 nobody noticed.
-
-          A plain <a> with no tracking and no client boundary. This template
-          renders ~1,896 times and carries LCP debt already gated in
-          lighthouserc.js; the file is a Server Component precisely so a link
-          costs bytes and nothing else. Click-through for this one used to be
-          readable off the Gumroad referrer — it is not any more, now that the
-          pack is served from this domain.
-
-          CORRECTION, 12 Sep 2026: the sentence that used to end this note said
-          measuring it would mean a client boundary on 1,896 pages. That is true
-          of an `onClick` and only of an `onClick`. DataFast's script puts ONE
-          listener on `document` and resolves
-          `event.target.closest('[data-fast-goal]')`, so a `data-fast-goal`
-          attribute on this anchor would track it from a Server Component for
-          ~40 bytes of HTML and no script at all — which is how
-          `kanji_index_click` already works in app/kanji/page.tsx. The paid book
-          line below uses exactly that.
-
-          So this link stays untracked by CHOICE, not by constraint, and the
-          choice is now a weak one: the pack's true pull is understated
-          sitewide, and the one surface where free and paid sit two lines apart
-          is the one place their ratio could be read. Left alone here only
-          because adding it in the same change as the book would confound the
-          book's first clean cycle. Add it after 26 Sep 2026. */}
-      {level === 'N5' && (
-        <p className="mt-2 text-center text-xs">
-          <a
-            href={PACK_DOWNLOADS.n5Kanji}
-            download={PACK_FILENAMES.n5Kanji}
-            className="rounded-sm font-medium text-japan-mountain-mist underline underline-offset-4 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            Or get all 82 N5 sheets as one free PDF
-            <span className="sr-only"> (downloads to your device)</span>
-          </a>
-        </p>
-      )}
-
-      {/* The paid book, N5 only for the same reason the pack line above is:
-          the book covers the N5 set, so offering it under 個 or 憂 would be a
-          promise the product does not keep. That costs almost no reach — the
-          three most-read detail pages (日 595, 本 261, 時 215 pageviews/month)
-          are all N5.
-
-          Below the free pack, and text rather than a button, for the reason
-          the pack line is text: two buttons in one row is a choice, and a
-          choice is slower than an action. Renders nothing until
-          AMAZON_BOOK_URL is filled in, so this costs an unlisted book zero
-          bytes. Tracked as `kanji_detail_book_click` with no client boundary
-          — see components/commerce/BookCTA.tsx. */}
-      {level === 'N5' && <BookCTA surface="kanjiDetail" variant="line" />}
+          The only action below the print strip, so it is shaped like one —
+          see "THE BOOK BAND" above and components/commerce/BookCTA.tsx.
+          Renders nothing until AMAZON_BOOK_URL is filled in, so this costs an
+          unlisted book zero bytes. Tracked as `kanji_detail_book_click` with
+          no client boundary. */}
+      {level === 'N5' && <BookCTA surface="kanjiDetail" variant="band" />}
     </section>
   );
 }
