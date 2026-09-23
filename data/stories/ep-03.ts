@@ -32,6 +32,7 @@ export const EPISODE: Episode = {
     art: "/stories/tan-goes-to-school/p1.webp",
     lines: [
       { speaker: "narration", ja: "タンは 学校に 行きました。", en: "Tan went to the school.", bubble: { x: 6, y: 4, w: 58, tail: null } },
+      { speaker: "tan", ja: "大きい 学校です。", en: "It is a big school.", bubble: { x: 14, y: 27, w: 54, tail: "bl" } },
     ],
   },
   {
@@ -40,6 +41,7 @@ export const EPISODE: Episode = {
     art: "/stories/tan-goes-to-school/p2.webp",
     lines: [
       { speaker: "sensei", ja: "わたしは 先生です。", en: "I am the teacher.", bubble: { x: 22, y: 5, w: 56, tail: "bl" } },
+      { speaker: "tan", ja: "はじめまして。 タンです。", en: "Nice to meet you. I am Tan.", bubble: { x: 48, y: 18, w: 48, tail: "br" } },
     ],
   },
   {
@@ -48,6 +50,7 @@ export const EPISODE: Episode = {
     art: "/stories/tan-goes-to-school/p3.webp",
     lines: [
       { speaker: "sensei", ja: "ここで 日本語を べんきょうします。", en: "We study Japanese here.", bubble: { x: 13, y: 3, w: 66, tail: "bl" } },
+      { speaker: "tan", ja: "はい、先生。", en: "Yes, teacher.", bubble: { x: 58, y: 25, w: 40, tail: "br" } },
     ],
   },
   {
@@ -72,7 +75,8 @@ export const EPISODE: Episode = {
     beat: "Payoff — Tan is a student now",
     art: "/stories/tan-goes-to-school/p6.webp",
     lines: [
-      { speaker: "tan", ja: "ぼくは 学生です。", en: "I am a student.", bubble: { x: 8, y: 5, w: 56, tail: "br" } },
+      { speaker: "tan", ja: "ぼくは 学生です。", en: "I am a student.", bubble: { x: 40, y: 5, w: 56, tail: "bl" } },
+      { speaker: "chun", ja: "わたしも 学生です。", en: "I am a student too.", bubble: { x: 1, y: 5, w: 36.5, tail: "bl" } },
     ],
   },
   ],
