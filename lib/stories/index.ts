@@ -13,8 +13,9 @@ import type { Episode, PanelLine, TargetWord, UpcomingEpisode } from './types';
 import { EPISODE as EP01 } from '../../data/stories/ep-01';
 import { EPISODE as EP02 } from '../../data/stories/ep-02';
 import { EPISODE as EP03 } from '../../data/stories/ep-03';
+import { EPISODE as EP04 } from '../../data/stories/ep-04';
 
-export const EPISODES: readonly Episode[] = [EP01, EP02, EP03];
+export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04];
 
 /**
  * The rest of season one: written, validated against the N5 list upstream, and
@@ -30,12 +31,6 @@ export const EPISODES: readonly Episode[] = [EP01, EP02, EP03];
  * number appears in both lists, so this cannot be forgotten silently.
  */
 export const UPCOMING: readonly UpcomingEpisode[] = [
-  {
-    number: 4,
-    titleEn: 'A rainy day off',
-    titleJa: 'あめの 休みの 日',
-    teaches: ['雨', '天気', '休み', '日'],
-  },
   {
     number: 5,
     titleEn: 'The train east',
