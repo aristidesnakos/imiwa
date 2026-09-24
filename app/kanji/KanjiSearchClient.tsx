@@ -247,7 +247,13 @@ export function KanjiSearchClient() {
                 {showOnlyUnlearned ? "Show all" : "Show unlearned"}
               </Button>
 
-              <Link href="/kanji/progress">
+              {/* prefetch={false} on both study links. /kanji/progress carries
+                  the site's charting library, ~106 kB of script, and this link is
+                  on screen from the first paint — so every visit to /kanji
+                  downloaded the progress page in full, whether or not anyone
+                  looked at it. That was over a quarter of this route's script
+                  budget in lighthouserc.js. A click still loads it on demand. */}
+              <Link href="/kanji/progress" prefetch={false}>
                 <div className="bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                   <span className="text-blue-600 font-semibold">{totalLearned}</span>
                   <span className="text-blue-800 ml-1">learned</span>
@@ -255,7 +261,7 @@ export function KanjiSearchClient() {
               </Link>
 
               {totalLearned > 0 && (
-                <Link href="/kanji/review">
+                <Link href="/kanji/review" prefetch={false}>
                   <div className="relative bg-purple-50 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer flex items-center gap-1">
                     <Brain className="w-4 h-4 text-purple-600" />
                     <span className="text-purple-800">Review</span>
