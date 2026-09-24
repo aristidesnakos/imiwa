@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Download, Printer } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, ListChecks, Printer } from 'lucide-react';
 
 import { getSEOTags } from '@/lib/seo';
 import { SITE_URL, SITE_NAME } from '@/lib/seo/site';
@@ -109,6 +109,12 @@ const GROUPS = (() => {
 })();
 
 const ORDERED: KanjiData[] = GROUPS.flatMap((g) => g.entries);
+
+const QUIZ_PATH = '/kanji/n5/quiz';
+
+/** The two per-group actions: text links, so the list stays the loudest thing on the page. */
+const GROUP_ACTION =
+  'inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-japan-deep-ocean underline underline-offset-2 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function N5KanjiListPage() {
   const episodes = episodesNewestFirst();
@@ -261,22 +267,38 @@ export default function N5KanjiListPage() {
                   target is an API route returning HTML, which client
                   navigation cannot render. Its own goal name, so the list
                   page's group printing reads apart from the sheets page's. */}
-              {group.entries.length <= MAX_SHEETS_PER_REQUEST ? (
-                <a
-                  href={kanjiSheetsHref(group.entries.map((e) => e.kanji))}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-fast-goal="n5_list_group_click"
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {group.entries.length <= MAX_SHEETS_PER_REQUEST ? (
+                  <a
+                    href={kanjiSheetsHref(group.entries.map((e) => e.kanji))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-fast-goal="n5_list_group_click"
+                    data-fast-goal-group={group.id}
+                    className={GROUP_ACTION}
+                  >
+                    <Printer className="h-4 w-4" aria-hidden />
+                    {group.entries.length === 1 ? 'Print this sheet' : `Print all ${group.entries.length} sheets`}
+                    <span className="sr-only"> for {group.title} (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <p className="text-sm text-japan-mountain-mist">{group.entries.length} kanji</p>
+                )}
+                {/* The quiz opens already set to this group (see parseQuizPreset
+                    in the quiz client) — and only this group's page is ever an
+                    answer, so a learner can test one theme the day they learn it. */}
+                <Link
+                  href={`${QUIZ_PATH}?group=${group.id}`}
+                  prefetch={false}
+                  data-fast-goal="n5_list_quiz_click"
                   data-fast-goal-group={group.id}
-                  className="inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-japan-deep-ocean underline underline-offset-2 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={GROUP_ACTION}
                 >
-                  <Printer className="h-4 w-4" aria-hidden />
-                  {group.entries.length === 1 ? 'Print this sheet' : `Print all ${group.entries.length} sheets`}
-                  <span className="sr-only"> for {group.title} (opens in a new tab)</span>
-                </a>
-              ) : (
-                <p className="text-sm text-japan-mountain-mist">{group.entries.length} kanji</p>
-              )}
+                  <ListChecks className="h-4 w-4" aria-hidden />
+                  Quiz this group
+                  <span className="sr-only">: {group.title}</span>
+                </Link>
+              </div>
             </div>
             <p className="mt-1 text-japan-mountain-mist">{withJapanese(group.summary)}</p>
             <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-fast-goal="n5_list_kanji_click">
@@ -323,6 +345,39 @@ export default function N5KanjiListPage() {
             </Link>
           </div>
           <BookCTA surface="n5List" variant="band" className="mt-6" />
+        </section>
+
+        {/* Practice: the review doc's third block. A quiz is the one thing on
+            this page an AI answer cannot do for the reader. */}
+        <section className={SECTION_BAND} aria-labelledby="practice-heading">
+          <h2 id="practice-heading" className={SECTION_HEADING}>
+            Test yourself on the N5 kanji
+          </h2>
+          <p className="mt-2 max-w-3xl text-japan-ink-black">
+            A free quiz on all {COUNT}, or on one group at a time: pick the meaning, pick the
+            reading, or pick the kanji. Mark the ones you got right as learned, and they join your
+            spaced-repetition reviews.
+          </p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={QUIZ_PATH}
+              prefetch={false}
+              data-fast-goal="n5_list_quiz_click"
+              data-fast-goal-group="all"
+              className={cn(buttonVariants({ size: 'default' }), 'w-full sm:w-auto')}
+            >
+              <ListChecks aria-hidden />
+              Take the N5 quiz
+            </Link>
+            <Link
+              href="/kanji/review"
+              prefetch={false}
+              className={cn(buttonVariants({ size: 'default', variant: 'outline' }), 'w-full sm:w-auto')}
+            >
+              Review what you&rsquo;ve learned
+              <ArrowRight aria-hidden />
+            </Link>
+          </div>
         </section>
 
         {/* The one thing on the page nobody else has. Text only, no panel art:
