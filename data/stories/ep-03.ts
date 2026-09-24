@@ -31,8 +31,8 @@ export const EPISODE: Episode = {
     beat: "Arriving at the school",
     art: "/stories/tan-goes-to-school/p1.webp",
     lines: [
-      { speaker: "narration", ja: "タンは 学校に 行きました。", en: "Tan went to the school.", bubble: { x: 6, y: 4, w: 58, tail: null } },
-      { speaker: "tan", ja: "大きい 学校です。", en: "It is a big school.", bubble: { x: 14, y: 27, w: 54, tail: "bl" } },
+      { speaker: "narration", ja: "タンは 学校に 行きました。", en: "Tan went to the school.", bubble: { x: 4, y: 3, w: 78, tail: null } },
+      { speaker: "tan", ja: "大きい 学校です。", en: "It is a big school.", bubble: { x: 24, y: 20, w: 52, tail: "bl" } },
     ],
   },
   {
