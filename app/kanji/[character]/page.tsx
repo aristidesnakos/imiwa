@@ -13,7 +13,7 @@ import {
   KANJI_CONTENT_PUBLISHED,
   KANJI_CONTENT_LAST_MODIFIED,
 } from '@/lib/seo/site';
-import { Badge } from '@/components/ui/badge';
+import { badgeVariants } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
 import Header from '@/components/sections/Header';
@@ -21,8 +21,11 @@ import { RelatedKanjiSection } from '@/components/kanji/RelatedKanjiSection';
 import { ExampleSentencesSection } from '@/components/kanji/ExampleSentencesSection';
 import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSection';
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
+import { LevelNavigation, neighboursWithin, type LevelNeighbours } from '@/components/kanji/LevelNavigation';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { sentencesForKanji } from '@/lib/sentences/published';
+import { levelHref, levelPagePath, type JlptLevel } from '@/lib/levels';
+import { cn } from '@/lib/utils';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
@@ -31,14 +34,37 @@ import { N1_KANJI } from '@/lib/constants/n1-kanji';
 // import { strokeOrderService } from '@/lib/stroke-order';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 
-// Combine all kanji data with levels
+// Combine all kanji data with levels. N5 first: `.find` takes the first match,
+// which is how a character on two lists resolves to its lowest level. The
+// levels are `as const` so `kanjiData.level` is a JlptLevel, and the level
+// lookups below can be indexed by it without a cast.
 const ALL_KANJI_DATA = [
-  ...N5_KANJI.map(k => ({ ...k, level: 'N5' })),
-  ...N4_KANJI.map(k => ({ ...k, level: 'N4' })),
-  ...N3_KANJI.map(k => ({ ...k, level: 'N3' })),
-  ...N2_KANJI.map(k => ({ ...k, level: 'N2' })),
-  ...N1_KANJI.map(k => ({ ...k, level: 'N1' })),
+  ...N5_KANJI.map(k => ({ ...k, level: 'N5' as const })),
+  ...N4_KANJI.map(k => ({ ...k, level: 'N4' as const })),
+  ...N3_KANJI.map(k => ({ ...k, level: 'N3' as const })),
+  ...N2_KANJI.map(k => ({ ...k, level: 'N2' as const })),
+  ...N1_KANJI.map(k => ({ ...k, level: 'N1' as const })),
 ];
+
+// The previous/next strip walks a level in its list order: each constants
+// file's own order, which for N5 is the teaching sequence the /kanji/n5 page
+// lists. Built once when this module loads, not per render. The page looks up
+// the level it already resolved above, so a neighbour can never come from a
+// list the character's badge does not name.
+const LEVEL_NEIGHBOURS: Record<JlptLevel, ReadonlyMap<string, LevelNeighbours>> = {
+  N5: neighboursWithin(N5_KANJI),
+  N4: neighboursWithin(N4_KANJI),
+  N3: neighboursWithin(N3_KANJI),
+  N2: neighboursWithin(N2_KANJI),
+  N1: neighboursWithin(N1_KANJI),
+};
+
+// The breadcrumb's links. Stock greys and blues used to sit here; these are the
+// tokens the /stories breadcrumbs already use, so the two trails look like one
+// site. The ring is explicit because these links do not go through
+// buttonVariants.
+const CRUMB_LINK =
+  'rounded-sm hover:text-japan-deep-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
 interface Props {
   params: Promise<{ character: string }>;
@@ -174,6 +200,10 @@ export default async function KanjiDetailPage({ params }: Props) {
   // Layer 4. Empty for most kanji for a long time — the section omits itself.
   const exampleSentences = sentencesForKanji(kanjiData.kanji);
 
+  // Always present for a character that has a page, since both come from the
+  // same five lists. Guarded anyway: a missing strip beats a crashed page.
+  const levelNeighbours = LEVEL_NEIGHBOURS[kanjiData.level].get(kanjiData.kanji);
+
   const pageUrl = `${SITE_URL}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
 
   // Structured readings, with romaji. Every reading-bearing surface below goes
@@ -297,29 +327,31 @@ export default async function KanjiDetailPage({ params }: Props) {
     ],
   };
 
+  // The level step exists only where the level has a list page of its own
+  // (lib/levels; only N5 today). A crumb has to name a real, canonical page, and
+  // the filtered hub is not one: /kanji?level=N4 canonicalises to /kanji, which
+  // is already the step before it. The visible trail below follows the same rule.
+  const levelListPath = levelPagePath(kanjiData.level);
+  const levelCrumbName = `JLPT ${kanjiData.level} kanji`;
+
+  const breadcrumbSteps = [
+    { name: 'Home', item: SITE_URL },
+    { name: 'Kanji Dictionary', item: `${SITE_URL}/kanji` },
+    ...(levelListPath ? [{ name: levelCrumbName, item: `${SITE_URL}${levelListPath}` }] : []),
+    { name: `${kanjiData.kanji} — ${primaryMeaning}`, item: pageUrl },
+  ];
+
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: SITE_URL,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Kanji Dictionary',
-        item: `${SITE_URL}/kanji`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: `${kanjiData.kanji} — ${primaryMeaning}`,
-        item: pageUrl,
-      },
-    ],
+    // Positions come from the array, so the optional step can never leave a
+    // gap in the numbering; validate:schema asserts they run 1..n.
+    itemListElement: breadcrumbSteps.map((step, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: step.name,
+      item: step.item,
+    })),
   };
 
   const jsonLd = [articleJsonLd, faqJsonLd, breadcrumbJsonLd];
@@ -340,23 +372,36 @@ export default async function KanjiDetailPage({ params }: Props) {
           (app/page.tsx, /tos, /advertise, …) already does this; the /kanji/*
           family was the holdout. */}
       <main id="main-content" tabIndex={-1} className="container mx-auto p-8 max-w-4xl">
-        {/* Breadcrumbs (mirror the BreadcrumbList JSON-LD) */}
-        <nav className="text-sm text-gray-600 mb-6" aria-label="Breadcrumb">
-          <ol className="flex items-center flex-wrap gap-1">
+        {/* Breadcrumbs (mirror the BreadcrumbList JSON-LD, level step included) */}
+        <nav className="mb-6 text-sm text-japan-mountain-mist" aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-1">
             <li className="flex items-center">
-              <Link href="/" className="hover:text-blue-600 flex items-center">
-                <ArrowLeft className="w-4 h-4 mr-1" />
+              <Link href="/" className={cn(CRUMB_LINK, 'flex items-center')}>
+                <ArrowLeft aria-hidden className="mr-1 h-4 w-4" />
                 Home
               </Link>
             </li>
-            <li aria-hidden className="text-gray-400">/</li>
+            <li aria-hidden className="text-japan-sakura-waters">/</li>
             <li>
-              <Link href="/kanji" className="hover:text-blue-600">
+              <Link href="/kanji" className={CRUMB_LINK}>
                 Kanji Dictionary
               </Link>
             </li>
-            <li aria-hidden className="text-gray-400">/</li>
-            <li className="text-gray-800 font-medium" aria-current="page">
+            {levelListPath && (
+              <>
+                <li aria-hidden className="text-japan-sakura-waters">/</li>
+                <li>
+                  {/* prefetch={false}: this trail is above the fold on ~1,900
+                      pages, and a prefetched level page would land in every one
+                      of their byte budgets. */}
+                  <Link href={levelListPath} prefetch={false} className={CRUMB_LINK}>
+                    {levelCrumbName}
+                  </Link>
+                </li>
+              </>
+            )}
+            <li aria-hidden className="text-japan-sakura-waters">/</li>
+            <li className="font-medium text-japan-ink-black" aria-current="page">
               <span lang="ja">{kanjiData.kanji}</span> — {primaryMeaning}
             </li>
           </ol>
@@ -389,10 +434,22 @@ export default async function KanjiDetailPage({ params }: Props) {
           </h1>
 
           <div className="flex justify-center space-x-2">
-            <Badge variant="secondary" className="text-lg px-3 py-1">
-              <BookOpen className="w-4 h-4 mr-1" />
+            {/* The badge is the character's way up to its level: the level's
+                list page, or /kanji filtered to it until it has one
+                (lib/levels). Still badgeVariants, so it looks as it did; the
+                variant's own focus-visible ring, inert on the old <div>, works
+                now that this is a link. Its alpha hover compiles to nothing,
+                hence the solid one. The sr-only tail says where the link goes
+                without changing what the eye reads. */}
+            <Link
+              href={levelHref(kanjiData.level)}
+              prefetch={false}
+              className={cn(badgeVariants({ variant: 'secondary' }), 'text-lg px-3 py-1 hover:bg-primary')}
+            >
+              <BookOpen aria-hidden className="w-4 h-4 mr-1" />
               JLPT {kanjiData.level}
-            </Badge>
+              <span className="sr-only">: see all {kanjiData.level} kanji</span>
+            </Link>
           </div>
         </div>
         
@@ -487,6 +544,11 @@ export default async function KanjiDetailPage({ params }: Props) {
             </Link>
           </div>
         )}
+
+        {/* The characters either side of this one in its level, and the level
+            itself. Here, after the page's closing moment: someone who has just
+            finished this character is the one who wants the next. */}
+        {levelNeighbours && <LevelNavigation level={kanjiData.level} neighbours={levelNeighbours} />}
 
         {/* Related Kanji — last content section, before the commercial blocks. */}
         <RelatedKanjiSection
