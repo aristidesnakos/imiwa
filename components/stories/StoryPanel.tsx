@@ -91,7 +91,9 @@ export function StoryPanel({ panel, priority = false }: { panel: Panel; priority
                     width: TAIL,
                     height: TAIL,
                     bottom: TAIL_DROP,
-                    [line.bubble.tail === 'bl' ? 'left' : 'right']: '14%',
+                    ...(line.bubble.tailX != null
+                      ? { left: `calc(${line.bubble.tailX}% - ${TAIL} / 2)` }
+                      : { [line.bubble.tail === 'bl' ? 'left' : 'right']: '14%' }),
                     background: 'var(--speech-paper)',
                     borderRight: `${BORDER} solid var(--ink-black)`,
                     borderBottom: `${BORDER} solid var(--ink-black)`,

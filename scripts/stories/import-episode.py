@@ -135,10 +135,12 @@ def emit_episode(script: dict, published: str, ep_dir: Path) -> str:
 
     targets = []
     for t in script['target_vocab']:
-        # `href` in script.json is a pre-encoded absolute URL, because Kit's
-        # composer has no code. On the site, hand-encoding is how you eventually
-        # ship %25E5%25B1%25B1 and a 404 — so the href is dropped here and the
-        # page builds it with encodeURIComponent from `kanji`.
+        # `href` in script.json is a pre-encoded absolute URL — a leftover from
+        # composing the email by hand in an ESP that had no code. The email is
+        # generated from typed data now, but the upstream field remains. On the
+        # site, hand-encoding is how you eventually ship %25E5%25B1%25B1 and a
+        # 404 — so the href is dropped here and the page builds it with
+        # encodeURIComponent from `kanji`.
         targets.append({
             'word': t['word'],
             'reading': t['reading'],
@@ -171,12 +173,16 @@ def emit_episode(script: dict, published: str, ep_dir: Path) -> str:
             tail = None if line['speaker'] == 'narration' else bub.get('tail')
             rendered.append(
                 '      {{ speaker: {sp}, ja: {ja}, en: {en}, '
-                'bubble: {{ x: {x}, y: {y}, w: {w}, tail: {tail} }} }},'.format(
+                'bubble: {{ x: {x}, y: {y}, w: {w}, tail: {tail}{tx} }} }},'.format(
                     sp=ts_str(line['speaker']),
                     ja=ts_str(line['ja']),
                     en=ts_str(line['en']),
                     x=bub['x'], y=bub['y'], w=bub['w'],
                     tail=ts_str(tail) if tail is not None else 'null',
+                    # Emitted only when set, so episodes without it re-import
+                    # byte-identical. Dropped with the tail on narration.
+                    tx=(', tailX: {}'.format(bub['tail_x'])
+                        if bub.get('tail_x') is not None and tail is not None else ''),
                 )
             )
         lines.append(

@@ -88,6 +88,13 @@ function validate(episode: Episode): void {
       if (line.speaker !== 'narration' && tail === null) {
         fail(episode, `${panel.id}: ${line.speaker} speaks, so the bubble needs a tail`);
       }
+      // An aimed tail must stay on the bubble's straight bottom edge; past 8–92
+      // it slides onto the rounded corner and floats.
+      const { tailX } = line.bubble;
+      if (tailX !== undefined) {
+        if (tail === null) fail(episode, `${panel.id}: tailX set on a bubble with no tail`);
+        if (!(tailX >= 8 && tailX <= 92)) fail(episode, `${panel.id}: tailX ${tailX} must lie in 8–92`);
+      }
     }
   }
 

@@ -34,6 +34,15 @@ export interface Bubble {
    * speech, and a tail pointing at nobody is what makes that read as a bug.
    */
   tail: 'bl' | 'br' | null;
+  /**
+   * Optional: where the tail sits along the bubble's bottom edge, as the tail's
+   * CENTRE in % of the bubble's width (8–92). Absent means the fixed corner —
+   * 14% in from the left for `bl`, from the right for `br` — which is what every
+   * episode before 4 uses. It exists so a tail can be aimed at the speaker's
+   * head without moving the whole bubble (the strip pipeline reads the same
+   * field from script.json as `tail_x`).
+   */
+  tailX?: number;
 }
 
 /** Who is speaking. Free-form because the cast grows; `narration` is reserved. */

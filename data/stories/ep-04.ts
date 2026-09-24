@@ -63,8 +63,8 @@ export const EPISODE: Episode = {
     beat: "Tea",
     art: "/stories/a-rainy-day-off/p5.webp",
     lines: [
-      { speaker: "chun", ja: "おちゃを のみませんか。", en: "Shall we drink some tea?", bubble: { x: 6, y: 3, w: 56, tail: "bl" } },
-      { speaker: "tan", ja: "のみましょう。", en: "Let's drink.", bubble: { x: 46, y: 25, w: 50, tail: "br" } },
+      { speaker: "chun", ja: "おちゃを のみませんか。", en: "Shall we drink some tea?", bubble: { x: 6, y: 3, w: 56, tail: "bl", tailX: 23 } },
+      { speaker: "tan", ja: "のみましょう。", en: "Let's drink.", bubble: { x: 46, y: 25, w: 50, tail: "br", tailX: 44 } },
     ],
   },
   {
@@ -72,7 +72,7 @@ export const EPISODE: Episode = {
     beat: "Payoff — the rain stops",
     art: "/stories/a-rainy-day-off/p6.webp",
     lines: [
-      { speaker: "tan", ja: "あしたは いい 天気です。", en: "Tomorrow the weather will be good.", bubble: { x: 14, y: 6, w: 58, tail: "br" } },
+      { speaker: "tan", ja: "あしたは いい 天気です。", en: "Tomorrow the weather will be good.", bubble: { x: 14, y: 6, w: 58, tail: "br", tailX: 74 } },
     ],
   },
   ],
