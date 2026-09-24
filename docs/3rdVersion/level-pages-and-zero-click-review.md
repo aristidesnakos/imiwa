@@ -382,6 +382,16 @@ _Updated 2026-09-24._
 - `scripts/validate-quiz.ts` runs in CI and asserts exactly one right answer for every kanji and
   question type.
 
+**Milestone 5 — the newsletter (§4.2 #1).**
+
+- The pending compliance work shipped with the postal address the owner supplied on 2026-09-24. It
+  covers:
+  - `config.business` and the CAN-SPAM line in every episode email's footer
+  - the privacy policy rewritten for the product that exists
+  - the Saturday send schedule and the Friday checks on the signup path
+- The weekly send stays a deliberate manual step (`docs/runbooks/newsletter.md`). Nothing in code
+  blocks it now.
+
 **Still open, and whose call it is.**
 
 - §3: completing and re-sourcing the N4–N1 lists. This is the owner's decision, and the N4–N1 list

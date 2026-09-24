@@ -41,6 +41,7 @@ pnpm validate:announcements  # announcement config + a replay of the acknowledge
 pnpm announcements:status    # human-readable state of the announcement queue
 pnpm validate:palette        # brand-palette alignment in app/ and components/
 pnpm validate:stories        # episode data: strict N5, bubble geometry, targets, quiz, assets
+npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts   # N5 quiz: one right answer per question
 ```
 
 `validate:announcements` does more than check a config shape — it replays the acknowledgement model
@@ -125,6 +126,25 @@ arrays into the five single-level `kanji-sheets` routes would blow it.
 Stroke diagrams are proxied through `app/api/kanji-svg/[hex]/route.ts`. The hex comes from
 `codePointAt(0)` (never `charCodeAt`, which returns a lone surrogate above U+FFFF).
 
+### JLPT level pages (`/kanji/n5`) and the level registry
+
+`lib/levels/index.ts` decides where every link to a level goes: its list page if it has one,
+otherwise `/kanji?level=Nx`. That covers the homepage cards, the `/kanji` level filter, the badge
+and breadcrumb on a character page, the footer and the sitemap. **Only N5 has a list page.** The
+N4–N1 lists are incomplete, and their sourcing is an open owner decision
+(`docs/3rdVersion/level-pages-and-zero-click-review.md` §3), so a page whose whole point is the
+list waits on that. Giving a level a page means registering it there and adding a static
+`app/kanji/<level>/page.tsx`; a dynamic `[level]` segment cannot sit beside `[character]`.
+
+The list renders in the teaching order of `lib/levels/n5-sequence.ts`. `validate:kanji-data`
+asserts that it places every N5 kanji exactly once, and in the data file's own order, because each
+character page's previous/next strip walks the data file. `validate:schema` deep-checks every
+registered level page, and each ItemList entry must be a kanji page that prerendered.
+
+`/kanji/n5/quiz` builds every question from the N5 data and `lib/romaji/readings.ts`.
+`scripts/validate-quiz.ts` asserts exactly one right answer among four for every kanji and question
+type, and runs in the kanji-data CI job.
+
 ### Romaji
 
 `lib/romaji/` derives romaji from the kana readings at runtime. Nothing is stored: baking romaji
@@ -183,8 +203,9 @@ tracing never saw the path. Adding a level means committing its file *and* addin
 the build should fail loudly on a missing import rather than silently render nothing.
 
 An empty `published/*.json` is a valid, expected state, and `ExampleSentencesSection` renders
-nothing at all when a kanji has no sentences — no heading, no empty state. Today every level is
-empty; the bottleneck is review throughput, not code.
+nothing at all when a kanji has no sentences — no heading, no empty state. N5 is published
+(229 sentences as of 2026-09-24); every other level is still empty, and the bottleneck is review
+throughput, not code.
 
 The review dashboard under `/admin` is a **local developer tool** that writes flat files with `fs`
 and has no auth. `lib/sentences/local-only.ts` provides two guards that must be the first statement
@@ -294,8 +315,8 @@ site-wide shift and wants its own review.
 
 Several brand colours are too light to carry text, so the palette uses **fill/ink pairs**: use
 `--coral-sunset` / `--destructive` as backgrounds and washes, and `--coral-sunset-ink` /
-`--destructive-ink` for text, borders and state indicators. Known open failure: the N4 and N3 level
-badges on the homepage still put white on light fills.
+`--destructive-ink` for text, borders and state indicators. The homepage level badges follow it
+too: N4 and N3 put dark ink on their light fills, not white (fixed 2026-09-24).
 
 Two related conventions:
 
@@ -336,11 +357,19 @@ send you to completely different consoles.
 
 ### Performance budgets
 
-`lighthouserc.js` gates PRs across `/`, `/kanji` and `/kanji/日`. Read its header comment before
-changing a threshold — it records how each number was derived and which ones freeze known debt.
-The **byte budgets are the gate to trust**: they came out byte-identical across 27 local and CI runs.
-TBT is noisy under 4× CPU emulation and is a "something got dramatically heavier" alarm only.
-`/kanji` TBT is confirmed debt; `/kanji` CLS is *not* — it did not reproduce on the runner.
+`lighthouserc.js` gates pushes and PRs across `/`, `/kanji`, `/kanji/日`, `/kanji/n5`,
+`/kanji/n5/quiz`, `/stories` and one episode. Every URL must match exactly one `assertMatrix`
+entry, because LHCI applies each entry whose pattern matches, which is why the character-page
+pattern is `/kanji/%`. Read the header comment before changing a threshold: it records how each
+number was derived and which ones freeze known debt. The **byte budgets are the gate to trust**:
+they came out byte-identical across 27 local and CI runs. TBT is noisy under 4× CPU emulation and
+is a "something got dramatically heavier" alarm only. The old `/kanji` TBT debt was paid on
+2026-09-24 (the hub stopped prefetching `/kanji/progress`), and its budgets were ratcheted down.
+
+**Prefetch is most of the byte budget.** Next prefetches every `<Link>` in the viewport, and a link
+to a heavy route pulls that route's payload into the page's own budget: `/kanji` carries the whole
+dictionary. Links that render many times, or point at `/kanji`, `/kanji/progress` or
+`/kanji/review`, carry `prefetch={false}`.
 
 ### Content licensing
 
@@ -358,9 +387,11 @@ structurally separate from licensed text, or the result becomes Adapted Material
   hand whenever you delete or move a `lib/` module.
 - `middleware.ts` runs on every non-static path for AI-crawler tracking.
 - `next lint` is deprecated and prints a migration notice; the pre-existing `no-unused-vars` warnings
-  in `lib/utils.ts`, `lib/hooks/use-toast.ts`, `lib/sentences/validate.ts`, `KanjiSearchClient.tsx`
-  and `sentence-reviewer.tsx` are noise — do not treat a clean-looking lint run as a change signal
-  without filtering to the files you touched.
+  in `lib/utils.ts`, `lib/hooks/use-toast.ts`, `lib/sentences/validate.ts` and
+  `sentence-reviewer.tsx` are noise — do not treat a clean-looking lint run as a change signal
+  without filtering to the files you touched. In a git worktree under `.claude/worktrees/`,
+  `pnpm lint` fails outright because ESLint also loads the parent checkout's config; lint the
+  touched files with `npx eslint --no-eslintrc -c .eslintrc.json <files>` instead.
 - Search matches **kana only** — `水`, `water` and `みず` match; `mizu` and `sui` do not. Describe the
   feature as "meaning or kana reading", never just "reading".
 - `docs/learnings/development-guide.md` holds the project's general SOLID/spec-driven guidance.
