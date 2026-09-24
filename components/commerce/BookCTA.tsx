@@ -201,12 +201,13 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
           className={cn(
             buttonVariants({ size: 'default' }),
             /* `hover:bg-japan-coral-sunset-ink` is not redundant with the resting
-               fill. `buttonVariants`' default variant carries `hover:bg-primary/90`,
-               and tailwind-merge only drops a class that CONFLICTS with a later
-               one: `hover:brightness-90` is a filter, not a background, so without
-               an explicit hover background of our own the button would repaint
-               itself deep-ocean the moment the pointer touched it. Naming the same
-               colour again is what removes the inherited hover.
+               fill. `buttonVariants`' default variant carries its own hover
+               background (mountain mist), and tailwind-merge only drops a class
+               that CONFLICTS with a later one: `hover:brightness-90` is a filter,
+               not a background, so without an explicit hover background of our
+               own the button would repaint itself blue the moment the pointer
+               touched it. Naming the same colour again is what removes the
+               inherited hover.
 
                And it is `brightness-90`, not `/90`: an alpha hover composites
                against the coral band behind the button, which LIGHTENS the

@@ -16,8 +16,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // The default and secondary hovers were `hover:bg-primary/90` and
+        // `hover:bg-secondary/80`. Both tokens are bare hex custom properties,
+        // so Tailwind could not fold the alpha in and emitted NOTHING: every
+        // default and secondary button on the site had no hover state at all.
+        // They now swap between the two palette blues instead — deep ocean
+        // lifts to mountain mist, mountain mist sinks to deep ocean — and the
+        // temple-stone label holds 6.53:1 at worst. A caller that recolours a
+        // button must also set its own hover:bg-*, which tailwind-merge lets
+        // win (see BookCTA).
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow hover:bg-japan-mountain-mist",
         // brightness-90, not /90: an alpha hover blends toward whatever is
         // behind the button, which on a light page LIGHTENS the red and drops
         // white text to 4.17:1. A filter darkens regardless of backdrop.
@@ -26,7 +35,7 @@ const buttonVariants = cva(
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-japan-deep-ocean",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
