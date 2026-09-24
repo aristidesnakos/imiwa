@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import Link from 'next/link';
 import { CheckCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -238,9 +239,19 @@ export function EmailCapture({
         </p>
       )}
 
-      {footnote && (
-        <p className="mt-3 text-xs text-japan-mountain-mist">{footnote}</p>
-      )}
+      {/* The privacy link renders even if a caller drops the footnote: this
+          form is where the address is collected, which is where the notice
+          belongs (GDPR Art. 13 — "at the time when personal data are
+          obtained"). */}
+      <p className="mt-3 text-xs text-japan-mountain-mist">
+        {footnote && <>{footnote} </>}
+        <Link
+          href="/privacy-policy"
+          className="rounded-sm underline underline-offset-2 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Privacy policy
+        </Link>
+      </p>
     </div>
   );
 }

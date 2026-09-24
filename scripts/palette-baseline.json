@@ -70,9 +70,6 @@
     "deadAlpha": 10,
     "blackWhite": 4
   },
-  "app/privacy-policy/page.tsx": {
-    "stock": 3
-  },
   "app/tos/page.tsx": {
     "stock": 4
   },
@@ -102,7 +99,7 @@
     "blackWhite": 3
   },
   "components/StrokeOrderViewer.tsx": {
-    "stock": 7,
+    "stock": 6,
     "blackWhite": 1
   },
   "components/admin/sentences/sentence-reviewer.tsx": {
@@ -114,7 +111,7 @@
     "literal": 1
   },
   "components/kanji/KanjiActionBar.tsx": {
-    "stock": 4,
+    "stock": 2,
     "blackWhite": 1
   },
   "components/kanji/PopularKanjiLinks.tsx": {
@@ -122,7 +119,7 @@
     "blackWhite": 1
   },
   "components/kanji/RelatedKanjiSection.tsx": {
-    "stock": 3
+    "stock": 1
   },
   "components/nav/StudyNavLinks.tsx": {
     "stock": 2
