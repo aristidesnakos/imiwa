@@ -91,7 +91,7 @@ export default function N2KanjiSheetsPage() {
         </div>
 
         {/* CTA Banner for Premium Workbook */}
-        <KanjiN5WorkbookCTA />
+        <KanjiN5WorkbookCTA source="n2_kanji_sheets_page" />
 
         <section className="bg-cyan-50 p-6 rounded-md border border-cyan-200 mb-6" aria-labelledby="instructions">
           <h3 id="instructions" className="text-lg font-medium text-cyan-900 mb-4 flex items-center gap-2">

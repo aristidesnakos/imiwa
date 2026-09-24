@@ -57,10 +57,17 @@ import { cn } from '@/lib/utils';
  */
 
 interface KanjiN5WorkbookCTAProps {
+  /**
+   * Which sheets page this box sits on, recorded as the goal's `source`. The
+   * N4–N1 sheets pages carry the same N5 pack, and until 2026-09-24 all four
+   * reported their downloads as `n5_kanji_sheets_page`, so every download
+   * from them was credited to the N5 page.
+   */
+  source?: `n${1 | 2 | 3 | 4 | 5}_kanji_sheets_page`;
   className?: string;
 }
 
-export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) {
+export function KanjiN5WorkbookCTA({ source = 'n5_kanji_sheets_page', className = '' }: KanjiN5WorkbookCTAProps) {
   return (
     <div className={cn('my-8', className)}>
       <div className="overflow-hidden rounded-lg border border-border bg-japan-soft-mist">
@@ -90,7 +97,7 @@ export function KanjiN5WorkbookCTA({ className = '' }: KanjiN5WorkbookCTAProps) 
                   void trackConversion({
                     name: PACK_DOWNLOAD_GOALS.n5Kanji,
                     properties: {
-                      source: 'n5_kanji_sheets_page',
+                      source,
                       destination: PACK_DESTINATION,
                     },
                   });
