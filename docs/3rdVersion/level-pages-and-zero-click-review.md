@@ -331,6 +331,45 @@ three directions:
 - **Learner demand from Reddit.** The search index returned no Reddit threads.
 - **Which URL ranks for which query.** This is blocked by the query×page join (§5).
 
+## 7. Status — what has shipped against this review
+
+_Updated 2026-09-24._
+
+**Milestone 1 — reachability (N5 list page and level wiring).**
+
+- `/kanji/n5` is live: the 82 N5 kanji in the teaching order of `lib/levels/n5-sequence.ts`, with
+  meanings, readings in kana and romaji, the free N5 pack, the book, the Tan stories and a signup
+  form. It is a server component (192 kB script and 270 kB total on Lighthouse's mobile run) with
+  its own budget in `lighthouserc.js`.
+- `lib/levels/index.ts` decides where a link to a level goes: the list page if one exists, otherwise
+  `/kanji?level=Nx`. Only N5 has a page, per §3. Giving another level a page means registering it
+  there and adding its route folder.
+- Wiring (§2.4):
+  - The homepage button and level cards use the registry.
+  - `/kanji` keeps its level in the URL; old `#level-Nx` links still resolve.
+  - Every N5 character page gains a "JLPT N5 kanji" breadcrumb step, and every character page gets a
+    level badge link and previous/next navigation through its level.
+  - The footer links the list site-wide, and the sitemap lists it.
+- `validate:kanji-data` asserts that the sequence covers the N5 list exactly once and in the data
+  file's order. `validate:schema` deep-checks every registered level page, and each list entry must
+  be a prerendered kanji page.
+- Fixed along the way:
+  - The EDRDG acknowledgement §3.2 said was owed.
+  - `/kanji` is back under its script budget: 394 → 239 kB, TBT ~1.1 s → 62 ms, CLS 0.87 → 0 locally.
+  - The homepage no longer ships the dictionary (First Load JS 194 → 142 kB), which cut ~57 kB of
+    script from every page that prefetches `/`.
+  - The N4 and N3 badge contrast failure.
+  - Default buttons had no hover state.
+  - Related-kanji cards had no surface.
+  - Stroke diagrams were blank until Play was pressed.
+
+**Still open, and whose call it is.**
+
+- §3: completing and re-sourcing the N4–N1 lists. This is the owner's decision, and the N4–N1 list
+  pages wait on it.
+- §5: the query×page join still needs the owner's account on the Search Console property.
+  `check-query-performance` gains clicks-by-intent reporting in its own milestone.
+
 ## Sources
 
 - Seer Interactive, "AIO Impact on Google CTR: 2026 Update", 2026-04-24 —
