@@ -3,6 +3,7 @@ import { buttonVariants } from '@/components/ui/button';
 import type { LevelTheme } from '@/lib/levels/n5-sequence';
 import { kanjiSheetsHref } from '@/lib/sheets/kanji-sheets';
 import { cn } from '@/lib/utils';
+import { withJapanese } from '@/components/ja-text';
 
 /**
  * components/sheets/GroupSheetLinks.tsx
@@ -44,25 +45,6 @@ interface Props {
   /** The DataFast goal every link here fires, e.g. `n5_sheets_group_click`. */
   goal: string;
   className?: string;
-}
-
-// The summaries are English with the odd character in them ("…that write 日本,
-// Japan."). The Japanese gets its own `lang`, so a screen reader switches voice
-// for it instead of reading kanji with an English one.
-const JAPANESE_RUN = /([぀-ヿ㐀-䶿一-鿿豈-﫿]+)/;
-
-function withJapanese(text: string) {
-  // split() with a capture group alternates text / match / text…, so every
-  // odd index is a Japanese run.
-  return text.split(JAPANESE_RUN).map((part, index) =>
-    index % 2 === 1 ? (
-      <span key={index} lang="ja">
-        {part}
-      </span>
-    ) : (
-      part
-    )
-  );
 }
 
 export function GroupSheetLinks({ themes, goal, className }: Props) {

@@ -11,6 +11,8 @@ import { KanjiListCard } from '@/components/levels/KanjiListCard';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { withJapanese } from '@/components/ja-text';
+import { kanjiSheetsHref, MAX_SHEETS_PER_REQUEST } from '@/lib/sheets/kanji-sheets';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import type { KanjiData } from '@/lib/constants/kanji-types';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
@@ -107,23 +109,6 @@ const GROUPS = (() => {
 })();
 
 const ORDERED: KanjiData[] = GROUPS.flatMap((g) => g.entries);
-
-/**
- * Wrap each run of Japanese in `lang="ja"`. The group summaries are English
- * prose that quotes a character or two (日本, 円, 気), and the document is
- * lang="en": without this a screen reader hands them to an English voice.
- */
-function withJapanese(text: string) {
-  return text.split(/([\u3040-\u30ff\u3400-\u9fff\u3005]+)/).map((part, i) =>
-    i % 2 === 1 ? (
-      <span key={i} lang="ja">
-        {part}
-      </span>
-    ) : (
-      part
-    ),
-  );
-}
 
 export default function N5KanjiListPage() {
   const episodes = episodesNewestFirst();
@@ -271,7 +256,27 @@ export default function N5KanjiListPage() {
                 <span className="mr-2 text-japan-mountain-mist">{index + 1}.</span>
                 {group.title}
               </h2>
-              <p className="text-sm text-japan-mountain-mist">{group.entries.length} kanji</p>
+              {/* Print the group as one document, one sheet per kanji — the
+                  study unit this page is organised around. A plain <a>: the
+                  target is an API route returning HTML, which client
+                  navigation cannot render. Its own goal name, so the list
+                  page's group printing reads apart from the sheets page's. */}
+              {group.entries.length <= MAX_SHEETS_PER_REQUEST ? (
+                <a
+                  href={kanjiSheetsHref(group.entries.map((e) => e.kanji))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fast-goal="n5_list_group_click"
+                  data-fast-goal-group={group.id}
+                  className="inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-japan-deep-ocean underline underline-offset-2 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Printer className="h-4 w-4" aria-hidden />
+                  {group.entries.length === 1 ? 'Print this sheet' : `Print all ${group.entries.length} sheets`}
+                  <span className="sr-only"> for {group.title} (opens in a new tab)</span>
+                </a>
+              ) : (
+                <p className="text-sm text-japan-mountain-mist">{group.entries.length} kanji</p>
+              )}
             </div>
             <p className="mt-1 text-japan-mountain-mist">{withJapanese(group.summary)}</p>
             <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-fast-goal="n5_list_kanji_click">
