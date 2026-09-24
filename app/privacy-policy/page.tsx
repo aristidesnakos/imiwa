@@ -27,6 +27,9 @@ export const metadata = getSEOTags({
  *    confirm button, and it is the consent record.
  *  - The signup source goes to DataFast as a goal without the address
  *    (components/EmailCapture.tsx), never onto the contact.
+ *  - The sign-up, feedback and advertising routes share one in-memory rate
+ *    limiter (middlewares/rateLimiter.ts) that forgets an IP once its
+ *    ten-minute window has passed; the policy states that ten minutes.
  *  - Feedback and advertising inquiries are emailed to config.resend.supportEmail
  *    (no FEEDBACK_/INQUIRY_WEBHOOK_URL is set in Vercel as of this rewrite; if
  *    one is ever set, the chat tool it posts to becomes a processor to name).
@@ -115,8 +118,9 @@ export default function PrivacyPolicy() {
             </li>
             <li>
               <strong>Server logs (Vercel).</strong> Our host records requests, including IP address and
-              browser, to run and secure the site. Our sign-up form also holds your IP address in memory for
-              ten minutes, to limit repeated submissions. Legal basis: our legitimate interests.
+              browser, to run and secure the site. Our sign-up, feedback and advertising forms also hold your
+              IP address in memory for ten minutes, to limit repeated submissions. Legal basis: our
+              legitimate interests.
             </li>
           </ul>
 

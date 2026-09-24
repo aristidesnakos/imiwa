@@ -18,9 +18,21 @@ function getClientIp(req: NextRequest): string | null {
 const rateLimit = (limit: number, windowMs: number) => {
   const requests = new Map<string, { count: number; timestamp: number }>();
 
+  // Forget every address whose window has passed. The privacy policy says the
+  // sign-up, feedback and advertising forms hold an IP in memory for their
+  // ten-minute window, so an expired entry must not sit here until that same
+  // address happens to come back. Swept on every check, because a serverless
+  // instance has no timer it can rely on; there are only ever a few entries.
+  const forgetExpired = (now: number) => {
+    requests.forEach((log, ip) => {
+      if (now - log.timestamp > windowMs) requests.delete(ip);
+    });
+  };
+
   const check = async (req: NextRequest): Promise<NextResponse | null> => {
     const ip = getClientIp(req);
     const now = Date.now();
+    forgetExpired(now);
 
     if (!ip) {
       return NextResponse.json({ error: "Unable to determine IP address" }, { status: 500 });
