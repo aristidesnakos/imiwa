@@ -14,8 +14,9 @@ import { EPISODE as EP01 } from '../../data/stories/ep-01';
 import { EPISODE as EP02 } from '../../data/stories/ep-02';
 import { EPISODE as EP03 } from '../../data/stories/ep-03';
 import { EPISODE as EP04 } from '../../data/stories/ep-04';
+import { EPISODE as EP05 } from '../../data/stories/ep-05';
 
-export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04];
+export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05];
 
 /**
  * The rest of season one: written, validated against the N5 list upstream, and
@@ -31,12 +32,6 @@ export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04];
  * number appears in both lists, so this cannot be forgotten silently.
  */
 export const UPCOMING: readonly UpcomingEpisode[] = [
-  {
-    number: 5,
-    titleEn: 'The train east',
-    titleJa: '東へ 行く 電車',
-    teaches: ['電車', '東', '行く', '来る'],
-  },
   {
     number: 6,
     titleEn: "Tan's family and friends",
