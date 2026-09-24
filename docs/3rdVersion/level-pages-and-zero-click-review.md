@@ -363,6 +363,25 @@ _Updated 2026-09-24._
   - Related-kanji cards had no surface.
   - Stroke diagrams were blank until Play was pressed.
 
+**Milestone 2 — printables as landing pages (§4.2 #3).**
+
+- `/free-resources/kanji-sheets` is rewritten as the landing page for "kanji practice sheets":
+  - title "Free Kanji Practice Sheets — Printable JLPT N5–N1 Worksheets"
+  - the free N5 pack first, then per-level cards linking to both the sheets and the list
+  - counts taken from the data (it used to say N5 had "~100")
+- `/api/kanji-sheets?characters=` prints up to 20 kanji as one document, one sheet each. The N5
+  sheets page and the N5 list print a whole theme group at once. Sheets are now cached for a day
+  (P3-3).
+
+**Milestone 3 — practice per level (§4.2 #4).**
+
+- `/kanji/n5/quiz` offers three question types (meaning, reading with romaji, kanji for a meaning),
+  on all 82 kanji or any group. Missed kanji link to their pages. Correct answers can be marked
+  learned, which feeds the existing SRS review.
+- Each group on `/kanji/n5` links to its own quiz.
+- `scripts/validate-quiz.ts` runs in CI and asserts exactly one right answer for every kanji and
+  question type.
+
 **Still open, and whose call it is.**
 
 - §3: completing and re-sourcing the N4–N1 lists. This is the owner's decision, and the N4–N1 list
