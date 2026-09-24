@@ -1,6 +1,15 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import Image from "next/image";
 import { trackConversion } from '@/lib/analytics';
@@ -85,12 +94,65 @@ const Header = () => {
           </Link>
         </nav>
 
-        {/* Mobile menu button. It opens nothing today, so the nav above is
-            desktop-only in practice — on mobile the Study links are reached via
-            the site-wide Footer, which renders its own <StudyNavLinks />. */}
-        <Button variant="outline" size="sm" className="md:hidden border-japan-sakura-waters/30 text-japan-deep-ocean hover:bg-japan-soft-mist">
-          Menu
-        </Button>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="md:hidden border-japan-sakura-waters/30 text-japan-deep-ocean hover:bg-japan-soft-mist"
+            >
+              <HamburgerMenuIcon className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="flex flex-col gap-1">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <nav className="flex flex-col mt-4">
+              <SheetClose asChild>
+                <Link href="/" className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]">
+                  Home
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link href="/kanji" className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]">
+                  Kanji
+                </Link>
+              </SheetClose>
+              <StudyNavLinks
+                itemAs="div"
+                linkClassName="block py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]"
+              />
+              <SheetClose asChild>
+                <Link href="/stories" className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]">
+                  Stories
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link
+                  href="/free-resources"
+                  className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]"
+                  onClick={async () => {
+                    await trackConversion({
+                      name: 'free_resources_clicked',
+                      properties: {
+                        source: 'header_nav_mobile'
+                      }
+                    });
+                  }}
+                >
+                  Free Resources
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link href="/advertise" className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
+                  Advertise
+                </Link>
+              </SheetClose>
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );
