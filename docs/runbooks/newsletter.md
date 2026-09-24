@@ -10,10 +10,13 @@
 > [Known gaps](#known-gaps). This is the failure the [Friday checks](#the-automated-checks)
 > exist to catch.
 >
-> **As of 2026-09-23, episodes 1–4 have never been broadcast to anyone.** Nothing is broken in
-> the send path; the send was never run, and it was blocked on two legal prerequisites. The
-> privacy policy is now rewritten; the postal address is the one blocker left —
-> see [The postal address](#the-postal-address).
+> **As of 2026-09-24, no episode has been broadcast to anyone, and neither legal prerequisite is
+> still open.** Nothing is broken in the send path; the send was never run, because it was held on
+> two legal prerequisites. The privacy policy was rewritten on 2026-09-23, and the owner supplied
+> the postal address on 2026-09-24 — see [The postal address](#the-postal-address). Both reach
+> subscribers with the deploy that ships them. The first broadcast is still a manual step for Ari
+> ([the Saturday ritual](#the-saturday-ritual)), and [Known gaps](#known-gaps) 6, a real
+> unsubscribe, is worth doing before it.
 
 ## What this is, and what subscribers are promised
 
@@ -114,7 +117,7 @@ Both read `config.business` in [`config.ts`](../../config.ts), so they cannot di
 |---|---|
 | `legalName` | `The Auspicious Company`, the Massachusetts company that operates MichiKanji and is the controller of subscriber data (confirmed 2026-09-23) |
 | `registration` | The phrase the privacy policy uses to describe it |
-| `postalAddress` | `null` until a mailbox exists; then `street`, `unit`, `locality`, `region`, `postalCode`, `country` |
+| `postalAddress` | `street`, `unit`, `locality`, `region`, `postalCode`, `country`. Set on 2026-09-24 to the private mailbox the owner supplied, with its `#4015` as the unit. `null` drops the footer line and stops `stories:create-broadcast` |
 
 **What it has to be.** A street address that reaches us: in practice a private mailbox at a
 commercial mail receiving agency (a "virtual mailbox"). CAN-SPAM
@@ -281,12 +284,13 @@ the whole path works — each stage fails in a place the previous stage cannot s
    2026-09-16 — they were referenced nowhere in code — so nothing in this project touches Kit any
    more. What is left is the account itself, which is a dashboard action and still costs money until
    someone does it (PRD M9; archive form `9824359`).
-4. **The postal address is not set — the one thing still blocking the first broadcast.** Everything
-   around it is built (2026-09-23): `config.business.postalAddress` renders in the footer of both
-   episode emails, `stories:create-broadcast` refuses to run while it is `null`, and
-   `validate:subscribe` refuses a PO Box. What is left is choosing the mailbox and getting its USPS
-   Form 1583 accepted — [The postal address](#the-postal-address). Until then the welcome card still
-   goes out, without the address line.
+4. ~~**The postal address is not set — the one thing still blocking the first broadcast.**~~
+   **Set 2026-09-24** from the address the owner supplied. `config.business.postalAddress` renders
+   in the footer of both episode emails and on the privacy policy, `stories:create-broadcast` no
+   longer refuses on the address, and `validate:subscribe` checks the real address as well as the
+   sample.
+   Until the deploy that ships it, the welcome card still goes out without the address line.
+   Keeping it valid: [The postal address](#the-postal-address).
 5. ~~**The privacy policy still describes a different product.**~~ **Rewritten 2026-09-23**
    ([`app/privacy-policy/page.tsx`](../../app/privacy-policy/page.tsx)), not amended: it now names
    the controller and every processor, describes what the code actually collects, and has a rights

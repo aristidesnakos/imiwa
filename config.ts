@@ -58,14 +58,24 @@ const config = {
   business: {
     legalName: "The Auspicious Company",
     registration: "a company registered in Massachusetts, United States",
-    // null until the mailbox exists AND its USPS Form 1583 has been accepted:
-    // a private mailbox is only a valid CAN-SPAM address once it is
-    // "accurately registered" with the mail receiving agency (16 CFR 316.2(p)).
-    // Never a USPS PO Box — `pnpm validate:subscribe` rejects one, because the
-    // address also has to name a physical place. While this is null the email
-    // footer omits the line and `pnpm stories:create-broadcast` refuses to run.
+    // Supplied by the owner on 2026-09-24: a private mailbox at a mail
+    // receiving agency, copied exactly as the agency gives it ("#4015" is its
+    // unit). A private mailbox is a valid CAN-SPAM address only while it is
+    // "accurately registered" with the agency, i.e. its USPS Form 1583 stays
+    // accepted (16 CFR 316.2(p)). Never a USPS PO Box — `pnpm validate:subscribe`
+    // rejects one, because the address also has to name a physical place.
+    // It prints in every episode email's footer and on /privacy-policy. If it
+    // is ever null again, the footer omits the line and
+    // `pnpm stories:create-broadcast` refuses to run.
     // Procedure: docs/runbooks/newsletter.md.
-    postalAddress: null,
+    postalAddress: {
+      street: "9169 W State St",
+      unit: "#4015",
+      locality: "Garden City",
+      region: "ID",
+      postalCode: "83714",
+      country: "United States",
+    },
   },
   auth: {
     // REQUIRED — the path to log in users

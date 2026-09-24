@@ -1,7 +1,16 @@
 # Story Delivery on Our Own Domain — Resend PRD (Option C)
 
 **Version 1.4** · Created 2026-08-24 · Revised 2026-09-16 · Owner: Ari Nakos
-**Status: signup is broken in production, and has been since the confirm route shipped.**
+
+**Status, 2026-09-24: no episode has been broadcast yet, and the two legal prerequisites the first
+send was held on are met.** Signup has worked in production since 2026-09-16 (the v1.4 note below),
+the privacy policy was rewritten on 2026-09-23, and the owner supplied the postal address on
+2026-09-24 (`config.business.postalAddress`, open question 6). §11 item 6's real unsubscribe test is
+still unticked. The send stays a manual step for Ari:
+[`docs/runbooks/newsletter.md`](../runbooks/newsletter.md).
+
+**Status as it stood on 2026-09-16, kept as the record — resolved the same day:**
+**signup is broken in production, and has been since the confirm route shipped.**
 `RESEND_API_KEY` and `EMAIL_TOKEN_SECRET` are set in Vercel production;
 `RESEND_WEEKLY_STORIES_SEGMENT_ID` is **not**. So `POST /api/subscribe` answers 200 and really does
 send the consent email — the first half works — while `POST /api/subscribe/confirm` fails its
@@ -438,8 +447,10 @@ cost of not leaving today — which is the same reason the migration is cheap no
    which confirms a subscription with no human involved. A one-button page fixes it for the cost of
    one route and no storage. At forty subscribers either is defensible — but §5 must not claim more
    than the chosen one delivers. *(Added v1.1.)*
-6. **Postal address for the email footer.** CAN-SPAM requires one and we have none anywhere. A
-   registered business address, or a mail-forwarding box — this blocks episode 1, not Phase 1.
+6. ~~**Postal address for the email footer.** CAN-SPAM requires one and we have none anywhere. A
+   registered business address, or a mail-forwarding box — this blocks episode 1, not Phase 1.~~
+   **Resolved 2026-09-24:** the owner supplied a private mailbox address, now in
+   `config.business.postalAddress`; it renders in both episode emails and on the privacy policy.
    *(Added v1.1 — see §11.)*
 7. ~~**Resend DPA.** Has one been accepted on the account?~~ **Resolved 2026-09-23: nothing to
    accept.** Resend's DPA is pre-signed and binds on acceptance of its Terms, with the EU standard
@@ -528,8 +539,9 @@ than that, and two items below are genuinely unmet today, with Kit, before any o
    email list accurately. **Rewrite it, do not append to it.**
 2. ~~**Accept a DPA with Resend** (Art. 28). Dashboard task.~~ Satisfied by Resend's Terms, which
    incorporate a pre-signed DPA — open question 7, resolved 2026-09-23.
-3. **A postal address in every commercial email.** CAN-SPAM requires it; there is none in the repo,
-   footer, ToS or privacy policy. Open question 6, blocks episode 1.
+3. **A postal address in every commercial email.** ~~CAN-SPAM requires it; there is none in the repo,
+   footer, ToS or privacy policy. Open question 6, blocks episode 1.~~ **Met 2026-09-24:** the owner
+   supplied the address, and it is in `config.business.postalAddress` (open question 6).
 
    **It does not have to be a home address, and it must not be a PO Box.** Researched 2026-09-16;
    the two regimes that apply here disagree, and only one answer satisfies both:

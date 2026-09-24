@@ -35,7 +35,7 @@ export const metadata = getSEOTags({
  * same definition the email footer renders, so the two cannot disagree.
  */
 
-const LAST_UPDATED = "September 23, 2026";
+const LAST_UPDATED = "September 24, 2026";
 
 const H2 = "mb-3 text-xl font-semibold text-japan-deep-ocean";
 const H3 = "mb-2 mt-6 text-base font-semibold text-japan-deep-ocean";
