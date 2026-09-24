@@ -303,10 +303,10 @@ the whole path works — each stage fails in a place the previous stage cannot s
    DataFast sets first-party cookies before any consent, on a legitimate-interests basis.
 6. **Unsubscribe has never been exercised for real** (PRD §11 item 6): no one has confirmed the
    `unsubscribed` flag flips, or that Gmail and Outlook render the one-click button.
-7. **The Friday checks described above are not running.** As of 2026-09-23
+7. ~~**The Friday checks described above are not running.**~~ **Committed 2026-09-24.** Until then
    [`.github/workflows/subscribe-live-check.yml`](../../.github/workflows/subscribe-live-check.yml)
-   exists only in a working tree: it has never been committed, so GitHub has never run it. Nothing
-   is watching the signup path until it is pushed.
+   existed only in a working tree, so GitHub had never run it. It runs from the push that puts it on
+   `main`; its end-to-end job stays skipped until gap 2's secrets exist.
 8. **GDPR Art. 27 — an EU representative.** The operator is a US company with no EU establishment,
    sending a regular newsletter to EU (and UK) residents. Art. 27 asks such a controller to appoint
    a representative in the Union unless its processing is "occasional", and a weekly send is not

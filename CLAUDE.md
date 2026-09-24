@@ -84,7 +84,8 @@ unset and every subscriber hit a 503 at the confirm button. It probes one endpoi
 token, creates nothing and needs no secrets, and runs every Friday before the send.
 `check-subscribe-e2e` is the other half: it subscribes `delivered+mk-e2e-<stamp>@resend.dev` — Resend's
 delivery sink, so nothing bounces — confirms it, asserts the contact exists, and deletes it in a
-`finally`. It needs the real secrets, so it skips rather than fails when they are absent.
+`finally`. It needs the real secrets: run by hand without them it fails and names them, while its
+CI job skips with a notice rather than failing.
 
 **Who sends it, and from where, is config.** `config.business` holds the legal operator (The
 Auspicious Company, a Massachusetts company, not an EU one, whatever older PRD text says) and the
