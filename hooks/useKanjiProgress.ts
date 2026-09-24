@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface KanjiProgressData {
   learnedKanji: string[];
@@ -94,6 +94,30 @@ function normaliseStoredProgress(value: unknown): KanjiProgressData | null {
   };
 }
 
+/**
+ * What is stored right now, read fresh. `raw` is returned alongside so a caller
+ * can tell "nothing stored" (raw null) from "something stored that we cannot
+ * read" (raw set, data null) — the second must never be written over blindly.
+ */
+function readStoredProgress(): { data: KanjiProgressData | null; raw: string | null } {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw === null) return { data: null, raw: null };
+  try {
+    return { data: normaliseStoredProgress(JSON.parse(raw)), raw };
+  } catch {
+    return { data: null, raw };
+  }
+}
+
+/**
+ * Keep an unreadable blob under a key of its own before anything replaces it.
+ * Reading already refuses to delete one (see normaliseStoredProgress); a write
+ * must not quietly do the deleting instead.
+ */
+function preserveUnrecognised(raw: string) {
+  localStorage.setItem(`${STORAGE_KEY}.unrecognised.${Date.now()}`, raw);
+}
+
 export function useKanjiProgress() {
   const [progressData, setProgressData] = useState<KanjiProgressData>({
     learnedKanji: [],
@@ -127,36 +151,62 @@ export function useKanjiProgress() {
     }
   }, []);
 
-  // Toggle a kanji as learned/unlearned
+  // The latest in-memory state, for the one case storage cannot answer:
+  // nothing stored at all.
+  const progressRef = useRef(progressData);
+  useEffect(() => {
+    progressRef.current = progressData;
+  }, [progressData]);
+
+  // Toggle a kanji as learned/unlearned.
+  //
+  // Read-modify-write against what is stored NOW, not against this tab's
+  // copy from mount: another tab may have marked kanji since, and writing our
+  // stale copy back used to unmark them silently. Done in the handler, not in
+  // a setState updater — React may run an updater twice, and a second run
+  // would read our own write back and toggle the kanji straight off again.
   const toggleKanjiLearned = useCallback((kanji: string) => {
+    if (typeof window === 'undefined') return;
     const now = Date.now();
-    
-    setProgressData(prev => {
-      let newLearnedKanji: string[];
-      let newTimestamps = { ...prev.timestamps };
-      
-      if (prev.learnedKanji.includes(kanji)) {
-        // Remove from learned
-        newLearnedKanji = prev.learnedKanji.filter(k => k !== kanji);
-        delete newTimestamps[kanji];
-      } else {
-        // Add to learned
-        newLearnedKanji = [...prev.learnedKanji, kanji];
-        newTimestamps[kanji] = now;
+
+    const { data: stored, raw } = readStoredProgress();
+    if (stored === null && raw !== null) preserveUnrecognised(raw);
+    const base = stored ?? progressRef.current;
+
+    const timestamps = { ...base.timestamps };
+    let learnedKanji: string[];
+    if (base.learnedKanji.includes(kanji)) {
+      learnedKanji = base.learnedKanji.filter(k => k !== kanji);
+      delete timestamps[kanji];
+    } else {
+      learnedKanji = [...base.learnedKanji, kanji];
+      timestamps[kanji] = now;
+    }
+
+    const next: KanjiProgressData = { learnedKanji, timestamps };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setProgressData(next);
+  }, []);
+
+  // Follow writes from other tabs, so a page left open does not show (and
+  // later act on) a list that has moved on. The event fires only in the tabs
+  // that did NOT make the change.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY) return;
+      if (event.newValue === null) {
+        setProgressData({ learnedKanji: [], timestamps: {} });
+        return;
       }
-
-      const newData = {
-        learnedKanji: newLearnedKanji,
-        timestamps: newTimestamps,
-      };
-
-      // Save to localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+      try {
+        const normalised = normaliseStoredProgress(JSON.parse(event.newValue));
+        if (normalised) setProgressData(normalised);
+      } catch {
+        // Unreadable: keep what we have rather than blank the page.
       }
-
-      return newData;
-    });
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // Check if a kanji is learned
