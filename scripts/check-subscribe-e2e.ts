@@ -114,9 +114,11 @@ async function main(): Promise<void> {
   const secret = process.env.EMAIL_TOKEN_SECRET;
   if (!apiKey || !secret) {
     throw new Error(
-      'RESEND_API_KEY and EMAIL_TOKEN_SECRET must be set, and must be the SAME values the\n' +
-        'target deployment uses — the token is signed here and verified there.\n' +
-        'Locally: vercel env pull. In CI: repository secrets.'
+      'RESEND_API_KEY and EMAIL_TOKEN_SECRET must be set. EMAIL_TOKEN_SECRET must be the SAME\n' +
+        'value the target deployment signs with — the token is signed here and verified there —\n' +
+        'and RESEND_API_KEY a Full access key, because this reads the contact back and deletes it.\n' +
+        'Locally: put both in .env.local by hand; `vercel env pull` reads the key back empty.\n' +
+        'In CI: repository secrets.'
     );
   }
 

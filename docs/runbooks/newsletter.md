@@ -208,8 +208,11 @@ our own domain would hard-bounce, and bounces wreck a young sending reputation f
 else. The sends do count against the monthly quota: two per run, against 50k.
 
 It mints the confirm token locally rather than reading the sink, so `EMAIL_TOKEN_SECRET` must be the
-**same value production signs with** or the confirm route answers 400. It needs `RESEND_API_KEY` too.
-Locally that means `vercel env pull`; in CI, repository secrets.
+**same value production signs with** or the confirm route answers 400. It needs `RESEND_API_KEY` too,
+a **Full access** key, because it reads the contact back and deletes it. Locally, put both in
+`.env.local` by hand: `vercel env pull` reads the key back empty, as
+[the Saturday ritual](#the-saturday-ritual) explains for the broadcast script. In CI, repository
+secrets.
 
 One assertion covers three things: the confirm route answers 502 if either the contact create or the
 segment add fails, so a 303 redirect proves both happened. `GET /contacts/{email}` does not report
