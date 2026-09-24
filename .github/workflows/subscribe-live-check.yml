@@ -1,0 +1,271 @@
+name: Subscribe Live Check
+
+# Asks the running production site whether a subscriber could actually join the
+# list today.
+#
+# This is the gap every other guard in this repo leaves open. `Subscribe Consent
+# Check` proves the token model is correct, the build proves the code compiles,
+# and a deploy proves it shipped — and on 2026-09-16 all three were green while
+# the signup path was dead, because `RESEND_WEEKLY_STORIES_SEGMENT_ID` had never
+# been added to Vercel. Subscribers got the consent email, pressed the confirm
+# button, and hit a 503. Three episodes shipped against a list nobody could join,
+# and nothing anywhere reported it.
+#
+# The probe is one unauthenticated POST with an empty token, which the confirm
+# route answers from its config guard before it parses anything. No contact is
+# created and no email is sent, so this is safe to run on a schedule against
+# production. See the header of scripts/check-subscribe-live.ts for why that
+# endpoint, and why `/api/subscribe` deliberately is not probed.
+#
+# That probe is a CONFIGURATION alarm: it cannot see an invalid Resend key or a
+# segment id pointing at nothing. The second job closes that gap by actually
+# walking the path with a real address against Resend's `delivered@resend.dev`
+# sink, then deleting the contact it made. It needs repository secrets, and
+# skips with a notice rather than failing when they are absent — so the
+# credential-free alarm above still runs on a fork or an unconfigured repo.
+#
+# Neither job can judge inbox placement or rendering. Those stay human:
+# docs/prd/episode-spec.md §A7 items 4-9.
+
+on:
+  # Fridays at 06:00 UTC — the morning before the Saturday send, so a dead
+  # signup path is discovered while there is still a day to fix it rather than
+  # after the broadcast has gone out to a list that could not grow. The send day
+  # is defined in config.newsletter; if it moves, move this too.
+  schedule:
+    - cron: '0 6 * * 5'
+  # Also on any change to the capture path or its configuration contract: the
+  # most likely moment to break this is the moment someone edits it.
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/api/subscribe/**'
+      - 'app/api/unsubscribe/**'
+      - 'scripts/check-subscribe-live.ts'
+      - '.github/workflows/subscribe-live-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: subscribe-live-check
+  cancel-in-progress: false
+
+jobs:
+  check-subscribe-live:
+    name: Can a subscriber actually join the list?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # Open / comment on an Issue as the notification. A red run in the Actions
+      # tab is not a notification — nobody reads that tab.
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # No secrets. The whole point of this probe is that it needs none — it
+      # asks a public endpoint a question that a misconfiguration answers
+      # differently, which is why it can run here at all.
+      - name: Probe the production signup path
+        run: pnpm check-subscribe-live
+
+      # Covers both failure modes with one handler, deliberately: "the probe
+      # says signup is dead" and "the job never got far enough to ask" are both
+      # "we do not know that people can subscribe", and both want the same
+      # human to look. The script's own output distinguishes them in the log.
+      - name: Report that signup is broken
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Explicit rather than inferred from the git remote: this step must
+          # survive a failure in Checkout, when there is no local repo.
+          GH_REPO: ${{ github.repository }}
+          ISSUE_TITLE: '🚨 [Newsletter] Production signup path is not accepting subscribers'
+          ISSUE_LABEL: newsletter-alarm
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # `gh issue create --label X` hard-fails on a label that does not
+          # exist, which would make this step swallow the alert it exists to
+          # raise. Create on demand; ignore "already exists".
+          gh label create "$ISSUE_LABEL" \
+            --color B60205 \
+            --description "Automated newsletter capture-path monitoring" \
+            >/dev/null 2>&1 || true
+
+          BODY=$(cat <<EOF
+          The production signup probe failed. **Assume nobody can join the newsletter right now.**
+
+          **Failed run:** ${RUN_URL}
+
+          The likely shape of this: \`POST /api/subscribe\` still answers 200 and still sends the
+          consent email, so the form looks like it works. The failure is at the next step —
+          \`POST /api/subscribe/confirm\` returns \`503 {"error":"Subscriptions are not configured."}\`
+          when the subscriber presses the button, and no contact is ever created.
+
+          ### Check, cheapest first
+
+          1. All three of \`RESEND_API_KEY\`, \`EMAIL_TOKEN_SECRET\` and
+             \`RESEND_WEEKLY_STORIES_SEGMENT_ID\` are set in the **Production** environment on Vercel
+             (\`vercel env ls production\`), and a deploy has happened **since** they were added.
+             Env vars are read at runtime by the deployment that was built with them.
+          2. The probe could reach the site at all — a DNS, TLS or outage failure exits non-zero
+             here too, and the run log says which it was.
+          3. The job failed before the script ran: dependency install, tsx resolution, runner setup.
+
+          Fix and end-to-end verification: \`docs/runbooks/newsletter.md\`.
+          The probe cannot confirm deliverability — after fixing, subscribe with a real address
+          and walk the full path before trusting it.
+
+          _Opened automatically by \`.github/workflows/subscribe-live-check.yml\`._
+          EOF
+          )
+
+          # Comment on the open issue rather than stacking a new one every week.
+          # A duplicate pile is the fastest way to get an alarm muted.
+          EXISTING=$(gh issue list \
+            --state open \
+            --label "$ISSUE_LABEL" \
+            --limit 100 \
+            --json number,title \
+            --jq 'map(select(.title == $ENV.ISSUE_TITLE)) | .[0].number // empty') || EXISTING=
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "Commented on existing issue #${EXISTING}."
+          else
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label "$ISSUE_LABEL" \
+              --body "$BODY"
+          fi
+
+  # Runs after the cheap probe, and only when the probe passed: if the path is
+  # misconfigured we already know, and walking it would just fail a second time
+  # with a noisier message and two wasted sends.
+  check-subscribe-e2e:
+    name: Can a real address complete the double opt-in?
+    needs: check-subscribe-live
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The `secrets` context is not available in a job-level `if` outside a
+      # reusable workflow, so the gate is a step. Skipping is deliberate rather
+      # than failing: an unconfigured repo should still get the credential-free
+      # alarm, and a red run that only means "no secrets here" trains people to
+      # ignore the whole workflow.
+      - name: Are the secrets present?
+        id: gate
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TOKEN_SECRET: ${{ secrets.EMAIL_TOKEN_SECRET }}
+        run: |
+          if [ -n "$RESEND_API_KEY" ] && [ -n "$EMAIL_TOKEN_SECRET" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipped: set RESEND_API_KEY and EMAIL_TOKEN_SECRET as repository secrets to enable the end-to-end check."
+          fi
+
+      # EMAIL_TOKEN_SECRET must be the SAME value production signs with — the
+      # token is minted here and verified there. A mismatch shows up as a 400
+      # from the confirm route, and the script says so by name.
+      - name: Walk the signup path with a real address
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TOKEN_SECRET: ${{ secrets.EMAIL_TOKEN_SECRET }}
+        run: pnpm check-subscribe-e2e
+
+      - name: Report that the end-to-end walk failed
+        if: failure() && steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_TITLE: '🚨 [Newsletter] End-to-end signup walk failed'
+          ISSUE_LABEL: newsletter-alarm
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          gh label create "$ISSUE_LABEL" \
+            --color B60205 \
+            --description "Automated newsletter capture-path monitoring" \
+            >/dev/null 2>&1 || true
+
+          BODY=$(cat <<EOF
+          The configuration probe passed but a real address could **not** complete the double
+          opt-in. Something past the config guard is broken — the Resend key, the segment, or the
+          contacts API.
+
+          **Failed run:** ${RUN_URL}
+
+          The script names the failing step. The usual causes, in order:
+
+          1. \`EMAIL_TOKEN_SECRET\` in repository secrets no longer matches the value production
+             signs with — shows up as a **400** from the confirm route.
+          2. The Resend API key was rotated or revoked — a **502** from confirm, or a failed
+             contact read.
+          3. \`RESEND_WEEKLY_STORIES_SEGMENT_ID\` points at a segment that no longer exists — a
+             **502** from confirm on the segment add.
+
+          The run may have left a \`delivered+mk-e2e-*@resend.dev\` contact behind if cleanup also
+          failed; the log says so. Delete it in the Resend dashboard so the next broadcast does not
+          mail it.
+
+          Runbook: \`docs/runbooks/newsletter.md\`.
+
+          _Opened automatically by \`.github/workflows/subscribe-live-check.yml\`._
+          EOF
+          )
+
+          EXISTING=$(gh issue list \
+            --state open \
+            --label "$ISSUE_LABEL" \
+            --limit 100 \
+            --json number,title \
+            --jq 'map(select(.title == $ENV.ISSUE_TITLE)) | .[0].number // empty') || EXISTING=
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "Commented on existing issue #${EXISTING}."
+          else
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label "$ISSUE_LABEL" \
+              --body "$BODY"
+          fi

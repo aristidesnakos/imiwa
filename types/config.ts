@@ -26,6 +26,12 @@ export interface ConfigProps {
     supportEmail?: string;
     forwardRepliesTo?: string;
   };
+  newsletter: {
+    /** 0 = Sunday … 6 = Saturday. The day a broadcast is scheduled for. */
+    sendDay: number;
+    /** Days before the send that the episode must be written and imported. */
+    writeLeadDays: number;
+  };
   auth: {
     loginUrl: string;
     callbackUrl: string;

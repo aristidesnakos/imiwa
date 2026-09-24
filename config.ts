@@ -36,6 +36,20 @@ const config = {
     supportEmail: "ari@llanai.com",
     forwardRepliesTo: "ari@llanai.com",
   },
+  // The weekly story's cadence, in one place, because until now it existed only
+  // as the word "weekly" in four pieces of prose and a blank column in
+  // docs/prd/episode-spec.md. Nothing schedules from this — Resend owns
+  // scheduling and the send stays a reviewed, manual act (see
+  // docs/runbooks/newsletter.md). What it does is give the runbook, the
+  // pre-send output and the calendar one definition to agree with, so "which
+  // Saturday" is never re-derived by hand.
+  newsletter: {
+    // Saturday. Chosen 2026-09-16; before that there was no send day at all.
+    sendDay: 6,
+    // Write-by is send-day minus 3 — a Wednesday — which is the room the A7
+    // pre-send checklist and one round of fixes actually need.
+    writeLeadDays: 3,
+  },
   auth: {
     // REQUIRED — the path to log in users
     loginUrl: "/signin",
