@@ -65,3 +65,6 @@ package-lock.json
 .tatoeba-cache/
 
 ./engagement-log.csv
+
+# Personal study material (third-party, copyrighted). Never commit it.
+/docs/kanji-list/

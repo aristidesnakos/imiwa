@@ -192,7 +192,8 @@ Then go straight to printables (§4.2).
 
 ### 3.1 About 310 standard kanji have no page
 
-`docs/kanji-list/` holds the source lists the constants were built from (§3.2). Compared with them:
+The source lists the constants were built from (§3.2) were kept in `docs/kanji-list/` until they were
+removed on 2026-09-24. Compared with them:
 
 | Level | Source list | Site list | Source kanji in no site list |
 |---|---|---|---|
@@ -225,12 +226,13 @@ because it is. N5 is complete. N4 and N3 need six characters added.
 
 ### 3.2 Where the level lists came from
 
-- **The N5–N2 PDFs are JLPTsensei's.** Each is titled "N5 Kanji List - JLPTsensei.com" (and so on),
-  and every page carries "© 2023 by JLPTsensei.com". They were committed in `61958c9` (2025-10-20)
-  together with the N2 list. The N5–N3 PDFs hold 617 characters between them, and the site's lists
-  contain all but six.
-- **The N1 PDF is unattributed.** `JLPTN1-Kanji-A4-bw.pdf` carries no attribution, and its origin is
-  unknown.
+- **The N5–N2 PDFs were JLPTsensei's.** They were the owner's personal study material, never meant to
+  be published, and were removed from the repo on 2026-09-24. Each was titled "N5 Kanji List -
+  JLPTsensei.com" (and so on), and every page carried "© 2023 by JLPTsensei.com". They had been
+  committed on 2025-10-20 together with the N2 list. The N5–N3 PDFs held 617 characters between
+  them, and the site's lists contain all but six.
+- **The N1 PDF was unattributed.** `JLPTN1-Kanji-A4-bw.pdf`, removed with the others, carried no
+  attribution, and its origin is unknown.
 - **The method doc cites the same sources.** It lists jlptsensei.com and tanos.co.uk among its
   "reliable sources" (`docs/learnings/systematic-kanji-completion-approach.md:28-29`).
 - **The provenance rule was never applied to the kanji lists.** It was recorded on 2026-07-31
@@ -342,5 +344,5 @@ three directions:
   Console", June 2026 — https://developers.google.com/search/blog/2026/06/gen-ai-performance-reports
 - JLPTsensei, "JLPT N5 Kanji List" — https://jlptsensei.com/jlpt-n5-kanji-list/
 - kanjilibrary.com, "JLPT N5 Kanji List (79 kanji)" — https://kanjilibrary.com/kanji/n5/
-- Internal: `data/query-history.json`, `data/indexation-history.json`, `docs/kanji-list/*.pdf`, and
-  the docs cited inline.
+- Internal: `data/query-history.json`, `data/indexation-history.json`, the `docs/kanji-list/` PDFs
+  (removed 2026-09-24), and the docs cited inline.
