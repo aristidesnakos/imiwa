@@ -4,6 +4,8 @@
  * Weekly QUERY-dimension progress tracker, backed by the Google Search Console API.
  * Run manually:  npx tsx --tsconfig tsconfig.json scripts/check-query-performance.ts
  * Run in CI:     a scheduled workflow, alongside .github/workflows/indexation-alarm.yml
+ * Classify only: add --classify-history. No credentials and no API call: it runs
+ *                the intent rules over the queries already in the history file.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * WHY THIS EXISTS, GIVEN THAT check-indexation.ts ALREADY CALLS THIS ENDPOINT
@@ -112,6 +114,32 @@
  * script will not count them. That is a deliberate precision-over-recall trade:
  * an undercount that moves when something real happens is worth more than a
  * larger number nobody can act on, and acting on it is the entire point.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CLICKS BY SEARCH INTENT, WHICH THE SUMMARY NOW LEADS WITH
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * CTR stopped being a health metric for this site. Across this file's first nine
+ * readings impressions grew 13× and clicks 47%, and the biggest queries are now
+ * machine-shaped ones that never click. So every query row is also classified by
+ * intent (scripts/lib/query-intent.ts, which carries the evidence and the rules)
+ * and each reading records the six classes as `intents`. Three properties
+ * matter:
+ *
+ *   - It covers EVERY query row, not the top 25, so the classes sum to the
+ *     reading's own totals. The pillar table in docs/prd/weekly-reads.md is built
+ *     from `topQueries` and is a floor; these are not, beyond the anonymisation
+ *     threshold every figure here is subject to.
+ *   - Machine-shaped queries are labelled, never dropped. Dropping them would make
+ *     the classes disagree with Search Console, and they are the evidence that
+ *     CTR broke in the first place.
+ *   - `intents.rules` fingerprints the rule set, and a delta is only printed
+ *     against a reading classified by the same rules.
+ *
+ * Readings taken before the field existed do not have it and are never
+ * backfilled: they stored only their top 25, which cannot be summed into a class
+ * total. `--classify-history` runs the classifier over those stored strings
+ * instead, and is the check to run after editing a rule.
  */
 
 import { readFileSync, writeFileSync, appendFileSync, renameSync, mkdirSync, existsSync } from 'node:fs';
@@ -128,6 +156,14 @@ import {
   getGoogleAccessToken,
   type ServiceAccountKey,
 } from './lib/google-service-account-auth';
+import {
+  classifyIntent,
+  matchingIntents,
+  INTENT_CLASSES,
+  INTENT_LABELS,
+  INTENT_RULES_FINGERPRINT,
+  type IntentClass,
+} from './lib/query-intent';
 // Reused verbatim from the sibling monitor rather than re-derived. The property
 // identifier and the lagged window are the two things both scripts must agree on
 // exactly, or the two history files describe different slices of reality and can
@@ -154,6 +190,25 @@ export interface RomajiMatchStats {
   clicks: number;
   /** Impression-weighted average position across the slice. */
   avgPosition: number;
+}
+
+/** One intent class's slice of the query rows: the same aggregate as a romaji slice. */
+export type IntentStats = RomajiMatchStats;
+
+/**
+ * Every query row, classified by search intent (scripts/lib/query-intent.ts).
+ *
+ * The classes partition the rows, so they always sum to the reading's own
+ * `totalQueries`, `impressions` and `clicks`. Machine-shaped queries are one of
+ * the classes, not a filter in front of them.
+ */
+export interface IntentBreakdown {
+  /**
+   * `INTENT_RULES_FINGERPRINT` when the reading was taken. Two readings' classes
+   * are comparable only when this matches; that constant's comment says why.
+   */
+  rules: string;
+  classes: Record<IntentClass, IntentStats>;
 }
 
 /**
@@ -204,7 +259,14 @@ export interface QueryReading {
   /** Total clicks across all returned query rows. */
   clicks: number;
   /**
-   * THE headline metric: stoplist-filtered romaji token AND a kanji-context
+   * Clicks, impressions and position per search-intent class: the figure the
+   * summary leads with, now that CTR is not one. Optional because the readings
+   * taken before it existed (2026-08-02..2026-09-21) do not have it, and history
+   * is never backfilled.
+   */
+  intents?: IntentBreakdown;
+  /**
+   * The romaji headline: stoplist-filtered romaji token AND a kanji-context
    * word. See the header for what it can and cannot prove.
    */
   romajiStrict: RomajiMatchStats;
@@ -238,16 +300,24 @@ const HISTORY_PATH = resolve(
 );
 
 const METRIC_NOTE =
-  'romajiStrict (the headline) = Google Search query rows (searchanalytics.query, ' +
+  'romajiStrict (the romaji headline) = Google Search query rows (searchanalytics.query, ' +
   'dimensions: [query]) containing BOTH a token that is a romaji spelling of some kanji ' +
   'reading in lib/constants/n{1..5}-kanji.ts (per romajiSearchKeys() in ' +
   'lib/romaji/readings.ts, minus an English-homograph stoplist) AND a kanji-context word. ' +
   'romajiLoose = the same without the context requirement; it is a superset. Both are a ' +
   'FLOOR twice over: Search Console omits low-volume queries entirely, and the stoplist ' +
   'deliberately discards genuine readings that are also English words (to, no, on, sun...) ' +
-  'to keep the figure precise enough to act on. This file is a PROGRESS tracker for the ' +
-  'romaji subsystem shipped 2026-08-02, not an alarm — no reading here should ever be read ' +
-  'as a pass/fail. See scripts/check-query-performance.ts.';
+  'to keep the figure precise enough to act on. intents = EVERY query row classified by ' +
+  'search intent per scripts/lib/query-intent.ts (first matching rule wins), so the six ' +
+  'classes sum to the reading totals and machine-shaped queries are a class, never dropped. ' +
+  'Read clicks per class, not CTR: impressions have grown so much faster than clicks, with ' +
+  'machine-shaped queries that never click among the largest, that CTR no longer measures ' +
+  'the site. Compare classes only between readings with the same ' +
+  'intents.rules fingerprint; readings taken before the field existed have none and are ' +
+  'never backfilled. avgPosition is impression-weighted throughout. This file is a PROGRESS ' +
+  'tracker for the romaji subsystem shipped 2026-08-02 and for clicks by intent, not an ' +
+  'alarm — no reading here should ever be read as a pass/fail. See ' +
+  'scripts/check-query-performance.ts.';
 
 const SEARCH_CONSOLE_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 const WEBMASTERS_BASE = 'https://www.googleapis.com/webmasters/v3';
@@ -649,6 +719,70 @@ export function romajiImpressionShare(reading: QueryReading): number {
   return round1((reading.romajiStrict.impressions / reading.impressions) * 100);
 }
 
+// ─── Intent classes (pure) ───────────────────────────────────────────────────
+
+/**
+ * Classify every row once and summarise each intent class.
+ *
+ * Runs over every row the API returned, not over `topQueries`, so each class is a
+ * total rather than a top-25 floor. Position is `weightedAveragePosition` again:
+ * each row's position is already a mean over that row's impressions, so weighting
+ * by impressions gives the mean over every impression in the class, where a plain
+ * mean of rows would let a one-impression query count as much as `kanji`.
+ */
+export function summariseByIntent(rows: SearchAnalyticsRow[]): IntentBreakdown {
+  const byClass = Object.fromEntries(
+    INTENT_CLASSES.map((intent) => [intent, [] as SearchAnalyticsRow[]])
+  ) as Record<IntentClass, SearchAnalyticsRow[]>;
+  for (const row of rows) byClass[classifyIntent(rowQuery(row))].push(row);
+  const classes = Object.fromEntries(
+    INTENT_CLASSES.map((intent) => [intent, summarise(byClass[intent])])
+  ) as Record<IntentClass, IntentStats>;
+  return { rules: INTENT_RULES_FINGERPRINT, classes };
+}
+
+/**
+ * The classes' own sum, which equals the reading's totals because the classes
+ * partition the rows. A class missing from an older reading counts as nothing
+ * rather than throwing: a summary that crashes after the reading is saved would
+ * report a healthy tracker as broken.
+ */
+function intentTotals(intents: IntentBreakdown): { queries: number; impressions: number; clicks: number } {
+  const totals = { queries: 0, impressions: 0, clicks: 0 };
+  for (const intent of INTENT_CLASSES) {
+    const stats: IntentStats | undefined = intents.classes[intent];
+    totals.queries += stats?.queries ?? 0;
+    totals.impressions += stats?.impressions ?? 0;
+    totals.clicks += stats?.clicks ?? 0;
+  }
+  return totals;
+}
+
+/** What a reading's intent classes can be compared against. */
+export type IntentBaseline =
+  | { kind: 'first' }
+  | { kind: 'rules-changed'; reading: QueryReading }
+  | { kind: 'comparable'; reading: QueryReading };
+
+/**
+ * The most recent reading before `current` that has intent classes, and whether
+ * it was classified by the same rules.
+ *
+ * Readings from before the field existed are skipped, never treated as zeros: a
+ * missing class total is unknown, and a delta against it would invent a jump.
+ */
+export function intentBaseline(history: QueryHistory, current: QueryReading): IntentBaseline {
+  const at = history.readings.lastIndexOf(current);
+  for (let i = (at === -1 ? history.readings.length : at) - 1; i >= 0; i -= 1) {
+    const reading = history.readings[i];
+    if (!reading.intents) continue;
+    return reading.intents.rules === current.intents?.rules
+      ? { kind: 'comparable', reading }
+      : { kind: 'rules-changed', reading };
+  }
+  return { kind: 'first' };
+}
+
 // ─── History persistence ─────────────────────────────────────────────────────
 // Deliberately NOT imported from check-indexation.ts. Its loadHistory/saveHistory
 // are typed to its Reading shape and its saveHistory stamps ITS metricNote onto
@@ -855,16 +989,97 @@ export function renderWatchlistTable(watched: WatchedQuery[]): string {
   return `${header}\n${body}`;
 }
 
+/**
+ * A query's intent for a listing. Machine-shaped rows are marked rather than
+ * removed: the listing must agree with the data, and the top of it is exactly
+ * where one repeated string would otherwise pass for demand.
+ */
+function intentTag(query: string): string {
+  const intent = classifyIntent(query);
+  return intent === 'machine-shaped' ? '**machine-shaped**' : INTENT_LABELS[intent];
+}
+
 export function renderTopQueriesTable(top: TopQuery[], keys: Set<string> = romajiKeySet()): string {
   const header =
-    '| # | Query | Impressions | Clicks | Position | Class |\n' + '|---:|---|---:|---:|---:|---|';
+    '| # | Query | Impressions | Clicks | Position | Intent | Romaji |\n' +
+    '|---:|---|---:|---:|---:|---|---|';
   const label: Record<QueryClass, string> = { strict: 'romaji', loose: 'romaji (loose)', none: '' };
   const body = top
     .map(
       (t, i) =>
         `| ${i + 1} | \`${t.query}\` | ${t.impressions} | ${t.clicks} | ${t.position} | ` +
-        `${label[classifyQuery(t.query, keys)]} |`
+        `${intentTag(t.query)} | ${label[classifyQuery(t.query, keys)]} |`
     )
+    .join('\n');
+  return `${header}\n${body}`;
+}
+
+/**
+ * Clicks by intent class, clicks first, with a Δ against `baseline` when it is
+ * comparable. There is deliberately no CTR column: see scripts/lib/query-intent.ts.
+ */
+export function renderIntentTable(intents: IntentBreakdown, baseline: IntentBaseline): string {
+  const before = baseline.kind === 'comparable' ? baseline.reading.intents : undefined;
+  const delta = (now: number, then: number | undefined) =>
+    then === undefined ? '—' : signed(now - then);
+  const header =
+    '| Intent | Clicks | Δ clicks | Impressions | Avg position | Queries |\n' +
+    '|---|---:|---:|---:|---:|---:|';
+  const rows = INTENT_CLASSES.map((intent) => {
+    const now = intents.classes[intent];
+    const then: IntentStats | undefined = before?.classes[intent];
+    return (
+      `| ${INTENT_LABELS[intent]} | ${now.clicks} | ${delta(now.clicks, then?.clicks)} | ` +
+      `${now.impressions} | ${now.avgPosition || '—'} | ${now.queries} |`
+    );
+  });
+  const total = intentTotals(intents);
+  const totalBefore = before ? intentTotals(before) : undefined;
+  rows.push(
+    `| All queries | ${total.clicks} | ${delta(total.clicks, totalBefore?.clicks)} | ` +
+      `${total.impressions} | | ${total.queries} |`
+  );
+  return `${header}\n${rows.join('\n')}`;
+}
+
+/** One sentence saying what the Δ column was measured against, or why it is blank. */
+export function describeIntentBaseline(baseline: IntentBaseline, intents: IntentBreakdown): string {
+  switch (baseline.kind) {
+    case 'first':
+      return 'First reading with intent classes, so there is no Δ yet. It starts with the next reading.';
+    case 'rules-changed':
+      return (
+        `No Δ this week: the intent rules changed after ${baseline.reading.takenOn} ` +
+        `(\`${baseline.reading.intents?.rules}\` → \`${intents.rules}\`), so part of any ` +
+        'difference would be the edit rather than the searchers. Classes re-baseline from here.'
+      );
+    case 'comparable':
+      return (
+        `Δ is against the reading taken ${baseline.reading.takenOn} ` +
+        `(window ${baseline.reading.windowStart}..${baseline.reading.windowEnd}).`
+      );
+  }
+}
+
+/**
+ * Clicks per class across every reading that has them. Read this rather than the
+ * Δ: consecutive windows share 21 of 28 days (see the header), so one week's move
+ * is rarely the story. The rules column puts a change of definition in the trend
+ * itself, where it cannot be mistaken for a change in demand.
+ */
+export function renderIntentTrendTable(readings: QueryReading[], limit = 12): string {
+  const rows = readings.filter((r) => r.intents).slice(-limit);
+  const header =
+    `| Taken on | ${INTENT_CLASSES.map((intent) => INTENT_LABELS[intent]).join(' | ')} | Rules |\n` +
+    `|---|${INTENT_CLASSES.map(() => '---:|').join('')}---|`;
+  const body = rows
+    .map((r) => {
+      const clicks = INTENT_CLASSES.map((intent) => {
+        const stats: IntentStats | undefined = r.intents?.classes[intent];
+        return stats ? String(stats.clicks) : '—';
+      });
+      return `| ${r.takenOn} | ${clicks.join(' | ')} | \`${r.intents?.rules}\` |`;
+    })
     .join('\n');
   return `${header}\n${body}`;
 }
@@ -888,10 +1103,35 @@ export function buildStepSummary(
       `(${signed(reading.romajiStrict.impressions - previous.romajiStrict.impressions)})`
     : 'first reading — nothing to compare against yet';
 
+  let intentSection: string[];
+  if (reading.intents) {
+    const baseline = intentBaseline(history, reading);
+    intentSection = [
+      renderIntentTable(reading.intents, baseline),
+      '',
+      describeIntentBaseline(baseline, reading.intents),
+    ];
+  } else {
+    intentSection = ['_This reading was taken before intent classes were recorded._'];
+  }
+
   return [
-    '## Romaji query performance',
+    '## Query performance',
     '',
     `**Window:** ${reading.windowStart}..${reading.windowEnd} · **Property:** \`${reading.property}\``,
+    '',
+    '### Clicks by search intent',
+    '',
+    ...intentSection,
+    '',
+    '> Clicks, not CTR. Impressions have grown many times faster than clicks, and the',
+    '> largest queries now include machine-shaped ones that never click, so a site CTR',
+    '> tracks the impression mix rather than the site. The classes cover every query row',
+    '> and sum to the totals; machine-shaped queries are labelled, never dropped.',
+    `> Positions are impression-weighted. Rules \`${INTENT_RULES_FINGERPRINT}\` in`,
+    '> `scripts/lib/query-intent.ts`, from docs/3rdVersion/level-pages-and-zero-click-review.md §1.2.',
+    '',
+    '### Romaji queries',
     '',
     `**Romaji queries (strict):** ${reading.romajiStrict.queries} of ${reading.totalQueries} ` +
       `(${romajiImpressionShare(reading)}% of impressions) · avg position ` +
@@ -922,7 +1162,11 @@ export function buildStepSummary(
     `${reading.kanjiPages.impressions} impressions · ${reading.kanjiPages.clicks} clicks · ` +
       `avg position ${reading.kanjiPages.avgPosition || '—'} (impression-weighted)`,
     '',
-    '### Trend',
+    '### Trend: clicks by intent',
+    '',
+    renderIntentTrendTable(history.readings, historyRows),
+    '',
+    '### Trend: romaji',
     '',
     renderHistoryTable(history.readings, historyRows),
     '',
@@ -976,6 +1220,170 @@ One-time setup (the repo owner must do this; it cannot be automated):
      variable GSC_PROPERTY_TYPE = domain. Default is url-prefix.
 `.trim();
 
+// ─── --classify-history (no credentials, no API) ─────────────────────────────
+// The stored top-25 and watchlist rows are the only real query strings in the
+// repo. Running the rules over them is how a rule edit gets checked before it
+// moves a weekly figure, and it is the only intent split the readings taken
+// before `intents` existed can ever have.
+
+/** One query string the history file has stored, at its most recent appearance. */
+export interface StoredQuery extends TopQuery {
+  /** The reading it was last seen in. */
+  takenOn: string;
+  /** How many readings had it in their top 25. 0 means it was only ever watched. */
+  topAppearances: number;
+}
+
+/**
+ * Every distinct query in the history file, each at its most recent appearance.
+ *
+ * A top-25 appearance always wins over a watchlist row, because the top 25 is the
+ * sample the review's §1.2 table was drawn from. A query that was only ever on
+ * the watchlist keeps its latest watchlist row and stays out of the top-25
+ * totals, so those remain comparable with the review's.
+ */
+export function storedQueries(history: QueryHistory): StoredQuery[] {
+  const top = new Map<string, StoredQuery>();
+  const watchedOnly = new Map<string, StoredQuery>();
+  for (const reading of history.readings) {
+    for (const t of reading.topQueries ?? []) {
+      const topAppearances = (top.get(t.query)?.topAppearances ?? 0) + 1;
+      top.set(t.query, { ...t, takenOn: reading.takenOn, topAppearances });
+    }
+    for (const w of reading.watchedQueries ?? []) {
+      watchedOnly.set(w.query, {
+        query: w.query,
+        impressions: w.impressions,
+        clicks: w.clicks,
+        position: w.position,
+        takenOn: reading.takenOn,
+        topAppearances: 0,
+      });
+    }
+  }
+  for (const query of top.keys()) watchedOnly.delete(query);
+  return [...top.values(), ...watchedOnly.values()];
+}
+
+function asRows(queries: TopQuery[]): SearchAnalyticsRow[] {
+  return queries.map((q) => ({
+    keys: [q.query],
+    impressions: q.impressions,
+    clicks: q.clicks,
+    position: q.position,
+  }));
+}
+
+/** Class totals for a sample of queries, in the column order of the review's §1.2 table. */
+function renderIntentSampleTable(intents: IntentBreakdown): string {
+  const header =
+    '| Intent | Queries | Impressions | Clicks | Avg position |\n' + '|---|---:|---:|---:|---:|';
+  const rows = INTENT_CLASSES.map((intent) => {
+    const stats: IntentStats | undefined = intents.classes[intent];
+    if (!stats) return `| ${INTENT_LABELS[intent]} | — | — | — | — |`;
+    return (
+      `| ${INTENT_LABELS[intent]} | ${stats.queries} | ${stats.impressions} | ${stats.clicks} | ` +
+      `${stats.avgPosition || '—'} |`
+    );
+  });
+  const total = intentTotals(intents);
+  rows.push(`| All | ${total.queries} | ${total.impressions} | ${total.clicks} | |`);
+  return `${header}\n${rows.join('\n')}`;
+}
+
+/** Every reading's top 25 split by intent: floors, but the only split old readings have. */
+function renderTopQueriesIntentTrend(readings: QueryReading[]): string {
+  const header =
+    `| Taken on | ${INTENT_CLASSES.map((intent) => INTENT_LABELS[intent]).join(' | ')} | ` +
+    'Machine-shaped impr. |\n' +
+    `|---|${INTENT_CLASSES.map(() => '---:|').join('')}---:|`;
+  const body = readings
+    .map((r) => {
+      const split = summariseByIntent(asRows(r.topQueries ?? []));
+      const clicks = INTENT_CLASSES.map((intent) => split.classes[intent].clicks);
+      return `| ${r.takenOn} | ${clicks.join(' | ')} | ${split.classes['machine-shaped'].impressions} |`;
+    })
+    .join('\n');
+  return `${header}\n${body}`;
+}
+
+/** What `--classify-history` prints. Pure, so it can be checked against a fixture. */
+export function renderHistoryClassification(history: QueryHistory, historyPath: string): string {
+  const readings = history.readings;
+  if (readings.length === 0) return `${historyPath} has no readings yet. Nothing to classify.`;
+
+  const stored = storedQueries(history);
+  const top = stored.filter((q) => q.topAppearances > 0);
+  const watchedOnly = stored.filter((q) => q.topAppearances === 0);
+  const latest = readings[readings.length - 1];
+  const byImpact = (a: StoredQuery, b: StoredQuery) =>
+    b.clicks - a.clicks || b.impressions - a.impressions;
+
+  const lines = [
+    '\n═══ Intent classes over the stored query history ═══',
+    `File: ${historyPath}`,
+    `Rules: ${INTENT_RULES_FINGERPRINT} (scripts/lib/query-intent.ts, first match wins)`,
+    `Readings: ${readings.length} (${readings[0].takenOn} → ${latest.takenOn})`,
+    `Distinct queries stored: ${stored.length}. ${top.length} reached a weekly top 25; ` +
+      `${watchedOnly.length} were only ever on the watchlist.`,
+    '',
+    "Every top-25 query at its most recent top-25 appearance (the review's §1.2 method):",
+    '',
+    renderIntentSampleTable(summariseByIntent(asRows(top))),
+    '',
+    `Latest reading (${latest.takenOn}), its top 25 only. A floor, not the site total:`,
+    '',
+    renderIntentSampleTable(summariseByIntent(asRows(latest.topQueries ?? []))),
+  ];
+
+  if (latest.intents) {
+    lines.push(
+      '',
+      `Latest reading as recorded, every query row (rules \`${latest.intents.rules}\`):`,
+      '',
+      renderIntentSampleTable(latest.intents)
+    );
+  }
+
+  lines.push(
+    '',
+    'Top-25 clicks by intent, every reading (floors; the last row is the latest):',
+    '',
+    renderTopQueriesIntentTrend(readings)
+  );
+
+  lines.push('', 'Queries in each class, most recent top-25 appearance:');
+  for (const intent of INTENT_CLASSES) {
+    const members = top.filter((q) => classifyIntent(q.query) === intent).sort(byImpact);
+    lines.push('', `${INTENT_LABELS[intent]}: ${members.length} ${members.length === 1 ? 'query' : 'queries'}`);
+    for (const q of members) {
+      lines.push(
+        `  ${q.query}: ${q.impressions} impr, ${q.clicks} clicks, pos ${q.position} ` +
+          `(${q.takenOn}; top 25 in ${q.topAppearances} of ${readings.length} readings)`
+      );
+    }
+  }
+
+  if (watchedOnly.length > 0) {
+    lines.push('', `Watchlist only, never in a top 25, so in no total above: ${watchedOnly.length}`);
+    for (const q of watchedOnly) {
+      lines.push(
+        `  ${q.query} → ${INTENT_LABELS[classifyIntent(q.query)]} ` +
+          `(${q.takenOn}: ${q.impressions} impr, ${q.clicks} clicks)`
+      );
+    }
+  }
+
+  const decidedByOrder = stored.filter((q) => matchingIntents(q.query).length > 1);
+  lines.push('', 'Decided by rule order (matched more than one rule; the first wins):');
+  if (decidedByOrder.length === 0) lines.push('  none');
+  for (const q of decidedByOrder) {
+    lines.push(`  ${q.query}: ${matchingIntents(q.query).join(' > ')}`);
+  }
+
+  return `${lines.join('\n')}\n`;
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 /** Exported so a test harness can drive a full run against a stubbed `fetch`. */
@@ -987,13 +1395,16 @@ export async function main(): Promise<void> {
   const keys = romajiKeySet();
 
   console.log('\n═══ MichiKanji Query Performance ═══');
-  console.log('Metric: romaji-matched search queries (PROGRESS tracker, never an alarm)');
+  console.log(
+    'Metric: clicks by search intent, and romaji-matched queries (PROGRESS tracker, never an alarm)'
+  );
   console.log(`Window: ${window.start} .. ${window.end} (${settings.windowDays}d, ${settings.lagDays}d lag)`);
   console.log(`Property (primary): ${primary}`);
   console.log(
     `Romaji key set: ${keys.size} distinct spellings from lib/constants/n{1..5}-kanji.ts ` +
       `(minus ${ENGLISH_HOMOGRAPH_STOPLIST.size} English homographs at match time)`
   );
+  console.log(`Intent rules: ${INTENT_RULES_FINGERPRINT} (scripts/lib/query-intent.ts, first match wins)`);
 
   const rawKey = process.env[CREDENTIAL_ENV_VAR];
   if (!rawKey || rawKey.trim() === '') {
@@ -1087,6 +1498,7 @@ export async function main(): Promise<void> {
   const kanjiPageRows = await fetchKanjiPageRows(token, property, window);
 
   const totals = aggregateRows(queryRows);
+  const intents = summariseByIntent(queryRows);
   const { strict: romajiStrict, loose: romajiLoose } = summariseRomajiQueries(queryRows, keys);
   const watchedQueries = pickWatchedQueries(queryRows, watchlist);
   const topQueries = pickTopQueries(queryRows, settings.topRows);
@@ -1100,6 +1512,7 @@ export async function main(): Promise<void> {
     totalQueries: queryRows.length,
     impressions: totals.impressions,
     clicks: totals.clicks,
+    intents,
     romajiStrict,
     romajiLoose,
     watchedQueries,
@@ -1112,6 +1525,12 @@ export async function main(): Promise<void> {
   saveHistory(HISTORY_PATH, history);
 
   // ─── Console report ────────────────────────────────────────────────────────
+  // Clicks by intent first: it is the figure to read now that CTR is not.
+
+  const baseline = intentBaseline(history, current);
+  console.log('\nClicks by search intent (every query row, so the classes sum to the totals):');
+  console.log(renderIntentTable(intents, baseline));
+  console.log(describeIntentBaseline(baseline, intents));
 
   console.log(`\nQueries returned: ${current.totalQueries}`);
   console.log(`Impressions: ${current.impressions}   Clicks: ${current.clicks}`);
@@ -1142,8 +1561,9 @@ export async function main(): Promise<void> {
     console.log('\nTop romaji-matched queries (strict + loose):');
     matchedRows.slice(0, 10).forEach((r) =>
       console.log(
-        `  • [${classifyQuery(r.query, keys)}] ${r.query} — ${r.impressions} impr, ` +
-          `${r.clicks} clicks, pos ${r.position}`
+        `  • [${classifyQuery(r.query, keys)}]` +
+          `${classifyIntent(r.query) === 'machine-shaped' ? ' [machine-shaped]' : ''} ` +
+          `${r.query} — ${r.impressions} impr, ${r.clicks} clicks, pos ${r.position}`
       )
     );
   } else {
@@ -1169,7 +1589,8 @@ export async function main(): Promise<void> {
   );
 
   console.log(`\nHistory (${history.readings.length} readings) -> ${HISTORY_PATH}`);
-  console.log(`\n${renderHistoryTable(history.readings, settings.historyRows)}`);
+  console.log(`\nClicks by intent:\n${renderIntentTrendTable(history.readings, settings.historyRows)}`);
+  console.log(`\nRomaji:\n${renderHistoryTable(history.readings, settings.historyRows)}`);
   console.log('\n════════════════════════════════════\n');
 
   writeStepSummary(buildStepSummary(current, history, keys, settings.historyRows));
@@ -1182,11 +1603,24 @@ export async function main(): Promise<void> {
 // Only auto-run when executed directly, so the pure helpers above can be
 // imported by a test harness without kicking off an API call.
 if (process.argv[1] && /check-query-performance(\.[cm]?[jt]s)?$/.test(process.argv[1])) {
-  main().catch((err: unknown) => {
-    console.error(
-      'check-query-performance script failed:',
-      err instanceof Error ? err.message : err
-    );
-    process.exit(1);
-  });
+  if (process.argv.includes('--classify-history')) {
+    // Reads the committed history and prints. Never writes, never needs a key.
+    try {
+      console.log(renderHistoryClassification(loadHistory(HISTORY_PATH), HISTORY_PATH));
+    } catch (err) {
+      console.error(
+        'check-query-performance --classify-history failed:',
+        err instanceof Error ? err.message : err
+      );
+      process.exit(1);
+    }
+  } else {
+    main().catch((err: unknown) => {
+      console.error(
+        'check-query-performance script failed:',
+        err instanceof Error ? err.message : err
+      );
+      process.exit(1);
+    });
+  }
 }
