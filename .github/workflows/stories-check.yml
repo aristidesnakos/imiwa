@@ -1,0 +1,94 @@
+name: Story Episode Check
+
+# Guards the episode contract in docs/prd/episode-spec.md, mechanised by
+# scripts/stories/validate-stories.ts.
+#
+# The highest-value assertion is the first one: every kanji in the dialogue is
+# on the N5 list. That is the promise the whole /stories section makes to a
+# beginner — "you can read all of this" — and it is the rule most likely to slip
+# at 11pm while an episode is being written. The strip pipeline's own
+# validate.py checks it upstream before the art is generated; this checks it
+# again after the import, because the two can diverge (a script edit that was
+# never re-imported, a hand-edit of a generated file) and the site is what the
+# reader actually sees.
+#
+# Nothing else in this repo executes this code path. `scripts/` is excluded from
+# tsconfig.json, so neither `pnpm build` nor `pnpm lint` typechecks the
+# validator, and lib/stories/index.ts deliberately imports by relative path
+# rather than `@/` precisely so the validator can run under tsx from scripts/.
+# Tidying those imports would break it silently — this job is what notices.
+#
+# Like sentences-check.yml and unlike schema-check.yml, this needs no build: it
+# reads the committed TypeScript and the committed art directly, so it runs in
+# seconds.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      # The generated episode data — the thing being validated.
+      - 'data/stories/**'
+      # The registry and the types the data is checked against.
+      - 'lib/stories/**'
+      # The N5 list is the gate itself; the other four decide whether a target
+      # word links a character that actually has a page.
+      - 'lib/constants/*-kanji.ts'
+      # Panel art, email art and the OG image are asserted to exist on disk.
+      # `next build` does not check public/ paths, so a data file pointing at a
+      # panel nobody imported ships as a broken image.
+      - 'public/stories/**'
+      - 'scripts/stories/**'
+      - '.github/workflows/stories-check.yml'
+  # Catch anything reaching main through a route other than a PR — which, today,
+  # is most of it.
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/stories/**'
+      - 'lib/stories/**'
+      - 'lib/constants/*-kanji.ts'
+      - 'public/stories/**'
+      - 'scripts/stories/**'
+      - '.github/workflows/stories-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: stories-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-stories:
+    name: Validate episode data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Passes when no episode is registered yet — the validator says so and
+      # exits clean. One assertion is time-dependent: publishedAt may not be in
+      # the future, because nothing gates on the date (dynamicParams = false
+      # prerenders an episode the moment it is in the registry) and a future
+      # date only puts a future lastmod in the sitemap for a page that is
+      # already live. That check can only turn a red run green as the date
+      # arrives, never the reverse, so a re-run is always safe.
+      - name: Validate episode data
+        run: pnpm validate:stories
