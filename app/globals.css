@@ -122,16 +122,21 @@ body {
   max-height: 200px;
 }
 
+/* At rest the diagram shows every stroke. The dash-offset trick that hides a
+   stroke so it can be drawn belongs to the animation alone: it used to sit on
+   the resting rule, so every stroke-order page — the page type that earns most
+   of the site's clicks — opened on a box of bare stroke numbers, and the answer
+   to "how do I write 水" appeared only after someone found and pressed Play.
+   Now the character is there on arrival, and Play redraws it stroke by stroke. */
 .stroke-animation path {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  transition: stroke-dashoffset 0.1s ease;
   stroke: #2c2c2c;
   stroke-width: 2;
   fill: none;
 }
 
 .stroke-animation.animate path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
   animation: draw-stroke 0.8s ease-in-out forwards;
 }
 

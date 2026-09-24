@@ -303,9 +303,13 @@ export function StrokeOrderViewer({ kanji, className = '' }: Props) {
                     without a count at all. */}
                 {strokeCount > 0 && ` (${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'})`}
               </span>
+              {/* A fixed box, because the injected SVG otherwise renders at its
+                  intrinsic 109px inside a panel reserved at 256px. The panel's
+                  height is already fixed (h-64, above), so sizing the diagram
+                  up cannot shift the layout. */}
               <div
                 id={diagramId}
-                className={`stroke-animation${animating ? ' animate' : ''}`}
+                className={`stroke-animation h-48 w-48${animating ? ' animate' : ''}`}
                 dangerouslySetInnerHTML={{ __html: svg }}
               />
             </div>
