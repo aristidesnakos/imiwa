@@ -315,9 +315,14 @@ export default function LandingPage() {
             recorded baseline, so it is the assertion that trips first. `/` has
             ~25 kB. See docs/prd/weekly-story-newsletter.md.
 
-            `title={undefined}` because EmailCapture's own heading is an <h3> and
-            this page's sections lead with an <h2>; letting the card render its
-            title here would skip a heading level.
+            `title=""` and `description=""`, NOT `{undefined}`: the section's own
+            <h2> and line above already say what this is, and the card's default
+            heading ("Get new study material by email") and blurb only repeated
+            it in vaguer words. EmailCapture renders both only when truthy, but
+            its props have default values, and a default parameter applies to
+            `undefined` — so `{undefined}` rendered the defaults, which is what
+            this page showed until 2026-09-24. An empty string is falsy AND not
+            undefined, so it is the value that actually hides them.
 
             The band is a real surface, not a wash. `bg-japan-soft-mist/60` drew
             NOTHING: Tailwind cannot fold an opacity modifier into a colour that
@@ -355,8 +360,8 @@ export default function LandingPage() {
                   border-width to 0 — so the card loses its border entirely. */}
               <EmailCapture
                 source="homepage-weekly-story"
-                title={undefined}
-                description={undefined}
+                title=""
+                description=""
                 cta="Send me the stories"
                 className="border-[color:color-mix(in_srgb,var(--sakura-waters)_55%,var(--temple-stone))] shadow-md"
               />
