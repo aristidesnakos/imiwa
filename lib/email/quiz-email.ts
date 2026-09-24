@@ -1,8 +1,24 @@
 import { SITE_URL } from '@/lib/seo/site';
 import config from '@/config';
+import { postalAddressLine } from '@/lib/business/postal-address';
 import type { Episode } from '@/lib/stories/types';
 
-/** A Travels of Tan episode, quiz and answers as an email. */
+/**
+ * A Travels of Tan episode, quiz and answers as an email.
+ *
+ * One renderer for both sends that carry an episode — the welcome card from
+ * `/api/subscribe/confirm` and the weekly broadcast from
+ * `stories:create-broadcast` — so the footer's legal lines cannot drift apart
+ * between them. The postal address is rendered whenever
+ * `config.business.postalAddress` is set; the broadcast script refuses to run
+ * while it is not, and `pnpm validate:subscribe` asserts both footers carry it.
+ */
+
+/** The sender and postal address as one footer line, or null while none is set. */
+function senderLine(): string | null {
+  const address = config.business.postalAddress;
+  return address ? `${config.business.legalName} · ${postalAddressLine(address)}` : null;
+}
 
 const DEEP_OCEAN = '#1B365D';
 const MOUNTAIN_MIST = '#2C5F7C';
@@ -71,6 +87,8 @@ export function quizEmailText(episode: Episode, unsubscribeUrl?: string): string
     'anything — it reaches a person, not a robot.',
   );
   if (unsubscribeUrl) lines.push('', `Unsubscribe: ${unsubscribeUrl}`);
+  const sender = senderLine();
+  if (sender) lines.push('', sender);
   return lines.join('\n');
 }
 
@@ -111,6 +129,7 @@ export function quizEmailHtml(episode: Episode, unsubscribeUrl?: string): string
     .map(target => `<tr><td style="padding:3px 0;font-size:15px;line-height:1.5;color:${INK_BLACK};"><strong>${escapeHtml(target.word)}</strong> <span style="color:${MOUNTAIN_MIST};">（${escapeHtml(target.reading)}）&mdash; ${escapeHtml(target.en)}</span></td></tr>`)
     .join('');
   const url = episodeUrl(episode);
+  const sender = senderLine();
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="color-scheme" content="light only" /></head>
 <body style="margin:0;padding:0;background:${TEMPLE_STONE};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TEMPLE_STONE};padding:32px 16px;"><tr><td align="center">
@@ -123,5 +142,5 @@ ${story}<tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};paddin
 <tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};padding:8px 0;border-top:1px solid ${SOFT_MIST};">The words this episode teaches</td></tr><tr><td style="padding-bottom:24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${targets}</table></td></tr>
 <tr><td style="font-size:13px;line-height:1.6;color:${MOUNTAIN_MIST};border-top:1px solid ${SOFT_MIST};padding-top:16px;">A new episode goes up every week. Reply to this email if you get stuck on anything &mdash; it reaches a person, not a robot.</td></tr>
 <tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:12px;">${escapeHtml(config.appName)} &middot; <a href="${SITE_URL}/stories" style="color:${DEEP_OCEAN};">every episode</a>${unsubscribeUrl ? ` &middot; <a href="${unsubscribeUrl}" style="color:${DEEP_OCEAN};">unsubscribe</a>` : ''}</td></tr>
-</table></td></tr></table></body></html>`;
+${sender ? `<tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:4px;">${escapeHtml(sender)}</td></tr>\n` : ''}</table></td></tr></table></body></html>`;
 }

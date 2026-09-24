@@ -40,6 +40,11 @@ import {
   EMAIL_SIGNUP_SOURCES,
   isEmailSignupSource,
 } from '../lib/analytics/email-signup-sources';
+import config from '../config';
+import type { PostalAddress } from '../types/config';
+import { postalAddressLine, postalAddressProblems } from '../lib/business/postal-address';
+import { quizEmailHtml, quizEmailText } from '../lib/email/quiz-email';
+import { episodesNewestFirst } from '../lib/stories';
 
 const SECRET = 'test-secret-not-used-anywhere-real';
 const OTHER_SECRET = 'a-different-secret-entirely';
@@ -278,6 +283,83 @@ check('an empty string does not validate', !isEmailSignupSource(''));
 check('a non-string does not validate', !isEmailSignupSource(42));
 check('null does not validate', !isEmailSignupSource(null));
 
+// --- The commercial email footer ------------------------------------------
+//
+// CAN-SPAM requires a valid physical postal address in every commercial email,
+// and the same address is the privacy policy's postal contact point for
+// erasure requests. The rules: never a PO Box (it must name a physical place),
+// nothing missing. Then both sends that carry an episode — the welcome card
+// and the weekly broadcast — must render it, in HTML and in plain text. The
+// renderer is exercised with a sample address so this holds even while
+// config.business.postalAddress is still null.
+
+const SAMPLE_ADDRESS: PostalAddress = {
+  street: '10 Example Street',
+  unit: 'Suite 100 #1234',
+  locality: 'Boston',
+  region: 'MA',
+  postalCode: '02110',
+  country: 'United States',
+};
+
+check('the sender has a legal name', config.business.legalName.trim().length > 0);
+check('a complete street address has no problems', postalAddressProblems(SAMPLE_ADDRESS).length === 0);
+check('a missing address is refused', postalAddressProblems(null).length > 0);
+for (const poBox of ['PO Box 12', 'P.O. Box 12', 'p o box 12', 'Post Office Box 12', 'POB 12']) {
+  check(
+    `a PO Box (${JSON.stringify(poBox)}) is refused`,
+    postalAddressProblems({ ...SAMPLE_ADDRESS, street: poBox }).length > 0
+  );
+}
+check(
+  'a PO Box hidden in the unit line is refused',
+  postalAddressProblems({ ...SAMPLE_ADDRESS, unit: 'PO Box 12' }).length > 0
+);
+check(
+  'a PMB, the designation USPS requires on an agency mailbox, is not mistaken for a PO Box',
+  postalAddressProblems({ ...SAMPLE_ADDRESS, unit: 'PMB 1234' }).length === 0
+);
+check(
+  'a blank required field is refused',
+  postalAddressProblems({ ...SAMPLE_ADDRESS, postalCode: ' ' }).length > 0
+);
+
+const configuredAddress = config.business.postalAddress;
+if (configuredAddress) {
+  check('the configured postal address is publishable', postalAddressProblems(configuredAddress).length === 0);
+}
+
+const newestEpisode = episodesNewestFirst()[0];
+check('there is an episode to render', newestEpisode !== undefined);
+if (newestEpisode) {
+  const line = `${config.business.legalName} · ${postalAddressLine(SAMPLE_ADDRESS)}`;
+  const broadcastUnsubscribe = '{{{RESEND_UNSUBSCRIBE_URL}}}';
+  const welcomeUnsubscribe = 'https://www.michikanji.com/api/unsubscribe?token=sample';
+
+  config.business.postalAddress = SAMPLE_ADDRESS;
+  try {
+    for (const [send, unsubscribeUrl] of [
+      ['broadcast', broadcastUnsubscribe],
+      ['welcome card', welcomeUnsubscribe],
+    ] as const) {
+      const html = quizEmailHtml(newestEpisode, unsubscribeUrl);
+      const text = quizEmailText(newestEpisode, unsubscribeUrl);
+      check(`the ${send} HTML carries the sender and postal address`, html.includes(line));
+      check(`the ${send} plain text carries the sender and postal address`, text.includes(line));
+      check(`the ${send} HTML carries its unsubscribe link`, html.includes(`href="${unsubscribeUrl}"`));
+      check(`the ${send} plain text carries its unsubscribe link`, text.includes(unsubscribeUrl));
+    }
+  } finally {
+    config.business.postalAddress = configuredAddress;
+  }
+
+  check(
+    'with no address configured, the footer omits the line rather than printing a blank one',
+    configuredAddress !== null ||
+      !quizEmailText(newestEpisode, broadcastUnsubscribe).includes(`${config.business.legalName} · `)
+  );
+}
+
 // --- Report ---------------------------------------------------------------
 
 const total = passed + failures.length;
@@ -298,6 +380,15 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · a malformed episode claim is dropped rather than refusing a real consent
   · an unsubscribe token is a separate, non-expiring token that cannot be
     replayed as a confirm token, and vice versa
+  · the published postal address is never a PO Box, and both the broadcast and
+    the welcome card carry it, with an unsubscribe link, in HTML and plain text
 
 PASS — ${passed}/${total} checks passed
 `);
+
+if (!configuredAddress) {
+  console.log(
+    'NOTE — config.business.postalAddress is not set, so `pnpm stories:create-broadcast` will refuse to\n' +
+      'run and the welcome card goes out without a postal address. See docs/runbooks/newsletter.md.\n'
+  );
+}

@@ -50,6 +50,23 @@ const config = {
     // pre-send checklist and one round of fixes actually need.
     writeLeadDays: 3,
   },
+  // Who legally sends the newsletter, and where post reaches them. One
+  // definition for three obligations that must agree: the email footer
+  // (CAN-SPAM: a valid physical postal address in every commercial email), the
+  // privacy policy (GDPR Art. 13: the controller's identity and contact
+  // details) and the erasure route (a subscriber must be able to write to us).
+  business: {
+    legalName: "The Auspicious Company",
+    registration: "a company registered in Massachusetts, United States",
+    // null until the mailbox exists AND its USPS Form 1583 has been accepted:
+    // a private mailbox is only a valid CAN-SPAM address once it is
+    // "accurately registered" with the mail receiving agency (16 CFR 316.2(p)).
+    // Never a USPS PO Box — `pnpm validate:subscribe` rejects one, because the
+    // address also has to name a physical place. While this is null the email
+    // footer omits the line and `pnpm stories:create-broadcast` refuses to run.
+    // Procedure: docs/runbooks/newsletter.md.
+    postalAddress: null,
+  },
   auth: {
     // REQUIRED — the path to log in users
     loginUrl: "/signin",

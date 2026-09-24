@@ -32,6 +32,13 @@ on:
       - 'app/api/subscribe/**'
       - 'app/subscribed/**'
       - 'app/confirm/**'
+      - 'lib/email/unsubscribe-token.ts'
+      # The commercial-email footer: CAN-SPAM's postal address and the
+      # unsubscribe link, rendered for both the welcome card and the broadcast.
+      - 'lib/email/quiz-email.ts'
+      - 'lib/business/**'
+      - 'config.ts'
+      - 'types/config.ts'
       - 'scripts/validate-subscribe.ts'
       - '.github/workflows/subscribe-check.yml'
   push:
@@ -43,6 +50,13 @@ on:
       - 'app/api/subscribe/**'
       - 'app/subscribed/**'
       - 'app/confirm/**'
+      - 'lib/email/unsubscribe-token.ts'
+      # The commercial-email footer: CAN-SPAM's postal address and the
+      # unsubscribe link, rendered for both the welcome card and the broadcast.
+      - 'lib/email/quiz-email.ts'
+      - 'lib/business/**'
+      - 'config.ts'
+      - 'types/config.ts'
       - 'scripts/validate-subscribe.ts'
       - '.github/workflows/subscribe-check.yml'
   workflow_dispatch:
