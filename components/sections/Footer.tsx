@@ -3,6 +3,11 @@ import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 // Client child inside a server component: Footer itself stays a server component.
 import { StudyNavLinks } from "@/components/nav/StudyNavLinks";
+import { levelPagePath } from "@/lib/levels";
+
+// Asked of the level registry rather than written out, so the link disappears
+// with the page instead of outliving it as a site-wide 404.
+const N5_LIST_PATH = levelPagePath("N5");
 
 const Footer = () => {
   return (
@@ -40,6 +45,17 @@ const Footer = () => {
                   All Kanji
                 </Link>
               </li>
+              {N5_LIST_PATH && (
+                <li>
+                  {/* The one level with a list page so far. A link from every
+                      page on the site is most of how a new page gets found and
+                      weighed, and the level-list queries are the ones still
+                      turning into clicks. */}
+                  <Link href={N5_LIST_PATH} className="text-sm text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors">
+                    JLPT N5 kanji list
+                  </Link>
+                </li>
+              )}
               <li>
                 {/* The header nav is desktop-only in practice (its mobile Menu
                     button opens nothing), so this footer link is how a phone
@@ -157,6 +173,50 @@ const Footer = () => {
                 className="hover:text-japan-sakura-waters underline transition-colors font-medium"
               >
                 Creative Commons Attribution-Share Alike 3.0 license
+              </Link>
+              .
+            </p>
+            {/* EDRDG, the acknowledgement app/layout.tsx said this footer "will
+                carry". It was owed from the day KANJIDIC data went live: 55
+                reading entries in lib/constants are KANJIDIC imports (the ", "
+                + "." dialect lib/romaji/readings.ts parses), and glosses such
+                as 道's "road-way" are KANJIDIC's too. The EDRDG licence requires
+                a site showing its data to acknowledge it "on each screen
+                display", e.g. "at the foot of the screen or page", and this
+                footer renders on every page.
+
+                The wording is EDRDG's own sample for a WWW site
+                (https://www.edrdg.org/edrdg/sample.html), links included,
+                narrowed to the one file we use: the sample also names
+                JMdict/EDICT, which nothing here ships. Name it too the day
+                anything does. See docs/prd/content-source-licence-investigation.md. */}
+            <p className="text-xs text-japan-mountain-mist leading-relaxed">
+              This site uses the{' '}
+              <Link
+                href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                KANJIDIC
+              </Link>{' '}
+              dictionary file. This file is the property of the{' '}
+              <Link
+                href="https://www.edrdg.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                Electronic Dictionary Research and Development Group
+              </Link>
+              , and is used in conformance with the Group&rsquo;s{' '}
+              <Link
+                href="https://www.edrdg.org/edrdg/licence.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                licence
               </Link>
               .
             </p>
