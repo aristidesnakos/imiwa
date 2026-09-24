@@ -433,6 +433,22 @@ section('8. N5 learning sequence');
     problems,
     `${N5_SEQUENCE.length} themes place all ${n5.size} N5 kanji exactly once`
   );
+
+  // One order, two surfaces: /kanji/n5 lists the sequence, and the
+  // previous/next strip on every N5 character page walks the data file. If the
+  // two orders drift, "next" on 水 stops being the card after 水 on the list.
+  const sequenceOrder = N5_SEQUENCE.flatMap((theme) => theme.kanji).join('');
+  const fileOrder = N5_KANJI.map((k) => k.kanji).join('');
+  check(
+    'N5 teaching order differs between the sequence and the data file',
+    problems.length === 0 && sequenceOrder !== fileOrder
+      ? [
+          'lib/levels/n5-sequence.ts and lib/constants/n5-kanji.ts list the N5 kanji in different orders — ' +
+            'reorder one to match the other, so the list page and the character pages agree on what comes next',
+        ]
+      : [],
+    'the sequence and lib/constants/n5-kanji.ts give the same teaching order'
+  );
 }
 
 // ---------------------------------------------------------------------------

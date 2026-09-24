@@ -124,7 +124,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AnnouncementBanner />
             {children}
             {/* Site-wide, NOT per-page. The footer carries the KanjiVG
-                (CC BY-SA 3.0) attribution, and will carry the EDRDG and Tatoeba
+                (CC BY-SA 3.0) attribution and the EDRDG and Tatoeba
                 acknowledgements. EDRDG's licence requires the acknowledgement
                 "on each screen display", and CC BY-SA attribution must travel
                 with the copies you distribute — so it has to render on

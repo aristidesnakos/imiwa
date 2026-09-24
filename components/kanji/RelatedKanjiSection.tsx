@@ -28,10 +28,17 @@ export function RelatedKanjiSection({ currentKanji, allKanji }: Props) {
       </h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
         {relatedKanji.map((related) => (
+          /* The card fill used to be `bg-japan-cloud-ice`, with a
+             `hover:bg-japan-sky-ice` hover — two tokens defined nowhere, so
+             both compiled to nothing and these cards rendered with no surface
+             and no hover at all. Now tints of sakura-waters, written as
+             color-mix because an alpha suffix on a japan-* token also compiles
+             to nothing (CLAUDE.md, "Design tokens"). The ring is explicit: this
+             link does not go through buttonVariants. */
           <Link
             key={related.kanji}
             href={`/kanji/${encodeURIComponent(related.kanji)}`}
-            className="group block min-h-[220px] rounded-xl bg-japan-cloud-ice p-4 text-center transition-colors hover:bg-japan-sky-ice"
+            className="group block min-h-[220px] rounded-xl bg-[color-mix(in_srgb,var(--sakura-waters)_10%,var(--temple-stone))] p-4 text-center transition-colors hover:bg-[color-mix(in_srgb,var(--sakura-waters)_20%,var(--temple-stone))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Badge
               variant="secondary"
@@ -48,7 +55,7 @@ export function RelatedKanjiSection({ currentKanji, allKanji }: Props) {
             >
               {related.kanji}
             </div>
-            <p className="mt-5 text-sm leading-relaxed text-gray-700">{related.meaning}</p>
+            <p className="mt-5 text-sm leading-relaxed text-japan-ink-black">{related.meaning}</p>
           </Link>
         ))}
       </div>
