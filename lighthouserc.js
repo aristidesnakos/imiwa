@@ -96,7 +96,9 @@
  * Some of these freeze known debt rather than endorse a healthy state:
  *   - /kanji TBT ~1.1s is bad, and unlike CLS it reproduces everywhere — the
  *     runner measured 2305ms, worse still. Confirmed debt. The gate stops it
- *     getting worse; fixing it is separate work.
+ *     getting worse; fixing it is separate work. PAID 2026-09-24: 62ms locally
+ *     once the hub stopped prefetching /kanji/progress and /kanji/review, and
+ *     its entry below is ratcheted to match.
  *   - /kanji/<char> LCP ~3s is "needs improvement" on the template that
  *     carries essentially all organic traffic.
  *   NOT on that list: /kanji CLS. The 0.157 laptop figure did not reproduce on
@@ -170,10 +172,13 @@ module.exports = {
       //                category query
       //   /stories/<s> one episode: six images plus a client-side email form,
       //                the heaviest image payload on the site
+      //   /kanji/n5    a JLPT level list — 82 server-rendered entries, and the
+      //                page built for the "n5 kanji" query class
       url: [
         `${HOST}/`,
         `${HOST}/kanji`,
         `${HOST}/kanji/%E6%97%A5`,
+        `${HOST}/kanji/n5`,
         `${HOST}/stories`,
         `${HOST}/stories/tan-climbs-the-mountain`,
       ],
@@ -210,16 +215,23 @@ module.exports = {
         route({
           // Anchored so it does NOT also match /kanji/<char>.
           matchingUrlPattern: '^http://localhost:3000/kanji$',
-          lcp: 4000, // ~2.88s baseline, ~1.4x
+          lcp: 4000, // ~2.88s baseline, ~1.4x (2.43s measured 2026-09-24)
           fcp: 2200, // ~1.21s baseline
-          // 0.157 on the laptop but 0.000 on the runner: environment-dependent
-          // and UNCONFIRMED, NOT known debt. Ceiling sits on the "poor" line so
-          // whichever environment the gate runs in, it cannot flake.
-          cls: 0.25,
-          tbt: 3500, // ~1.1s baseline, 1581ms worst run — KNOWN DEBT, x4 CPU noise
-          scriptKb: 384, // 340 kB baseline, +13% — the real gate for this route
-          totalKb: 660, // 573 kB baseline, +15%
-          perfScore: 0.6,
+          // RATCHETED 2026-09-24, after the hub rework paid off the debt this
+          // entry used to freeze. Script fell 394 → 239 kB (the hub stopped
+          // prefetching /kanji/progress and /kanji/review, 112 kB of chart
+          // library), CLS 0.87 → 0 locally (the loading state now reserves the
+          // grid's height, so the footer no longer flashes into view and
+          // prefetches its links), TBT ~1.1s → 62ms. The old ceilings
+          // (script 384, total 660, CLS 0.25, TBT 3500) would have let every
+          // one of those fixes regress silently.
+          cls: 0.1,
+          // Loosest TBT here: this route still hydrates a 200-card grid and a
+          // 1,906-link index, and runner TBT ran ~2x local before.
+          tbt: 800,
+          scriptKb: 280, // 239 kB measured, +17%
+          totalKb: 430, // 375 kB measured, +15%
+          perfScore: 0.85,
         }),
         // Measured 2026-09-14: 3 runs per route, local `pnpm start`, same 4x CPU
         // emulation as every other entry here. Byte budgets are baseline +~15%
@@ -231,8 +243,13 @@ module.exports = {
           fcp: 1800, // ~0.92s baseline — same FCP as `/`, same ceiling
           cls: 0.1, // 0.000 measured; hold Google's "good" boundary
           tbt: 600, // 34-42ms measured; CPU-noise room, not a real limit
-          scriptKb: 255, // 223 kB baseline, +14%
-          totalKb: 345, // 300 kB baseline, +15%
+          // RATCHETED 2026-09-24: 183 kB script / 283 kB total measured. The
+          // header logo prefetches `/`, and `/` stopped shipping the whole
+          // dictionary when the homepage became a server component, so every
+          // page with a header fell ~57 kB of script. Holding the old ceilings
+          // would have left that much room for a regression nobody sees.
+          scriptKb: 215, // 183 kB measured, +17%
+          totalKb: 325, // 283 kB measured, +15%
           perfScore: 0.85, // 0.99 measured
         }),
         route({
@@ -242,15 +259,35 @@ module.exports = {
           fcp: 2000, // 1.03s median, 1.22s worst run
           cls: 0.1, // 0.000 measured
           tbt: 600, // 47-53ms measured
-          scriptKb: 255, // 223 kB baseline, +14%
+          scriptKb: 215, // 183 kB measured 2026-09-24 (was 223), +17% — see /stories
           // Six WebP panels, but next/image serves a responsive size rather
           // than the 1092px master — the whole page lands under the kanji
           // detail route, not over it, which the paper budget got badly wrong.
-          totalKb: 425, // 367 kB baseline, +16%
+          totalKb: 365, // 315 kB measured 2026-09-24 (was 367), +16%
           perfScore: 0.85, // 0.98 measured
         }),
+        // A JLPT level list (/kanji/n5, and later n4..n1). Measured 2026-09-24,
+        // local `pnpm start`, same emulation: 192 kB script / 270 kB total. It
+        // is lighter than a character page because every link that would
+        // prefetch a heavy route — 82 kanji pages, the /kanji dictionary — has
+        // prefetch off, and the list itself is server-rendered HTML.
+        // N1's list is ~12x N5's: budget it on its own when it gets a page.
         route({
-          matchingUrlPattern: '^http://localhost:3000/kanji/.+',
+          matchingUrlPattern: '^http://localhost:3000/kanji/n[1-5]$',
+          lcp: 4100, // 2.89s measured, ~1.4x
+          fcp: 1800, // 1.08s measured
+          cls: 0.1, // 0.000 measured
+          tbt: 600, // 59ms measured
+          scriptKb: 225, // 192 kB measured, +17%
+          totalKb: 310, // 270 kB measured, +15%
+          perfScore: 0.85, // 0.94 measured
+        }),
+        route({
+          // Percent-encoded segments only, i.e. a character. `/kanji/.+` used
+          // to be safe here, but LHCI applies EVERY matching entry to a URL, so
+          // it would also hold the level lists (/kanji/n5) to this template's
+          // budget on top of their own.
+          matchingUrlPattern: '^http://localhost:3000/kanji/%',
           lcp: 4500, // 2.87-3.30s baseline (noisy, post-hydration LCP element)
           fcp: 1800, // ~0.92s baseline
           cls: 0.1, // 0.026 baseline
