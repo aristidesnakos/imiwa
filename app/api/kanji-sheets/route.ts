@@ -5,6 +5,7 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
+import { MAX_SHEETS_PER_REQUEST } from '@/lib/sheets/kanji-sheets';
 
 // Built once at module scope: this route is hit on every sheet open, so a
 // ~2000-entry lookup should not be rebuilt per request.
@@ -19,9 +20,36 @@ const KANJI_MAP = new Map<string, KanjiWithLevel>([
   ...N5_KANJI.map((k) => [k.kanji, { ...k, level: 'N5' }] as [string, KanjiWithLevel]),
 ]);
 
+// A finished sheet is cached for a day by the browser and the CDN, the same
+// policy as the stroke-diagram proxy (app/api/kanji-svg/[hex]/route.ts). Until
+// this, every open re-ran the KanjiVG fetch for a document that only changes
+// when our data or KanjiVG does, and a deploy purges the CDN anyway. Roadmap
+// P3-3.
+//
+// A sheet printed WITHOUT its diagram is never cached. When KanjiVG cannot be
+// reached this route degrades rather than fails — the sheet still prints, minus
+// the stroke order — and a day-long cache would pin one bad upstream minute onto
+// everyone who opened that sheet afterwards. That is not hypothetical: on
+// 2026-09-24 jsDelivr answered 403, and 404 "Failed to fetch KanjiVG/kanjivg@latest
+// from GitHub", for files that exist and loaded fine minutes later.
+const CACHE_COMPLETE_SHEET = 'public, max-age=86400, s-maxage=86400';
+const CACHE_INCOMPLETE_SHEET = 'no-store';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const character = searchParams.get('character');
+  const characters = searchParams.get('characters');
+
+  // `characters` is the several-sheets form. It is branched on first so that a
+  // request which does not name it takes exactly the path it always took —
+  // same statuses, same messages, byte for byte the same sheet. Naming both is
+  // refused rather than guessed at.
+  if (characters !== null) {
+    if (character !== null) {
+      return new NextResponse('Pass character or characters, not both', { status: 400 });
+    }
+    return multiSheetResponse(characters);
+  }
 
   if (!character) {
     return new NextResponse('Missing character parameter', { status: 400 });
@@ -53,8 +81,103 @@ export async function GET(request: NextRequest) {
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': strokeOrderSvg ? CACHE_COMPLETE_SHEET : CACHE_INCOMPLETE_SHEET,
     }
   });
+}
+
+interface PreparedSheet {
+  kanjiData: KanjiWithLevel;
+  strokeOrderSvg: string | null;
+  strokeCount: number | null;
+  licenceNotice: string | null;
+}
+
+/**
+ * Several sheets as ONE printable document, one per page, in the order asked
+ * for. This is what the "print a whole group" links open: a themed set of N5
+ * kanji printed, or saved as a single PDF, in one go instead of one tab each.
+ *
+ * Every character has to pass the lookup the single-sheet path uses — the same
+ * KANJI_MAP, so lowest-level-wins holds here too — or the request is refused
+ * with the first offender named. Dropping a bad character quietly would hand
+ * someone a shorter stack of paper than they asked for, with nothing on it to
+ * say so.
+ */
+async function multiSheetResponse(value: string): Promise<NextResponse> {
+  const parsed = parseCharacters(value);
+  if ('error' in parsed) {
+    return new NextResponse(parsed.error, { status: 400 });
+  }
+
+  // In parallel: at the cap that is twenty KanjiVG fetches, and in series the
+  // document could not start until the last of them had come back.
+  const sheets: PreparedSheet[] = await Promise.all(
+    parsed.kanji.map(async (kanjiData) => {
+      const strokeOrder = await fetchKanjiStrokeOrder(kanjiData.kanji);
+      const strokeOrderSvg = strokeOrder?.svg ?? null;
+      return {
+        kanjiData,
+        strokeOrderSvg,
+        strokeCount: strokeOrderSvg ? extractStrokeCount(strokeOrderSvg) : null,
+        licenceNotice: strokeOrder?.notice ?? null,
+      };
+    })
+  );
+
+  const complete = sheets.every((sheet) => sheet.strokeOrderSvg !== null);
+
+  return new NextResponse(generateMultiSheetHTML(sheets), {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': complete ? CACHE_COMPLETE_SHEET : CACHE_INCOMPLETE_SHEET,
+    },
+  });
+}
+
+/**
+ * The `characters` value as an ordered, de-duplicated list of entries — or why
+ * it was refused.
+ *
+ * `for…of` walks a string by code point, never by UTF-16 unit, for the reason
+ * `fetchKanjiStrokeOrder` uses codePointAt: split by unit, a character above
+ * U+FFFF is two lone surrogates, neither of which is in the data, and a request
+ * naming a real kanji would be refused.
+ *
+ * Nothing is trimmed or normalised. A space, a comma or a variation selector is
+ * a code point the data does not contain, so it is refused like any other — the
+ * one-character path accepts exactly what KANJI_MAP holds, and so does this.
+ */
+function parseCharacters(value: string): { kanji: KanjiWithLevel[] } | { error: string } {
+  const kanji: KanjiWithLevel[] = [];
+  const seen = new Set<string>();
+
+  for (const char of value) {
+    if (seen.has(char)) continue;
+
+    const entry = KANJI_MAP.get(char);
+    if (!entry) {
+      // The code point as well as the character: the offender is often
+      // invisible (a space, a zero-width joiner) or renders as a box.
+      const codePoint = (char.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0');
+      return { error: `"${char}" (U+${codePoint}) is not a kanji in our JLPT N5-N1 dataset` };
+    }
+
+    seen.add(char);
+    kanji.push(entry);
+
+    if (kanji.length > MAX_SHEETS_PER_REQUEST) {
+      return {
+        error: `Too many kanji: one request prints at most ${MAX_SHEETS_PER_REQUEST} sheets`,
+      };
+    }
+  }
+
+  if (kanji.length === 0) {
+    return { error: 'Missing characters parameter' };
+  }
+
+  return { kanji };
 }
 
 // KanjiVG's copyright notice is an XML comment sitting above the root element
@@ -123,19 +246,85 @@ function extractStrokeCount(svg: string): number {
   return matches ? matches.length : 0;
 }
 
+// The document is assembled from three pieces — the head and stylesheet, one
+// body per sheet, the closing tags — so the one-sheet and several-sheet
+// documents share every line of the sheet itself. The one-sheet assembly is
+// byte-for-byte the single template this used to be; keep it that way, since
+// scripts/download-kanji-sheets.ts and every cached copy expect that document.
+
 function generatePracticeSheetHTML(
   kanjiData: KanjiWithLevel,
   strokeOrderSvg: string | null,
   strokeCount: number | null,
   licenceNotice: string | null
 ): string {
+  return `${documentStart(`${kanjiData.kanji} Practice Sheet`)}${licenceNotice ?? ''}
+${renderSheet(kanjiData, strokeOrderSvg, strokeCount)}${DOCUMENT_END}`;
+}
+
+// Added to the shared stylesheet for the several-sheet document only. No
+// colours: this is a print document with no access to the site's palette
+// tokens, so anything new here inherits the sheet's own ink rather than adding
+// another literal.
+const MULTI_SHEET_STYLES = `
+    /* One sheet per printed page. A break BEFORE every sheet after the first,
+       not after every sheet, so the document never ends on a blank page. */
+    .page-container + .page-container {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .print-hint {
+      max-width: 210mm;
+      margin: 0 auto 24px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* On screen the sheets would otherwise run together into one long page;
+       on paper the page break already separates them. */
+    @media screen {
+      .page-container + .page-container {
+        margin-top: 48px;
+        padding-top: 48px;
+        border-top: 1px dashed;
+      }
+    }
+
+    @media print {
+      .print-hint {
+        display: none;
+      }
+    }
+`;
+
+function generateMultiSheetHTML(sheets: PreparedSheet[]): string {
+  const sheetsLabel = sheets.length === 1 ? 'Practice Sheet' : 'Practice Sheets';
+  // The title is also the file name the browser suggests under Save as PDF,
+  // so it names the characters rather than just counting them.
+  const title = `${sheets.map((sheet) => sheet.kanjiData.kanji).join('')} ${sheetsLabel}`;
+
+  // Every KanjiVG file carries the same notice, and the one-sheet document
+  // already keeps a single copy rather than one per inlined diagram. One copy
+  // of each DISTINCT notice keeps every source's notice intact without printing
+  // the same comment twenty times.
+  const notices = Array.from(
+    new Set(sheets.map((sheet) => sheet.licenceNotice).filter((notice): notice is string => notice !== null))
+  ).join('\n');
+
+  return `${documentStart(title, MULTI_SHEET_STYLES)}${notices}
+  <p class="print-hint" lang="en">${sheets.length} ${sheetsLabel.toLowerCase()}, one per printed page. Press Ctrl+P (&#8984;P on a Mac) to print, or choose Save as PDF in the print dialog to keep them all in one file.</p>
+${sheets.map((sheet) => renderSheet(sheet.kanjiData, sheet.strokeOrderSvg, sheet.strokeCount)).join('')}${DOCUMENT_END}`;
+}
+
+function documentStart(title: string, extraStyles = ''): string {
   return `
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${kanjiData.kanji} Practice Sheet</title>
+  <title>${title}</title>
   <style>
     @page {
       size: A4 portrait;
@@ -307,11 +496,18 @@ function generatePracticeSheetHTML(
         page-break-inside: avoid;
       }
     }
-  </style>
+${extraStyles}  </style>
 </head>
 <body>
-${licenceNotice ?? ''}
-  <div class="page-container">
+`;
+}
+
+function renderSheet(
+  kanjiData: KanjiWithLevel,
+  strokeOrderSvg: string | null,
+  strokeCount: number | null
+): string {
+  return `  <div class="page-container">
     <!-- Header Section -->
     <div class="header-section">
       <div class="kanji-display">
@@ -379,6 +575,8 @@ ${licenceNotice ?? ''}
       Practice sheet from michikanji.com.
     </p>
   </div>
-</body>
-</html>`;
+`;
 }
+
+const DOCUMENT_END = `</body>
+</html>`;

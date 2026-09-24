@@ -9,14 +9,23 @@ export async function GET(request: NextRequest) {
 
   const kanaGrid = getKanaGrid(type);
   const title = getKanaTitle(type);
-  
+
   // Generate HTML for practice sheet
-  const html = await generatePracticeSheetHTML(kanaGrid, title, format, showRomaji);
-  
+  const fetches = { missing: 0 };
+  const html = await generatePracticeSheetHTML(kanaGrid, title, format, showRomaji, fetches);
+
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${type}_${format}_sheet.html"`
+      'Content-Disposition': `attachment; filename="${type}_${format}_sheet.html"`,
+      // Cached for a day like the kanji sheets (roadmap P3-3): the stroke-order
+      // format otherwise re-fetches one KanjiVG file per kana on every download.
+      // Not when a diagram failed to arrive — that cell falls back to the plain
+      // character, and caching the fallback would pin a passing jsDelivr hiccup
+      // onto a day of downloads. Seen while writing this: four katakana missing
+      // from one request, all four present on the next. See
+      // app/api/kanji-sheets/route.ts.
+      'Cache-Control': fetches.missing === 0 ? 'public, max-age=86400, s-maxage=86400' : 'no-store',
     }
   });
 }
@@ -66,10 +75,11 @@ async function fetchKanaStrokeOrder(unicode: number): Promise<string | null> {
 }
 
 async function generatePracticeSheetHTML(
-  kanaGrid: KanaRow[], 
-  title: string, 
-  format: string, 
-  showRomaji: boolean
+  kanaGrid: KanaRow[],
+  title: string,
+  format: string,
+  showRomaji: boolean,
+  fetches: { missing: number }
 ): Promise<string> {
   return `
 <!DOCTYPE html>
@@ -288,6 +298,7 @@ async function generatePracticeSheetHTML(
             
             if (format === 'stroke-order' && char) {
               const strokeSvg = await fetchKanaStrokeOrder(char.unicode);
+              if (!strokeSvg) fetches.missing += 1;
               cellContent = `
                 <div class="stroke-order-container">
                   ${strokeSvg || `<div class="kana-char">${char.char}</div>`}
