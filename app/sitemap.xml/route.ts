@@ -15,6 +15,10 @@ import { EPISODES } from '@/lib/stories';
 const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   { path: '', lastmod: '2026-06-14', priority: '1.0' },
   { path: '/kanji', lastmod: '2026-06-14', priority: '0.9' },
+  // Level list pages — one per entry in lib/levels (only N5 has a page yet).
+  // Same priority as the hub: each is a category page written to rank for its
+  // own query class ("n5 kanji", "n5 kanji list").
+  { path: '/kanji/n5', lastmod: '2026-09-24', priority: '0.9' },
   // Indexable and canonical, but both of its in-app links sit behind localStorage
   // checks a crawler never satisfies — without this entry it is an orphan.
   { path: '/kanji/review', lastmod: '2026-07-31', priority: '0.6' },

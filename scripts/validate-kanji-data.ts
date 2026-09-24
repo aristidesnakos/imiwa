@@ -71,6 +71,7 @@ import { N3_KANJI } from '../lib/constants/n3-kanji';
 import { N4_KANJI } from '../lib/constants/n4-kanji';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
 import { NON_JLPT_KANJI } from '../lib/constants/non-jlpt-kanji';
+import { N5_SEQUENCE } from '../lib/levels/n5-sequence';
 
 // The `KanjiData` type is deliberately not imported — only the values are — so
 // this script survives the type moving between modules.
@@ -393,6 +394,45 @@ section('7. Advertised kanji total');
   }
   console.log(`  distinct characters   ${distinct}`);
   console.log(`  non-JLPT entries      ${NON_JLPT_KANJI.length}  (unreferenced — nothing renders these)`);
+}
+
+// ---------------------------------------------------------------------------
+// 8. The N5 learning sequence covers the N5 list exactly
+// ---------------------------------------------------------------------------
+// /kanji/n5 renders the list in the order lib/levels/n5-sequence.ts gives it.
+// The page never drops an entry the sequence misses (it falls into a trailing
+// group), but a list page that quietly grows an "also on the list" bin has
+// lost its teaching order, so both directions fail here.
+
+section('8. N5 learning sequence');
+{
+  const n5 = new Set(N5_KANJI.map((k) => k.kanji));
+  const seen = new Map<string, string>();
+  const problems: string[] = [];
+  const ids = new Set<string>();
+
+  for (const theme of N5_SEQUENCE) {
+    if (ids.has(theme.id)) problems.push(`theme id "${theme.id}" is used twice — it is the page's anchor`);
+    ids.add(theme.id);
+    if (theme.kanji.length === 0) problems.push(`theme "${theme.id}" is empty`);
+    for (const kanji of theme.kanji) {
+      if (!n5.has(kanji)) problems.push(`${kanji} (theme "${theme.id}") is not on the N5 list`);
+      const earlier = seen.get(kanji);
+      if (earlier) problems.push(`${kanji} appears in theme "${earlier}" and again in "${theme.id}"`);
+      seen.set(kanji, theme.id);
+    }
+  }
+  for (const kanji of n5) {
+    if (!seen.has(kanji)) {
+      problems.push(`${kanji} is on the N5 list but in no theme — add it to lib/levels/n5-sequence.ts`);
+    }
+  }
+
+  check(
+    'N5 learning sequence does not match the N5 list',
+    problems,
+    `${N5_SEQUENCE.length} themes place all ${n5.size} N5 kanji exactly once`
+  );
 }
 
 // ---------------------------------------------------------------------------

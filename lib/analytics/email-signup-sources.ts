@@ -50,6 +50,14 @@ export const EMAIL_SIGNUP_SOURCES = [
    * source that evidence does not exist.
    */
   'short-quiz',
+  /**
+   * The form at the foot of a JLPT level list (/kanji/n5). Someone here is
+   * studying a level as a set — a different intent from browsing the story
+   * shelf or finishing an episode, which is the test for earning a source of
+   * its own. One source for every level page, not one per level: a per-level
+   * split answers no decision the page URL in DataFast does not already.
+   */
+  'kanji-level-list',
 ] as const;
 
 /**

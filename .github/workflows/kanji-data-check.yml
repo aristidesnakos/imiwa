@@ -37,6 +37,7 @@ on:
     paths:
       - 'lib/constants/**'
       - 'lib/romaji/**'
+      - 'lib/levels/**'
       # Consumes the romaji transform to build titles and descriptions, so a
       # change here can leak annotation syntax into a <title> without touching
       # lib/romaji/ at all.
@@ -51,6 +52,7 @@ on:
     paths:
       - 'lib/constants/**'
       - 'lib/romaji/**'
+      - 'lib/levels/**'
       - 'lib/seo/kanji-optimization.ts'
       - 'scripts/validate-romaji.ts'
       - 'scripts/validate-kanji-data.ts'

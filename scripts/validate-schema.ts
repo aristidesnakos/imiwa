@@ -54,6 +54,7 @@ import {
   KANJI_CONTENT_PUBLISHED,
   KANJI_CONTENT_LAST_MODIFIED,
 } from '../lib/seo/site';
+import { levelPages } from '../lib/levels';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -811,6 +812,97 @@ function validateLearningResource(file: string, node: Node, expectedPageUrl: str
   }
 }
 
+/**
+ * A JLPT level list page (`/kanji/n5`, …): a CollectionPage whose ItemList is
+ * the level's kanji, plus a BreadcrumbList.
+ *
+ * The ItemList is checked against the BUILD rather than trusted: every entry
+ * must point at a kanji page that was actually prerendered. A list page whose
+ * entries 404 is the failure a visitor would hit first and a crawler would
+ * hit eighty times, and it is exactly what drift between the level data and
+ * the page would produce.
+ */
+function validateLevelPage(file: string, entities: Node[], pagePath: string, level: string, kanjiPageSet: Set<string>): void {
+  const expectedUrl = `${SITE_URL}${pagePath}`;
+  const collections = entitiesOfType(entities, 'CollectionPage');
+  if (collections.length !== 1) {
+    fail({
+      file,
+      schemaType: 'CollectionPage',
+      field: '(block)',
+      expected: 'exactly one CollectionPage entity',
+      actual: `${collections.length} — page has ${entities.map(typeOf).join(', ')}`,
+      hint: 'Level list pages describe themselves as a CollectionPage with an ItemList of their kanji.',
+    });
+  }
+  for (const page of collections) {
+    const T = 'CollectionPage';
+    requireField(file, T, page, 'name');
+    requireField(file, T, page, 'description');
+    requireEquals(file, T, 'url', asString(page.url), expectedUrl, 'The entity URL must be the page it describes, on the canonical www host.');
+    requireEquals(file, T, 'educationalLevel', asString(page.educationalLevel), `JLPT ${level}`, 'Keep the level in one spelling: "JLPT N5".');
+
+    const list = asObject(page.mainEntity);
+    if (!list || typeOf(list) !== 'ItemList') {
+      fail({ file, schemaType: T, field: 'mainEntity', expected: 'an ItemList of the level\'s kanji', actual: list ? typeOf(list) : 'missing' });
+      continue;
+    }
+    const items = Array.isArray(list.itemListElement) ? list.itemListElement : [];
+    if (items.length === 0) {
+      fail({ file, schemaType: 'ItemList', field: 'itemListElement', expected: 'one ListItem per kanji', actual: 'empty or missing' });
+      continue;
+    }
+    if (list.numberOfItems !== items.length) {
+      fail({
+        file,
+        schemaType: 'ItemList',
+        field: 'numberOfItems',
+        expected: String(items.length),
+        actual: JSON.stringify(list.numberOfItems),
+        hint: 'numberOfItems must agree with the entries actually listed.',
+      });
+    }
+    const kanjiPrefix = `${SITE_URL}/kanji/`;
+    items.forEach((raw, i) => {
+      const item = asObject(raw);
+      const label = `ItemList.itemListElement[${i}]`;
+      if (!item) {
+        fail({ file, schemaType: 'ItemList', field: `itemListElement[${i}]`, expected: 'a ListItem object', actual: JSON.stringify(raw).slice(0, 120) });
+        return;
+      }
+      requireEquals(file, label, '@type', item['@type'], 'ListItem');
+      if (item.position !== i + 1) {
+        fail({ file, schemaType: label, field: 'position', expected: String(i + 1), actual: JSON.stringify(item.position), hint: 'Positions must be contiguous and 1-based.' });
+      }
+      requireField(file, label, item, 'name');
+      const url = asString(item.url);
+      requireCanonicalHost(file, label, 'url', url);
+      const char = url && url.startsWith(kanjiPrefix) ? decodeURIComponent(url.slice(kanjiPrefix.length)) : null;
+      if (!char || !kanjiPageSet.has(char.normalize('NFC'))) {
+        fail({
+          file,
+          schemaType: label,
+          field: 'url',
+          expected: `a prerendered ${kanjiPrefix}<char> page`,
+          actual: JSON.stringify(url),
+          hint: 'Every entry on a level list must link to a kanji page that exists in this build.',
+        });
+      }
+    });
+  }
+
+  const crumbs = entitiesOfType(entities, 'BreadcrumbList');
+  if (crumbs.length === 0) {
+    fail({ file, schemaType: 'BreadcrumbList', field: '(block)', expected: 'one BreadcrumbList entity', actual: `absent — page has ${entities.map(typeOf).join(', ')}` });
+  }
+  for (const list of crumbs) {
+    validateBreadcrumbList(file, list);
+    const items = Array.isArray(list.itemListElement) ? list.itemListElement : [];
+    const last = asObject(items[items.length - 1]);
+    if (last) requireEquals(file, 'BreadcrumbList (last item)', 'item', asString(last.item), expectedUrl, 'The last crumb is the page itself.');
+  }
+}
+
 function validatePage(absPath: string, opts: { kanjiChar: string | null; storySlug?: string | null; requireSiteGraph: boolean }): void {
   const file = relative(absPath);
   const html = fs.readFileSync(absPath, 'utf8');
@@ -1200,6 +1292,28 @@ function main(): void {
     });
   }
 
+  // ─ level list pages ─
+  // Enumerated from lib/levels, so registering a level without building its
+  // page fails here instead of shipping a sitemap-less, link-less gap.
+  const kanjiCharSet = new Set(kanjiPages.map((f) => path.basename(f, '.html').normalize('NFC')));
+  for (const { level, path: pagePath } of levelPages()) {
+    const abs = path.join(BUILD_APP_DIR, `${pagePath.replace(/^\//, '')}.html`);
+    if (!fs.existsSync(abs)) {
+      fail({
+        file: relative(abs),
+        schemaType: '(build artefact)',
+        field: `level page ${pagePath}`,
+        expected: 'a prerendered HTML file',
+        actual: 'missing',
+        hint: `lib/levels says ${level} has a list page. Create app${pagePath}/page.tsx or remove the level from LEVELS_WITH_PAGES.`,
+      });
+      continue;
+    }
+    const file = relative(abs);
+    const { entities } = extractJsonLd(file, fs.readFileSync(abs, 'utf8'));
+    validateLevelPage(file, entities, pagePath, level, kanjiCharSet);
+  }
+
   validateSitemap();
   validateRobots();
 
@@ -1218,7 +1332,8 @@ function main(): void {
   console.log('  - All required Article fields present (dates, image, publisher, mainEntityOfPage)');
   console.log('  - Every logo/image URL in JSON-LD resolves to a real file');
   console.log(`  - Every entity URL is on ${SITE_HOST}; apex ${APEX_HOST} absent from the build`);
-  console.log('  - FAQPage and BreadcrumbList well-formed; sitemap + robots canonical\n');
+  console.log('  - FAQPage and BreadcrumbList well-formed; sitemap + robots canonical');
+  console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page\n');
 }
 
 main();

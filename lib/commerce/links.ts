@@ -144,6 +144,15 @@ export const PACK_DOWNLOAD_GOALS = {
 export const PACK_DESTINATION = 'michikanji_site';
 
 /**
+ * The N5 pack offered on the N5 LIST page (`/kanji/n5`), as opposed to under
+ * the N5 sheets. Same file, a different placement, and by the rule above a
+ * placement that can be moved or killed on its own gets its own series. Fired
+ * from a server-rendered `data-fast-goal` attribute, so the list page carries
+ * no client boundary for it.
+ */
+export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
+
+/**
  * ─────────────────────────────────────────────────────────────────────────────
  * THE BOOK — GOAL NAMES, TAGS, AND THE PER-SURFACE URL
  * ─────────────────────────────────────────────────────────────────────────────
@@ -153,7 +162,7 @@ export const PACK_DESTINATION = 'michikanji_site';
  * more. What happens after the click is joined back by hand — see
  * `data/book-sales/README.md`.
  *
- * ONE BOOK, THREE NAMES. The same rule that kept the three pack downloads
+ * ONE BOOK, ONE NAME PER SURFACE. The same rule that kept the three pack downloads
  * apart keeps these apart: a split you would act on separately belongs in the
  * name, and the surfaces lead to different decisions.
  *
@@ -169,6 +178,13 @@ export const PACK_DESTINATION = 'michikanji_site';
  *     SEO hobby and becomes a revenue project. Low → they are reference
  *     lookups, the line goes, and the N5 plan's "link it from the kanji pages"
  *     is answered *no*. This is the highest-value number on the list.
+ *
+ *   · `n5_list_book_click` — the N5 list page, `/kanji/n5` (added 24 Sep 2026).
+ *     Its visitors are studying the N5 set AS a set, which is exactly what the
+ *     book is. High → the list page is the book's natural home, and the same
+ *     slot belongs on every future level page that has a book. Low → people
+ *     choosing a whole level want the free pack directly above it; stop giving
+ *     the book that slot.
  *
  * A funnel step matches a goal NAME and ignores properties (verified: the
  * dashboard's step editor takes a goal name, and the shipped script sends
@@ -190,11 +206,12 @@ export const PACK_DESTINATION = 'michikanji_site';
  * and it is not defined until something renders it, because an unused goal name
  * is a permanent line in a list that never shrinks.
  */
-export type BookSurface = 'n5Sheets' | 'kanjiDetail';
+export type BookSurface = 'n5Sheets' | 'kanjiDetail' | 'n5List';
 
 export const BOOK_CLICK_GOALS = {
   n5Sheets: 'n5_sheets_book_click',
   kanjiDetail: 'kanji_detail_book_click',
+  n5List: 'n5_list_book_click',
 } as const satisfies Record<BookSurface, string>;
 
 /**
@@ -258,6 +275,7 @@ export const BOOK_DESTINATION = 'amazon';
 export const BOOK_ATTRIBUTION_TAGS: Record<BookSurface, string> = {
   n5Sheets: '',
   kanjiDetail: '',
+  n5List: '',
 };
 
 /**
