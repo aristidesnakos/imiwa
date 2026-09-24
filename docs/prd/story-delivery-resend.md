@@ -1,10 +1,41 @@
 # Story Delivery on Our Own Domain — Resend PRD (Option C)
 
-**Version 1.3** · Created 2026-08-24 · Revised 2026-09-15 · Owner: Ari Nakos
-**Status:** Capture is built. `RESEND_API_KEY`, `EMAIL_TOKEN_SECRET` and
-`RESEND_WEEKLY_STORIES_SEGMENT_ID` must all be live in
-production (Vercel) and a deploy must have picked them up before `/api/subscribe` answers 200 instead
-of 503 — verify with a real subscribe attempt on production, not by checking that the vars are set.
+**Version 1.4** · Created 2026-08-24 · Revised 2026-09-16 · Owner: Ari Nakos
+**Status: signup is broken in production, and has been since the confirm route shipped.**
+`RESEND_API_KEY` and `EMAIL_TOKEN_SECRET` are set in Vercel production;
+`RESEND_WEEKLY_STORIES_SEGMENT_ID` is **not**. So `POST /api/subscribe` answers 200 and really does
+send the consent email — the first half works — while `POST /api/subscribe/confirm` fails its
+`!NEWSLETTER_SEGMENT_ID` guard and returns `503 {"error":"Subscriptions are not configured."}`,
+verified live 2026-09-16 with a side-effect-free probe. A subscriber therefore receives the consent
+email, clicks through to `/confirm`, presses the button and hits an error; no contact is ever created.
+**The list is empty by construction, not for lack of interest.** Episodes 1, 2 and 3 are all live and
+none has ever been broadcast. The blocker is one environment variable plus a redeploy: set
+`RESEND_WEEKLY_STORIES_SEGMENT_ID` in Production, redeploy, then run §5 Phase 2 step 9's live test end
+to end before trusting any of this. Operational procedure:
+[`docs/runbooks/newsletter.md`](../runbooks/newsletter.md).
+
+**v1.4 — The send day exists, and the capture path is dead in production.** Two unrelated things in
+one revision. **The send day is Saturday**, decided 2026-09-16, with write-by at send minus three —
+Wednesday. Until now the cadence was promised as "weekly" in four pieces of site and email copy and
+defined nowhere: `episode-spec.md` Part B's Send column was blank for all six episodes, so which
+Saturday an episode was for got counted off a calendar by hand every week. It is now a constant —
+`config.ts` gained `newsletter: { sendDay: 6, writeLeadDays: 3 }`, and `lib/email/send-schedule.ts`
+derives the next send date, the write-by date and the day name from it. **Nothing schedules from
+this.** It is a single definition so that the runbook, the pre-send output and the episode calendar
+agree, not the beginning of a cron: **§5 Phase 4 step 13's "no cron" kill decision is unchanged.**
+Separately, the Status block above was a *precondition* — three env vars that "must all be live",
+verified by a real subscribe attempt — and that verification had never been done. It has been now, and
+the reality is worse and more specific than the precondition implied: the segment id was never set, so
+the confirm route has been 503ing for every subscriber since it shipped, and the first half of the
+flow working is what hid it. The Status block above now states what is true rather than what must be.
+**Resolved the same day, after this note was first written:** the segment id was set in Production and
+Development and the deployment rebuilt, and `pnpm check-subscribe-live` now passes — a subscriber can
+complete the double opt-in. Preview still lacks the variable. **M9 is half done:** `KIT_API_KEY` and
+`KIT_FORM_ID` were deleted from Vercel, and `episode-spec.md` §A8 was rewritten from Kit to Resend, so
+nothing in this project touches Kit any more; the Kit *account* is still not cancelled and still
+costs money. Kit now survives only as historical rationale in code comments, deliberately — the
+`/api/subscribe` comment explaining why its consent-skipping fallback is not reimplemented is the
+reason that bug has not come back.
 
 **v1.3 — Shared renderer and reviewed Broadcast drafts.** Each published episode now renders to one
 text-plus-image email from `lib/email/quiz-email.ts`: JPEG panel derivatives plus the selectable
@@ -60,12 +91,14 @@ conflict with anything below, this document wins:
 | `weekly-story-newsletter.md` | Open decision 1 — Kit form identity | Void. No Kit forms exist after cutover |
 | `weekly-story-newsletter.md` | "Current state" table, rows 1 and 6 | Replaced by §4 |
 | `weekly-story-newsletter.md` | Sequence row "By ~2026-09-03 — Kit trial" | Replaced by §4 migration task M9 |
-| `episode-spec.md` | A8 "Kit settings that matter" | Replaced by §3 |
+| `episode-spec.md` | A8 "Kit settings that matter" | Rewritten in place 2026-09-16 as A8 "Resend settings that matter" |
 | `episode-spec.md` | A7 items 4–9 (Kit preview / test sends) | Rewritten against Resend, §5 Phase 4 |
 | `phase-0-growth-monetization.md` | The "second Kit form + env var" carry-over obligation | Void — SG1 gets a `source` value, not a second form |
 
 Unchanged and still binding: everything in `story-pages.md`, everything in `episode-spec.md` Parts A1–A6
-and Part B, and the decision gate in `weekly-story-newsletter.md`.
+and Part B, and the decision gate in `weekly-story-newsletter.md`. One addition rather than a
+supersession (v1.4): Part B's Send column is no longer blank — it is Saturday, derived from
+`config.newsletter.sendDay` by `lib/email/send-schedule.ts`, and write-by is that minus three days.
 
 ---
 
@@ -181,7 +214,7 @@ before starting: **M1 gates everything else.**
 | M5 | Tighten `source` validation | `app/api/subscribe/route.ts` | Today any non-empty string passes. Validate against `EmailSignupSource` — at **`lib/analytics/index.ts:256`**, not `lib/analytics.ts` (line right, path stale). Two implementation notes v1.0 glossed: it is a *type*, erased at runtime, so validation needs a `const` array to check against — export the array and derive the type from it; and `lib/analytics/index.ts` is a browser module (nine `window`/`document` references), so put that array where a route handler can import it without pulling client code into the server bundle. Justification corrected: this is worth doing because an unvalidated free string reaches an email we send, **not** because Resend needs it — see M7 |
 | M6 | Update `EmailCapture` copy **and its doc comment** | `components/EmailCapture.tsx` | The defaults deliberately refuse to promise a confirmation email because Kit's behaviour for a returning address was unknowable from our side. After cutover we send that email ourselves, so the promise becomes true and the copy can say so plainly. The 30-line comment block explaining why it could not is now wrong and must be rewritten, not left to rot |
 | M7 | **Drop `referrer` segmentation — do not replace it** | Resend | **Corrected in v1.1, reopened in v1.2.** v1.1's finding — that the installed `resend@4.8.0` SDK's types describe an audience-scoped contact with no custom-property field — was accurate for those types but is no longer accurate for the live API: contacts are now global (no `audience_id`) and can carry `properties`, `segments` and `topics` (re-verified 2026-09-14). Per-surface signup CTR is still measured by DataFast at capture time via `trackEmailSignup(source)` (`lib/analytics/index.ts:259`), so nothing is *broken* by leaving `source` out of Resend. But the reason v1.1 gave for that choice — "there is no custom-property field" — is now false, and whether a `source` property is worth adding (it would let a broadcast target "finished an episode" vs. "browsed the hub", which DataFast cannot do) is a decision for Ari, not something this doc should silently re-affirm. **Standing decision unless revisited: one list; `source` is not stored in Resend.** Do not create a Segment or Topic until there is a reason to send to a subset — a Segment is addable later without touching the signup path |
-| M8 | Env vars | Vercel + `.env.example` | **Shipped 2026-09-14, corrected from v1.1's plan.** `KIT_API_KEY`/`KIT_FORM_ID` are still set in Vercel and unread — removal is a standalone cleanup, no code depends on them. `RESEND_AUDIENCE_ID` was added per v1.1's plan and then **deleted** the same day once M7 reopened: there is no audience id in the global-contacts model, so there is nothing for a helper to read. `EMAIL_TOKEN_SECRET` is added (Production + Preview) and now signs both the confirm token and the non-expiring unsubscribe token (`lib/email/unsubscribe-token.ts`). `RESEND_API_KEY` is present in Production as a **Secret**-type var, which the CLI reads back as an empty string — this is expected and not a misconfiguration; validity is confirmed by a real subscribe attempt, not by reading the value. **As of this revision, no redeploy has picked up `EMAIL_TOKEN_SECRET` yet — production is still 503ing.** |
+| M8 | Env vars | Vercel + `.env.example` | **Shipped 2026-09-14, corrected from v1.1's plan.** `KIT_API_KEY`/`KIT_FORM_ID` were deleted from Vercel on 2026-09-16; no code ever read them. `RESEND_AUDIENCE_ID` was added per v1.1's plan and then **deleted** the same day once M7 reopened: there is no audience id in the global-contacts model, so there is nothing for a helper to read. `EMAIL_TOKEN_SECRET` is added (Production + Preview) and now signs both the confirm token and the non-expiring unsubscribe token (`lib/email/unsubscribe-token.ts`). `RESEND_API_KEY` is present in Production as a **Secret**-type var, which the CLI reads back as an empty string — this is expected and not a misconfiguration; validity is confirmed by a real subscribe attempt, not by reading the value. ~~**As of this revision, no redeploy has picked up `EMAIL_TOKEN_SECRET` yet — production is still 503ing.**~~ Superseded v1.4: `EMAIL_TOKEN_SECRET` was fine; the var that was never set at all is `RESEND_WEEKLY_STORIES_SEGMENT_ID`, added to Production and Development 2026-09-16 with a redeploy. Preview still lacks it. |
 | M9 | Cancel the Kit trial before **2026-09-03** | Kit dashboard | It converts to paid if ignored. Archive form `9824359` |
 | M10 | Rewrite `episode-spec.md` §A8, §A7 items 4–9, **and §A5** | docs | Kit composer → Resend broadcast preview and test send. §A5 was missed in v1.0: it names Kit by vendor ("Kit rewrites links for click tracking, then the client may re-encode") inside the mechanism that justifies the encoding rule, and turning click tracking off changes that paragraph's premise. **Keep the rule** — pre-encode every URL, always — and fix the reason it gives |
 | M11 | **Locate — or author — the `michikanji-episode` skill** | skill | **It could not be found**: not in `~/.claude/skills/` (16 skills, none by that name), not in `~/.claude/plugins/`, not in `.claude/skills/` (which holds only `track-datafast-goal.md`). v1.0 says "update", which nobody can act on. Either find where it actually lives, or treat this as *create* and author the pre-send checks against Resend from `episode-spec.md` §A7. Still the one deliverable outside the repo |
@@ -306,7 +339,8 @@ extension + sitemap → Lighthouse budgets for the new routes.
     Items 1–3 and 10 are machine-checkable and
     belong in `validate:stories`; items 4–9 (test sends to Gmail web, Gmail mobile, Outlook.com; clip
     check; dark mode; reply path) are Ari's, and are never reported as passed by anyone else.
-13. Schedule manually in the Resend dashboard. No cron — unchanged kill decision. Resend owns
+13. Schedule manually in the Resend dashboard, for the Saturday `lib/email/send-schedule.ts` names.
+    No cron — unchanged kill decision, and a defined send day does not reopen it. Resend owns
     broadcast queueing, throttling, unsubscribe filtering and scheduling; the application never pages
     through contacts or calls `POST /emails` once per recipient.
 
@@ -395,7 +429,9 @@ cost of not leaving today — which is the same reason the migration is cheap no
    inbox. Accepted trade-off: subscribers see a different domain when they hit reply. Accepted gain:
    replies never traverse the unauthenticated inbound webhook. Does **not** extend to `fromAdmin` —
    see §3.
-3. **Send day** — the calendar's write-by is send-day minus 3, and it is still blank.
+3. ~~**Send day**~~ — **resolved 2026-09-16: Saturday**, write-by Wednesday (send minus 3). It lives
+   in `config.newsletter` and is derived by `lib/email/send-schedule.ts`; nothing schedules from it.
+   *(v1.4.)*
 4. **Transactional from-address** — `michikanji.com` apex or `mail.michikanji.com`? Affects one DNS
    record and `config.ts`.
 5. **Bare `GET` confirm, or a confirm button?** A `GET` link can be auto-fetched by a mail scanner,
@@ -405,8 +441,10 @@ cost of not leaving today — which is the same reason the migration is cheap no
 6. **Postal address for the email footer.** CAN-SPAM requires one and we have none anywhere. A
    registered business address, or a mail-forwarding box — this blocks episode 1, not Phase 1.
    *(Added v1.1 — see §11.)*
-7. **Resend DPA.** Has one been accepted on the account? GDPR Art. 28 requires it before Resend
-   processes subscriber data on our behalf. Dashboard task, minutes, but it is not optional.
+7. ~~**Resend DPA.** Has one been accepted on the account?~~ **Resolved 2026-09-23: nothing to
+   accept.** Resend's DPA is pre-signed and binds on acceptance of its Terms, with the EU standard
+   contractual clauses and the UK Addendum included (resend.com/legal/dpa, updated 2026-08-27;
+   resend.com/docs/knowledge-base/downloading-documents). Keep a copy from Settings → Documents.
    *(Added v1.1 — see §11.)*
 
 ---
@@ -418,12 +456,18 @@ database?*
 
 **No. Resend stores the list, and it costs nothing beyond the $20/mo already being paid.**
 
-A Resend **Audience** *is* the subscriber database — a hosted contact list with an id, which is what
-`RESEND_AUDIENCE_ID` points at. The installed SDK confirms the whole lifecycle is theirs:
-`contacts.create({audienceId, email, unsubscribed})`, `contacts.list({audienceId})`, `contacts.get`,
-`contacts.update`, `contacts.remove`. Resend also owns the unsubscribe flow — that is what
-`{{{RESEND_UNSUBSCRIBE_URL}}}` in §5 Phase 4 is: their hosted page, their state change, no code from
-us. There is no tier to upgrade and no storage add-on; audiences are part of the account.
+Resend's **global contact list** *is* the subscriber database, and a **Segment** is a view over it.
+The whole lifecycle is theirs: `POST /contacts` (no audience id — contacts are global),
+`GET /contacts/{id_or_email}`, `DELETE /contacts/{id_or_email}`, and
+`POST /contacts/{email}/segments/{segmentId}` to add membership. There is no tier to upgrade and no
+storage add-on; contacts are part of the account.
+
+*Corrected v1.4.* This paragraph described a Resend **Audience** with an id held in
+`RESEND_AUDIENCE_ID`, and an `{{{RESEND_UNSUBSCRIBE_URL}}}`-hosted unsubscribe page — both of which
+v1.2 had already deleted elsewhere in this document while leaving this section untouched, so §11
+contradicted §5 for two revisions. Unsubscribe is ours, not Resend's hosted page:
+`app/api/unsubscribe/route.ts` PATCHes the contact's `unsubscribed` flag from a signed,
+non-expiring token carried as an RFC 8058 `List-Unsubscribe` header.
 
 So the `CLAUDE.md` rule stands exactly as written, and it is worth being precise about what it says.
 "No server-side user state" is a rule about **our** infrastructure: we run no database, we hold no
@@ -465,7 +509,8 @@ cost saving is zero because Resend's storage is already paid for:
 - **Rate limits and secrets get worse**, not better: a workflow with write access to a subscriber file
   is a far larger blast radius than an API key that can only append to an audience.
 
-**Recommendation: no database, no repo-stored list. Resend Audiences, as §5 already describes.** The
+**Recommendation: no database, no repo-stored list. Resend's contact list and one Segment, as §5
+already describes.** The
 one thing worth doing is an occasional manual CSV export as a portability backup, so a vendor exit is
 never blocked on the vendor — which is what §9's rollback already assumes.
 
@@ -481,9 +526,34 @@ than that, and two items below are genuinely unmet today, with Kit, before any o
    collected, and there are no accounts and no server-side user state. It is inherited boilerplate
    describing a different product, and it is about to become the document that has to describe the
    email list accurately. **Rewrite it, do not append to it.**
-2. **Accept a DPA with Resend** (Art. 28). Dashboard task. Open question 7.
+2. ~~**Accept a DPA with Resend** (Art. 28). Dashboard task.~~ Satisfied by Resend's Terms, which
+   incorporate a pre-signed DPA — open question 7, resolved 2026-09-23.
 3. **A postal address in every commercial email.** CAN-SPAM requires it; there is none in the repo,
    footer, ToS or privacy policy. Open question 6, blocks episode 1.
+
+   **It does not have to be a home address, and it must not be a PO Box.** Researched 2026-09-16;
+   the two regimes that apply here disagree, and only one answer satisfies both:
+
+   - **CAN-SPAM** (US recipients) accepts a street address, a **USPS-registered PO Box**, *or* a
+     private mailbox registered with a commercial mail receiving agency.
+   - ~~**The e-Commerce Directive** Art. 5(1) (we are established in the EU) requires the *geographic
+     address at which the service provider is established*~~ — **corrected 2026-09-23: we are not
+     established in the EU.** The operator is The Auspicious Company, a Massachusetts company run
+     from the US, which is what the ToS always said. Art. 5 binds providers established in a Member
+     State, so it does not govern this address. GDPR Art. 13 still requires the controller's
+     identity and contact details, and GDPR reaches EU subscribers through Art. 3(2) — which raises
+     Art. 27 (an EU representative) instead; see the runbook's Known gaps.
+
+   So the governing rule is CAN-SPAM's, and a **private mailbox at a commercial mail receiving agency
+   in the US** satisfies it once USPS Form 1583 is accepted. We keep the stricter bar anyway — a real
+   street address that forwards mail to us, never a PO Box — because the address is also the
+   published postal route for erasure requests and should name a physical place. The constraint that
+   survives unchanged is the one worth not getting wrong: mail sent there must actually be received.
+   The mechanism is built: `config.business.postalAddress`, rendered in both episode emails, refused
+   by `stories:create-broadcast` while unset (docs/runbooks/newsletter.md, "The postal address").
+
+   The same address satisfies item 4 below, which needs a stated address a person can write to — so
+   this is one decision, not two, and it is published in the email footer *and* the privacy policy.
 4. **A working erasure route.** `contacts.remove` covers the mechanism; what is missing is a stated
    address a person can write to, published in the policy.
 5. **Keep the consent record legible.** With the §5 design, the consent record *is* "a contact exists

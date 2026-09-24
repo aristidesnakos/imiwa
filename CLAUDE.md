@@ -63,6 +63,37 @@ pnpm check-query-performance                     # per-query trend; is romaji ac
 pnpm submit-indexnow
 ```
 
+### The newsletter
+
+```bash
+pnpm check-subscribe-live                        # is the signup path configured? (no secrets)
+pnpm check-subscribe-e2e                         # walk it with a real address, then clean up
+pnpm stories:create-broadcast <episode-slug>     # a Resend draft, never a send
+```
+
+`docs/runbooks/newsletter.md` is the operator procedure and the first thing to read here. The short
+version: the send day is **Saturday** (`config.newsletter`, derived by `lib/email/send-schedule.ts`),
+write-by is the Wednesday before, and **the weekly send is deliberately manual** — there is no cron,
+no send route and no contact loop. The only automatic emails are the double opt-in confirmation and
+the welcome quiz card, both triggered by one person acting on their own address.
+
+`check-subscribe-live` exists because nothing else in this repo can see a missing environment
+variable in production. `validate:subscribe` proves the token model, the build proves compilation,
+a deploy proves shipping — and all three were green while `RESEND_WEEKLY_STORIES_SEGMENT_ID` was
+unset and every subscriber hit a 503 at the confirm button. It probes one endpoint with an empty
+token, creates nothing and needs no secrets, and runs every Friday before the send.
+`check-subscribe-e2e` is the other half: it subscribes `delivered+mk-e2e-<stamp>@resend.dev` — Resend's
+delivery sink, so nothing bounces — confirms it, asserts the contact exists, and deletes it in a
+`finally`. It needs the real secrets, so it skips rather than fails when they are absent.
+
+**Who sends it, and from where, is config.** `config.business` holds the legal operator (The
+Auspicious Company, a Massachusetts company, not an EU one, whatever older PRD text says) and the
+published postal address. CAN-SPAM needs that address in every commercial email, so the episode email
+footer renders it, `stories:create-broadcast` refuses to run while it is `null`, and
+`validate:subscribe` refuses a PO Box. `app/privacy-policy/page.tsx` reads the same block rather than
+hard-coding either, so the footer and the policy cannot disagree. The policy describes what the code
+collects: change one, re-read the other (its header lists the claims to re-check).
+
 ## Architecture
 
 ### Kanji data and rendering

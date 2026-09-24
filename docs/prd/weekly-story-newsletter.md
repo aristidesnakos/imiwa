@@ -1,11 +1,26 @@
 # Weekly Story Newsletter — Roadmap
 
-**Version 1.4** · Created 2026-08-20 · Updated 2026-08-23 · Owner: Ari Nakos
-**Status:** Kit form configured; capture copy fixed (committed `f30f50c`); `/api/subscribe`
-rate-limited; `EmailCapture` mounted on the homepage — all on branch
-`feat/weekly-story-capture`, **not yet merged or deployed**, so no visitor can subscribe *yet*.
-Open decisions 1 and 2 are settled. Content pilot not started.
-**Related:** [`phase-0-growth-monetization.md`](./phase-0-growth-monetization.md) (SG1 — the capture pipeline this reuses) · [`../3rdVersion/seo-operations-review.md`](../3rdVersion/seo-operations-review.md) (the CTR finding placement rests on)
+**Version 1.5** · Created 2026-08-20 · Updated 2026-09-16 · Owner: Ari Nakos
+
+**Status: this is the pilot plan, and every operational instruction in it that names Kit is
+superseded.** The newsletter is sent from Resend, from our own authenticated domain. Kit is not part
+of the pipeline in any form and the account is being cancelled (migration task M9, still open).
+[`story-delivery-resend.md`](./story-delivery-resend.md) is the live design and wins wherever the two
+disagree; its "Sections this supersedes" table names exactly which parts of this document it
+replaces. The procedure for an actual send is [`../runbooks/newsletter.md`](../runbooks/newsletter.md)
+— follow that, not the send instructions below.
+
+**Still live here:** the placement research, the content and editorial plan, and the decision gate.
+The Kit sections are kept rather than deleted because they record why the pilot was shaped the way it
+was — read them as history, not as instructions.
+
+**Status as it stood on 2026-08-23, kept as the record of where the pilot got to:** Kit form
+configured; capture copy fixed (committed `f30f50c`); `/api/subscribe` rate-limited; `EmailCapture`
+mounted on the homepage — all on branch `feat/weekly-story-capture`, not yet merged or deployed.
+Open decisions 1 and 2 were settled; the content pilot had not started. What shipped instead is
+`story-delivery-resend.md` §4.
+
+**Related:** [`story-delivery-resend.md`](./story-delivery-resend.md) (the live design — read this first) · [`phase-0-growth-monetization.md`](./phase-0-growth-monetization.md) (SG1 — the capture pipeline this reuses) · [`../runbooks/newsletter.md`](../runbooks/newsletter.md) (how a send is actually done) · [`../3rdVersion/seo-operations-review.md`](../3rdVersion/seo-operations-review.md) (the CTR finding placement rests on)
 
 ## What this is
 
@@ -92,26 +107,34 @@ from the SERP. The list is a direct channel at the 0.25% CTR problem.
 
 ## Current state
 
+**Rows 1 and 6 are superseded by `story-delivery-resend.md` §4** — they describe a Kit pipeline that
+no longer exists. The rest of the table still holds.
+
 | Piece | Status |
 |---|---|
-| `/api/subscribe` → Kit proxy | ✅ `app/api/subscribe/route.ts` |
+| ~~`/api/subscribe` → Kit proxy~~ | **Superseded.** `app/api/subscribe/route.ts` is no longer a proxy to anything: it mints a signed 48h token and sends a consent email through Resend, and creates no contact at all. `app/api/subscribe/confirm/route.ts` creates the contact when the token comes back. See `story-delivery-resend.md` §5. |
 | `EmailCapture` component | ✅ exists — imported by no page |
 | Capture copy | ✅ Committed `f30f50c`. Copy is props; defaults assert neither an incentive nor a confirmation email — both are false for a returning address. Plus a11y and a stuck-`sending` fix. |
 | Capture sections | ⏳ Homepage section built on `feat/weekly-story-capture` (`app/page.tsx`, between Popular Kanji and the Closing CTA). Surfaces 1, 3 and 4 not built. |
 | Abuse protection on `/api/subscribe` | ✅ `rateLimit(2, 10 * 60 * 1000)` per IP, same shape as `/api/feedback`. In-memory `Map`, so per-instance — stops a naive script, not a distributed attack. |
-| Kit account / form `9824359` / DOI / redirect / Vercel env vars | Claimed set, not verifiable from this repo — recheck in the dashboards. Trial started 2026-08-20, **lapses ~2026-09-03**. |
+| ~~Kit account / form `9824359` / DOI / redirect / Vercel env vars~~ | **Superseded.** Kit is out of the pipeline entirely and the account is being cancelled — migration task M9, still open. `KIT_API_KEY` and `KIT_FORM_ID` are still set in Vercel and are referenced by no code. Double opt-in is now ours: `story-delivery-resend.md` §5. |
 
 ## Open decisions
 
-1. ~~**Form identity.**~~ **Settled 2026-08-23 — (a).** The single `KIT_FORM_ID` that `route.ts`
-   reads for every `source` stays pointed at the no-incentive newsletter form. SG1 gets its own Kit
-   form and its own env var **when SG1 ships, not before** — nothing today reads a second form, so
-   this costs zero code now. `referrer` continues to separate audiences for broadcasts; the
-   confirmation email and redirect are per-form, which is exactly why SG1 cannot share this slot.
-   **Carry-over obligation:** `phase-0-growth-monetization.md:44` still describes this slot as the
-   lead-magnet form. Whoever implements SG1 must add the second form + env var and a `source`→form
-   map, or pack-seekers will receive the newsletter's confirmation email. That note is now recorded
-   in the phase-0 doc.
+1. ~~**Form identity.**~~ **Void — there are no Kit forms.** Per `story-delivery-resend.md`'s
+   supersession table, this decision and the carry-over obligation it created are both void: the
+   capture path is ours end to end, so there is no form to point at and no second form for SG1 to
+   create. What replaces it is `source`, validated against `EmailSignupSource` and carried inside the
+   signed token. Kept because the reasoning below is why the two surfaces were ever separated, and
+   that question survives the vendor change.
+
+   *The decision as recorded on 2026-08-23, now history:* option (a) — the single `KIT_FORM_ID` that
+   `route.ts` read for every `source` stayed pointed at the no-incentive newsletter form. SG1 was to
+   get its own Kit form and its own env var when SG1 shipped, not before, because nothing then read a
+   second form. `referrer` separated audiences for broadcasts; the confirmation email and redirect
+   were per-form, which is exactly why SG1 could not share the slot. The carry-over obligation this
+   created for `phase-0-growth-monetization.md` — add a second form, an env var and a `source`→form
+   map, or pack-seekers receive the newsletter's confirmation email — is void with the forms.
 2. ~~**Byline.**~~ **Settled 2026-08-23 — a person, not the brand.** Episodes are written by Ari and
    sent from **"Ari at MichiKanji"**. Rationale: the pilot's only readable signal at this list size
    is replies (see Decision gate), and people do not reply to a brand. Teacher-collaboration
@@ -139,9 +162,19 @@ Nothing technical matters if this queue is empty.
 
 4. **Write episode 1 end-to-end** and treat it as the template for tone, length and structure.
 5. **Define the read signal before episode 1 sends.** Opens, click-through to the linked kanji pages, and — the one that matters — whether episode 2's open rate holds against episode 1's. The return-open is the "did they want more" signal; the first open is curiosity.
-6. **Weekly loop once live:** write → self-review against the episode 1 template → schedule in Kit → next week, check episode N-1's numbers before finalizing episode N.
+6. **Weekly loop once live:** write → self-review against the episode 1 template → create the Resend
+   draft with `pnpm stories:create-broadcast <slug>`, review it, test it and schedule it by hand
+   (`../runbooks/newsletter.md`) → next week, check episode N-1's numbers before finalizing episode N.
+   The send day is Saturday and the write-by is the Wednesday before, both derived from
+   `config.newsletter` by `lib/email/send-schedule.ts`.
 
 ## Technical steps
+
+**The pipeline below is the Kit-era shape and is superseded by `story-delivery-resend.md` §5.** The
+capture surfaces and their `source` values survived the migration; the destination did not. Today
+`POST /api/subscribe` mints a signed 48h token and sends a consent email through Resend, and
+`GET /api/subscribe/confirm` creates the contact. Kept as drawn because steps 3, 5 and 6 explain
+constraints that still bind.
 
 ```
 <EmailCapture source="kanji-index-weekly-story" />   ┐
@@ -166,33 +199,47 @@ Nothing technical matters if this queue is empty.
    and carries the brand query plus a share of the stroke-order cluster. `/kanji` waits for its own
    re-baseline, which is unrelated to this pilot. ✅ Homepage section built on
    `feat/weekly-story-capture`.
-6. **Live test after deploy.** The fallback at `app/api/subscribe/route.ts:62`
-   (`POST /v4/subscribers`) creates `state: active` — single opt-in. Once active, the form add won't
-   re-trigger confirmation, so the subscriber skips consent (phase-0 risk #6). It fires only when the
-   first form-add fails, so a clean first submit proves nothing about it.
-   - Submit a fresh email. **Before clicking anything, check the contact in Kit is `unconfirmed`, not `active`.** Checking only the end state cannot detect this.
-   - Confirm the DOI email arrives, click it, land on `/subscribed`, check it flips to confirmed.
-   - Re-submit the *same* email and confirm it doesn't silently skip consent.
-   - If plain form-subscribe works without the fallback, delete the fallback.
+6. **Live test after deploy.** *The bug this step existed to catch is gone, and the shape of the test
+   is not.* The Kit fallback (`POST /v4/subscribers`) created `state: active` — single opt-in. Once
+   active, the form add would not re-trigger confirmation, so the subscriber skipped consent (phase-0
+   risk #6). It fired only when the first form-add failed, so a clean first submit proved nothing
+   about it. That fallback was deleted at the migration and is **deliberately not reimplemented** —
+   the route's header comment says so, and carrying a consent bug across a migration is how it becomes
+   permanent. Run the equivalent test against the Resend path (`story-delivery-resend.md` §5 Phase 2
+   step 9): the pre-click check is the only one that can detect an accidental single-opt-in path.
+   - Submit a fresh email. **Before clicking anything, check that no contact exists in Resend at all.** Checking only the end state cannot detect this.
+   - Confirm the consent email arrives, click it, land on `/subscribed`, check the contact now exists.
+   - Re-submit the *same* email and confirm no duplicate and no second confirmation storm.
+   - ~~If plain form-subscribe works without the fallback, delete the fallback.~~ Done at the migration; the fallback no longer exists.
 
 ### Sending: manual, no cron
 
-Kit Broadcasts covers Phase 0. Write the episode in Kit's composer, use "Schedule for later", target
-by filtering on `referrer` — **referrer, not tags**, matching `phase-0-growth-monetization.md`.
-Nothing on our side triggers a send.
+**The mechanics here are superseded by `story-delivery-resend.md` §5 Phase 4; the decision is not.**
+The send is still deliberately manual and nothing on our side triggers one — that part is unchanged
+and is the load-bearing half of this section.
 
-Automation is code that must be maintained whether or not anyone reads the newsletter. If the pilot
-validates, the shape is a queued-episode file plus a Vercel Cron job calling Kit's v4 Broadcasts API.
-Design it then, against real numbers.
+What it is now: `pnpm stories:create-broadcast <slug>` creates a Resend **draft only**, addressed to
+the Weekly Stories Segment. A person reviews it, sends a test and schedules it in the Resend
+dashboard for the Saturday `lib/email/send-schedule.ts` names. There is no cron, no send route and no
+contact loop. Procedure: [`../runbooks/newsletter.md`](../runbooks/newsletter.md).
+
+*The Kit-era mechanics, for the record:* Kit Broadcasts covered Phase 0 — write the episode in Kit's
+composer, use "Schedule for later", target by filtering on `referrer` (referrer, not tags). No Kit
+form, composer or `referrer` filter exists any more; Resend contacts are global, sit in Segments, and
+carry no `source` at all — the signup surface lives in DataFast.
+
+Automation is code that must be maintained whether or not anyone reads the newsletter. That argument
+is why there is still no cron, and it did not change with the vendor. If the pilot validates, design
+automation then, against real numbers.
 
 ## Sequence
 
 | When | What |
 |---|---|
 | **By 2026-08-30** | Settle form identity + byline. Fill the calendar. Write episode 1. |
-| **By ~2026-09-03** | Kit trial: let it lapse to Free (10k subscribers, unlimited sends — covers Phase 0) or keep a paid tier. Automations/tags aren't needed until a tag-triggered flow exists. |
+| ~~**By ~2026-09-03**~~ | **Superseded by `story-delivery-resend.md` §4 task M9.** The question was whether to let the Kit trial lapse to Free or keep a paid tier; it was answered by leaving Kit altogether. M9 — cancel the account — is still open. |
 | **Then** | Ship `/kanji` capture → Lighthouse gate → deploy → live test → homepage capture. |
-| **Weeks 1–4/6** | One episode/week, manually scheduled, checking opens/clicks weekly. |
+| **Weeks 1–4/6** | One episode/week, manually scheduled on the Saturday, checking opens/clicks weekly. |
 
 ## Decision gate
 
@@ -207,9 +254,12 @@ Gate on signal, not date.
 - **Kill** if the list barely grows past the capture surfaces' traffic and opens are low from episode
   1 — that points at the format, not the targeting.
 
-Read list growth from **Kit's confirmed count, not DataFast**. `email_signup` counts submits, and
-with DOI on ~20–30% never confirm, so the goal runs ~25% above the real list (phase-0 risk #5). Use
-`email_signup` for funnel and per-surface CTR — that is what the distinct `source` values are for.
+Read list growth from **the confirmed contacts in the Resend Weekly Stories Segment, not DataFast**
+(it was Kit's confirmed count when this was written; the reason is the same). `email_signup` counts
+submits, and with double opt-in ~20–30% never confirm, so the goal runs ~25% above the real list
+(phase-0 risk #5). Use `email_signup` for funnel and per-surface CTR — that is what the distinct
+`source` values are for, and it is the only place `source` is recorded, because a Resend contact does
+not carry it.
 
 **Paid is unresolved and not being designed during the pilot.** The plausible candidate is a paid
 tier of this newsletter rather than a separate product. Teacher collaborations come first.

@@ -408,8 +408,11 @@ assume search only matches the character itself.
 Ranked by how much value is sitting idle:
 
 1. **Email capture is built and rendered nowhere.** `components/EmailCapture.tsx` +
-   `app/api/subscribe/route.ts` (Kit/ConvertKit, double opt-in, referrer segmentation, DataFast
-   goal) + `app/subscribed/page.tsx` thank-you landing. The component is imported by **no page**.
+   `app/api/subscribe/route.ts` (double opt-in we own end to end: per-IP rate limit, `source`
+   validated against `EmailSignupSource`, then a signed 48h token mailed as a consent email through
+   Resend — it creates no contact, `app/api/subscribe/confirm/route.ts` does that when the token
+   comes back; `EmailCapture` fires the DataFast `email_signup` goal) + `app/subscribed/page.tsx`
+   thank-you landing. The component is imported by **no page**.
    `docs/prd/phase-0-growth-monetization.md` specifies it on free resources, progress, and Pro
    waitlist surfaces. The entire list-building pipeline is dark. This is not an announcement — it
    is a growth fix, and probably worth more than the whole banner campaign.

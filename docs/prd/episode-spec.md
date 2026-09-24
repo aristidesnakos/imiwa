@@ -6,7 +6,8 @@
 Two jobs. **Part A** is the format — locked, so "write episode 1" has a spec instead of a vibe.
 **Part B** is the calendar — filled, so send day is never a scramble.
 
-The binding constraint on every decision below: **the episode is a static email composed in Kit.**
+The binding constraint on every decision below: **the episode is a static email sent as a Resend
+broadcast.**
 No toggle, no collapsible, no script. Everything here is chosen to survive Outlook for Windows,
 which is the client that breaks things.
 
@@ -16,27 +17,33 @@ which is the client that breaks things.
 
 ### A0. The one rule that governs the rest
 
-**Compose inside Kit's editor. Never paste formatted text into it.**
+**The body is generated, not typed. Never paste formatted text into the Resend draft.**
+
+Both parts of the broadcast come from `lib/email/quiz-email.ts`, rendered from the episode data;
+`scripts/stories/create-broadcast.ts` posts them to Resend and a person reviews the draft. So the way
+this breaks now is someone "fixing" a line by pasting into the dashboard editor.
 
 Pasting from Google Docs, Word, or Notion injects hundreds of `<span style="…">` wrappers around
 Japanese text. Three consequences, all bad: Gmail clips any message whose HTML exceeds ~102 KB and
 hides the rest behind a "View entire message" link — and span soup gets there faster than you'd
-think; Outlook's renderer chokes on nested inline styles around CJK and drops your line spacing;
-and Kit's plain-text auto-generation produces garbage.
+think; Outlook's renderer chokes on nested inline styles around CJK and drops your line spacing; and
+it desynchronises the plain-text part, which is rendered from the same typed data and will not follow
+an edit made in the dashboard.
 
-Paste as plain text (`⌘⇧V`), then apply formatting with Kit's own buttons. Kit's output is already
-tested across clients. Yours isn't.
+If you genuinely have to edit a draft by hand, paste as plain text (`⌘⇧V`) and use Resend's own
+formatting controls — then fix the source and re-create the draft, because the next episode is
+rendered from the code, not from your edit.
 
 ### A1. Banned constructs
 
 | Don't | Why | Do instead |
 |---|---|---|
-| `<ruby>` furigana | Outlook for Windows renders email through the **Word** engine, which has no ruby support — readings drop inline and corrupt the sentence into unreadable mush. Not available in Kit's composer anyway. | Parenthetical reading after first occurrence: 山（やま） |
+| `<ruby>` furigana | Outlook for Windows renders email through the **Word** engine, which has no ruby support — readings drop inline and corrupt the sentence into unreadable mush. Neither the renderer nor Resend's editor offers it anyway. | Parenthetical reading after first occurrence: 山（やま） |
 | Story text as an image | Outlook blocks images by default, so the episode arrives blank. Also kills the plain-text part, accessibility, and any text selection. | Real text, always |
 | Collapsibles / `<details>` / "click to reveal" | No JS in email. `<details>` is unsupported in Outlook and inconsistent elsewhere. | Answers physically last, under a rule |
 | White-on-white or `display:none` hidden answers | Dark mode reveals them, and hidden text is a **spam-filter signal** — a real deliverability risk on a young list | Same as above |
 | Background-colour boxes carrying meaning | Gmail app and Outlook.com force-invert in dark mode; a pale-yellow "answers" panel can invert to near-black on black | Horizontal rules + bold labels |
-| A decorative or serif Latin font | Word substitutes per-glyph for CJK; you get mismatched baselines and cramped kana | Kit's default sans-serif, untouched |
+| A decorative or serif Latin font | Word substitutes per-glyph for CJK; you get mismatched baselines and cramped kana | The system sans-serif stack `lib/email/quiz-email.ts` already sets, untouched |
 | Raw CJK in URLs | See A5 — this is the likeliest failure in your specific design | Pre-encoded URLs, listed in Part B |
 | Emoji as structural markers | Outlook renders many monochrome; some Android clients drop them | Text labels and rules |
 
@@ -48,7 +55,7 @@ The translation is itself part of the answer key, so it belongs low. One-line ch
 
 ```
 1  Subject line                    ≤ 30 chars — mobile truncates
-2  Preview text                    Kit field. Set it. Never let it default.
+2  Preview text                    Resend draft field. Set it by hand — the script doesn't.
 3  Title                           Japanese title + English gloss
 4  The story                       Japanese, one sentence per line
    ───────────────────────────
@@ -78,7 +85,7 @@ unenforceable.
 
 One sentence per line is not a stylistic flourish. It does three things at once: it gives the reader
 short lines without any CSS (Outlook ignores `line-height` on `<p>` unless you write
-`mso-line-height-rule: exactly`, which Kit won't let you); it makes the English translation align
+`mso-line-height-rule: exactly`, which the renderer does not); it makes the English translation align
 line-for-line so readers can self-check; and it prevents CJK — which legally breaks at *any*
 character — from producing ragged mid-word wraps on narrow phones.
 
@@ -128,9 +135,10 @@ count into spam-filter territory on a young sending reputation.
 
 **Always paste the percent-encoded URL.** `https://michikanji.com/kanji/山` is not a valid URL — the
 CJK character has to be percent-encoded to `%E5%B1%B1` somewhere in the chain, and *which* link in the
-chain does it is inconsistent. Kit rewrites links for click tracking, then the client may re-encode,
-then the receiving MTA may re-encode again. Double-encoding produces `%25E5%25B1%25B1` and a 404;
-some clients simply refuse to linkify a non-ASCII path at all.
+chain does it is inconsistent. An ESP rewrites links when click tracking is on — which is why it is
+off in Resend, see A8 — then the client may re-encode, then the receiving MTA may re-encode again.
+Double-encoding produces `%25E5%25B1%25B1` and a 404; some clients simply refuse to linkify a
+non-ASCII path at all.
 
 Encode it yourself so exactly one representation exists end to end. Every URL you need is
 pre-encoded in Part B. Display text stays the kanji — only the href is encoded.
@@ -167,7 +175,8 @@ with Japanese email.
 1. Every kanji in the body appears in `lib/constants/n5-kanji.ts`.
 2. Every grammar pattern is on the A4 whitelist.
 3. Every link href is percent-encoded; zero links in the story body.
-4. Click each link in the Kit preview — confirm it lands on the kanji page, not a 404.
+4. Click each link in the Resend draft preview and again in the test send — confirm each lands on
+   the kanji page, not a 404.
 5. Preview text field is set and is not the first line of the greeting.
 6. Send a test to **Gmail (web), Gmail (mobile app), and Outlook.com** at minimum. Outlook.com is
    where CJK and dark mode both fail. If you have access to Outlook desktop on Windows, add it.
@@ -176,18 +185,45 @@ with Japanese email.
 9. Confirm the reply-to lands in an inbox you actually read.
 10. Read block 8 against block 4 — the line count must match exactly.
 
-### A8. Kit settings that matter
+### A8. Resend settings that matter
 
-- **From name:** `Ari at MichiKanji` (settled — see the PRD's open decision 2).
-- **Reply-to: a real inbox you read.** Not `noreply@`. The decision gate reads replies; a broken
-  reply path silently zeroes the only signal the pilot can produce at this list size.
-- **Audience:** filter on `referrer = homepage-weekly-story`. Referrer, not tags — the code applies
-  no tags.
-- **Authenticate the sending domain** (SPF, DKIM, DMARC) in Kit before episode 1. You're far below
-  the 5,000/day threshold that makes it mandatory at Gmail and Yahoo, but alignment still moves
-  inbox placement, and a list this small can't absorb a spam-folder start.
-- **Template:** the plainest one Kit offers. Heavy templates wrap content in nested tables that
-  interact badly with CJK line breaking, and buy nothing here.
+> Rewritten from Kit to Resend on 2026-09-16. Until then this section described a Kit account: a From
+> name set in Kit, a sending domain authenticated in Kit, an audience filtered on
+> `referrer = homepage-weekly-story`, and Kit's plainest template. None of that exists any more —
+> there is no Kit form, no Kit audience, and no `referrer` field anywhere in the send path. Recorded
+> so nobody reintroduces the filter looking for a list that was never stored that way. The procedure
+> is [`docs/runbooks/newsletter.md`](../runbooks/newsletter.md); this section is only the settings a
+> person has to get right.
+
+- **From: `Ari at MichiKanji <ari@michikanji.com>`.** A person, not a brand — settled 2026-08-23,
+  because the pilot's only signal is replies. It is `config.resend.fromAdmin`, and
+  `scripts/stories/create-broadcast.ts` puts it on the draft; nobody types it into the dashboard.
+- **Reply-to: a real inbox you read.** `config.resend.supportEmail` — `ari@llanai.com`, deliberately a
+  different domain from the sender. It is a monitored Google Workspace inbox, and a cross-domain
+  reply-to needs no DKIM or SPF alignment. Not `noreply@`: the decision gate reads replies, and a
+  broken reply path silently zeroes the only signal the pilot can produce at this list size.
+- **Audience: there is no audience.** Resend contacts are global and sit in Segments, so the draft is
+  addressed to `RESEND_WEEKLY_STORIES_SEGMENT_ID` — now set in Vercel production, preview still
+  pending — and nothing filters on anything else. Where a subscriber came from is recorded in
+  DataFast as `source` at capture time, never as a property on the contact
+  (`app/api/subscribe/confirm/route.ts`).
+- **The sending domain is already authenticated,** and needed no new DNS: `michikanji.com` carries the
+  `resend._domainkey` DKIM record and `send.michikanji.com` carries Resend's SPF and `feedback-smtp`
+  MX (see the comment block in `config.ts`). We are far below the 5,000/day threshold that makes
+  alignment mandatory at Gmail and Yahoo, but it still moves inbox placement, and a list this small
+  can't absorb a spam-folder start.
+- **Click tracking off; open tracking on.** Not a preference. Resend rewrites every link when click
+  tracking is on, and A5's percent-encoded CJK URLs survive exactly one encoding pass — a second one
+  produces a 404. Open tracking is weak but free, and it is the only number inside the email.
+  (`story-delivery-resend.md` §3.)
+- **Template: none.** The body is HTML generated by `lib/email/quiz-email.ts` — one 520px table and a
+  system sans-serif stack. Dashboard templates wrap content in nested tables that interact badly with
+  CJK line breaking and buy nothing here, so review the draft `create-broadcast` made and send that.
+- **Keep `{{{RESEND_UNSUBSCRIBE_URL}}}` in the body.** Only the Broadcast product resolves that
+  placeholder. Edit it away in the dashboard and the send goes out with no unsubscribe link.
+- **Schedule by hand, for the Saturday.** Nothing here schedules: `create-broadcast` creates a draft,
+  prints the date `config.newsletter` implies, and stops. Resend owns queueing, throttling,
+  unsubscribe filtering and scheduling.
 
 ---
 
@@ -207,15 +243,20 @@ focus character across episodes.
 
 | Ep | Theme | Focus kanji | Target vocab (3–5) | Write by | Send |
 |---|---|---|---|---|---|
-| 1 | Tan climbs the mountain | 山 木 上 見 大 | 山, 木, 上, 見る, 大きい | | |
-| 2 | Tan finds the river | 川 水 下 小 白 | 川, 水, 下, 小さい, 白い | | |
-| 3 | Tan goes to school | 学 校 先 生 語 | 学校, 先生, 学生, 日本語 | | |
-| 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | | |
-| 5 | The train to Tokyo | 電 車 東 行 来 | 電車, 東京, 行く, 来る | | |
-| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | | |
+| 1 | Tan climbs the mountain | 山 木 上 見 大 | 山, 木, 上, 見る, 大きい | written 2026-09-14 | not sent — backfill |
+| 2 | Tan finds the river | 川 水 下 小 白 | 川, 水, 下, 小さい, 白い | written 2026-09-14 | not sent — backfill |
+| 3 | Tan goes to school | 学 校 先 生 語 | 学校, 先生, 学生, 日本語 | written 2026-09-16 | Sat 2026-09-19 |
+| 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | Wed 2026-09-23 | Sat 2026-09-26 |
+| 5 | The train to Tokyo | 電 車 東 行 来 | 電車, 東京, 行く, 来る | Wed 2026-09-30 | Sat 2026-10-03 |
+| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | Wed 2026-10-07 | Sat 2026-10-10 |
 
-Dates left blank deliberately — fill them once you've decided the send day, and work backwards:
-**write-by is send-day minus 3**, so there's room for the A7 checklist and a fix.
+The send day is **Saturday**, decided 2026-09-16; write-by is the Wednesday before, which is the
+room the A7 checklist and one round of fixes need. The cadence is defined once in
+`config.newsletter` and derived by `lib/email/send-schedule.ts`, so read the next date off those
+rather than counting it off a calendar. Episodes 1 and 2 went up on the site before there was a
+list to send to, so they carry no send date at all — a new subscriber meets them through the site
+and the welcome card, not a broadcast. The operational procedure for a write-by Wednesday and a
+send Saturday is in `docs/runbooks/newsletter.md`.
 
 ### Pre-encoded links
 
