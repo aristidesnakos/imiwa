@@ -174,11 +174,14 @@ module.exports = {
       //                the heaviest image payload on the site
       //   /kanji/n5    a JLPT level list — 82 server-rendered entries, and the
       //                page built for the "n5 kanji" query class
+      //   /kanji/n5/quiz  the level quiz: the one client-heavy page in the
+      //                level family, carrying the N5 data for play
       url: [
         `${HOST}/`,
         `${HOST}/kanji`,
         `${HOST}/kanji/%E6%97%A5`,
         `${HOST}/kanji/n5`,
+        `${HOST}/kanji/n5/quiz`,
         `${HOST}/stories`,
         `${HOST}/stories/tan-climbs-the-mountain`,
       ],
@@ -281,6 +284,20 @@ module.exports = {
           scriptKb: 225, // 192 kB measured, +17%
           totalKb: 310, // 270 kB measured, +15%
           perfScore: 0.85, // 0.94 measured
+        }),
+        // The level quiz. Measured 2026-09-24, local `pnpm start`: 199 kB script
+        // / 247 kB total — heavier on script than the list because the quiz
+        // engine and the N5 data ship to play it, lighter on total because the
+        // server HTML is a setup form, not 82 entries.
+        route({
+          matchingUrlPattern: '^http://localhost:3000/kanji/n[1-5]/quiz$',
+          lcp: 3500, // 2.45s measured, ~1.4x
+          fcp: 1800, // 0.93s measured
+          cls: 0.1, // 0.000 measured
+          tbt: 600, // 38ms measured
+          scriptKb: 235, // 199 kB measured, +17%
+          totalKb: 285, // 247 kB measured, +15%
+          perfScore: 0.85, // 0.98 measured
         }),
         route({
           // Percent-encoded segments only, i.e. a character. `/kanji/.+` used

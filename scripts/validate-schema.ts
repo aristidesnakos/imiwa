@@ -929,6 +929,15 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
     checkAssetsDeep(file, type, entity, '');
   }
 
+  // Any other page that emits a trail gets it checked too: positions 1..n,
+  // names, canonical-host items. Kanji and story pages assert theirs below
+  // (they also REQUIRE one), so this covers the rest — the level lists, the
+  // quiz, the sheets pages — which previously could ship a broken trail
+  // unchecked.
+  if (opts.kanjiChar === null && !opts.storySlug) {
+    for (const crumbs of entitiesOfType(entities, 'BreadcrumbList')) validateBreadcrumbList(file, crumbs);
+  }
+
   const orgs = entitiesOfType(entities, 'Organization');
   const sites = entitiesOfType(entities, 'WebSite');
 

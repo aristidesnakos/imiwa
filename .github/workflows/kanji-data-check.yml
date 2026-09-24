@@ -38,6 +38,9 @@ on:
       - 'lib/constants/**'
       - 'lib/romaji/**'
       - 'lib/levels/**'
+      # The N5 quiz builds every question from this data and its readings.
+      - 'components/levels/quiz/**'
+      - 'scripts/validate-quiz.ts'
       # Consumes the romaji transform to build titles and descriptions, so a
       # change here can leak annotation syntax into a <title> without touching
       # lib/romaji/ at all.
@@ -53,6 +56,9 @@ on:
       - 'lib/constants/**'
       - 'lib/romaji/**'
       - 'lib/levels/**'
+      # The N5 quiz builds every question from this data and its readings.
+      - 'components/levels/quiz/**'
+      - 'scripts/validate-quiz.ts'
       - 'lib/seo/kanji-optimization.ts'
       - 'scripts/validate-romaji.ts'
       - 'scripts/validate-kanji-data.ts'
@@ -97,3 +103,10 @@ jobs:
 
       - name: Validate romaji derivation
         run: pnpm validate:romaji
+
+      # The quiz's one promise: exactly one right answer among four, for every
+      # kanji and question type. It reads the same N5 data and readings, so a
+      # data edit that creates two identical options fails here. Called
+      # directly, not through a package.json script.
+      - name: Validate the N5 quiz
+        run: npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts
