@@ -556,7 +556,7 @@ export function N5QuizClient() {
               size="lg"
               className="w-full sm:w-auto"
               data-fast-goal="n5_quiz_start_click"
-              data-fast-goal-type={typeChoice}
+              data-fast-goal-mode={typeChoice}
               data-fast-goal-questions={String(count)}
             >
               Start the quiz
@@ -831,7 +831,7 @@ export function N5QuizClient() {
                 onClick={next}
                 aria-keyshortcuts="Enter"
                 data-fast-goal={isLast ? 'n5_quiz_finish_click' : undefined}
-                data-fast-goal-type={isLast ? round.type : undefined}
+                data-fast-goal-mode={isLast ? round.type : undefined}
                 data-fast-goal-questions={isLast ? String(total) : undefined}
                 data-fast-goal-score={isLast ? String(rightSoFar) : undefined}
               >

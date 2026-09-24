@@ -67,7 +67,7 @@ const breadcrumbJsonLd = {
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
     { '@type': 'ListItem', position: 2, name: 'Kanji Dictionary', item: `${SITE_URL}/kanji` },
-    { '@type': 'ListItem', position: 3, name: 'JLPT N5 Kanji', item: `${SITE_URL}${N5_LIST}` },
+    { '@type': 'ListItem', position: 3, name: 'JLPT N5 kanji', item: `${SITE_URL}${N5_LIST}` },
     { '@type': 'ListItem', position: 4, name: 'Quiz', item: `${SITE_URL}${PATH}` },
   ],
 };
@@ -109,7 +109,7 @@ export default function N5QuizPage() {
             </li>
             <li>
               <Link prefetch={false} href={N5_LIST} className={CRUMB}>
-                JLPT N5 Kanji
+                JLPT N5 kanji
               </Link>
             </li>
             <li aria-hidden="true" className="text-japan-sakura-waters">
