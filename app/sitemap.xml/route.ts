@@ -22,6 +22,9 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // Indexable and canonical, but both of its in-app links sit behind localStorage
   // checks a crawler never satisfies — without this entry it is an orphan.
   { path: '/kanji/review', lastmod: '2026-07-31', priority: '0.6' },
+  // Practice, not a list: it is written for "n5 kanji quiz", a different query
+  // from the one the N5 list page answers.
+  { path: '/kanji/n5/quiz', lastmod: '2026-09-24', priority: '0.7' },
   // The hub, not the episodes: those carry their own publication dates and are
   // emitted below. Priority matches /kanji because it does the same job for a
   // different query class — it is a category page written to rank, not an index.
