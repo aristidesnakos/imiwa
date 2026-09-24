@@ -10,7 +10,7 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { ArrowRight, PenLine, Layers3, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, PenLine, Search, Sparkles } from 'lucide-react';
 import { trackConversion } from '@/lib/analytics';
 import EmailCapture from '@/components/EmailCapture';
 
@@ -23,12 +23,6 @@ const FEATURES = [
     title: 'Animated stroke order',
     body: 'Watch each character drawn stroke by stroke with KanjiVG diagrams, then practice the correct way to write it.',
     accent: 'var(--coral-sunset)',
-  },
-  {
-    icon: Layers3,
-    title: 'Organized by JLPT level',
-    body: 'Every kanji is grouped from N5 to N1 so you always know what to learn next on your path to fluency.',
-    accent: 'var(--cherry-blossom)',
   },
   {
     icon: Search,
@@ -93,8 +87,7 @@ export default function LandingPage() {
                 Learn Japanese Kanji
               </h1>
               <p className="mt-4 max-w-2xl text-lg text-japan-mountain-mist md:text-xl">
-                Master every JLPT kanji with interactive stroke-order diagrams.
-                Search, learn, and practice the correct way to write each character.
+                From N5 to N1 — learn to read and write every character on the JLPT.
               </p>
 
               <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row">
@@ -113,20 +106,6 @@ export default function LandingPage() {
                   <Link href="/kanji#level-N5">Start with N5 basics</Link>
                 </Button>
               </div>
-
-              {/* Quick stats */}
-              <dl className="mt-10 grid w-full max-w-lg grid-cols-3 gap-4">
-                {[
-                  { value: ALL_KANJI_COUNT.toLocaleString(), label: 'Kanji' },
-                  { value: '5', label: 'JLPT levels' },
-                  { value: 'Animated', label: 'Stroke order' },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-japan-sakura-waters/20 bg-card/60 py-3 backdrop-blur-sm">
-                    <dt className="text-lg font-bold text-japan-deep-ocean md:text-xl">{stat.value}</dt>
-                    <dd className="text-xs text-japan-mountain-mist">{stat.label}</dd>
-                  </div>
-                ))}
-              </dl>
             </div>
           </div>
         </section>
@@ -164,7 +143,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+            <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
               {FEATURES.map((f) => (
                 <div
                   key={f.title}
@@ -253,15 +232,6 @@ export default function LandingPage() {
                 </Link>
               ))}
             </div>
-
-            <div className="mt-10 text-center">
-              <Button asChild size="lg">
-                <Link href="/kanji" onClick={() => handleExploreClick('homepage_popular_grid')}>
-                  Explore all {ALL_KANJI_COUNT.toLocaleString()} kanji
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
           </div>
         </section>
 
@@ -335,8 +305,7 @@ export default function LandingPage() {
                 Ready to start writing kanji?
               </h2>
               <p className="mt-3 max-w-xl text-japan-sakura-waters">
-                No sign-up, no cost. Jump straight into {ALL_KANJI_COUNT.toLocaleString()} kanji
-                with animated stroke order and readings.
+                No sign-up, no cost. Start learning today.
               </p>
               {/* brightness-90, not /90. An alpha hover composites against
                   whatever is behind it, so the same class darkened on this navy
