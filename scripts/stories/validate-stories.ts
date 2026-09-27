@@ -18,7 +18,7 @@
  * what the reader sees.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { EPISODES, UPCOMING } from '../../lib/stories';
@@ -31,6 +31,8 @@ import { N1_KANJI } from '../../lib/constants/n1-kanji';
 
 const ROOT = resolve(__dirname, '..', '..');
 const PUBLIC_DIR = join(ROOT, 'public');
+const DATA_DIR = join(ROOT, 'data', 'stories');
+const ART_DIR = join(PUBLIC_DIR, 'stories');
 
 const N5 = new Set(N5_KANJI.map(k => k.kanji));
 const ALL_LEVELS = new Set(
@@ -185,8 +187,71 @@ function validate(episode: Episode): void {
   }
 }
 
+/**
+ * The disk against the registry. Every other check reads EPISODES, so an
+ * episode that never made it into the list is invisible to all of them — and
+ * that is how episode 6 shipped: its data file and art were committed, the
+ * import line in lib/stories/index.ts was not, this validator stayed green,
+ * and `/stories/tans-family-and-friends` was a 404 in production while the hub
+ * went on listing it as coming soon.
+ *
+ * Reading the disk is right here and only here: the `fs` trap the registry
+ * documents is about site code under Next's file tracing, and this is a script.
+ */
+function validateRegistryCoversDisk(): void {
+  const dataFiles = existsSync(DATA_DIR)
+    ? readdirSync(DATA_DIR).filter(f => /^ep-.*\.ts$/.test(f)).sort()
+    : [];
+  for (const file of dataFiles) {
+    // `require`, not a regex over the source, and through the same module cache
+    // the registry used: a registered file hands back the very object EPISODES
+    // holds, so identity is the registration test. A file nobody imports, or a
+    // stale copy of one that is, loads fresh and is not in the list.
+    const { EPISODE: episode } = require(join(DATA_DIR, file)) as { EPISODE?: Episode };
+    if (!episode) {
+      issues.push(`data/stories/${file} does not export EPISODE`);
+      continue;
+    }
+    // The importer names the file from the number it writes into it, so any
+    // other name is a hand rename or a stale copy, not an episode to register.
+    const expected = `ep-${String(episode.number).padStart(2, '0')}.ts`;
+    if (file !== expected) {
+      issues.push(
+        `data/stories/${file} exports episode ${episode.number}, which the importer names ${expected}`,
+      );
+    } else if (!EPISODES.includes(episode)) {
+      issues.push(
+        `data/stories/${file} is not in EPISODES — import it in lib/stories/index.ts, ` +
+          `or /stories/${episode.slug} is a 404`,
+      );
+    }
+  }
+
+  // Directories only. Finder leaves a .DS_Store at this level, and a file is
+  // not an episode's art; nothing else legitimately lives here.
+  const slugs = new Set(EPISODES.map(e => e.slug));
+  const artDirs = existsSync(ART_DIR)
+    ? readdirSync(ART_DIR, { withFileTypes: true })
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name)
+        .sort()
+    : [];
+  for (const dir of artDirs) {
+    if (!slugs.has(dir)) {
+      issues.push(
+        `public/stories/${dir}/ belongs to no registered episode — register its episode in ` +
+          `lib/stories/index.ts, or the art ships with no page`,
+      );
+    }
+  }
+}
+
 function main(): void {
-  if (EPISODES.length === 0) {
+  // First, and before the early return: an empty registry with episode files
+  // on disk is the episode 6 failure in its most complete form.
+  validateRegistryCoversDisk();
+
+  if (EPISODES.length === 0 && issues.length === 0) {
     console.log('No episodes registered yet — nothing to validate.');
     return;
   }
