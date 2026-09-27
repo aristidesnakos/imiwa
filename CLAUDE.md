@@ -243,7 +243,9 @@ this checks it again after the import, because the two can diverge. It also catc
 pipeline tolerates: narration lines in `script.json` carry a bubble tail that `build.py` ignores, so
 the importer normalises it to `null` and the validator asserts tail-vs-speaker agreement — and that
 an episode's three quiz answers are not all in the same position, which all eighteen questions in
-season one were, making every card answerable without reading it.
+season one were, making every card answerable without reading it. It now also fails on a data file
+or art directory the registry does not import: every other check starts from `EPISODES`, so
+episode 6 shipped as a 404 on a green validator.
 
 **The link from `/kanji/[character]` is text and must stay text.** `StoryAppearancesSection` is a
 server component with no client boundary, so it costs nothing against the script budget. It cannot
