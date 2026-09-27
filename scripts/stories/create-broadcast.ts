@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   console.log(`The next send slot is ${formatUtcInstant(nextSendAt())}.`);
   console.log(
     'If this episode is next in the queue, the weekly job schedules this draft on its next run (Wednesday or\n' +
-      'Friday, 12:00 UTC). Delete it in Resend if that is not what you want, or review it, send a test and\n' +
+      'Friday, 12:07 UTC). Delete it in Resend if that is not what you want, or review it, send a test and\n' +
       'schedule it yourself in the Resend dashboard.'
   );
   console.log('Pre-send checklist: docs/prd/episode-spec.md §A7. Procedure: docs/runbooks/newsletter.md.');
