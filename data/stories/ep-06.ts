@@ -15,7 +15,7 @@ export const EPISODE: Episode = {
   titleEn: "Tan's family and friends",
   titleJa: "タンの かぞくと ともだち",
   level: "N5",
-  publishedAt: "2026-09-24",
+  publishedAt: "2026-09-27",
   ogImage: "/stories/tans-family-and-friends/og.jpg",
   focusKanji: ["父", "母", "友", "男", "女"],
   targets: [

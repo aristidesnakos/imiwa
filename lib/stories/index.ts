@@ -15,30 +15,25 @@ import { EPISODE as EP02 } from '../../data/stories/ep-02';
 import { EPISODE as EP03 } from '../../data/stories/ep-03';
 import { EPISODE as EP04 } from '../../data/stories/ep-04';
 import { EPISODE as EP05 } from '../../data/stories/ep-05';
+import { EPISODE as EP06 } from '../../data/stories/ep-06';
 
-export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05];
+export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05, EP06];
 
 /**
- * The rest of season one: written, validated against the N5 list upstream, and
- * waiting on art.
+ * Episodes written and validated against the N5 list upstream, but still
+ * waiting on art. Empty whenever every written episode has been drawn, and the
+ * hub then renders nothing for it.
  *
  * Hand-maintained, and that is the cheaper side of the trade. The alternative
  * is reading `strips/season-01.json`, which lives outside this repo — so it
  * would be either an untraceable `fs` read (the trap `lib/sentences/
- * published.ts` documents) or a second generated file to keep in step. Four
- * entries deleted one at a time over four weeks is less machinery than either.
+ * published.ts` documents) or a second generated file to keep in step.
+ * Deleting one entry per imported episode is less machinery than either.
  *
  * Delete an entry when its episode is imported. `validate:stories` fails if a
  * number appears in both lists, so this cannot be forgotten silently.
  */
-export const UPCOMING: readonly UpcomingEpisode[] = [
-  {
-    number: 6,
-    titleEn: "Tan's family and friends",
-    titleJa: 'タンの かぞくと ともだち',
-    teaches: ['父', '母', '友だち', '男の子', '女の子'],
-  },
-];
+export const UPCOMING: readonly UpcomingEpisode[] = [];
 
 /** Oldest first — the order they will actually arrive in. */
 export function upcomingInOrder(): UpcomingEpisode[] {
