@@ -221,6 +221,160 @@ segment membership, so there is nothing better to assert.
 Still not proven, and deliberately: inbox placement, rendering, and the link inside the email body.
 Those are human judgements — [§A7 items 4–9](../prd/episode-spec.md).
 
+## Measuring the newsletter
+
+As of 2026-09-27 the list is four confirmed subscribers, no broadcast has gone out, and **Resend's
+open and click tracking are off** on `michikanji.com`, the only sending domain. So Resend holds no
+open or click data at all. Its email log shows every message as "delivered", including confirmation
+emails that each subscriber must have opened, and clicked through, to become one. Nothing is broken:
+Resend was never asked to record either.
+
+### The signals, and how to read each
+
+| Signal | Where to read it | Needs tracking on? | What it tells you |
+|---|---|---|---|
+| Arrivals from the email | DataFast, UTM tab | No | Someone followed a link in a given email to the site |
+| Replies | The inbox behind `config.resend.supportEmail` | No | Someone read closely enough to write back |
+| Unsubscribes | `pnpm newsletter:stats`, or the Resend dashboard | No | Someone decided to leave |
+| Delivered, bounced, complained | `pnpm newsletter:stats`, or the Resend dashboard | No | Whether the mail arrived, and whether anyone marked it as spam |
+| Opens | `pnpm newsletter:stats`, or the Resend dashboard | Open tracking | An upper bound at best (see Apple, below) |
+| Clicks, counted by Resend | `pnpm newsletter:stats`, or the Resend dashboard | Click tracking | Off by decision (see the last subsection) |
+
+**Arrivals in DataFast: the click signal that works today.** Every content link in the episode email
+carries `utm_source=newsletter`, `utm_medium=email`, `utm_campaign=<episode slug>` and
+`utm_content=welcome` or `weekly` ([`lib/email/utm.ts`](../../lib/email/utm.ts)). DataFast reads
+them with no setup: open the UTM tab, filter on `utm_source=newsletter`, then break it down by
+campaign (which episode) and content (the welcome card or the weekly send). It counts visits, not
+clicks, and cannot see a browser that blocks analytics; a forwarded email's reader counts like a
+subscriber. The tag is identical for every recipient, so it says which email a visit came from,
+never who made it. The unsubscribe link, the `{{{RESEND_UNSUBSCRIBE_URL}}}` placeholder, `mailto:`
+links, images and the whole confirmation email are never tagged, and the plain-text part tags only
+its "Read the episode" link. `pnpm validate:subscribe` asserts all of that. The renderers default
+to `welcome`, so **the broadcast must pass `'weekly'`**, or its arrivals are filed under the
+welcome card.
+
+**Replies.** The welcome card and the broadcast both set reply-to `config.resend.supportEmail`, so
+replies land in that inbox and nowhere Resend or DataFast can see. Count them per episode by hand.
+At this size a reply is worth more than any rate: it is the signal the pilot's decision gate reads
+([`episode-spec.md`](../prd/episode-spec.md) §A8).
+
+**Unsubscribes.** `newsletter:stats` counts the segment's contacts as subscribed and unsubscribed:
+the list as it stands, whichever link was used (the welcome card carries our own
+`/api/unsubscribe`, the broadcast Resend's). Per broadcast, it prints the unsubscribes Resend
+attributes to that send. On a list of four, one unsubscribe is a quarter of the list; read it as
+one person's decision, and read their reply if they sent one.
+
+**Resend's broadcast numbers.** Delivered, bounced, complained and unsubscribed are recorded
+whatever the tracking settings. Opens need open tracking and clicks need click tracking on the
+sending domain, and **neither is retroactive**: a send made while a switch was off has no events,
+whatever the switch says later. The dashboard shows them under Broadcasts, one broadcast at a time.
+The API exposes them through `GET /emails/metrics`, filtered by broadcast id; `GET /broadcasts`
+itself carries no numbers at all. Verified against the live docs on 2026-09-27:
+[metrics](https://resend.com/docs/api-reference/emails/get-metrics),
+[broadcasts](https://resend.com/docs/api-reference/broadcasts/get-broadcast),
+[segment contacts](https://resend.com/docs/api-reference/segments/list-segment-contacts),
+[domains](https://resend.com/docs/api-reference/domains/list-domains) (which carry each domain's
+`open_tracking` and `click_tracking`), and [tracking](https://resend.com/docs/dashboard/domains/tracking)
+itself.
+
+### Opens overcount: clicks and replies are the honest signals
+
+Open tracking is a tiny remote image, and Apple Mail's Mail Privacy Protection downloads remote
+content in the background when a message arrives, not when someone reads it
+([Apple](https://support.apple.com/guide/mail/use-mail-privacy-protection-mlhl03be2866/mac)). Every
+Apple Mail reader with it on counts as an open on delivery, read or not, and Resend itself says
+open rates "can be inaccurate"
+([Resend](https://resend.com/docs/knowledge-base/why-are-my-open-rates-not-accurate)). An open rate
+is an upper bound with an unknown amount of air in it. Arrivals and replies are things a person
+did. Clicks are harder to fake than opens but not impossible: some corporate mail gateways follow
+links to scan them, which a Resend click-tracking redirect would count as a click.
+
+### Four people is an anecdote, not data
+
+With four subscribers, one person moves any rate by 25 percentage points. "50% opened" is two
+people, and next week's "75%" can be the same two plus somebody's iPhone. No rate from this list,
+Resend's or DataFast's, means anything yet. Read the events themselves: which episode drew an
+arrival, who replied and what they said, who left. `newsletter:stats` prints that arithmetic at the
+foot of every report so nobody has to remember it. Rates start to carry information once the list
+is in the hundreds, and even then one week against the next is mostly noise.
+
+### Running `pnpm newsletter:stats`
+
+```bash
+pnpm newsletter:stats
+```
+
+It is read-only: it sends, schedules and changes nothing. It needs `RESEND_API_KEY`, a **Full
+access** key (a Sending-access key cannot read contacts or broadcasts), and
+`RESEND_WEEKLY_STORIES_SEGMENT_ID`, both in `.env.local` by hand, for the reason
+[the Saturday ritual](#the-saturday-ritual) gives. Without a key it exits with one line; without
+the segment id it skips the subscriber count and reports the rest. It prints:
+
+- the segment's contacts, subscribed against unsubscribed;
+- each sending domain's open and click tracking as set today;
+- every broadcast, newest first, with its status and its sent or scheduled time; then delivered of
+  sent, bounced, complained and unsubscribed; and opens and clicks where the domain records them.
+  Where it does not, it prints **"not recorded: open tracking is off on …"**, never a 0% that
+  would read as "nobody opened it";
+- what Resend cannot count: the list-size arithmetic above, the DataFast filter, and the reply
+  inbox.
+
+It counts contacts without keeping or printing an address, and scrubs addresses, keys and the
+segment id from any error it prints. Resend caches the numbers for up to 15 minutes and keeps them
+only for the plan's retention window.
+
+### The tracking decision, still open
+
+Tracking is a per-domain switch in Resend, and it is **off**. Turning it on is the owner's call,
+and not yet made. These are the facts it turns on:
+
+- **It would reach the confirmation email.** Everything this repo sends goes from one domain,
+  `michikanji.com` (`config.resend.fromAdmin`): the consent email, the welcome card and the
+  broadcast. Switched on there, the pixel and the rewritten links land in the confirmation email
+  too, which reaches people who have agreed to nothing, some of whom never asked to be signed up.
+  Avoiding that takes two sending identities: the confirmation stays on an untracked domain, and
+  the welcome card and broadcast move to a tracked subdomain (`stories.michikanji.com` was
+  [PRD §3](../prd/story-delivery-resend.md)'s plan all along). That is new DNS records and a
+  from-address change in code, not just the switch.
+- **Click tracking should stay off.** [PRD §3](../prd/story-delivery-resend.md) turned it off on
+  purpose: Resend's redirect is one more hop that can re-encode a percent-encoded CJK URL into a
+  404, and it records each clicker's IP address and browser. Arrivals in DataFast already answer
+  "did anyone go and read it" without either.
+- **Open tracking buys little at this size.** Apple inflates it, and four people make any rate an
+  anecdote.
+- **The privacy policy promises notice.** It says a change that affects how subscribers'
+  information is used in a meaningful way is emailed to them before it takes effect, and recording
+  who opened what is the kind of change it means. Tell the list first.
+- **The disclosure is written, and held.** A separate privacy-policy commit
+  (`docs(privacy): disclose open and click tracking in the story email`) says the emails carry a
+  pixel and tracked links, what Resend records and why, and how to avoid both: images off, or
+  unsubscribe. It ships **the same day** the switch is turned on, and not before. It is written for
+  the switch as it exists today, one domain for everything, so it tells readers the confirmation
+  email is tracked too. If the confirmation moves to an untracked domain first, cut that bullet
+  before it ships.
+- **EU subscribers.** Article 5(3) of the ePrivacy Directive governs storing information on, or
+  reading it from, a user's device. The EDPB's
+  [Guidelines 2/2023](https://www.edpb.europa.eu/system/files/2024-10/edpb_guidelines_202302_technical_scope_art_53_eprivacydirective_v2_en_0.pdf)
+  (version 2.0, adopted 7 October 2024, §§47–51) read it as covering email tracking pixels and
+  tracking links. France's CNIL adopted a
+  [recommendation](https://www.cnil.fr/fr/recommandation-pixel-suivi-courriels) on 12 March 2026
+  that treats a pixel measuring individual opens as needing the recipient's consent, with narrow
+  exemptions (some aggregate and deliverability measurement among them), and says its reach
+  includes senders outside the EU. That is a regulator's guidance on applying French law, not a
+  statute, and how any of it applies to a US operator with a handful of EU subscribers is the same
+  lawyer's question as [Known gaps](#known-gaps) 8. What is certain is narrower: the signup form
+  asks for no tracking consent, so the conservative reading is no pixel for EU subscribers without
+  an opt-in collected at signup. The same EDPB reading covers tracking links, and its own example
+  (§49) is a source tag rather than a per-person one, so the UTM tags are not categorically
+  outside it. They carry no per-person identifier and are read by the DataFast script that already
+  runs without consent, the judgement call the privacy policy already states, rather than a new
+  one.
+
+**If the switch is turned on, in this order.** Settle the confirmation-email question. Email the
+list that tracking starts on a given date. On that date, turn the switch on and deploy the held
+privacy commit together, with its `LAST_UPDATED` set to that day. Then run `pnpm newsletter:stats`
+and check it reports the new setting.
+
 ## End-to-end verification
 
 Run against production with a real inbox you control. Ten minutes, and it is the only way to know
