@@ -22,9 +22,11 @@ export const metadata = getSEOTags({
  *    loads only after analytics consent (lib/analytics/index.ts).
  *  - Progress lives in localStorage and never reaches a server (CLAUDE.md,
  *    "No server-side user state").
- *  - A pending signup is stored nowhere: the signed token is the record
- *    (lib/email/subscribe-token.ts). The Resend contact is created only by the
- *    confirm button, and it is the consent record.
+ *  - A pending signup is never added to the list: the signed token is the
+ *    record (lib/email/subscribe-token.ts). The Resend contact is created only
+ *    by the confirm button, and it is the consent record. Resend's send log
+ *    does keep the confirmation email itself (address, subject, time), so the
+ *    policy never says a pending signup is "stored nowhere".
  *  - The signup source goes to DataFast as a goal without the address
  *    (components/EmailCapture.tsx), never onto the contact.
  *  - Content links in the episode email carry UTM tags naming the email,
@@ -143,9 +145,9 @@ export default function PrivacyPolicy() {
             </li>
             <li>
               <strong>How you join:</strong> you enter your address, we send one confirmation email, and
-              nothing else happens unless you press the button in it. Until then we store nothing: the link
-              in that email carries your request itself, signed so it cannot be forged, and it expires after
-              48 hours.
+              nothing else happens unless you press the button in it. Until then nothing is added to our list:
+              the link in that email carries your request itself, signed so it cannot be forged, and it
+              expires after 48 hours.
             </li>
             <li>
               <strong>Our record of your consent</strong> is your subscriber entry. It can only be created
@@ -192,7 +194,7 @@ export default function PrivacyPolicy() {
           <h2 className={H2}>Who handles data for us</h2>
           <p className={P}>These service providers process data on our behalf and only on our instructions:</p>
           <ul className={`${LIST} mt-3`}>
-            <li><strong>Resend</strong>: sends our emails and stores the subscriber list</li>
+            <li><strong>Resend</strong>: sends our emails, keeps a log of what it sent, and stores the subscriber list</li>
             <li><strong>Vercel</strong>: hosts the website</li>
             <li><strong>DataFast</strong>: visit analytics</li>
             <li><strong>Ahrefs</strong>: optional analytics, only with your consent</li>
@@ -220,8 +222,9 @@ export default function PrivacyPolicy() {
               do-not-email marker described above, until you ask us to delete it.
             </li>
             <li>
-              <strong>Unconfirmed sign-ups:</strong> nothing is stored, and the confirmation link expires
-              after 48 hours.
+              <strong>Unconfirmed sign-ups:</strong> nothing is added to our list, and the confirmation link
+              expires after 48 hours. Resend&apos;s send log keeps a record of the confirmation email (your
+              address, its subject and when it was sent) for the period Resend sets for our account.
             </li>
             <li><strong>Messages to us:</strong> as long as we need to deal with them and any follow-up.</li>
             <li><strong>Analytics and server logs:</strong> for the periods those providers set.</li>
