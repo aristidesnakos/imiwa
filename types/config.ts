@@ -42,8 +42,15 @@ export interface ConfigProps {
   newsletter: {
     /** 0 = Sunday … 6 = Saturday. The day a broadcast is scheduled for. */
     sendDay: number;
+    /** `HH:MM`, in UTC. The time of day on `sendDay` a broadcast is scheduled for. */
+    sendTimeUtc: string;
     /** Days before the send that the episode must be written and imported. */
     writeLeadDays: number;
+    /**
+     * The lowest episode number the weekly job broadcasts. Lower-numbered
+     * episodes predate the list's first broadcast and are never sent.
+     */
+    firstBroadcastEpisode: number;
   };
   business: {
     /** The legal entity that operates the site and sends the newsletter. */
@@ -53,8 +60,8 @@ export interface ConfigProps {
     /**
      * Where post reaches the business. A street address — a private mailbox at
      * a commercial mail receiving agency is fine, a USPS PO Box is not.
-     * `null` until one exists; `stories:create-broadcast` refuses to run
-     * without it. See lib/business/postal-address.ts.
+     * `null` until one exists; both broadcast scripts refuse to run without
+     * it. See lib/business/postal-address.ts.
      */
     postalAddress: PostalAddress | null;
   };

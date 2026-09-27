@@ -36,19 +36,32 @@ const config = {
     supportEmail: "ari@llanai.com",
     forwardRepliesTo: "ari@llanai.com",
   },
-  // The weekly story's cadence, in one place, because until now it existed only
-  // as the word "weekly" in four pieces of prose and a blank column in
-  // docs/prd/episode-spec.md. Nothing schedules from this — Resend owns
-  // scheduling and the send stays a reviewed, manual act (see
-  // docs/runbooks/newsletter.md). What it does is give the runbook, the
-  // pre-send output and the calendar one definition to agree with, so "which
-  // Saturday" is never re-derived by hand.
+  // The weekly story's cadence, in one place, because until 2026-09-16 it
+  // existed only as the word "weekly" in four pieces of prose and a blank
+  // column in docs/prd/episode-spec.md. Since 2026-09-27 the weekly job
+  // (.github/workflows/weekly-broadcast.yml, running
+  // scripts/stories/schedule-weekly-broadcast.ts) schedules from it: it asks
+  // Resend to send the next episode at `sendDay` + `sendTimeUtc`, and Resend
+  // does the sending. The runbook, the job and the calendar all read this one
+  // definition, so "which Saturday" is never re-derived by hand.
+  // Procedure: docs/runbooks/newsletter.md.
   newsletter: {
     // Saturday. Chosen 2026-09-16; before that there was no send day at all.
+    // If it moves, move the job's cron too: it runs on the write-by day and on
+    // the day before the send.
     sendDay: 6,
+    // The time of day the broadcast is scheduled for, in UTC, as HH:MM. A UTC
+    // time rather than a local one so it never moves with anyone's daylight
+    // saving. Chosen 2026-09-27, with the scheduler.
+    sendTimeUtc: "13:00",
     // Write-by is send-day minus 3 — a Wednesday — which is the room the A7
     // pre-send checklist and one round of fixes actually need.
     writeLeadDays: 3,
+    // The lowest episode number the weekly job will ever broadcast. Episodes 1
+    // to 5 went up before the list had received a single broadcast, and a new
+    // subscriber meets them through the site and the welcome card instead; the
+    // job never sends them. The queue starts here and runs in episode order.
+    firstBroadcastEpisode: 6,
   },
   // Who legally sends the newsletter, and where post reaches them. One
   // definition for three obligations that must agree: the email footer
@@ -65,8 +78,9 @@ const config = {
     // accepted (16 CFR 316.2(p)). Never a USPS PO Box — `pnpm validate:subscribe`
     // rejects one, because the address also has to name a physical place.
     // It prints in every episode email's footer and on /privacy-policy. If it
-    // is ever null again, the footer omits the line and
-    // `pnpm stories:create-broadcast` refuses to run.
+    // is ever null again, the footer omits the line and both broadcast
+    // scripts, `pnpm stories:schedule-broadcast` and
+    // `pnpm stories:create-broadcast`, refuse to run.
     // Procedure: docs/runbooks/newsletter.md.
     postalAddress: {
       street: "9169 W State St",

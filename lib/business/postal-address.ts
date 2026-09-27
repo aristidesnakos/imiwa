@@ -4,9 +4,10 @@
  * `config.business.postalAddress` is published in two places that must agree —
  * every newsletter footer and the privacy policy — and it is the stated
  * contact point for data-erasure requests. So it is formatted in exactly one
- * place, here, and checked in exactly one place, also here: the broadcast
- * script refuses to create a draft while `postalAddressProblems` reports
- * anything, and `pnpm validate:subscribe` asserts the same rules.
+ * place, here, and checked in exactly one place, also here: both broadcast
+ * scripts (the weekly job and the manual draft) refuse to run while
+ * `postalAddressProblems` reports anything, and `pnpm validate:subscribe`
+ * asserts the same rules.
  *
  * The rules are the intersection of what the address has to satisfy:
  *

@@ -10,17 +10,19 @@ export type { EpisodeEmailKind } from '@/lib/email/utm';
  * A Travels of Tan episode, quiz and answers as an email.
  *
  * One renderer for both sends that carry an episode — the welcome card from
- * `/api/subscribe/confirm` and the weekly broadcast from
- * `stories:create-broadcast` — so the footer's legal lines cannot drift apart
- * between them. The postal address is rendered whenever
- * `config.business.postalAddress` is set; the broadcast script refuses to run
- * while it is not, and `pnpm validate:subscribe` asserts both footers carry it.
+ * `/api/subscribe/confirm` and the weekly broadcast built by
+ * lib/email/broadcast.ts for both broadcast scripts — so the footer's legal
+ * lines cannot drift apart between them. The postal address is rendered
+ * whenever `config.business.postalAddress` is set; both broadcast scripts
+ * refuse to run while it is not, and `pnpm validate:subscribe` asserts both
+ * footers carry it.
  *
  * `kind` says which of the two sends this is, and travels as `utm_content` on
  * the content links (lib/email/utm.ts) so DataFast can tell their arrivals
  * apart. It defaults to 'welcome' so the confirm route's call is unchanged;
  * the broadcast must pass 'weekly', or its arrivals are filed under the
- * welcome card.
+ * welcome card. lib/email/broadcast.ts does, and `pnpm validate:broadcast`
+ * asserts it.
  */
 
 /** The sender and postal address as one footer line, or null while none is set. */
