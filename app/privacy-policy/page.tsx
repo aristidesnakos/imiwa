@@ -27,6 +27,10 @@ export const metadata = getSEOTags({
  *    confirm button, and it is the consent record.
  *  - The signup source goes to DataFast as a goal without the address
  *    (components/EmailCapture.tsx), never onto the contact.
+ *  - Content links in the episode email carry UTM tags naming the email,
+ *    identical for every recipient (lib/email/utm.ts); DataFast reads them on
+ *    arrival. The unsubscribe link and the confirmation email carry none
+ *    (asserted by scripts/validate-subscribe.ts).
  *  - The sign-up, feedback and advertising routes share one in-memory rate
  *    limiter (middlewares/rateLimiter.ts) that forgets an IP once its
  *    ten-minute window has passed; the policy states that ten minutes.
@@ -38,7 +42,7 @@ export const metadata = getSEOTags({
  * same definition the email footer renders, so the two cannot disagree.
  */
 
-const LAST_UPDATED = "September 24, 2026";
+const LAST_UPDATED = "September 27, 2026";
 
 const H2 = "mb-3 text-xl font-semibold text-japan-deep-ocean";
 const H3 = "mb-2 mt-6 text-base font-semibold text-japan-deep-ocean";
@@ -150,6 +154,11 @@ export default function PrivacyPolicy() {
             <li>
               <strong>Which page you signed up from</strong> is counted in our analytics as a sign-up event.
               It is not stored with your email address.
+            </li>
+            <li>
+              <strong>Links in the story email</strong> carry a tag naming the email they are in. The tag is the
+              same for every subscriber, so when you follow one, our visit analytics learns which email the visit
+              came from, not which subscriber you are.
             </li>
             <li>
               <strong>Why:</strong> to send you the story you asked for, about once a week. Legal basis:

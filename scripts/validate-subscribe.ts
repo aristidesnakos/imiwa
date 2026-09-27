@@ -23,7 +23,9 @@
  *     not pinned on verify;
  *   - an expired token still verifies its signature (so the re-subscribe form
  *     stays attributed) but is refused as consent;
- *   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send.
+ *   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
+ *   - the episode email's campaign tags are identical for every recipient, and
+ *     never reach the unsubscribe link or the pre-consent confirmation email.
  *
  * The migration this guards replaced a Kit proxy that had a fallback minting
  * `state: active` subscribers with no confirmation step at all. That bug is
@@ -44,7 +46,14 @@ import config from '../config';
 import type { PostalAddress } from '../types/config';
 import { postalAddressLine, postalAddressProblems } from '../lib/business/postal-address';
 import { quizEmailHtml, quizEmailText } from '../lib/email/quiz-email';
-import { episodesNewestFirst } from '../lib/stories';
+import { withNewsletterUtm } from '../lib/email/utm';
+import {
+  confirmUrl,
+  confirmationEmailHtml,
+  confirmationEmailText,
+} from '../lib/email/confirmation-email';
+import { EPISODES, episodesNewestFirst } from '../lib/stories';
+import { SITE_URL } from '../lib/seo/site';
 
 const SECRET = 'test-secret-not-used-anywhere-real';
 const OTHER_SECRET = 'a-different-secret-entirely';
@@ -360,6 +369,136 @@ if (newestEpisode) {
   );
 }
 
+// --- Campaign tags on the episode email -------------------------------------
+//
+// The episode email's content links carry UTM tags so DataFast can say which
+// email a visit came from (lib/email/utm.ts). What makes that safe is asserted
+// here rather than described: the tags are exact, they are identical for every
+// recipient, and none reaches the unsubscribe link, the Resend placeholder, a
+// mailto: link, an image, or the confirmation email, which is transactional
+// and reaches someone who has not consented to anything yet.
+
+type EmailKind = 'welcome' | 'weekly';
+
+/** Every href in an HTML part, with `&amp;` decoded back to the URL it stands for. */
+function hrefsIn(html: string): string[] {
+  return [...html.matchAll(/href="([^"]*)"/g)].map(match => match[1].replace(/&amp;/g, '&'));
+}
+
+/** The tagged URL the spec asks for, written out rather than derived from the helper. */
+function tagged(path: string, slug: string, kind: EmailKind): string {
+  return `${SITE_URL}${path}?utm_source=newsletter&utm_medium=email&utm_campaign=${slug}&utm_content=${kind}`;
+}
+
+const SAMPLE_UNSUBSCRIBE = 'https://www.michikanji.com/api/unsubscribe?token=sample';
+const RESEND_PLACEHOLDER = '{{{RESEND_UNSUBSCRIBE_URL}}}';
+
+for (const episode of EPISODES) {
+  check(
+    `${episode.slug}: the campaign is the slug, and reads the same in DataFast without encoding`,
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(episode.slug)
+  );
+  for (const kind of ['welcome', 'weekly'] as const) {
+    const primary = tagged(`/stories/${episode.slug}`, episode.slug, kind);
+    check(
+      `${episode.slug} (${kind}): the HTML links the episode page with exactly the four tags`,
+      hrefsIn(quizEmailHtml(episode, SAMPLE_UNSUBSCRIBE, kind)).includes(primary)
+    );
+    check(
+      `${episode.slug} (${kind}): the plain text links the episode page with exactly the four tags`,
+      quizEmailText(episode, SAMPLE_UNSUBSCRIBE, kind).split('\n').includes(primary)
+    );
+  }
+}
+
+if (newestEpisode) {
+  const slug = newestEpisode.slug;
+  const sends = [
+    { send: 'broadcast', kind: 'weekly', unsubscribe: RESEND_PLACEHOLDER },
+    { send: 'welcome card', kind: 'welcome', unsubscribe: SAMPLE_UNSUBSCRIBE },
+  ] as const;
+
+  for (const { send, kind, unsubscribe } of sends) {
+    const html = quizEmailHtml(newestEpisode, unsubscribe, kind);
+    const text = quizEmailText(newestEpisode, unsubscribe, kind);
+    const contentLinks = [tagged(`/stories/${slug}`, slug, kind), tagged('/stories', slug, kind)];
+    const links = hrefsIn(html);
+
+    check(
+      `the ${send} HTML tags both content links, the episode and every episode`,
+      contentLinks.every(link => links.includes(link))
+    );
+    check(
+      `every link in the ${send} HTML is a tagged content link or the unsubscribe link exactly as given`,
+      links.includes(unsubscribe) && links.every(link => contentLinks.includes(link) || link === unsubscribe)
+    );
+    check(
+      `no image in the ${send} carries a tag`,
+      [...html.matchAll(/src="([^"]*)"/g)].every(match => !match[1].includes('utm_'))
+    );
+    const textUrls: string[] = text.match(/https?:\/\/\S+/g) ?? [];
+    check(
+      `the ${send} plain text tags its primary link and no other`,
+      textUrls.includes(contentLinks[0]) && textUrls.filter(url => url.includes('utm_')).length === 1
+    );
+    check(
+      `the ${send} plain text keeps its unsubscribe link bare`,
+      text.split('\n').includes(`Unsubscribe: ${unsubscribe}`)
+    );
+  }
+
+  check(
+    'an episode email with no kind is the welcome card, so the confirm route needs no change',
+    quizEmailHtml(newestEpisode, SAMPLE_UNSUBSCRIBE) === quizEmailHtml(newestEpisode, SAMPLE_UNSUBSCRIBE, 'welcome') &&
+      quizEmailText(newestEpisode, SAMPLE_UNSUBSCRIBE) === quizEmailText(newestEpisode, SAMPLE_UNSUBSCRIBE, 'welcome')
+  );
+
+  const asWelcome = (rendered: string) => rendered.replaceAll('utm_content=weekly', 'utm_content=welcome');
+  check(
+    'the welcome card and the broadcast differ in utm_content and nothing else',
+    asWelcome(quizEmailHtml(newestEpisode, SAMPLE_UNSUBSCRIBE, 'weekly')) ===
+      quizEmailHtml(newestEpisode, SAMPLE_UNSUBSCRIBE, 'welcome') &&
+      asWelcome(quizEmailText(newestEpisode, SAMPLE_UNSUBSCRIBE, 'weekly')) ===
+        quizEmailText(newestEpisode, SAMPLE_UNSUBSCRIBE, 'welcome')
+  );
+
+  // The only per-recipient input a renderer receives is the signed unsubscribe
+  // link. If any of it leaked into a content link, the tag would identify the
+  // reader, which is exactly what it must never do.
+  const readerOne = 'https://www.michikanji.com/api/unsubscribe?token=reader-one';
+  const readerTwo = 'https://www.michikanji.com/api/unsubscribe?token=reader-two';
+  const contentOnly = (unsubscribe: string) =>
+    JSON.stringify(hrefsIn(quizEmailHtml(newestEpisode, unsubscribe, 'weekly')).filter(link => link !== unsubscribe));
+  check(
+    'the content links are identical for every recipient, so no tag carries anything personal',
+    contentOnly(readerOne) === contentOnly(readerTwo)
+  );
+}
+
+for (const [what, url] of [
+  ['the Resend unsubscribe placeholder', RESEND_PLACEHOLDER],
+  ['a signed unsubscribe link', SAMPLE_UNSUBSCRIBE],
+  ['a mailto: link', 'mailto:reply@example.com'],
+  ['a link to another site', 'https://example.com/stories'],
+] as const) {
+  check(
+    `${what} comes back untagged even when handed to the tagger`,
+    withNewsletterUtm(url, 'any-campaign', 'weekly') === url
+  );
+}
+
+const confirmToken = mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET);
+const confirmationHtml = confirmationEmailHtml(confirmToken);
+check(
+  'the confirmation email carries no campaign tag: it is transactional and pre-consent',
+  !confirmationHtml.includes('utm_') && !confirmationEmailText(confirmToken).includes('utm_')
+);
+check(
+  'every link in the confirmation email is the bare confirm link',
+  hrefsIn(confirmationHtml).length > 0 &&
+    hrefsIn(confirmationHtml).every(link => link === confirmUrl(confirmToken))
+);
+
 // --- Report ---------------------------------------------------------------
 
 const total = passed + failures.length;
@@ -382,6 +521,9 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
     replayed as a confirm token, and vice versa
   · the published postal address is never a PO Box, and both the broadcast and
     the welcome card carry it, with an unsubscribe link, in HTML and plain text
+  · the episode email's content links carry exact UTM tags, identical for every
+    recipient; the unsubscribe link, the Resend placeholder, mailto: links,
+    images and the confirmation email never carry one
 
 PASS — ${passed}/${total} checks passed
 `);

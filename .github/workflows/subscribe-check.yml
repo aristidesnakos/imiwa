@@ -14,7 +14,9 @@ name: Subscribe Consent Check
 #     pinned on verify;
 #   - an expired token still verifies its signature (so the re-subscribe form
 #     stays attributed) but is refused as consent;
-#   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send.
+#   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
+#   - the episode email's campaign tags are identical for every recipient and
+#     never reach the unsubscribe link or the pre-consent confirmation email.
 #
 # This migration replaced a Kit proxy that had a fallback minting
 # `state: active` subscribers with no confirmation step at all — exactly the
@@ -36,6 +38,10 @@ on:
       # The commercial-email footer: CAN-SPAM's postal address and the
       # unsubscribe link, rendered for both the welcome card and the broadcast.
       - 'lib/email/quiz-email.ts'
+      # Campaign tags on its links, and the pre-consent confirmation email that
+      # must never carry one.
+      - 'lib/email/utm.ts'
+      - 'lib/email/confirmation-email.ts'
       - 'lib/business/**'
       - 'config.ts'
       - 'types/config.ts'
@@ -54,6 +60,10 @@ on:
       # The commercial-email footer: CAN-SPAM's postal address and the
       # unsubscribe link, rendered for both the welcome card and the broadcast.
       - 'lib/email/quiz-email.ts'
+      # Campaign tags on its links, and the pre-consent confirmation email that
+      # must never carry one.
+      - 'lib/email/utm.ts'
+      - 'lib/email/confirmation-email.ts'
       - 'lib/business/**'
       - 'config.ts'
       - 'types/config.ts'

@@ -1,7 +1,10 @@
 import { SITE_URL } from '@/lib/seo/site';
 import config from '@/config';
 import { postalAddressLine } from '@/lib/business/postal-address';
+import { withNewsletterUtm, type EpisodeEmailKind } from '@/lib/email/utm';
 import type { Episode } from '@/lib/stories/types';
+
+export type { EpisodeEmailKind } from '@/lib/email/utm';
 
 /**
  * A Travels of Tan episode, quiz and answers as an email.
@@ -12,6 +15,12 @@ import type { Episode } from '@/lib/stories/types';
  * between them. The postal address is rendered whenever
  * `config.business.postalAddress` is set; the broadcast script refuses to run
  * while it is not, and `pnpm validate:subscribe` asserts both footers carry it.
+ *
+ * `kind` says which of the two sends this is, and travels as `utm_content` on
+ * the content links (lib/email/utm.ts) so DataFast can tell their arrivals
+ * apart. It defaults to 'welcome' so the confirm route's call is unchanged;
+ * the broadcast must pass 'weekly', or its arrivals are filed under the
+ * welcome card.
  */
 
 /** The sender and postal address as one footer line, or null while none is set. */
@@ -48,7 +57,11 @@ export function quizEmailSubject(episode: Episode): string {
   return `The Travels of Tan — ${episode.titleEn}`;
 }
 
-export function quizEmailText(episode: Episode, unsubscribeUrl?: string): string {
+export function quizEmailText(
+  episode: Episode,
+  unsubscribeUrl?: string,
+  kind: EpisodeEmailKind = 'welcome'
+): string {
   const lines = [
     `The Travels of Tan — ${episode.titleEn}`,
     '',
@@ -56,7 +69,15 @@ export function quizEmailText(episode: Episode, unsubscribeUrl?: string): string
     `Every word is JLPT ${episode.level}.`,
     '',
     'Read the episode:',
-    episodeUrl(episode),
+    // Tagged, and the only tagged link in this part. Plain text prints a URL
+    // in full, so every tag here is some ninety characters of query string in
+    // an email whose whole point is readable text. This is the primary call to
+    // action, where a plain-text reader actually goes: tagging it keeps their
+    // arrival attributed instead of landing in DataFast as direct traffic,
+    // indistinguishable from a bookmark. Printing it hides nothing, because the
+    // tag names the email, not the reader. Any secondary link added to this
+    // part later stays bare; `pnpm validate:subscribe` asserts exactly one.
+    withNewsletterUtm(episodeUrl(episode), episode.slug, kind),
     '',
   ];
 
@@ -92,7 +113,15 @@ export function quizEmailText(episode: Episode, unsubscribeUrl?: string): string
   return lines.join('\n');
 }
 
-export function quizEmailHtml(episode: Episode, unsubscribeUrl?: string): string {
+export function quizEmailHtml(
+  episode: Episode,
+  unsubscribeUrl?: string,
+  kind: EpisodeEmailKind = 'welcome'
+): string {
+  // Content links only, and escaped: the tags join with `&`, which an href
+  // must carry as `&amp;`. The unsubscribe link below is deliberately not
+  // passed through this (lib/email/utm.ts says why).
+  const contentHref = (url: string) => escapeHtml(withNewsletterUtm(url, episode.slug, kind));
   const story = episode.panels
     .map(
       (panel, i) => `
@@ -128,7 +157,8 @@ export function quizEmailHtml(episode: Episode, unsubscribeUrl?: string): string
   const targets = episode.targets
     .map(target => `<tr><td style="padding:3px 0;font-size:15px;line-height:1.5;color:${INK_BLACK};"><strong>${escapeHtml(target.word)}</strong> <span style="color:${MOUNTAIN_MIST};">（${escapeHtml(target.reading)}）&mdash; ${escapeHtml(target.en)}</span></td></tr>`)
     .join('');
-  const url = episodeUrl(episode);
+  const url = contentHref(episodeUrl(episode));
+  const hubUrl = contentHref(`${SITE_URL}/stories`);
   const sender = senderLine();
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="color-scheme" content="light only" /></head>
@@ -141,6 +171,6 @@ ${story}<tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};paddin
 <tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};padding:8px 0;border-top:1px solid ${SOFT_MIST};">Answers</td></tr><tr><td style="padding-bottom:20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${answers}</table></td></tr>
 <tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};padding:8px 0;border-top:1px solid ${SOFT_MIST};">The words this episode teaches</td></tr><tr><td style="padding-bottom:24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${targets}</table></td></tr>
 <tr><td style="font-size:13px;line-height:1.6;color:${MOUNTAIN_MIST};border-top:1px solid ${SOFT_MIST};padding-top:16px;">A new episode goes up every week. Reply to this email if you get stuck on anything &mdash; it reaches a person, not a robot.</td></tr>
-<tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:12px;">${escapeHtml(config.appName)} &middot; <a href="${SITE_URL}/stories" style="color:${DEEP_OCEAN};">every episode</a>${unsubscribeUrl ? ` &middot; <a href="${unsubscribeUrl}" style="color:${DEEP_OCEAN};">unsubscribe</a>` : ''}</td></tr>
+<tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:12px;">${escapeHtml(config.appName)} &middot; <a href="${hubUrl}" style="color:${DEEP_OCEAN};">every episode</a>${unsubscribeUrl ? ` &middot; <a href="${unsubscribeUrl}" style="color:${DEEP_OCEAN};">unsubscribe</a>` : ''}</td></tr>
 ${sender ? `<tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:4px;">${escapeHtml(sender)}</td></tr>\n` : ''}</table></td></tr></table></body></html>`;
 }
