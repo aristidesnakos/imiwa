@@ -14,7 +14,7 @@
 > published and none broadcast: the manual ritual this replaces was never once run, so the owner
 > decided the scheduling should run itself.
 > [`.github/workflows/weekly-broadcast.yml`](../../.github/workflows/weekly-broadcast.yml) runs every
-> Wednesday and Friday at 12:00 UTC, schedules the next episode in Resend for Saturday at 13:00 UTC,
+> Wednesday and Friday at 12:07 UTC, schedules the next episode in Resend for Saturday at 13:00 UTC,
 > and opens a GitHub issue to review it ([the Saturday ritual](#the-saturday-ritual)). Resend still
 > does the sending. **It schedules nothing until two repository secrets exist**
 > ([Known gaps](#known-gaps) 2); until then every run fails and says so in an issue. Episode 6 is
@@ -40,9 +40,11 @@ calendar again — which is how the Send column in
 module only computes: the weekly job passes `nextSendAt()` to Resend as `scheduled_at`, and Resend
 does the sending.
 
-There is no database. The confirmed list lives in a Resend Segment; a *pending* signup lives nowhere
-at all, because the signed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
-That is what keeps CLAUDE.md's "no server-side user state" rule intact.
+There is no database. The confirmed list lives in a Resend Segment; a *pending* signup is never added
+to it, because the signed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
+That is what keeps CLAUDE.md's "no server-side user state" rule intact. It is not the same as
+"stored nowhere": Resend's send log keeps the confirmation email itself (address, subject, time),
+and the privacy policy says so. Unconfirmed addresses can be read straight out of that log.
 
 ## The three email paths
 
@@ -74,7 +76,7 @@ scheduled, and can stop it. Write-by is still Wednesday (send day minus
 
 [`.github/workflows/weekly-broadcast.yml`](../../.github/workflows/weekly-broadcast.yml) runs
 [`scripts/stories/schedule-weekly-broadcast.ts`](../../scripts/stories/schedule-weekly-broadcast.ts)
-(`pnpm stories:schedule-broadcast`) every **Wednesday and Friday at 12:00 UTC**. It also runs on
+(`pnpm stories:schedule-broadcast`) every **Wednesday and Friday at 12:07 UTC**. It also runs on
 demand (Actions → Weekly Broadcast → Run workflow), and a dry-run switch there makes it print its
 plan and change nothing. Each run:
 
@@ -125,8 +127,8 @@ A job with no secrets does the same.
    truth; `scripts/stories/import-episode.py` derives `data/stories/ep-NN.ts` and the art, and the
    generated file is not editable. Run `pnpm validate:stories` (the contract: a failure is a content
    bug, not a lint nit), then merge and deploy so `/stories/<slug>` is live. The broadcast links to the
-   page and quotes it. Imported by Wednesday 12:00 UTC, the episode gets a three-day review window;
-   by Friday 12:00 UTC, one day. After Friday's run, run the workflow by hand before Saturday
+   page and quotes it. Imported by Wednesday 12:07 UTC, the episode gets a three-day review window;
+   by Friday 12:07 UTC, one day. After Friday's run, run the workflow by hand before Saturday
    12:30 UTC, or the episode waits a week.
 2. **Review in the window.** The review issue arrives when the job schedules. Open the broadcast in
    Resend and run [`docs/prd/episode-spec.md`](../prd/episode-spec.md) §A7. Items 1–3 and 10 are
@@ -588,7 +590,7 @@ the whole path works — each stage fails in a place the previous stage cannot s
 9. **GitHub's scheduler is best effort.** Per
    [GitHub's docs](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows),
    a scheduled run can be delayed at busy times, the start of every hour among them, and under
-   enough load dropped; the weekly job runs on the hour. It runs on two days so that each covers the
-   other. A week in which both runs are dropped schedules nothing, and nothing says so. Separately,
+   enough load dropped; the weekly job runs at seven past the hour for that reason. It runs on two
+   days so that each covers the other. A week in which both runs are dropped schedules nothing, and nothing says so. Separately,
    GitHub disables scheduled workflows in a public repository after 60 days with no activity;
    re-enable it in the Actions tab if that ever happens.

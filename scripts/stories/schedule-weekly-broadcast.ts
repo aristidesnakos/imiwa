@@ -12,7 +12,7 @@
  * Six episodes went up and not one was broadcast: the weekly send was a manual
  * ritual that nobody ran. So since 2026-09-27 (an owner decision, reversing
  * docs/prd/story-delivery-resend.md §5 Phase 4's "no cron") a workflow runs
- * this every Wednesday and Friday at 12:00 UTC. It reads every broadcast in
+ * this every Wednesday and Friday at 12:07 UTC. It reads every broadcast in
  * Resend, decides which episode is next (lib/email/broadcast-queue.ts, where
  * the rules are), checks that the episode's page answers 200 in production and
  * that the postal address is publishable, builds the email
@@ -500,7 +500,7 @@ function nothingQueuedBody(slot: string, newest: number | null, gh: GitHub): str
     '',
     '1. Import the next episode (`scripts/stories/import-episode.py`), run `pnpm validate:stories`, and deploy, ' +
       'so its page answers 200.',
-    '2. The job\'s next scheduled run (Wednesdays and Fridays, 12:00 UTC) schedules it. Or run it by hand ' +
+    '2. The job\'s next scheduled run (Wednesdays and Fridays, 12:07 UTC) schedules it. Or run it by hand ' +
       `once the page is live (Actions → Weekly Broadcast → Run workflow), any time before ${lastCall}.`,
     '',
     'Skipping the week is a decision too: close this issue.',

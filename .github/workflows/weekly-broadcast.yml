@@ -26,15 +26,16 @@ name: Weekly Broadcast
 
 on:
   schedule:
-    # Wednesdays and Fridays at 12:00 UTC. Wednesday is write-by (the Saturday
+    # Wednesdays and Fridays at 12:07 UTC. Wednesday is write-by (the Saturday
     # send minus config.newsletter.writeLeadDays), so an episode imported by
     # then gets a three-day review window; Friday is the second chance, for an
     # episode imported late or a Wednesday run that failed. GitHub can delay a
-    # scheduled run, most often at the top of the hour, and under heavy load
-    # can drop one; each day is the other's backstop. The send day and time
-    # live in config.newsletter: if they move, move these too.
-    - cron: '0 12 * * 3'
-    - cron: '0 12 * * 5'
+    # scheduled run, most often at the top of the hour, which is why these run
+    # at seven past; under heavy load it can drop one, and each day is the
+    # other's backstop. The send day and time live in config.newsletter: if
+    # they move, move these too.
+    - cron: '7 12 * * 3'
+    - cron: '7 12 * * 5'
   workflow_dispatch:
     inputs:
       dry_run:

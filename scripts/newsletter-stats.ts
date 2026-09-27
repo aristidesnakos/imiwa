@@ -390,7 +390,10 @@ async function main(): Promise<void> {
   let printedOpens = false;
   let newestDelivered: number | null = null;
   if (broadcasts.length === 0) {
-    console.log('  none yet. The first appears here once `pnpm stories:create-broadcast <slug>` has made one.');
+    console.log(
+      '  none yet. The first appears here once the weekly job (`pnpm stories:schedule-broadcast`) or ' +
+        '`pnpm stories:create-broadcast <slug>` has made one.'
+    );
   }
   for (const broadcast of broadcasts) {
     const elsewhere = segmentId && broadcast.segment_id && broadcast.segment_id !== segmentId ? ', to another segment' : '';

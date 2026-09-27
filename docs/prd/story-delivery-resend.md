@@ -2,8 +2,16 @@
 
 **Version 1.4** · Created 2026-08-24 · Revised 2026-09-16 · Owner: Ari Nakos
 
-**Status, 2026-09-24: no episode has been broadcast yet, and the two legal prerequisites the first
-send was held on are met.** Signup has worked in production since 2026-09-16 (the v1.4 note below),
+**Status, 2026-09-27: the weekly send is scheduled by a job, and still nothing has gone out.** Six
+episodes were published without one broadcast, because the manual ritual below never ran. The owner
+reversed §5 Phase 4's "no cron" the same day: `.github/workflows/weekly-broadcast.yml` books the next
+episode in Resend for Saturday 13:00 UTC and opens a GitHub review issue. It fails loudly until the
+`RESEND_API_KEY` (Full access) and `RESEND_WEEKLY_STORIES_SEGMENT_ID` repository secrets exist. The
+list is 4 confirmed subscribers in the "Michikanji Weekly Stories" segment. Open and click tracking
+are off on the sending domain.
+
+**Status, 2026-09-24, superseded above: no episode has been broadcast yet, and the two legal
+prerequisites the first send was held on are met.** Signup has worked in production since 2026-09-16 (the v1.4 note below),
 the privacy policy was rewritten on 2026-09-23, and the owner supplied the postal address on
 2026-09-24 (`config.business.postalAddress`, open question 6). §11 item 6's real unsubscribe test is
 still unticked. The send stays a manual step for Ari:

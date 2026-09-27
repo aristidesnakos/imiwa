@@ -78,7 +78,7 @@ pnpm newsletter:stats                            # read-only Resend report (Full
 version: the send is **Saturday at 13:00 UTC** (`config.newsletter`, derived by
 `lib/email/send-schedule.ts`), write-by is the Wednesday before, and **the weekly send is scheduled
 by a job** (since 2026-09-27, reversing an earlier "no cron" decision). Every Wednesday and Friday at
-12:00 UTC, `.github/workflows/weekly-broadcast.yml` runs `stories:schedule-broadcast`. The job books
+12:07 UTC, `.github/workflows/weekly-broadcast.yml` runs `stories:schedule-broadcast`. The job books
 the next episode in Resend and opens a GitHub review issue that says how to cancel it. There is
 still no send route and no contact loop: Resend owns queueing, throttling, unsubscribe filtering and
 the send. Resend is also the ledger, with no repo state file. An episode's broadcast is the one named
