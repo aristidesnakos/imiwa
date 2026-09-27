@@ -214,6 +214,11 @@ constraints that still bind.
 
 ### Sending: manual, no cron
 
+> **Reversed 2026-09-27, by the owner.** Six episodes were published and none broadcast, so the send
+> is now scheduled by a weekly job with a review window: see the dated note in
+> `story-delivery-resend.md` §5 Phase 4 and [`../runbooks/newsletter.md`](../runbooks/newsletter.md).
+> There is still no send route and no contact loop. The section below is kept as the record.
+
 **The mechanics here are superseded by `story-delivery-resend.md` §5 Phase 4; the decision is not.**
 The send is still deliberately manual and nothing on our side triggers one — that part is unchanged
 and is the load-bearing half of this section.

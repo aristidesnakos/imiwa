@@ -19,9 +19,10 @@ which is the client that breaks things.
 
 **The body is generated, not typed. Never paste formatted text into the Resend draft.**
 
-Both parts of the broadcast come from `lib/email/quiz-email.ts`, rendered from the episode data;
-`scripts/stories/create-broadcast.ts` posts them to Resend and a person reviews the draft. So the way
-this breaks now is someone "fixing" a line by pasting into the dashboard editor.
+Both parts of the broadcast come from `lib/email/quiz-email.ts`, rendered from the episode data by
+`lib/email/broadcast.ts`. Since 2026-09-27 the weekly job posts them to Resend and schedules the
+broadcast, and a person reviews it in the window before the send. So the way this breaks now is
+someone "fixing" a line by pasting into the dashboard editor.
 
 Pasting from Google Docs, Word, or Notion injects hundreds of `<span style="…">` wrappers around
 Japanese text. Three consequences, all bad: Gmail clips any message whose HTML exceeds ~102 KB and
@@ -30,9 +31,11 @@ think; Outlook's renderer chokes on nested inline styles around CJK and drops yo
 it desynchronises the plain-text part, which is rendered from the same typed data and will not follow
 an edit made in the dashboard.
 
-If you genuinely have to edit a draft by hand, paste as plain text (`⌘⇧V`) and use Resend's own
-formatting controls — then fix the source and re-create the draft, because the next episode is
-rendered from the code, not from your edit.
+If you genuinely have to edit a broadcast by hand, paste as plain text (`⌘⇧V`) and use Resend's own
+formatting controls — then fix the source, because the next episode is rendered from the code, not
+from your edit. An edit to a broadcast that is already scheduled goes out as edited: the job never
+touches a scheduled broadcast. A draft that differs from what the builder makes is never scheduled
+by the job; schedule it yourself, or delete it and the job builds a fresh one.
 
 ### A1. Banned constructs
 
@@ -169,17 +172,22 @@ Words to keep:
 
 ### A7. Pre-send checklist
 
-Run this before scheduling. It takes four minutes and catches everything that has ever gone wrong
-with Japanese email.
+Run this in the review window: from the moment the weekly job schedules the broadcast (Wednesday or
+Friday at 12:00 UTC; its review issue says which) to the send on Saturday at 13:00 UTC. It takes
+four minutes and catches everything that has ever gone wrong with Japanese email. Items 1–3 and 10
+are machine-checked by `validate:stories` before the episode ships. Items 4–9 are Ari's, on the
+scheduled broadcast and a test send. If any fails, cancel the broadcast in Resend
+([`docs/runbooks/newsletter.md`](../runbooks/newsletter.md), "Cancelling or rescheduling").
 
 1. Every kanji in the body appears in `lib/constants/n5-kanji.ts`.
 2. Every grammar pattern is on the A4 whitelist.
 3. Every link href is percent-encoded; zero links in the story body.
-4. Click each link in the Resend draft preview and again in the test send — confirm each lands on
-   the kanji page, not a 404.
+4. Click each link in the scheduled broadcast's preview in Resend and again in the test send —
+   confirm each lands on the kanji page, not a 404.
 5. Preview text field is set and is not the first line of the greeting.
 6. Send a test to **Gmail (web), Gmail (mobile app), and Outlook.com** at minimum. Outlook.com is
-   where CJK and dark mode both fail. If you have access to Outlook desktop on Windows, add it.
+   where CJK and dark mode both fail. If you have access to Outlook desktop on Windows, add it. If
+   Resend will not test-send a scheduled broadcast, the runbook says how to get the same email.
 7. In the Gmail test, check no "View entire message" clip link appeared at the bottom.
 8. Toggle your phone to dark mode and re-read the test. Confirm nothing vanished.
 9. Confirm the reply-to lands in an inbox you actually read.
@@ -196,15 +204,16 @@ with Japanese email.
 > person has to get right.
 
 - **From: `Ari at MichiKanji <ari@michikanji.com>`.** A person, not a brand — settled 2026-08-23,
-  because the pilot's only signal is replies. It is `config.resend.fromAdmin`, and
-  `scripts/stories/create-broadcast.ts` puts it on the draft; nobody types it into the dashboard.
+  because the pilot's only signal is replies. It is `config.resend.fromAdmin`, and the shared
+  builder, `lib/email/broadcast.ts`, puts it on every broadcast; nobody types it into the dashboard.
 - **Reply-to: a real inbox you read.** `config.resend.supportEmail` — `ari@llanai.com`, deliberately a
   different domain from the sender. It is a monitored Google Workspace inbox, and a cross-domain
   reply-to needs no DKIM or SPF alignment. Not `noreply@`: the decision gate reads replies, and a
   broken reply path silently zeroes the only signal the pilot can produce at this list size.
-- **Audience: there is no audience.** Resend contacts are global and sit in Segments, so the draft is
-  addressed to `RESEND_WEEKLY_STORIES_SEGMENT_ID` — now set in Vercel production, preview still
-  pending — and nothing filters on anything else. Where a subscriber came from is recorded in
+- **Audience: there is no audience.** Resend contacts are global and sit in Segments, so every
+  broadcast is addressed to `RESEND_WEEKLY_STORIES_SEGMENT_ID` — now set in Vercel production, preview
+  still pending, and needed as a GitHub repository secret by the weekly job — and nothing filters on
+  anything else. Where a subscriber came from is recorded in
   DataFast as `source` at capture time, never as a property on the contact
   (`app/api/subscribe/confirm/route.ts`).
 - **The sending domain is already authenticated,** and needed no new DNS: `michikanji.com` carries the
@@ -218,12 +227,12 @@ with Japanese email.
   (`story-delivery-resend.md` §3.)
 - **Template: none.** The body is HTML generated by `lib/email/quiz-email.ts` — one 520px table and a
   system sans-serif stack. Dashboard templates wrap content in nested tables that interact badly with
-  CJK line breaking and buy nothing here, so review the draft `create-broadcast` made and send that.
+  CJK line breaking and buy nothing here, so review the broadcast the builder made and send that.
 - **Keep `{{{RESEND_UNSUBSCRIBE_URL}}}` in the body.** Only the Broadcast product resolves that
   placeholder. Edit it away in the dashboard and the send goes out with no unsubscribe link.
-- **Schedule by hand, for the Saturday.** Nothing here schedules: `create-broadcast` creates a draft,
-  prints the date `config.newsletter` implies, and stops. Resend owns queueing, throttling,
-  unsubscribe filtering and scheduling.
+- **Scheduled by the weekly job, for Saturday at 13:00 UTC.** Since 2026-09-27 the job books it
+  from `config.newsletter` and opens a review issue; cancel it in Resend to stop it. Resend owns
+  queueing, throttling, unsubscribe filtering and the send.
 
 ---
 
@@ -241,22 +250,30 @@ here; it's the only structure the grammar supports.
 All 30 focus kanji below are verified present in `lib/constants/n5-kanji.ts`. No kanji repeats as a
 focus character across episodes.
 
-| Ep | Theme | Focus kanji | Target vocab (3–5) | Write by | Send |
-|---|---|---|---|---|---|
-| 1 | Tan climbs the mountain | 山 木 上 見 大 | 山, 木, 上, 見る, 大きい | written 2026-09-14 | not sent — backfill |
-| 2 | Tan finds the river | 川 水 下 小 白 | 川, 水, 下, 小さい, 白い | written 2026-09-14 | not sent — backfill |
-| 3 | Tan goes to school | 学 校 先 生 語 | 学校, 先生, 学生, 日本語 | written 2026-09-16 | Sat 2026-09-19 |
-| 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | Wed 2026-09-23 | Sat 2026-09-26 |
-| 5 | The train to Tokyo | 電 車 東 行 来 | 電車, 東京, 行く, 来る | Wed 2026-09-30 | Sat 2026-10-03 |
-| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | Wed 2026-10-07 | Sat 2026-10-10 |
+| Ep | Theme | Focus kanji | Target vocab (3–5) | Write by | Scheduled | Sent |
+|---|---|---|---|---|---|---|
+| 1 | Tan climbs the mountain | 山 木 上 見 大 | 山, 木, 上, 見る, 大きい | written 2026-09-14 | never: before the first broadcast | — |
+| 2 | Tan finds the river | 川 水 下 小 白 | 川, 水, 下, 小さい, 白い | written 2026-09-14 | never: before the first broadcast | — |
+| 3 | Tan goes to school | 学 校 先 生 語 | 学校, 先生, 学生, 日本語 | written 2026-09-16 | never: before the first broadcast | — |
+| 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | written 2026-09-23 | never: before the first broadcast | — |
+| 5 | The train to Tokyo | 電 車 東 行 来 | 電車, 東京, 行く, 来る | written 2026-09-24 | never: before the first broadcast | — |
+| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | written 2026-09-27 | Sat 2026-10-03 | — |
 
-The send day is **Saturday**, decided 2026-09-16; write-by is the Wednesday before, which is the
-room the A7 checklist and one round of fixes need. The cadence is defined once in
-`config.newsletter` and derived by `lib/email/send-schedule.ts`, so read the next date off those
-rather than counting it off a calendar. Episodes 1 and 2 went up on the site before there was a
-list to send to, so they carry no send date at all — a new subscriber meets them through the site
-and the welcome card, not a broadcast. The operational procedure for a write-by Wednesday and a
-send Saturday is in `docs/runbooks/newsletter.md`.
+The send is **Saturday at 13:00 UTC** (the day decided 2026-09-16, the time 2026-09-27); write-by
+is the Wednesday before, which is the room the A7 checklist and one round of fixes need, and the day
+the weekly job first runs. The cadence is defined once in `config.newsletter` and derived by
+`lib/email/send-schedule.ts`, so read the next date off those rather than counting it off a
+calendar.
+
+**Scheduled** is the Saturday the queue gives an episode. The weekly job books episodes in Resend in
+`number` order, one per Saturday, from `config.newsletter.firstBroadcastEpisode` (6). Episodes 1 to
+5 went up on the site before the list's first broadcast, so they are never broadcast; a new
+subscriber meets them through the site and the welcome card. **Sent** is filled only from Resend's
+record of an actual send (the job's closing comment on the review issue, `pnpm newsletter:stats`, or
+the dashboard) and reads "—" until then. **Sent is a record, never a plan.** A single Send column
+conflated the two twice: episodes 3 and 4 carried Saturdays, 2026-09-19 and 2026-09-26, that passed
+with nothing sent and still read as sends. The operational procedure is in
+`docs/runbooks/newsletter.md`.
 
 ### Pre-encoded links
 

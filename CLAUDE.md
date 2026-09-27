@@ -69,14 +69,23 @@ pnpm submit-indexnow
 ```bash
 pnpm check-subscribe-live                        # is the signup path configured? (no secrets)
 pnpm check-subscribe-e2e                         # walk it with a real address, then clean up
-pnpm stories:create-broadcast <episode-slug>     # a Resend draft, never a send
+pnpm stories:schedule-broadcast --dry-run        # what the weekly job would schedule; needs no key
+pnpm stories:create-broadcast <episode-slug>     # a Resend draft, never a send (manual fallback)
+pnpm newsletter:stats                            # read-only Resend report (Full access key)
 ```
 
 `docs/runbooks/newsletter.md` is the operator procedure and the first thing to read here. The short
-version: the send day is **Saturday** (`config.newsletter`, derived by `lib/email/send-schedule.ts`),
-write-by is the Wednesday before, and **the weekly send is deliberately manual** — there is no cron,
-no send route and no contact loop. The only automatic emails are the double opt-in confirmation and
-the welcome quiz card, both triggered by one person acting on their own address.
+version: the send is **Saturday at 13:00 UTC** (`config.newsletter`, derived by
+`lib/email/send-schedule.ts`), write-by is the Wednesday before, and **the weekly send is scheduled
+by a job** (since 2026-09-27, reversing an earlier "no cron" decision). Every Wednesday and Friday at
+12:00 UTC, `.github/workflows/weekly-broadcast.yml` runs `stories:schedule-broadcast`. The job books
+the next episode in Resend and opens a GitHub review issue that says how to cancel it. There is
+still no send route and no contact loop: Resend owns queueing, throttling, unsubscribe filtering and
+the send. Resend is also the ledger, with no repo state file. An episode's broadcast is the one named
+exactly `Episode N: <title>`, and the queue runs by `number` from
+`config.newsletter.firstBroadcastEpisode`. `pnpm validate:broadcast` asserts the job's rules against
+fake Resend state. The only emails the app itself sends are the double opt-in confirmation and the
+welcome quiz card, both triggered by one person acting on their own address.
 
 `check-subscribe-live` exists because nothing else in this repo can see a missing environment
 variable in production. `validate:subscribe` proves the token model, the build proves compilation,
@@ -91,7 +100,7 @@ CI job skips with a notice rather than failing.
 **Who sends it, and from where, is config.** `config.business` holds the legal operator (The
 Auspicious Company, a Massachusetts company, not an EU one, whatever older PRD text says) and the
 published postal address. CAN-SPAM needs that address in every commercial email, so the episode email
-footer renders it, `stories:create-broadcast` refuses to run while it is `null`, and
+footer renders it, both broadcast scripts refuse to run while it is `null`, and
 `validate:subscribe` refuses a PO Box. `app/privacy-policy/page.tsx` reads the same block rather than
 hard-coding either, so the footer and the policy cannot disagree. The policy describes what the code
 collects: change one, re-read the other (its header lists the claims to re-check).

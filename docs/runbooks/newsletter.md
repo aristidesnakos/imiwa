@@ -10,13 +10,19 @@
 > [Known gaps](#known-gaps). This is the failure the [Friday checks](#the-automated-checks)
 > exist to catch.
 >
-> **As of 2026-09-24, no episode has been broadcast to anyone, and neither legal prerequisite is
-> still open.** Nothing is broken in the send path; the send was never run, because it was held on
-> two legal prerequisites. The privacy policy was rewritten on 2026-09-23, and the owner supplied
-> the postal address on 2026-09-24 — see [The postal address](#the-postal-address). Both reach
-> subscribers with the deploy that ships them. The first broadcast is still a manual step for Ari
-> ([the Saturday ritual](#the-saturday-ritual)), and [Known gaps](#known-gaps) 6, a real
-> unsubscribe, is worth doing before it.
+> **Since 2026-09-27 the weekly send is scheduled by a job, not by hand.** Six episodes had been
+> published and none broadcast: the manual ritual this replaces was never once run, so the owner
+> decided the scheduling should run itself.
+> [`.github/workflows/weekly-broadcast.yml`](../../.github/workflows/weekly-broadcast.yml) runs every
+> Wednesday and Friday at 12:00 UTC, schedules the next episode in Resend for Saturday at 13:00 UTC,
+> and opens a GitHub issue to review it ([the Saturday ritual](#the-saturday-ritual)). Resend still
+> does the sending. **It schedules nothing until two repository secrets exist**
+> ([Known gaps](#known-gaps) 2); until then every run fails and says so in an issue. Episode 6 is
+> first in its queue, for Sat 2026-10-03, if the secrets are in place by the Friday 2026-10-02 run.
+> The segment holds 4 confirmed subscribers and none of the owner's own addresses (2026-09-27), so
+> add one before that send. [Known gaps](#known-gaps) 6, a real unsubscribe, is worth doing before
+> it too. Both legal prerequisites were met on 2026-09-23 and 2026-09-24:
+> [The postal address](#the-postal-address).
 
 ## What this is, and what subscribers are promised
 
@@ -25,12 +31,14 @@ three quiz questions, and the answers. The promise is made in the email body its
 ([`lib/email/quiz-email.ts`](../../lib/email/quiz-email.ts)): "A new episode goes up every week."
 
 The cadence is now a value, not prose. `config.newsletter` in [`config.ts`](../../config.ts) holds
-`sendDay: 6` (**Saturday**, decided 2026-09-16) and `writeLeadDays: 3`, so write-by is the
-**Wednesday** before. [`lib/email/send-schedule.ts`](../../lib/email/send-schedule.ts) derives
-`nextSendDate()`, `writeByDate(sendDate)` and `sendDayName()` from that config so nobody counts off a
+`sendDay: 6` (**Saturday**, decided 2026-09-16), `sendTimeUtc: '13:00'` and `writeLeadDays: 3`, so
+write-by is the **Wednesday** before, plus `firstBroadcastEpisode: 6`, where the broadcast queue
+starts. [`lib/email/send-schedule.ts`](../../lib/email/send-schedule.ts) derives `nextSendDate()`,
+`nextSendAt()`, `writeByDate(sendDate)` and `sendDayName()` from that config so nobody counts off a
 calendar again — which is how the Send column in
-[`docs/prd/episode-spec.md`](../prd/episode-spec.md) Part B stayed blank for three episodes. Nothing
-in that module schedules anything; Resend owns scheduling.
+[`docs/prd/episode-spec.md`](../prd/episode-spec.md) Part B stayed blank for three episodes. That
+module only computes: the weekly job passes `nextSendAt()` to Resend as `scheduled_at`, and Resend
+does the sending.
 
 There is no database. The confirmed list lives in a Resend Segment; a *pending* signup lives nowhere
 at all, because the signed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
@@ -42,11 +50,12 @@ That is what keeps CLAUDE.md's "no server-side user state" rule intact.
 |---|---|---|---|
 | Double opt-in confirmation | A human types their address into a capture form | Yes | [`app/api/subscribe/route.ts`](../../app/api/subscribe/route.ts) → [`lib/email/confirmation-email.ts`](../../lib/email/confirmation-email.ts) |
 | Welcome quiz card | That same human presses the button on `/confirm` | Yes | [`app/api/subscribe/confirm/route.ts`](../../app/api/subscribe/confirm/route.ts) → [`lib/email/quiz-email.ts`](../../lib/email/quiz-email.ts) |
-| Weekly episode broadcast | An operator runs a command and then presses Send in Resend | **No** | [`scripts/stories/create-broadcast.ts`](../../scripts/stories/create-broadcast.ts) |
+| Weekly episode broadcast | The weekly job schedules it in Resend (Wednesday or Friday, for Saturday 13:00 UTC); Resend sends it unless a person cancels it | **Scheduled by a job**, since 2026-09-27 | [`scripts/stories/schedule-weekly-broadcast.ts`](../../scripts/stories/schedule-weekly-broadcast.ts), built by [`lib/email/broadcast.ts`](../../lib/email/broadcast.ts) |
 
-Both automatic sends are one-per-person and reactive: each is triggered by a specific person acting
-on their own address, in the same request. Nothing in this repo sends to more than one recipient,
-iterates contacts, or fires on a timer.
+The first two sends are one-per-person and reactive: each is triggered by a specific person acting
+on their own address, in the same request. Nothing in this repo sends to more than one recipient or
+iterates contacts. One thing runs on a timer, the weekly job, and it does not send: it asks Resend to
+schedule one broadcast to the segment, and Resend sends it.
 
 Which episode the welcome card carries travels inside the signed confirm token as an optional
 `episode` slug, resolved against the registry on the way in and again on the way out. An unknown slug
@@ -57,55 +66,142 @@ never grow one, because suppressing the consent email breaks consent itself.
 
 ## The Saturday ritual
 
-Write by Wednesday (send day minus `config.newsletter.writeLeadDays`). Everything below is done by a
-person; none of it is triggered by a schedule.
+Since 2026-09-27 a job schedules the send. A person imports the episode, reviews what the job
+scheduled, and can stop it. Write-by is still Wednesday (send day minus
+`config.newsletter.writeLeadDays`), because the job's first run each week is then.
 
-1. **Import the episode.** `strips/ep-NN/script.json` in the strips repo is the source of truth.
-   `scripts/stories/import-episode.py` derives `data/stories/ep-NN.ts` and the art. The generated
-   data file is not editable — edit the script and re-import.
-2. **Validate.** `pnpm validate:stories` — strict N5, bubble geometry, targets, quiz answer spread,
-   assets. It is the contract; a failure here is a content bug, not a lint nit.
-3. **Ship the page first.** Merge and deploy so `/stories/<slug>` is live. The broadcast body links
-   to it and quotes it; `dynamicParams = false` means the episode is prerendered the moment it is in
-   the registry.
-4. **Check the subscribe path still works** before sending anything to anyone —
-   [the end-to-end verification below](#end-to-end-verification). Do this on the first send after any
-   change to env, Resend config, or the email modules.
-5. **Create the draft.** `pnpm stories:create-broadcast <episode-slug>` — for example
-   `pnpm stories:create-broadcast tan-goes-to-school`. It refuses to run while
-   `config.business.postalAddress` is unset or looks like a PO Box — checked before it asks for
-   credentials, so you learn that without a key. It POSTs one draft to Resend addressed to
-   `RESEND_WEEKLY_STORIES_SEGMENT_ID`, from `config.resend.fromAdmin`, reply-to
-   `config.resend.supportEmail`. It deliberately omits `send` and `scheduled_at`. It prints the draft
-   id and the send slot to type into the dashboard — `Schedule it for Saturday <date>`, derived from
-   `config.newsletter` via `nextSendDate()`, so the date is not counted off a calendar.
-   **Do not re-run it after an ambiguous network response** — reconcile in the Resend dashboard
-   first, because the Broadcast API has no documented idempotency key
-   ([PRD §5 Phase 4](../prd/story-delivery-resend.md)).
-6. **Review the draft in Resend and send a test**, then run
-   [`docs/prd/episode-spec.md`](../prd/episode-spec.md) §A7. Items 1–3 and 10 are machine-checked by
-   `validate:stories`; items 4–9 — Gmail web, Gmail mobile, Outlook.com, clip check, dark mode, reply
-   path — are Ari's, and nobody else reports them as passed. On the **first** send, also open the
-   test's raw headers and confirm Resend added `List-Unsubscribe` and `List-Unsubscribe-Post`, and
-   that the plain-text part's `{{{RESEND_UNSUBSCRIBE_URL}}}` was replaced with a real link. As of
-   2026-09-23 only a 2024 Resend blog post says it adds those headers to broadcasts, and the docs
-   never show the placeholder inside `text`. A dashboard test email leaves out the custom Reply-To
-   by design, so a missing reply-to there is not a bug.
-7. **Schedule it by hand** in the Resend dashboard for the Saturday. Resend owns queueing,
-   throttling, unsubscribe filtering and scheduling. *Unverified on the first send:* Resend's
-   2025 Broadcast API launch post said an API-created broadcast can only be sent from the API; its
-   2026 editor docs say API content is editable in the dashboard. If the dashboard will not
-   schedule the draft, the documented alternative is one `POST /broadcasts/{id}/send` carrying
-   `scheduled_at`, made by a person after review. That is still a reviewed, manual send, not a
-   send route.
-8. **Record the send date** in the Part B calendar table.
+### What the job does
 
-Running the script locally needs Resend credentials, and **they cannot come from `vercel env
+[`.github/workflows/weekly-broadcast.yml`](../../.github/workflows/weekly-broadcast.yml) runs
+[`scripts/stories/schedule-weekly-broadcast.ts`](../../scripts/stories/schedule-weekly-broadcast.ts)
+(`pnpm stories:schedule-broadcast`) every **Wednesday and Friday at 12:00 UTC**. It also runs on
+demand (Actions → Weekly Broadcast → Run workflow), and a dry-run switch there makes it print its
+plan and change nothing. Each run:
+
+1. **Checks its own rules first.** `pnpm validate:broadcast` asserts the slot and queue logic
+   against a synthetic clock and fake Resend state, because most changes reach `main` without a
+   pull request.
+2. **Reads every broadcast in Resend. Resend is the ledger; there is no state file in the repo.** An
+   episode's broadcast is the one named exactly `Episode N: <title>`, the name
+   [`lib/email/broadcast.ts`](../../lib/email/broadcast.ts) gives it. Only broadcasts to the
+   weekly-stories segment count.
+3. **Picks the next episode:** the lowest-numbered registered episode, from
+   `config.newsletter.firstBroadcastEpisode` (6) up, that has no broadcast scheduled, queued,
+   sending, sent or cancelled. It goes by `number`, never `publishedAt`. Episodes 1 to 5 went up
+   before the list's first broadcast and are never sent; subscribers meet them on the site and
+   through the welcome card.
+4. **Does nothing if a send is already booked.** If any episode broadcast is scheduled, whatever its
+   date, or any other broadcast has the Saturday, the job leaves it: one broadcast per send slot.
+   So episode 6 goes out on Sat 2026-10-03, and an episode 7 would wait for the Saturday after.
+5. **Guards the send.** It refuses unless the episode page answers 200 in production (episode 6 once
+   shipped as a 404 on a green validator) and `config.business.postalAddress` passes
+   `postalAddressProblems`. A run that finds an episode already scheduled checks its page again.
+6. **Schedules it** for the next Saturday at `config.newsletter.sendTimeUtc` (13:00 UTC), as an ISO
+   `scheduled_at`, never less than 30 minutes ahead: a run on Saturday after 12:30 UTC books the
+   following Saturday. It creates a draft and schedules it in two separate calls. The Broadcast API
+   has no idempotency key, and a lost response to a single create-and-schedule call could book the
+   episode twice. If exactly one draft for the episode already exists (from `create-broadcast`, or an
+   earlier run cut short), the job schedules that draft instead, but only if it is byte for byte
+   what the builder makes today.
+7. **Opens the review issue,** "Weekly story scheduled: Episode N for Sat YYYY-MM-DD 13:00 UTC"
+   (label `newsletter`). It carries the broadcast id and one line on how to cancel it. Friday's run
+   comments on it while it is open. The Wednesday after the send, the job closes it with Resend's
+   record of when the broadcast went out.
+8. **With nothing to schedule, it does not fail.** It opens "No episode queued for Saturday
+   YYYY-MM-DD — import one by Friday": the write-by reminder. Season one is fully published, so from
+   Sat 2026-10-10 on this is the expected state until an episode 7 is imported.
+
+It never sends, and it never reads a contact. It makes at most two calls that change anything,
+create a draft and schedule it, and Resend does the queueing, throttling, unsubscribe filtering and
+the send itself at `scheduled_at`. When the state is ambiguous it stops rather than guess: two
+drafts for one episode, a near-miss name such as `Episode 6 - …` that has gone out, a status it does
+not know, or a draft that is no longer what the builder makes. A stop makes the run red and opens a
+`newsletter-alarm` issue carrying the end of the job's output, which says what to change in Resend.
+A job with no secrets does the same.
+
+### What a person still does
+
+1. **Import the episode by Friday.** `strips/ep-NN/script.json` in the strips repo is the source of
+   truth; `scripts/stories/import-episode.py` derives `data/stories/ep-NN.ts` and the art, and the
+   generated file is not editable. Run `pnpm validate:stories` (the contract: a failure is a content
+   bug, not a lint nit), then merge and deploy so `/stories/<slug>` is live. The broadcast links to the
+   page and quotes it. Imported by Wednesday 12:00 UTC, the episode gets a three-day review window;
+   by Friday 12:00 UTC, one day. After Friday's run, run the workflow by hand before Saturday
+   12:30 UTC, or the episode waits a week.
+2. **Review in the window.** The review issue arrives when the job schedules. Open the broadcast in
+   Resend and run [`docs/prd/episode-spec.md`](../prd/episode-spec.md) §A7. Items 1–3 and 10 are
+   machine-checked by `validate:stories`. Items 4–9 (Gmail web, Gmail mobile, Outlook.com, clip
+   check, dark mode, reply path) are Ari's, on a test send, and nobody else reports them as passed.
+   *Unverified until the first send:* whether Resend's Test email works on a broadcast that is
+   already scheduled. If it does not, the welcome card is the same email (`pnpm validate:subscribe`
+   asserts the two differ only in `utm_content` and the unsubscribe link), and subscribing one of
+   your addresses through the episode page's form sends you that episode's card. A dashboard test
+   email leaves out the custom Reply-To by design, so a missing reply-to there is not a bug. Close
+   the issue when you are satisfied, or leave it; nothing waits on it. After any change to env,
+   Resend config or the email modules, walk [the end-to-end verification](#end-to-end-verification)
+   too.
+3. **The first-send header check.** On the list's first broadcast the review issue carries one more
+   box: once the broadcast has gone out, open your own copy's raw headers. Confirm that Resend added
+   `List-Unsubscribe` and `List-Unsubscribe-Post`, and that the plain-text part's
+   `{{{RESEND_UNSUBSCRIBE_URL}}}` became a real link. As of 2026-09-23 only a 2024 Resend blog post
+   says Resend adds those headers to broadcasts, and the docs never show the placeholder inside
+   `text`.
+4. **Record the send** in the Part B calendar's Sent column, from Resend's record of it: the closing
+   comment on the review issue, `pnpm newsletter:stats`, or the dashboard. Never from the plan.
+
+**Put one of your own addresses in the segment.** As of 2026-09-27 the segment holds 4 confirmed
+subscribers, and the owner's two test contacts are not among them, so nobody on our side receives
+the broadcast. Add one of your addresses to the weekly-stories segment in the Resend dashboard, or
+subscribe it through the site's form. Then every broadcast lands in a human inbox, and the
+first-send header check has a copy to open. Do it in the dashboard or the form; never write the
+address into this repo.
+
+### Cancelling or rescheduling
+
+All of this is done in Resend (Broadcasts), in the dashboard or through its API. The job finds out
+by itself on its next run.
+
+- **Stop it for this Saturday:** cancel it. A cancelled scheduled broadcast goes back to `draft`
+  and nothing is sent
+  ([Resend](https://resend.com/docs/api-reference/broadcasts/cancel-broadcast)). The Saturday is
+  then **held**: the job already opened that Saturday's review issue, so it schedules nothing else
+  for that day, and Friday's run says so on the issue. The following week's runs schedule the same
+  broadcast for the Saturday after.
+- **Rebuild it:** delete it instead. Deleting a scheduled broadcast also cancels it. The Saturday is
+  held the same way, and the following week's run builds a fresh broadcast from the episode data, so
+  this is the one to use after fixing the episode itself.
+- **Move it:** change its time in Resend. The job leaves a scheduled episode broadcast alone,
+  whatever its date, and schedules nothing ahead of it.
+- **Send it this Saturday after all,** after a hold: schedule it yourself in Resend. *Unverified:*
+  Resend's 2025 Broadcast API launch post said an API-created broadcast can only be sent from the
+  API, and its 2026 editor docs say API content is editable in the dashboard. If the dashboard will
+  not schedule it, one `POST /broadcasts/{id}/send` carrying `scheduled_at` will.
+- **Stop the job altogether:** Actions → Weekly Broadcast → Disable workflow.
+
+Do not rename a broadcast, or rename or delete a review issue: the job finds both by their exact
+names, and a deleted review issue takes its Saturday's hold with it.
+
+### Running it by hand
+
+`pnpm stories:schedule-broadcast --dry-run` needs no credentials and changes nothing. It prints the
+slot, the candidate episode and "Resend state unknown (no key)". Given a key, it also prints the
+broadcasts that bear on the run. A real run needs `GITHUB_TOKEN` and `GITHUB_REPOSITORY` as well as
+the Resend pair, because the review issue is part of the contract, so use the workflow.
+
+The manual fallback, `pnpm stories:create-broadcast <episode-slug>`, still makes a draft and only a
+draft, with the same builder. It refuses to run while `config.business.postalAddress` is unset or
+looks like a PO Box, and checks that before it asks for credentials. A draft it makes for the next
+episode in the queue is scheduled by the job's next run; delete it if that is not what you want.
+**Do not re-run it after an ambiguous network response.** Reconcile in the Resend dashboard first,
+because the Broadcast API has no idempotency key.
+
+Running either script locally needs Resend credentials, and **they cannot come from `vercel env
 pull`**: `RESEND_API_KEY` exists in Vercel only for Preview and Production, as a sensitive variable
 the CLI reads back empty. Create a **Full access** key in Resend → API Keys (a Sending-access key
 cannot create broadcasts; the API answers `401 restricted_api_key`) and put it in `.env.local` by
-hand, with `RESEND_WEEKLY_STORIES_SEGMENT_ID` beside it. The script loads `.env.local` then `.env`
-via dotenv and never prints a value.
+hand, with `RESEND_WEEKLY_STORIES_SEGMENT_ID` beside it. The scripts load `.env.local` then `.env`
+via dotenv and never print a value. The weekly job reads the same two values from GitHub repository
+secrets instead ([Known gaps](#known-gaps) 2).
 
 ## The postal address
 
@@ -117,7 +213,7 @@ Both read `config.business` in [`config.ts`](../../config.ts), so they cannot di
 |---|---|
 | `legalName` | `The Auspicious Company`, the Massachusetts company that operates MichiKanji and is the controller of subscriber data (confirmed 2026-09-23) |
 | `registration` | The phrase the privacy policy uses to describe it |
-| `postalAddress` | `street`, `unit`, `locality`, `region`, `postalCode`, `country`. Set on 2026-09-24 to the private mailbox the owner supplied, with its `#4015` as the unit. `null` drops the footer line and stops `stories:create-broadcast` |
+| `postalAddress` | `street`, `unit`, `locality`, `region`, `postalCode`, `country`. Set on 2026-09-24 to the private mailbox the owner supplied, with its `#4015` as the unit. `null` drops the footer line and stops both broadcast scripts |
 
 **What it has to be.** A street address that reaches us: in practice a private mailbox at a
 commercial mail receiving agency (a "virtual mailbox"). CAN-SPAM
@@ -149,9 +245,13 @@ Set in every Vercel environment. Reference copy: [`.env.example`](../../.env.exa
 
 | Variable | Used by | What breaks without it |
 |---|---|---|
-| `RESEND_API_KEY` | `/api/subscribe`, `/api/subscribe/confirm`, `/api/unsubscribe`, `stories:create-broadcast` | `POST /api/subscribe` → `503 {"error":"Subscriptions are not configured."}`; confirm → the same 503; `POST /api/unsubscribe` → bare 503; the broadcast script exits with its usage error. The guard matters because `sendEmail` returns a **mock success** when the key is unset ([`lib/resend.ts`](../../lib/resend.ts)) — without it a signup would answer 200 and send nothing. |
+| `RESEND_API_KEY` | `/api/subscribe`, `/api/subscribe/confirm`, `/api/unsubscribe`, `stories:create-broadcast`, `stories:schedule-broadcast` | `POST /api/subscribe` → `503 {"error":"Subscriptions are not configured."}`; confirm → the same 503; `POST /api/unsubscribe` → bare 503; the broadcast scripts exit with an error naming it. The guard matters because `sendEmail` returns a **mock success** when the key is unset ([`lib/resend.ts`](../../lib/resend.ts)) — without it a signup would answer 200 and send nothing. |
 | `EMAIL_TOKEN_SECRET` | Both subscribe routes, `/api/unsubscribe` | Same 503s. It HMACs both the 48h confirm token and the non-expiring unsubscribe token. Rotating it invalidates every confirmation link in flight **and every unsubscribe link ever sent** — rotate only in a send-free window. |
-| `RESEND_WEEKLY_STORIES_SEGMENT_ID` | `/api/subscribe/confirm`, `stories:create-broadcast` | **This is the one that was missing for three episodes.** `/api/subscribe` still answers 200 and the confirmation email still goes out — that route does not check this variable — so the break is invisible until the person presses the confirm button and gets `503 {"error":"Subscriptions are not configured."}`. No contact, no segment membership, no welcome card. The broadcast script also refuses to create a draft. Set in Production and Development on 2026-09-16; **not yet in Preview**. |
+| `RESEND_WEEKLY_STORIES_SEGMENT_ID` | `/api/subscribe/confirm`, `stories:create-broadcast`, `stories:schedule-broadcast` | **This is the one that was missing for three episodes.** `/api/subscribe` still answers 200 and the confirmation email still goes out — that route does not check this variable — so the break is invisible until the person presses the confirm button and gets `503 {"error":"Subscriptions are not configured."}`. No contact, no segment membership, no welcome card. The broadcast scripts also refuse to run. Set in Production and Development on 2026-09-16; **not yet in Preview**. |
+
+The weekly job does not read Vercel. It needs its own copies of `RESEND_API_KEY` (a **Full access**
+key) and `RESEND_WEEKLY_STORIES_SEGMENT_ID` as GitHub repository secrets, and it fails, with an
+issue, while either is missing ([Known gaps](#known-gaps) 2).
 
 The variables are read at runtime by the deployment that was **built with them**, so adding one to
 Vercel changes nothing until a redeploy. That is the trap worth internalising: on 2026-09-16 the
@@ -405,17 +505,24 @@ the whole path works — each stage fails in a place the previous stage cannot s
 
 ## Deliberately not automated
 
-- **No cron, no send route, no contact loop.** The weekly send is a recorded kill decision in
-  [PRD §5 Phase 4](../prd/story-delivery-resend.md), not an oversight. Resend owns queueing,
-  throttling, unsubscribe filtering and scheduling; the application never pages through contacts or
-  calls `POST /emails` once per recipient. `create-broadcast` creates a draft and stops.
-- **No auto-send after validation.** §A7 items 4–9 are human judgements — CJK rendering in
-  Outlook.com, dark mode, the Gmail clip link, the reply path. A script cannot pass them, so nothing
-  should be able to send without a person who has.
-- **Nothing schedules from `config.newsletter`.** It is the one definition the runbook, the pre-send
-  output and the calendar agree with; `create-broadcast` *prints* the resulting date and a person
-  types it into Resend. Printing is the whole extent of the automation — giving it a scheduler would
-  reintroduce the thing §5 killed.
+- **The cron is no longer on this list: reversed 2026-09-27.** "No cron" was a recorded kill
+  decision in [PRD §5 Phase 4](../prd/story-delivery-resend.md), and it held until six episodes
+  were published and none broadcast. The manual send depended on someone remembering a ritual, and
+  nobody ran it once. The owner chose the replacement: a job that schedules the send, with a review
+  window. [The Saturday ritual](#the-saturday-ritual) describes it; the PRD carries a dated note.
+- **Still no send route and no contact loop.** Nothing in the application sends a broadcast. No
+  route or endpoint can, and nothing pages through contacts or calls `POST /emails` once per
+  recipient. The job asks Resend to schedule one broadcast to the segment and stops. Resend owns
+  queueing, throttling, unsubscribe filtering and the send itself. `create-broadcast` still creates
+  a draft and stops.
+- **No send without a window to stop it.** §A7 items 4–9 are human judgements: CJK rendering in
+  Outlook.com, dark mode, the Gmail clip link, the reply path. A script cannot pass them. What
+  changed is the default: the send now goes ahead unless a person cancels it. The job never
+  schedules less than 30 minutes ahead, its normal runs leave one to three days, and it opens a
+  review issue saying how to cancel.
+- **Only the job schedules from `config.newsletter`.** It is still the one definition the runbook,
+  the job and the calendar agree with: `nextSendAt()` turns `sendDay` and `sendTimeUtc` into the
+  `scheduled_at` the job sends Resend.
 - **No bounce/complaint webhook.** `app/api/webhook/resend/route.ts` is a ShipFast leftover that
   parses `formData` for inbound forwarding; Resend's event webhooks post signed JSON and need a
   separate route. Confirm Resend already auto-suppresses hard bounces before building one —
@@ -423,6 +530,8 @@ the whole path works — each stage fails in a place the previous stage cannot s
 - **The Friday probe is monitoring, not sending.** `check-subscribe-live` reads one endpoint's
   configuration state and opens an Issue. It creates nothing, sends nothing, and has no credentials
   with which to do either — deliberately, so that adding a monitor did not quietly add a send path.
+  The weekly job, unlike the probe, holds a key able to send. It uses it only to read broadcasts
+  and to ask Resend to schedule one.
 - **No single-use confirm tokens.** Enforcement needs storage, which needs the backend this project
   has repeatedly killed. A replay inside 48h is a no-op create.
 
@@ -434,13 +543,18 @@ the whole path works — each stage fails in a place the previous stage cannot s
    Preview useless for testing this path, which is the one place you would want to test it. The CLI
    in this repo is old enough that `vercel env add … preview` needs the interactive prompt; add it
    from the Vercel dashboard, or upgrade the CLI first.
-2. **Repository secrets for the end-to-end walk are not set.** `pnpm check-subscribe-e2e` and its
-   Friday job stay skipped until `RESEND_API_KEY` and `EMAIL_TOKEN_SECRET` exist as GitHub repository
-   secrets. `EMAIL_TOKEN_SECRET` must be the **same value** production signs with.
-3. **The Kit account is not cancelled.** `KIT_API_KEY` and `KIT_FORM_ID` were deleted from Vercel on
-   2026-09-16 — they were referenced nowhere in code — so nothing in this project touches Kit any
-   more. What is left is the account itself, which is a dashboard action and still costs money until
-   someone does it (PRD M9; archive form `9824359`).
+2. **The GitHub repository secrets are not set, so the weekly job cannot schedule anything.** On
+   2026-09-27 the repository's only secret was `GSC_SERVICE_ACCOUNT_KEY`. The job
+   needs `RESEND_API_KEY`, a **Full access** key, and `RESEND_WEEKLY_STORIES_SEGMENT_ID`, the same
+   segment id Vercel Production has. Until both exist, every Wednesday and Friday run fails and opens
+   "Weekly broadcast cannot run: Resend secrets are missing", by design; it never skips quietly. The
+   end-to-end walk needs `RESEND_API_KEY` too, with `EMAIL_TOKEN_SECRET`, which must be the **same
+   value** production signs with; `pnpm check-subscribe-e2e` and its Friday job stay skipped until
+   they exist. Add all three under Settings → Secrets and variables → Actions.
+3. **Kit: nothing to migrate.** The Kit trial ended without a charge, and the account holds 0
+   subscribers (checked 2026-09-27). `KIT_API_KEY` and `KIT_FORM_ID` were deleted from Vercel on
+   2026-09-16 and nothing in this project touches Kit. Closing the account is optional housekeeping
+   (PRD M9; archive form `9824359`).
 4. ~~**The postal address is not set — the one thing still blocking the first broadcast.**~~
    **Set 2026-09-24** from the address the owner supplied. `config.business.postalAddress` renders
    in the footer of both episode emails and on the privacy policy, `stories:create-broadcast` no
@@ -471,3 +585,10 @@ the whole path works — each stage fails in a place the previous stage cannot s
    price seen 2026-09-23: Prighter, EUR 39/mo or EUR 420/yr per region (UK 10% off as a second
    product); EDPO lists EUR 1,920/yr (EU) and GBP 1,080/yr (UK). Not decided; the policy names no
    representative, correctly, because none exists.
+9. **GitHub's scheduler is best effort.** Per
+   [GitHub's docs](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows),
+   a scheduled run can be delayed at busy times, the start of every hour among them, and under
+   enough load dropped; the weekly job runs on the hour. It runs on two days so that each covers the
+   other. A week in which both runs are dropped schedules nothing, and nothing says so. Separately,
+   GitHub disables scheduled workflows in a public repository after 60 days with no activity;
+   re-enable it in the Actions tab if that ever happens.

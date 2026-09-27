@@ -353,6 +353,23 @@ extension + sitemap → Lighthouse budgets for the new routes.
     broadcast queueing, throttling, unsubscribe filtering and scheduling; the application never pages
     through contacts or calls `POST /emails` once per recipient.
 
+> **Reversed 2026-09-27, by the owner: the scheduling is now a job.** Steps 11 to 13 above are kept
+> as the record. By 2026-09-27 six episodes had been published and none broadcast: the manual send
+> depended on someone running a draft command and then scheduling the draft in the dashboard, and
+> nobody ever did. So step 13's "no cron" kill decision is reversed.
+> [`.github/workflows/weekly-broadcast.yml`](../../.github/workflows/weekly-broadcast.yml) runs
+> [`scripts/stories/schedule-weekly-broadcast.ts`](../../scripts/stories/schedule-weekly-broadcast.ts)
+> every Wednesday and Friday at 12:00 UTC. It schedules the next episode for Saturday at 13:00 UTC
+> (`config.newsletter.sendTimeUtc`), then opens a GitHub issue; from then until the send, a person
+> can cancel it in Resend. Resend is the ledger: an episode's broadcast is the one named
+> `Episode N: <title>`, and there is no repo state file. The queue starts at
+> `config.newsletter.firstBroadcastEpisode` (6), so episodes 1 to 5 are never broadcast. What this
+> step protected still holds: there is no send route and no contact loop, and Resend owns queueing,
+> throttling, unsubscribe filtering and the send itself. Step 11's command survives as the manual,
+> draft-only fallback, on the same builder
+> ([`lib/email/broadcast.ts`](../../lib/email/broadcast.ts)). Step 12's human checks now happen in
+> the review window. Procedure: [`docs/runbooks/newsletter.md`](../runbooks/newsletter.md).
+
 ### Deliberately not in Phase 4
 
 **A bounce/complaint webhook.** `app/api/webhook/resend/route.ts` exists but is a ShipFast leftover

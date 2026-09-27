@@ -263,7 +263,7 @@ Before deploying new tracking:
    - The newsletter list is owned on Resend, and sends from our own authenticated domain as `Ari at MichiKanji <ari@michikanji.com>`, reply-to `ari@llanai.com`
    - Double opt-in is ours, not a vendor setting: `/api/subscribe` mints a signed token and mails it; a contact exists only after the link comes back
    - The signup surface (`source`) lives in DataFast, not on the contact — there is no `referrer` field to segment on
-   - Sends are deliberately manual: `pnpm stories:create-broadcast <slug>` creates a draft, a person reviews and schedules it. See [docs/runbooks/newsletter.md](../runbooks/newsletter.md)
+   - Sends are scheduled by a weekly job (since 2026-09-27): `.github/workflows/weekly-broadcast.yml` books the next episode in Resend for Saturday 13:00 UTC and opens a review issue; a person can cancel it before then. Resend does the sending. See [docs/runbooks/newsletter.md](../runbooks/newsletter.md)
 
 ### Future Considerations
 - **A/B testing**: Consider implementing feature flags with PostHog or similar
