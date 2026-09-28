@@ -16,11 +16,10 @@
 > [`.github/workflows/weekly-broadcast.yml`](../../.github/workflows/weekly-broadcast.yml) runs every
 > Wednesday and Friday at 12:07 UTC, schedules the next episode in Resend for Saturday at 13:00 UTC,
 > and opens a GitHub issue to review it ([the Saturday ritual](#the-saturday-ritual)). Resend still
-> does the sending. **It schedules nothing until two repository secrets exist**
-> ([Known gaps](#known-gaps) 2); until then every run fails and says so in an issue. Episode 6 is
-> first in its queue, for Sat 2026-10-03, if the secrets are in place by the Friday 2026-10-02 run.
-> The segment holds 4 confirmed subscribers and none of the owner's own addresses (2026-09-27), so
-> add one before that send. [Known gaps](#known-gaps) 6, a real unsubscribe, is worth doing before
+> does the sending. Its two repository secrets were set on 2026-09-28, and a dry run that day
+> planned Episode 6 for Sat 2026-10-03 13:00 UTC ([Known gaps](#known-gaps) 2). The Wednesday
+> 2026-09-30 run books it. The segment holds 4 confirmed subscribers and none of the owner's own
+> addresses (2026-09-27), so add one before that send. [Known gaps](#known-gaps) 6, a real unsubscribe, is worth doing before
 > it too. Both legal prerequisites were met on 2026-09-23 and 2026-09-24:
 > [The postal address](#the-postal-address).
 
