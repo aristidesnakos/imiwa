@@ -23,6 +23,14 @@
  * `https://michikanji.com` while every canonical said `https://www.michikanji.com`
  * hands Google entity URLs that 301, splitting one brand across two hostnames.
  *
+ * A fourth is an image nothing can find. Every kanji page's stroke-order
+ * diagram was inline SVG injected after hydration, which Google Images never
+ * sees, while each Article's `image` named the one site-wide OG image. The
+ * diagram is now a real image (/kanji/<char>/stroke-order.svg), and this script
+ * holds all three places it has to appear: an <img> in the page HTML, the first
+ * Article `image` with KanjiVG's licence metadata, and the sitemap's image
+ * entry for that page.
+ *
  * So this script reads what the build actually emitted:
  *   - `.next/server/app/**\/*.html`               — prerendered pages, e.g.
  *                                                   `.next/server/app/kanji/日.html`
@@ -55,6 +63,8 @@ import {
   KANJI_CONTENT_LAST_MODIFIED,
 } from '../lib/seo/site';
 import { levelPages } from '../lib/levels';
+import { KANJIVG_LICENCE } from '../lib/kanjivg';
+import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -246,6 +256,28 @@ function resolveAsset(url: string): { ok: boolean; how: string } {
     const routePath = path.join(BUILD_APP_DIR, rel, 'route.js');
     if (fs.existsSync(routePath)) return { ok: true, how: `.next/server/app/${rel}/route.js` };
 
+    // 3b. A route handler beneath a character's page, e.g. the stroke-order
+    //     image: kanji/日/stroke-order.svg is served by
+    //     .next/server/app/kanji/[character]/stroke-order.svg/route.js. A
+    //     dynamic segment accepts any string, so the handler existing proves
+    //     nothing about this URL on its own: the character must also have a
+    //     prerendered page, because the handler resolves the same kanji data and
+    //     404s anything else. Only [character] is understood; any other dynamic
+    //     segment stays unresolved rather than being waved through.
+    const underCharacter = /^kanji\/([^/]+)\/(.+)$/.exec(rel);
+    if (underCharacter) {
+      const [, char, rest] = underCharacter;
+      const handler = path.join(BUILD_APP_DIR, 'kanji', '[character]', rest, 'route.js');
+      if (fs.existsSync(handler)) {
+        const pageBuilt = [char, char.normalize('NFC')].some((c) =>
+          fs.existsSync(path.join(BUILD_APP_DIR, 'kanji', `${c}.html`))
+        );
+        return pageBuilt
+          ? { ok: true, how: `.next/server/app/kanji/[character]/${rest}/route.js, for a prerendered ${char}` }
+          : { ok: false, how: `kanji/[character]/${rest} is built, but ${char} has no prerendered page, so the handler 404s it` };
+      }
+    }
+
     // 4. A Next.js file convention in app/ (opengraph-image.tsx, icon.png, …).
     for (const ext of ['.tsx', '.ts', '.jsx', '.js', '.png', '.jpg', '.jpeg', '.svg', '.ico', '.webp']) {
       const convPath = path.join(APP_DIR, `${rel}${ext}`);
@@ -292,7 +324,7 @@ function requireEquals(
   schemaType: string,
   field: string,
   actual: unknown,
-  expected: string,
+  expected: string | number,
   hint?: string
 ): void {
   if (actual !== expected) {
@@ -536,7 +568,158 @@ function validateWebSite(file: string, site: Node): void {
   }
 }
 
-function validateArticle(file: string, article: Node, expectedPageUrl: string | null): void {
+/**
+ * A URL reduced to origin + decoded, NFC-normalised path, so `/kanji/%E6%97%A5`
+ * and `/kanji/日` compare equal while a different host or character does not.
+ */
+function normaliseUrl(u: string): string {
+  try {
+    const parsed = new URL(u);
+    return `${parsed.origin}${decodeURIComponent(parsed.pathname).normalize('NFC')}`;
+  } catch {
+    return u;
+  }
+}
+
+/**
+ * `Article.image` on a kanji page: the character's own stroke-order diagram,
+ * then the site-wide OG image.
+ *
+ * The diagram is asserted to be THIS page's character. Resolution alone would
+ * pass a template slip that put one character's diagram on all ~1,900 pages,
+ * because every one of those URLs resolves. Its licence metadata is asserted
+ * against lib/kanjivg.ts rather than for presence: without `license` the image
+ * cannot get the Licensable badge, and a wrong credit or notice is a licence
+ * breach repeated on every page. The shape follows
+ * developers.google.com/search/docs/appearance/structured-data/image-license-metadata.
+ *
+ * This used to assert a single ImageObject at the OG image. An array would have
+ * slipped past that check entirely (asObject() of an array is null), which is
+ * why the length and both entries are asserted here, not just the first.
+ */
+function validateKanjiArticleImages(file: string, type: string, value: unknown, kanjiChar: string): void {
+  const diagramUrl = `${SITE_URL}${strokeOrderImagePath(kanjiChar)}`;
+  const T = `${type}.image`;
+
+  if (!Array.isArray(value) || value.length !== 2) {
+    fail({
+      file,
+      schemaType: type,
+      field: 'image',
+      expected: `[ImageObject ${diagramUrl} with licence metadata, ImageObject ${SITE_OG_IMAGE.url}]`,
+      actual: value === undefined ? 'missing' : JSON.stringify(value).slice(0, 160),
+      hint: 'The per-kanji stroke-order diagram leads, so image search associates this page with its own image; the site OG image stays second.',
+    });
+    return;
+  }
+
+  const diagram = asObject(value[0]);
+  if (!diagram) {
+    fail({ file, schemaType: `${T}[0]`, field: '(entry)', expected: 'an ImageObject', actual: JSON.stringify(value[0]).slice(0, 120) });
+  } else {
+    const D = `${T}[0]`;
+    requireEquals(file, D, '@type', diagram['@type'], 'ImageObject');
+    for (const field of ['contentUrl', 'url'] as const) {
+      const actual = asString(diagram[field]);
+      if (actual === null || normaliseUrl(actual) !== normaliseUrl(diagramUrl)) {
+        fail({
+          file,
+          schemaType: D,
+          field,
+          expected: diagramUrl,
+          actual: actual === null ? 'missing' : actual,
+          hint: 'The stroke-order diagram of the character this page is about, built with strokeOrderImagePath() from lib/stroke-order-image.ts on SITE_URL.',
+        });
+      }
+    }
+    requireEquals(file, D, 'width', diagram.width, STROKE_ORDER_IMAGE_SIZE, 'The intrinsic size the route serves (STROKE_ORDER_IMAGE_SIZE).');
+    requireEquals(file, D, 'height', diagram.height, STROKE_ORDER_IMAGE_SIZE, 'The intrinsic size the route serves (STROKE_ORDER_IMAGE_SIZE).');
+
+    const licenceHint = 'Must match KANJIVG_LICENCE in lib/kanjivg.ts: KanjiVG is CC BY-SA 3.0, and this is its credit on every page.';
+    requireEquals(file, D, 'license', diagram.license, KANJIVG_LICENCE.licenseUrl, licenceHint);
+    requireEquals(file, D, 'acquireLicensePage', diagram.acquireLicensePage, KANJIVG_LICENCE.projectUrl, licenceHint);
+    requireEquals(file, D, 'creditText', diagram.creditText, KANJIVG_LICENCE.creditText, licenceHint);
+    requireEquals(file, D, 'copyrightNotice', diagram.copyrightNotice, KANJIVG_LICENCE.copyrightNotice, licenceHint);
+    const creator = asObject(diagram.creator);
+    if (!creator) {
+      fail({
+        file,
+        schemaType: D,
+        field: 'creator',
+        expected: `a Person named ${JSON.stringify(KANJIVG_LICENCE.creator)}`,
+        actual: diagram.creator === undefined ? 'missing' : JSON.stringify(diagram.creator),
+        hint: licenceHint,
+      });
+    } else {
+      requireEquals(file, `${D}.creator`, '@type', creator['@type'], 'Person', licenceHint);
+      requireEquals(file, `${D}.creator`, 'name', creator.name, KANJIVG_LICENCE.creator, licenceHint);
+    }
+  }
+
+  const og = asObject(value[1]);
+  if (!og) {
+    fail({ file, schemaType: `${T}[1]`, field: '(entry)', expected: 'an ImageObject', actual: JSON.stringify(value[1]).slice(0, 120) });
+  } else {
+    const O = `${T}[1]`;
+    requireEquals(file, O, '@type', og['@type'], 'ImageObject');
+    requireEquals(file, O, 'url', og.url, SITE_OG_IMAGE.url, 'Use SITE_OG_IMAGE from lib/seo/site.ts.');
+    requireEquals(file, O, 'width', og.width, SITE_OG_IMAGE.width, 'Use SITE_OG_IMAGE from lib/seo/site.ts.');
+    requireEquals(file, O, 'height', og.height, SITE_OG_IMAGE.height, 'Use SITE_OG_IMAGE from lib/seo/site.ts.');
+  }
+}
+
+/**
+ * The diagram the JSON-LD names has to be on the page, as a real <img> in the
+ * server HTML. That is the only form Google Images indexes (not inline <svg>,
+ * not a CSS background, not anything a script adds after load), and an Article
+ * image nobody can see on its page is a structured-data guideline problem.
+ * The alt has to name the character and the subject, because it is the text
+ * the image is ranked on.
+ */
+function validateStrokeOrderImg(file: string, html: string, kanjiChar: string): void {
+  const expectedSrc = strokeOrderImagePath(kanjiChar);
+  const attribute = (tag: string, name: string): string | null =>
+    new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1] ?? null;
+  const samePath = (a: string, b: string): boolean => {
+    try {
+      return decodeURIComponent(a).normalize('NFC') === decodeURIComponent(b).normalize('NFC');
+    } catch {
+      return a === b;
+    }
+  };
+
+  const tag = [...html.matchAll(/<img\b[^>]*>/g)]
+    .map((m) => m[0])
+    .find((t) => {
+      const src = attribute(t, 'src');
+      return src !== null && samePath(src, expectedSrc);
+    });
+
+  if (!tag) {
+    fail({
+      file,
+      schemaType: '(page)',
+      field: '<img> stroke-order diagram',
+      expected: `an <img src="${expectedSrc}"> in the server-rendered HTML`,
+      actual: 'none found',
+      hint: 'components/StrokeOrderViewer.tsx must render the diagram as an <img> on the server; the JSON-LD declares it as the page image.',
+    });
+    return;
+  }
+
+  const alt = (attribute(tag, 'alt') ?? '').normalize('NFC');
+  if (!alt.includes(kanjiChar) || !/stroke order/i.test(alt)) {
+    fail({
+      file,
+      schemaType: '(page)',
+      field: '<img> stroke-order diagram alt',
+      expected: `alt text naming ${kanjiChar} and "stroke order" (strokeOrderImageAlt in lib/stroke-order-image.ts)`,
+      actual: JSON.stringify(alt),
+    });
+  }
+}
+
+function validateArticle(file: string, article: Node, expectedPageUrl: string | null, kanjiChar: string): void {
   const type = typeOf(article);
 
   for (const field of [
@@ -629,13 +812,8 @@ function validateArticle(file: string, article: Node, expectedPageUrl: string | 
     });
   }
 
-  // ─ image ─
-  const image = asObject(article.image);
-  if (image) {
-    requireEquals(file, type, 'image.url', image.url, SITE_OG_IMAGE.url);
-    requireField(file, type, image, 'width');
-    requireField(file, type, image, 'height');
-  }
+  // ─ image: the character's stroke-order diagram, then the site OG image ─
+  validateKanjiArticleImages(file, type, article.image, kanjiChar);
 
   // ─ mainEntityOfPage points at this exact page ─
   const meop = asObject(article.mainEntityOfPage);
@@ -643,15 +821,7 @@ function validateArticle(file: string, article: Node, expectedPageUrl: string | 
     requireCanonicalHost(file, `${type}.mainEntityOfPage`, '@id', meop['@id']);
     if (expectedPageUrl !== null) {
       const actual = asString(meop['@id']);
-      const normalise = (u: string): string => {
-        try {
-          const parsed = new URL(u);
-          return `${parsed.origin}${decodeURIComponent(parsed.pathname).normalize('NFC')}`;
-        } catch {
-          return u;
-        }
-      };
-      if (actual === null || normalise(actual) !== normalise(expectedPageUrl)) {
+      if (actual === null || normaliseUrl(actual) !== normaliseUrl(expectedPageUrl)) {
         fail({
           file,
           schemaType: `${type}.mainEntityOfPage`,
@@ -1006,7 +1176,9 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
       actual: `absent — page has ${entities.map(typeOf).join(', ')}`,
     });
   }
-  for (const article of articles) validateArticle(file, article, expectedPageUrl);
+  for (const article of articles) validateArticle(file, article, expectedPageUrl, opts.kanjiChar);
+
+  validateStrokeOrderImg(file, html, opts.kanjiChar);
 
   const faqs = entitiesOfType(entities, 'FAQPage');
   if (faqs.length === 0) {
@@ -1103,6 +1275,81 @@ function validateSitemap(): void {
         actual: mod,
       });
     }
+  }
+
+  // ─ image extension: every kanji page lists its stroke-order diagram ─
+  // An image sitemap is the one place Google Images learns about an image
+  // without rendering the page, so each kanji <url> must carry exactly its own
+  // diagram, spelled with the same encoding as the <loc> beside it, and every
+  // <image:loc> must be canonical and resolve like a JSON-LD image does.
+  // Mismatches are reported once with examples, not ~1,900 times.
+  const IMAGE_NS = 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"';
+  const urlset = /<urlset\b[^>]*>/.exec(xml)?.[0] ?? '';
+  if (!urlset.includes(IMAGE_NS)) {
+    fail({
+      file,
+      schemaType: '(sitemap)',
+      field: '<urlset> image namespace',
+      expected: IMAGE_NS,
+      actual: urlset || 'no <urlset> element',
+      hint: 'Without the declaration every <image:image> element is a namespace error and the whole file is malformed.',
+    });
+  }
+  const kanjiPrefix = `${SITE_URL}/kanji/`;
+  let kanjiUrls = 0;
+  const wrongImages: string[] = [];
+  const badImageLocs: string[] = [];
+  for (const block of [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => m[1])) {
+    const loc = /<loc>([\s\S]*?)<\/loc>/.exec(block)?.[1].trim() ?? '';
+    const imageLocs = [...block.matchAll(/<image:image>\s*<image:loc>([\s\S]*?)<\/image:loc>\s*<\/image:image>/g)].map((m) =>
+      m[1].trim()
+    );
+    // An <image:loc> outside an <image:image> wrapper is not read at all.
+    const unwrapped = (block.match(/<image:loc>/g) ?? []).length - imageLocs.length;
+    if (unwrapped > 0) badImageLocs.push(`${loc}: ${unwrapped} <image:loc> outside <image:image>`);
+
+    for (const imageLoc of imageLocs) {
+      if (!imageLoc.startsWith(`${SITE_URL}/`)) {
+        badImageLocs.push(`${imageLoc} is not on ${SITE_URL}`);
+        continue;
+      }
+      const res = resolveAsset(imageLoc);
+      if (!res.ok) badImageLocs.push(`${imageLoc}: ${res.how}`);
+    }
+
+    const rest = loc.startsWith(kanjiPrefix) ? loc.slice(kanjiPrefix.length) : '';
+    let isKanjiPage = false;
+    try {
+      isKanjiPage = rest !== '' && !rest.includes('/') && isSingleCharacter(decodeURIComponent(rest));
+    } catch {
+      isKanjiPage = false;
+    }
+    if (!isKanjiPage) continue;
+
+    kanjiUrls += 1;
+    const expected = `${loc}/stroke-order.svg`;
+    if (imageLocs.length !== 1 || imageLocs[0] !== expected) {
+      wrongImages.push(`${loc} has ${imageLocs.length ? imageLocs.join(', ') : 'no image'}`);
+    }
+  }
+  if (wrongImages.length > 0) {
+    fail({
+      file,
+      schemaType: '(sitemap)',
+      field: '<image:image> on kanji <url>s',
+      expected: 'exactly one <image:loc> per kanji page, equal to its <loc> + "/stroke-order.svg"',
+      actual: `${wrongImages.length} of ${kanjiUrls} wrong, e.g. ${wrongImages.slice(0, 3).join('; ')}`,
+      hint: 'Build it with strokeOrderImagePath() from lib/stroke-order-image.ts, as app/sitemap.xml/route.ts does.',
+    });
+  }
+  if (badImageLocs.length > 0) {
+    fail({
+      file,
+      schemaType: '(sitemap)',
+      field: '<image:loc>',
+      expected: `canonical ${SITE_URL} image URLs, each wrapped in <image:image>, that resolve to a built route or file`,
+      actual: `${badImageLocs.length} bad, e.g. ${badImageLocs.slice(0, 3).join('; ')}`,
+    });
   }
 }
 
@@ -1339,9 +1586,12 @@ function main(): void {
   console.log('\n✓ Structured data valid.');
   console.log('  - Article author/publisher match the brand; no repo-name leakage');
   console.log('  - All required Article fields present (dates, image, publisher, mainEntityOfPage)');
+  console.log('  - Kanji Article image: the page\'s own stroke-order diagram with KanjiVG licence metadata, then the OG image');
+  console.log('  - Every kanji page renders that diagram as an <img> in its server HTML, with alt text');
   console.log('  - Every logo/image URL in JSON-LD resolves to a real file');
   console.log(`  - Every entity URL is on ${SITE_HOST}; apex ${APEX_HOST} absent from the build`);
   console.log('  - FAQPage and BreadcrumbList well-formed; sitemap + robots canonical');
+  console.log('  - Every kanji <url> in the sitemap lists exactly its own stroke-order image');
   console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page\n');
 }
 

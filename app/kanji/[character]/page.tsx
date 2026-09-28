@@ -13,6 +13,8 @@ import {
   KANJI_CONTENT_PUBLISHED,
   KANJI_CONTENT_LAST_MODIFIED,
 } from '@/lib/seo/site';
+import { KANJIVG_LICENCE } from '@/lib/kanjivg';
+import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '@/lib/stroke-order-image';
 import { badgeVariants } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
@@ -205,6 +207,9 @@ export default async function KanjiDetailPage({ params }: Props) {
   const levelNeighbours = LEVEL_NEIGHBOURS[kanjiData.level].get(kanjiData.kanji);
 
   const pageUrl = `${SITE_URL}/kanji/${encodeURIComponent(kanjiData.kanji)}`;
+  // The same image the viewer renders at rest, by the same helper, so the
+  // JSON-LD can only ever name the diagram that is actually on the page.
+  const strokeOrderImageUrl = `${SITE_URL}${strokeOrderImagePath(kanjiData.kanji)}`;
 
   // Structured readings, with romaji. Every reading-bearing surface below goes
   // through this rather than reading the raw fields, which carry two different
@@ -241,12 +246,35 @@ export default async function KanjiDetailPage({ params }: Props) {
     },
     datePublished: KANJI_CONTENT_PUBLISHED,
     dateModified: KANJI_CONTENT_LAST_MODIFIED,
-    image: {
-      '@type': 'ImageObject',
-      url: SITE_OG_IMAGE.url,
-      width: SITE_OG_IMAGE.width,
-      height: SITE_OG_IMAGE.height,
-    },
+    // The character's own stroke-order diagram first: the image this page
+    // exists to show, and the one a search for "日 stroke order" should find.
+    // It carries Google's image licence metadata
+    // (developers.google.com/search/docs/appearance/structured-data/image-license-metadata),
+    // which is how an image result shows KanjiVG's licence and credit rather
+    // than none. The site-wide OG image stays as a second, generic entry.
+    image: [
+      {
+        '@type': 'ImageObject',
+        contentUrl: strokeOrderImageUrl,
+        url: strokeOrderImageUrl,
+        width: STROKE_ORDER_IMAGE_SIZE,
+        height: STROKE_ORDER_IMAGE_SIZE,
+        license: KANJIVG_LICENCE.licenseUrl,
+        acquireLicensePage: KANJIVG_LICENCE.projectUrl,
+        creditText: KANJIVG_LICENCE.creditText,
+        creator: {
+          '@type': 'Person',
+          name: KANJIVG_LICENCE.creator,
+        },
+        copyrightNotice: KANJIVG_LICENCE.copyrightNotice,
+      },
+      {
+        '@type': 'ImageObject',
+        url: SITE_OG_IMAGE.url,
+        width: SITE_OG_IMAGE.width,
+        height: SITE_OG_IMAGE.height,
+      },
+    ],
     author: {
       '@type': 'Organization',
       name: SITE_NAME,
@@ -463,7 +491,7 @@ export default async function KanjiDetailPage({ params }: Props) {
             <h2 id="writing-heading" className={`${SECTION_HEADING} text-center`}>
               How to write <span lang="ja">{kanjiData.kanji}</span>
             </h2>
-            <StrokeOrderViewer kanji={kanjiData.kanji} />
+            <StrokeOrderViewer kanji={kanjiData.kanji} meaning={primaryMeaning} />
           </section>
 
           {/* Kanji Information */}

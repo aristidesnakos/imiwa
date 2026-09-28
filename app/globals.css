@@ -127,7 +127,11 @@ body {
    the resting rule, so every stroke-order page — the page type that earns most
    of the site's clicks — opened on a box of bare stroke numbers, and the answer
    to "how do I write 水" appeared only after someone found and pressed Play.
-   Now the character is there on arrival, and Play redraws it stroke by stroke. */
+   Now the character is there on arrival, and Play redraws it stroke by stroke.
+
+   Before the first Play the diagram is an <img> of /kanji/<char>/stroke-order.svg,
+   which no page CSS reaches, so lib/kanjivg.ts restates this rule inside that
+   file. Change the two together, or the swap to the animation changes the look. */
 .stroke-animation path {
   stroke: #2c2c2c;
   stroke-width: 2;

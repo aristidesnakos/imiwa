@@ -45,4 +45,17 @@ export const SITE_OG_IMAGE = {
  * underlying content actually changes.
  */
 export const KANJI_CONTENT_PUBLISHED = '2025-10-20'; // dab4476 — dictionary launched
-export const KANJI_CONTENT_LAST_MODIFIED = '2026-06-14'; // ba5c8fd — last kanji data edit
+
+/**
+ * The last significant change to the main content of the character pages,
+ * whether it came from the kanji data or from the page template. It is every
+ * kanji URL's sitemap `lastmod` and every Article's `dateModified`, so bump it
+ * for a change a reader or crawler meets in the body of all ~1,900 pages, not
+ * for chrome such as the header, footer or a restyle.
+ *
+ * 2026-09-28: the stroke-order diagram became a server-rendered, indexable
+ * image (`/kanji/<char>/stroke-order.svg`: an <img> in the HTML, in the Article
+ * JSON-LD and in the sitemap) instead of an SVG injected after hydration.
+ * Before that, 2026-06-14 (ba5c8fd), the last kanji data edit.
+ */
+export const KANJI_CONTENT_LAST_MODIFIED = '2026-09-28';

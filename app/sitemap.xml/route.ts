@@ -4,6 +4,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
+import { strokeOrderImagePath } from '@/lib/stroke-order-image';
 import { EPISODES } from '@/lib/stories';
 
 // Static pages, each with the date its content actually last changed.
@@ -44,9 +45,14 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || SITE_URL;
 
-  // Generate sitemap XML
+  // Generate sitemap XML. The image namespace is for the kanji pages: each one
+  // lists its stroke-order diagram (app/kanji/[character]/stroke-order.svg), the
+  // image the page exists to show. <image:image> comes after the standard
+  // elements, where the sitemap schema puts extensions, and its <image:loc> is
+  // built by the same helper as the page's <img>, so it is encoded exactly as
+  // that page's <loc> is.
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   ${STATIC_PAGES.map(({ path, lastmod, priority }) => `
   <url>
     <loc>${baseUrl}${path}</loc>
@@ -67,6 +73,9 @@ export async function GET() {
     <lastmod>${KANJI_CONTENT_LAST_MODIFIED}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>${baseUrl}${strokeOrderImagePath(kanji.kanji)}</image:loc>
+    </image:image>
   </url>`).join('')}
 </urlset>`.trim();
 
