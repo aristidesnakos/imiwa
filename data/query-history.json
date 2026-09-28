@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "metricNote": "romajiStrict (the headline) = Google Search query rows (searchanalytics.query, dimensions: [query]) containing BOTH a token that is a romaji spelling of some kanji reading in lib/constants/n{1..5}-kanji.ts (per romajiSearchKeys() in lib/romaji/readings.ts, minus an English-homograph stoplist) AND a kanji-context word. romajiLoose = the same without the context requirement; it is a superset. Both are a FLOOR twice over: Search Console omits low-volume queries entirely, and the stoplist deliberately discards genuine readings that are also English words (to, no, on, sun...) to keep the figure precise enough to act on. This file is a PROGRESS tracker for the romaji subsystem shipped 2026-08-02, not an alarm — no reading here should ever be read as a pass/fail. See scripts/check-query-performance.ts.",
+  "metricNote": "romajiStrict (the romaji headline) = Google Search query rows (searchanalytics.query, dimensions: [query]) containing BOTH a token that is a romaji spelling of some kanji reading in lib/constants/n{1..5}-kanji.ts (per romajiSearchKeys() in lib/romaji/readings.ts, minus an English-homograph stoplist) AND a kanji-context word. romajiLoose = the same without the context requirement; it is a superset. Both are a FLOOR twice over: Search Console omits low-volume queries entirely, and the stoplist deliberately discards genuine readings that are also English words (to, no, on, sun...) to keep the figure precise enough to act on. intents = EVERY query row classified by search intent per scripts/lib/query-intent.ts (first matching rule wins), so the six classes sum to the reading totals and machine-shaped queries are a class, never dropped. Read clicks per class, not CTR: impressions have grown so much faster than clicks, with machine-shaped queries that never click among the largest, that CTR no longer measures the site. Compare classes only between readings with the same intents.rules fingerprint; readings taken before the field existed have none and are never backfilled. avgPosition is impression-weighted throughout. This file is a PROGRESS tracker for the romaji subsystem shipped 2026-08-02 and for clicks by intent, not an alarm — no reading here should ever be read as a pass/fail. See scripts/check-query-performance.ts.",
   "readings": [
     {
       "takenOn": "2026-08-02",
@@ -2124,6 +2124,283 @@
         "impressions": 367140,
         "clicks": 293,
         "avgPosition": 9.13
+      }
+    },
+    {
+      "takenOn": "2026-09-28",
+      "windowStart": "2026-08-29",
+      "windowEnd": "2026-09-25",
+      "property": "sc-domain:michikanji.com",
+      "totalQueries": 6178,
+      "impressions": 367877,
+      "clicks": 1675,
+      "intents": {
+        "rules": "ce83849c",
+        "classes": {
+          "brand": {
+            "queries": 2,
+            "impressions": 854,
+            "clicks": 206,
+            "avgPosition": 2.08
+          },
+          "stroke-order-and-practice": {
+            "queries": 950,
+            "impressions": 21082,
+            "clicks": 913,
+            "avgPosition": 6.06
+          },
+          "level-lists": {
+            "queries": 248,
+            "impressions": 5422,
+            "clicks": 114,
+            "avgPosition": 8.71
+          },
+          "generic": {
+            "queries": 32,
+            "impressions": 21300,
+            "clicks": 250,
+            "avgPosition": 8.2
+          },
+          "character-lookup": {
+            "queries": 4876,
+            "impressions": 294850,
+            "clicks": 192,
+            "avgPosition": 9.5
+          },
+          "machine-shaped": {
+            "queries": 70,
+            "impressions": 24369,
+            "clicks": 0,
+            "avgPosition": 8.08
+          }
+        }
+      },
+      "romajiStrict": {
+        "queries": 1229,
+        "impressions": 41572,
+        "clicks": 183,
+        "avgPosition": 7.43
+      },
+      "romajiLoose": {
+        "queries": 1379,
+        "impressions": 43180,
+        "clicks": 202,
+        "avgPosition": 7.49
+      },
+      "watchedQueries": [
+        {
+          "query": "michi kanji",
+          "impressions": 715,
+          "clicks": 92,
+          "ctr": 0.1287,
+          "position": 2.26
+        },
+        {
+          "query": "mizu kanji",
+          "impressions": 1006,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 8.24
+        },
+        {
+          "query": "hi kanji",
+          "impressions": 365,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 7.07
+        },
+        {
+          "query": "kokoro kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        },
+        {
+          "query": "yama kanji",
+          "impressions": 97,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 9.11
+        },
+        {
+          "query": "michikanji",
+          "impressions": 139,
+          "clicks": 114,
+          "ctr": 0.8201,
+          "position": 1.13
+        },
+        {
+          "query": "kou kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        },
+        {
+          "query": "ko kanji",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "position": 0
+        }
+      ],
+      "topQueries": [
+        {
+          "query": "父、 stroke order",
+          "impressions": 18658,
+          "clicks": 0,
+          "position": 7.51
+        },
+        {
+          "query": "kanji",
+          "impressions": 10704,
+          "clicks": 107,
+          "position": 8.92
+        },
+        {
+          "query": "japanese kanji",
+          "impressions": 6356,
+          "clicks": 91,
+          "position": 7.23
+        },
+        {
+          "query": "父",
+          "impressions": 5075,
+          "clicks": 0,
+          "position": 9.84
+        },
+        {
+          "query": "kanji japanese",
+          "impressions": 2705,
+          "clicks": 36,
+          "position": 7
+        },
+        {
+          "query": "stroke order",
+          "impressions": 2622,
+          "clicks": 1,
+          "position": 7.88
+        },
+        {
+          "query": "kanji stroke order",
+          "impressions": 2329,
+          "clicks": 316,
+          "position": 3.24
+        },
+        {
+          "query": "n5 kanji",
+          "impressions": 1050,
+          "clicks": 25,
+          "position": 8.48
+        },
+        {
+          "query": "mizu kanji",
+          "impressions": 1006,
+          "clicks": 0,
+          "position": 8.24
+        },
+        {
+          "query": "kanji dictionary",
+          "impressions": 922,
+          "clicks": 8,
+          "position": 9.11
+        },
+        {
+          "query": "nihongo kanji",
+          "impressions": 889,
+          "clicks": 5,
+          "position": 7.15
+        },
+        {
+          "query": "yume kanji",
+          "impressions": 821,
+          "clicks": 2,
+          "position": 6.33
+        },
+        {
+          "query": "sai kanji",
+          "impressions": 727,
+          "clicks": 1,
+          "position": 7.02
+        },
+        {
+          "query": "kanji practice",
+          "impressions": 725,
+          "clicks": 27,
+          "position": 7.34
+        },
+        {
+          "query": "michi kanji",
+          "impressions": 715,
+          "clicks": 92,
+          "position": 2.26
+        },
+        {
+          "query": "kanji chart",
+          "impressions": 688,
+          "clicks": 7,
+          "position": 8.38
+        },
+        {
+          "query": "tanoshii kanji",
+          "impressions": 612,
+          "clicks": 0,
+          "position": 7.03
+        },
+        {
+          "query": "sen kanji",
+          "impressions": 532,
+          "clicks": 0,
+          "position": 8.05
+        },
+        {
+          "query": "shadow in japanese",
+          "impressions": 518,
+          "clicks": 0,
+          "position": 11.02
+        },
+        {
+          "query": "hito kanji",
+          "impressions": 509,
+          "clicks": 0,
+          "position": 8.92
+        },
+        {
+          "query": "toki kanji",
+          "impressions": 483,
+          "clicks": 1,
+          "position": 8.02
+        },
+        {
+          "query": "migi kanji",
+          "impressions": 474,
+          "clicks": 3,
+          "position": 6.41
+        },
+        {
+          "query": "7 kanji",
+          "impressions": 459,
+          "clicks": 0,
+          "position": 8.51
+        },
+        {
+          "query": "warui kanji",
+          "impressions": 458,
+          "clicks": 0,
+          "position": 6.81
+        },
+        {
+          "query": "tsuki kanji",
+          "impressions": 446,
+          "clicks": 1,
+          "position": 9.2
+        }
+      ],
+      "kanjiPages": {
+        "impressions": 377589,
+        "clicks": 375,
+        "avgPosition": 8.97
       }
     }
   ]
