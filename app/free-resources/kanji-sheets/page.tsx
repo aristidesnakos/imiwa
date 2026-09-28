@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, Download } from 'lucide-react';
 import { getSEOTags } from '@/lib/seo';
 import { SITE_NAME, SITE_URL } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
+import { EmailCapture } from '@/components/EmailCapture';
 import { buttonVariants } from '@/components/ui/button';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
@@ -18,6 +19,7 @@ import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { JLPT_LEVELS, LEVEL_LABELS, levelHref, type JlptLevel } from '@/lib/levels';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
+import { sendDayName } from '@/lib/email/send-schedule';
 import {
   PACK_DESTINATION,
   PACK_DOWNLOADS,
@@ -271,6 +273,33 @@ export default function KanjiSheetsLandingPage() {
               );
             })}
           </ul>
+        </section>
+
+        {/* The weekly-story signup, straight after the downloads rather than
+            in front of them: the pack in the hero and the level cards above
+            are what this page is for, and neither moves. The hero promises
+            "No signup", which stays true because nothing here gates a sheet,
+            and the copy says so.
+
+            `title=""` and `description=""`, not `{undefined}`: EmailCapture's
+            props have defaults, a default parameter applies to `undefined`, and
+            the card would then lead with an <h3> repeating this <h2>. */}
+        <section aria-labelledby="weekly-story-heading" className={SECTION_BAND}>
+          <h2 id="weekly-story-heading" className={cn(SECTION_HEADING, 'text-japan-deep-ocean')}>
+            A weekly story you can actually read
+          </h2>
+          <p className="mt-2 max-w-3xl text-japan-mountain-mist">
+            A short comic every {sendDayName()}, written with beginner (N5) kanji and grammar only,
+            plus a quiz on the words it teaches. Every kanji in it has a sheet here. It&rsquo;s
+            separate from the sheets, which never ask for an email.
+          </p>
+          <EmailCapture
+            source="kanji-sheets-hub"
+            title=""
+            description=""
+            cta="Send me the stories"
+            className="mt-6 max-w-xl"
+          />
         </section>
 
         <SheetContents className={SECTION_BAND} />

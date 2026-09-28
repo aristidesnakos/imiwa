@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { getSEOTags } from '@/lib/seo';
 import { SITE_NAME, SITE_URL } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
+import { EmailCapture } from '@/components/EmailCapture';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { KanjiN5WorkbookCTA } from '@/components/kanji/KanjiN5WorkbookCTA';
 import { BookCTA } from '@/components/commerce/BookCTA';
@@ -12,6 +13,7 @@ import { GroupSheetLinks } from '@/components/sheets/GroupSheetLinks';
 import { PrintSteps } from '@/components/sheets/PrintSteps';
 import { SheetContents } from '@/components/sheets/SheetContents';
 import { SheetsBreadcrumb, breadcrumbJsonLd, type Crumb } from '@/components/sheets/SheetsBreadcrumb';
+import { sendDayName } from '@/lib/email/send-schedule';
 import { levelPagePath } from '@/lib/levels';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
 import { kanjiSheetHref } from '@/lib/sheets/kanji-sheets';
@@ -203,6 +205,36 @@ export default function N5KanjiSheetsPage() {
               print by group, N4 earns a themed sequence of its own. The theme
               travels as a property — see GroupSheetLinks. */}
           <GroupSheetLinks themes={N5_SEQUENCE} goal="n5_sheets_group_click" className="mt-6" />
+        </section>
+
+        {/* The weekly-story signup goes after the last way to print, not beside
+            the pack, and that is the same decision as the groups' placement
+            above. Directly under the pack it would push down the book card,
+            whose click goal and `n5_sheets_scroll_book` marker are being read
+            now. Above this section it would push down the group prints, which
+            are downloads with a keep-or-cut goal of their own. Here nothing
+            measured moves. Once the book has its month of data, trying it
+            under the pack is a one-block change.
+
+            `title=""` and `description=""`, not `{undefined}`: EmailCapture's
+            props have defaults, a default parameter applies to `undefined`, and
+            the card would then lead with an <h3> repeating this <h2>. */}
+        <section aria-labelledby="weekly-story-heading" className={SECTION_BAND}>
+          <h2 id="weekly-story-heading" className={cn(SECTION_HEADING, 'text-japan-deep-ocean')}>
+            A weekly story you can actually read
+          </h2>
+          <p className="mt-2 max-w-3xl text-japan-mountain-mist">
+            A short comic every {sendDayName()}, with a quiz on the words it teaches. It&rsquo;s
+            written with N5 kanji and beginner grammar only, so every kanji in it is one you can
+            print on this page.
+          </p>
+          <EmailCapture
+            source="kanji-level-sheets"
+            title=""
+            description=""
+            cta="Send me the stories"
+            className="mt-6 max-w-xl"
+          />
         </section>
 
         <PrintSteps

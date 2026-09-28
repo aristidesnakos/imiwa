@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Header from '@/components/sections/Header';
+import { EmailCapture } from '@/components/EmailCapture';
+import { sendDayName } from '@/lib/email/send-schedule';
 import { getSEOTags } from '@/lib/seo';
 import { hasLevelPage, LEVEL_LABELS, levelHref, levelPagePath, type JlptLevel } from '@/lib/levels';
 import { KanjiSearchClient } from './KanjiSearchClient';
@@ -168,6 +170,53 @@ function HubGuide() {
   );
 }
 
+/**
+ * The weekly-story signup: the one ask on the site's top organic landing page,
+ * and it goes after the grid, never above it. The grid is what a visitor
+ * searched for, so it keeps the first viewport to itself.
+ *
+ * It sits below the Suspense boundary, so it cannot shift anything or put a
+ * link on screen at load: the fallback reserves `min-h-screen` for the grid.
+ * EmailCapture's script chunk was already downloaded here before this form
+ * existed, prefetched with the homepage through the header logo. Measured on
+ * 2026-09-28, one Lighthouse run each on the same commit without and with
+ * it: script 244.3 -> 240.2 kB and total 383.7 -> 380.4 kB, because webpack
+ * regrouped the shared chunks. CLS stayed 0.
+ *
+ * `title=""` and `description=""` hide the card's own heading and blurb, which
+ * would repeat the <h2> above in vaguer words. `{undefined}` would not: the
+ * props have defaults, and a default parameter applies to `undefined`. No
+ * scroll marker, because the DataFast event budget is spent. `email_signup`
+ * carries the source, and the /kanji pageview is the denominator.
+ */
+function WeeklyStorySignup() {
+  return (
+    <section
+      aria-labelledby="weekly-story-heading"
+      className="mx-auto max-w-4xl border-t border-border pt-12"
+    >
+      <div className="mx-auto mb-6 max-w-2xl text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
+          Free weekly newsletter
+        </p>
+        <h2
+          id="weekly-story-heading"
+          className="mt-3 text-balance text-2xl font-semibold text-japan-deep-ocean"
+        >
+          A weekly story you can actually read
+        </h2>
+        <p className="mt-3 text-pretty text-japan-mountain-mist">
+          A short comic every {sendDayName()}, written with beginner (N5) kanji and grammar only,
+          plus a quiz on the words it teaches. Every kanji in it is in this dictionary.
+        </p>
+      </div>
+      <div className="mx-auto max-w-xl">
+        <EmailCapture source="kanji-hub" title="" description="" cta="Send me the stories" />
+      </div>
+    </section>
+  );
+}
+
 export default function KanjiPage() {
   return (
     <>
@@ -199,6 +248,8 @@ export default function KanjiPage() {
           >
             <KanjiSearchClient />
           </Suspense>
+
+          <WeeklyStorySignup />
 
           <HubGuide />
         </div>
