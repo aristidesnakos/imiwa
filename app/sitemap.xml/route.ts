@@ -13,8 +13,8 @@ import { EPISODES } from '@/lib/stories';
 // makes `lastmod` untrustworthy and gets it ignored. Bump a date here when you
 // meaningfully change that page.
 const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
-  { path: '', lastmod: '2026-06-14', priority: '1.0' },
-  { path: '/kanji', lastmod: '2026-06-14', priority: '0.9' },
+  { path: '', lastmod: '2026-09-24', priority: '1.0' },
+  { path: '/kanji', lastmod: '2026-09-24', priority: '0.9' },
   // Level list pages — one per entry in lib/levels (only N5 has a page yet).
   // Same priority as the hub: each is a category page written to rank for its
   // own query class ("n5 kanji", "n5 kanji list").
