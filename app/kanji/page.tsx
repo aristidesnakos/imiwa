@@ -207,7 +207,6 @@ export default function KanjiPage() {
         <section
           className="container mx-auto px-8 pb-12"
           aria-label="Complete kanji index"
-          data-fast-scroll="kanji_scroll_index"
         >
           <details className="mt-4 border-t border-border pt-6">
             <summary className={`cursor-pointer rounded-sm text-lg font-semibold text-foreground ${FOCUS_RING}`}>

@@ -330,11 +330,14 @@ export function KanjiSearchClient() {
       </div>
 
       {/* Kanji Grid */}
-      {/* The scroll marker goes on the grid, but the click goal goes on the
-          <Link> below and NOT here: the grid also contains the check-off
-          buttons, and DataFast's delegated click handler would count those as
-          kanji opens. */}
-      <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4" data-fast-scroll="kanji_scroll_grid">
+      {/* No DataFast tracking on the grid, its cards or "Show more", and that
+          is deliberate. Every card opens /kanji/<char>, which DataFast already
+          counts as a pageview. The grid is on screen for ~98% of /kanji
+          visitors, so a scroll marker only restates the pageview, and it
+          re-fired on every return (~12 times a visitor). The three cost ~56k
+          events a month between them, about 70% of the goal budget, for
+          numbers we already had. Removed 2026-09-28; do not add them back. */}
+      <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-4">
         {visible.map((k, index) => {
           const isLearned = isKanjiLearned(k.kanji);
           return (
@@ -351,7 +354,6 @@ export function KanjiSearchClient() {
               <Link
                 href={`/kanji/${encodeURIComponent(k.kanji)}`}
                 prefetch={false}
-                data-fast-goal="kanji_card_click"
                 className={`group block p-4 border rounded-lg text-center transition-all duration-200 hover:border-japan-sakura-waters hover:bg-muted hover:shadow-md ${FOCUS_RING} ${
                   isLearned
                     ? 'border-[color:color-mix(in_srgb,var(--sakura-waters)_70%,var(--temple-stone))] bg-[color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]'
@@ -397,7 +399,6 @@ export function KanjiSearchClient() {
           </p>
           <Button
             variant="outline"
-            data-fast-goal="kanji_more_click"
             onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
           >
             Show {Math.min(PAGE_SIZE, filtered.length - visibleCount)} more

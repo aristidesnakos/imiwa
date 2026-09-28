@@ -168,30 +168,9 @@ export default function LandingPage() {
         </section>
 
         {/* Features */}
-        {/* DataFast scroll markers (`data-fast-scroll`) start here and continue
-            to the closing CTA. They are the input to the "Homepage scroll
-            depth" funnel in DataFast, which answers the one question this page
-            has never been able to answer: how far down does a visitor actually
-            get before leaving.
-
-            The marker is on the HEADING BLOCK, never on the <section>. The
-            DataFast script registers its IntersectionObserver with
-            `threshold: [0, t]` and fires on `isIntersecting`, so it fires the
-            moment the FIRST PIXEL of the observed element enters the viewport —
-            not at the 50% the docs describe. On a full-height section that
-            means the goal fires as the previous section scrolls off, which
-            measures "they left the hero", not "they read the features". A
-            heading block is short enough that first-pixel and read-it are the
-            same event.
-
-            Also: the script clears its `fired` flag when the element leaves the
-            viewport, so scrolling back up and down re-fires the goal. Funnel
-            steps count VISITORS, so this does not distort the funnel — but it
-            does inflate raw goal completions and monthly event usage. Read the
-            funnel, not the goal counter. */}
         <section className="border-t border-japan-sakura-waters/10 bg-background py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center" data-fast-scroll="home_scroll_features">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
               <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
                 Everything you need to read and write kanji
               </h2>
@@ -223,7 +202,7 @@ export default function LandingPage() {
         {/* JLPT Levels */}
         <section className="bg-[color-mix(in_srgb,var(--soft-mist)_60%,var(--temple-stone))] py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center" data-fast-scroll="home_scroll_levels">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
               <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
                 Study by JLPT level
               </h2>
@@ -272,7 +251,7 @@ export default function LandingPage() {
         {/* Popular Kanji */}
         <section className="bg-background py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center" data-fast-scroll="home_scroll_popular">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
               <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
                 Popular JLPT kanji
               </h2>
@@ -338,6 +317,27 @@ export default function LandingPage() {
             step, and a light rule on top of it reads as an artifact. */}
         <section className="border-t border-border bg-gradient-to-b from-japan-soft-mist to-[color-mix(in_srgb,var(--sakura-waters)_25%,var(--temple-stone))] py-16 md:py-20">
           <div className="container mx-auto px-4">
+            {/* The homepage's one DataFast scroll marker: "saw the signup
+                card", the denominator for this band's `email_signup`. The
+                scroll-depth markers on the features, levels, popular-kanji and
+                closing-CTA headings were removed on 2026-09-28. The question
+                they were built for is answered (1,053 → 575 → 415 → 270 → 158
+                → 15 visitors over 30 days), and they kept spending events
+                after it was.
+
+                The marker is on the HEADING BLOCK, never on the <section>. The
+                DataFast script registers its IntersectionObserver with
+                `threshold: [0, t]` and fires on `isIntersecting`, so it fires
+                the moment the FIRST PIXEL of the observed element enters the
+                viewport — not at the 50% the docs describe. On a full-height
+                section that measures "they left the section above", not "they
+                saw the card". A heading block is short enough that first-pixel
+                and saw-it are the same event.
+
+                The script clears its `fired` flag when the element leaves the
+                viewport, so scrolling back past the heading re-fires the goal.
+                Funnel steps count VISITORS, so read the funnel, not the raw
+                goal counter. */}
             <div className="mx-auto mb-8 max-w-2xl text-center" data-fast-scroll="home_scroll_newsletter">
               {/* coral-sunset-INK, never coral-sunset: the fill is 2.7:1 here and
                   cannot legally carry a label. The ink is 4.70:1 against the top
@@ -380,7 +380,7 @@ export default function LandingPage() {
                 height={160}
                 className="w-24 md:w-28 drop-shadow-lg"
               />
-              <h2 className="mt-5 text-2xl font-bold text-japan-temple-stone md:text-3xl" data-fast-scroll="home_scroll_final_cta">
+              <h2 className="mt-5 text-2xl font-bold text-japan-temple-stone md:text-3xl">
                 Ready to start writing kanji?
               </h2>
               <p className="mt-3 max-w-xl text-japan-sakura-waters">

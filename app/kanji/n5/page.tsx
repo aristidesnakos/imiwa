@@ -301,7 +301,7 @@ export default function N5KanjiListPage() {
               </div>
             </div>
             <p className="mt-1 text-japan-mountain-mist">{withJapanese(group.summary)}</p>
-            <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-fast-goal="n5_list_kanji_click">
+            <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {group.entries.map((entry) => (
                 <li key={entry.kanji}>
                   <KanjiListCard entry={entry} />

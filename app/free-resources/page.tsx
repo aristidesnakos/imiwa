@@ -193,10 +193,7 @@ export default function FreeResourcesPage() {
                 </p>
               </div>
 
-              <h2
-                className="mb-3 text-xl font-semibold text-japan-deep-ocean md:text-2xl"
-                data-fast-scroll="resources_scroll_packs"
-              >
+              <h2 className="mb-3 text-xl font-semibold text-japan-deep-ocean md:text-2xl">
                 Prefer the whole set in one file?
               </h2>
 
