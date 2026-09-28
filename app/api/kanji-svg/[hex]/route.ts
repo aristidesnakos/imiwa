@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchKanjiVgSource } from '@/lib/kanjivg';
 
+// The KanjiVG source file, untouched, for the viewer's animation: it injects
+// this inline so CSS can reach the strokes. Since 2026-09-28 it is fetched only
+// when someone presses Play; the diagram a page shows at rest, and the one
+// search engines index, is /kanji/<char>/stroke-order.svg. Both routes fetch
+// through lib/kanjivg.ts.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ hex: string }> }
@@ -15,27 +21,16 @@ export async function GET(
     // Pad to 5 characters if needed
     const paddedHex = hex.padStart(5, '0');
 
-    const url = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${paddedHex}.svg`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; KanjiApp/1.0)',
-        'Accept': 'image/svg+xml,text/xml,application/xml,*/*',
-        'Referer': 'https://github.com/KanjiVG/kanjivg',
-      },
-      next: { revalidate: 86400 },
-    });
-    
-    if (!response.ok) {
+    const source = await fetchKanjiVgSource(paddedHex);
+
+    if (source.svg === null) {
       return NextResponse.json(
-        { error: 'SVG not found', status: response.status },
-        { status: response.status }
+        { error: 'SVG not found', status: source.status },
+        { status: source.status }
       );
     }
-    
-    const svgContent = await response.text();
-    
-    return new NextResponse(svgContent, {
+
+    return new NextResponse(source.svg, {
       status: 200,
       headers: {
         'Content-Type': 'image/svg+xml',
