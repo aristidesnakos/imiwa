@@ -15,8 +15,12 @@ export const metadata = getSEOTags({
   canonicalUrlRelative: '/advertise',
 });
 
+// `id` is what DataFast records as the `slot` property on a booking click. It
+// stays fixed when a tier's name or price changes, because a new value would
+// split one tier's history across two spellings.
 const SPONSOR_SLOTS = [
   {
+    id: 'n5',
     name: 'N5 — Beginner',
     audience: 'Beginners',
     pages: '~88 pages',
@@ -27,6 +31,7 @@ const SPONSOR_SLOTS = [
     stripeUrl: 'https://buy.stripe.com/3cIbJ3a2IcjUa0j3ms6Vq00',
   },
   {
+    id: 'n4_n3',
     name: 'N4–N3 — Intermediate',
     audience: 'Intermediate',
     pages: '~540 pages',
@@ -38,6 +43,7 @@ const SPONSOR_SLOTS = [
     stripeUrl: 'https://buy.stripe.com/9B68wR8YE97I8Wf0ag6Vq01',
   },
   {
+    id: 'n2_n1',
     name: 'N2–N1 — Advanced',
     audience: 'Advanced',
     pages: '~1,370 pages',
@@ -198,7 +204,25 @@ export default async function AdvertisePage() {
                       }`}
                       variant={slot.highlighted ? 'default' : 'outline'}
                     >
-                      <a href={slot.stripeUrl} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={slot.stripeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        /* ONE goal for all three tiers, with the tier as a `slot`
+                           property. The question this answers is whether anyone
+                           wants to sponsor at all, which needs one pooled series,
+                           and the tiers sit side by side in one grid, so none is a
+                           placement that gets moved or killed on its own.
+                           `destination` records who takes the payment without
+                           putting a vendor in the name, as BOOK_DESTINATION does.
+                           The attributes sit on the <a>, not the Button, because
+                           DataFast's one document listener resolves the clicked
+                           element's closest `[data-fast-goal]`; the new tab keeps
+                           this page alive, so the goal is not lost to navigation. */
+                        data-fast-goal="advertise_slot_click"
+                        data-fast-goal-slot={slot.id}
+                        data-fast-goal-destination="stripe"
+                      >
                         Book this slot
                       </a>
                     </Button>

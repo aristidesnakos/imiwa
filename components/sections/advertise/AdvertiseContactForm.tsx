@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { trackGoal } from '@/lib/analytics';
 
 interface FormData {
   name: string;
@@ -42,6 +43,11 @@ export default function AdvertiseContactForm() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error('Failed');
+      // Counted only once the route has accepted the inquiry, so a rejected or
+      // rate-limited attempt never reads as a lead. No properties: the fact of a
+      // submission is the signal, and nothing typed here, not even its length,
+      // goes to analytics.
+      void trackGoal('advertise_contact_submit');
       setStatus('success');
       setForm({ name: '', email: '', company: '', website: '', budget: '', message: '' });
     } catch {
