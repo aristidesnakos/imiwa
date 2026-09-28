@@ -184,7 +184,7 @@ When you need to track a new conversion or goal:
 Here are suggested goals for future implementation:
 
 #### User Engagement
-- `kanji_card_clicked` - When user clicks on a kanji card
+- ~~`kanji_card_clicked`~~ - **Do not add.** A card click opens `/kanji/<char>`, which DataFast already counts as a pageview. Its twin, `kanji_card_click`, cost ~22.5k events a month and was removed on 2026-09-28. Any goal for a same-site navigation has the same problem.
 - `stroke_animation_played` - When user plays stroke order animation
 - `kanji_marked_learned` - When user marks a kanji as learned
 - `search_performed` - When user searches for kanji
