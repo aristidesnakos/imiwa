@@ -132,8 +132,19 @@ never stored in the data — it is added by whichever call site does the merge. 
 `import type`: `/kanji` runs against a hard Lighthouse byte budget, and a barrel that pulls the data
 arrays into the five single-level `kanji-sheets` routes would blow it.
 
-Stroke diagrams are proxied through `app/api/kanji-svg/[hex]/route.ts`. The hex comes from
-`codePointAt(0)` (never `charCodeAt`, which returns a lone surrogate above U+FFFF).
+A stroke diagram reaches the page in two forms. At rest, `StrokeOrderViewer` renders an `<img>` of
+`/kanji/<char>/stroke-order.svg` in the server HTML: the only form Google Images indexes. The same
+URL, built by `strokeOrderImagePath()` in `lib/stroke-order-image.ts`, is also the first Article
+`image` (with KanjiVG's licence metadata) and an `<image:loc>` in the sitemap. `validate:schema`
+asserts all three. On Play, the viewer fetches the raw file from `app/api/kanji-svg/[hex]/route.ts`
+and swaps it in inline, because CSS has to reach the paths to animate them. Both routes fetch through
+`lib/kanjivg.ts`, with the hex from `codePointAt(0)` (never `charCodeAt`, which returns a lone
+surrogate above U+FFFF). The image route is `force-dynamic`. If the upstream fetch fails it answers
+with a `no-store` 502, never a 404, because a 404 would tell Google the image is gone.
+`toStandaloneStrokeOrderSvg()` keeps KanjiVG's copyright header intact and adds the change notice
+CC BY-SA 3.0 requires. It also restates `.stroke-animation path` from `globals.css` inside the file,
+so **change the stroke styling in both places**, or the swap to the animation changes the look.
+`robots.txt` exempts `/api/kanji-svg/` from its `/api/` block, because the diagram is page content.
 
 ### JLPT level pages (`/kanji/n5`) and the level registry
 
@@ -352,6 +363,9 @@ exactly one thing on that page: a moment rather than content.
 three linked JSON-LD types (Article, FAQPage, BreadcrumbList); `lib/seo/site.ts` is the single source
 of absolute URLs, and JSON-LD must use the canonical `www` host — the apex 301s to it, and hardcoding
 the apex splits the brand entity across two hostnames. `schema-check` CI gates this on every PR.
+`KANJI_CONTENT_LAST_MODIFIED` (`lib/seo/site.ts`) sets every kanji URL's `lastmod` and every
+Article's `dateModified`. Bump it when the main content of every character page changes, whether
+through the data or the template. Never bump it for chrome such as the header or footer.
 
 Two weekly Search Console monitors exist and they answer different questions — do not merge them:
 
