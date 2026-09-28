@@ -58,6 +58,35 @@ export const EMAIL_SIGNUP_SOURCES = [
    * split answers no decision the page URL in DataFast does not already.
    */
   'kanji-level-list',
+  /**
+   * The form under the grid on /kanji, the dictionary hub: the site's top
+   * organic landing, viewed by 61% of Google visitors (DataFast, 2026-09-28).
+   * Someone here came to look a character up, not to study a set or read a
+   * story, so this is the lowest-intent surface on the list and by far the
+   * largest. Whether that visitor subscribes at all is the question it answers.
+   *
+   * docs/prd/weekly-story-newsletter.md planned this surface as
+   * `kanji-index-weekly-story`. It is named for the hub instead, as `story-hub`
+   * is, because on that page "index" already means the complete kanji index
+   * under the guide, whose clicks are the `kanji_index_click` goal.
+   */
+  'kanji-hub',
+  /**
+   * /free-resources/kanji-sheets, the page that ranks for "kanji practice
+   * sheets". Someone here wants paper and has not picked a level yet. Kept
+   * apart from `free-resources`, the printables hub for every script: the
+   * two pages are reached on different queries, and each one's own rate is
+   * what putting the form on organic landing pages is meant to measure.
+   */
+  'kanji-sheets-hub',
+  /**
+   * The form on a JLPT level's sheets page (/free-resources/kanji-sheets/n5-sheets).
+   * Someone here wants paper for a level they have already chosen, on the page
+   * whose free N5 pack converts ~20% of its visitors. It is the sheets
+   * counterpart of `kanji-level-list` and named the same way: one source for
+   * every level's sheets page, so N4-N1 reuse it if they ever carry the form.
+   */
+  'kanji-level-sheets',
 ] as const;
 
 /**
