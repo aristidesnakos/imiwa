@@ -32,6 +32,11 @@ import { strokeOrderImageAlt } from '@/lib/stroke-order-image';
 // in the Data Cache for a day, and the response in the CDN for a day.
 export const dynamic = 'force-dynamic';
 
+// The same ceiling vercel.json gives /api/kanji-svg, which makes the same
+// jsDelivr fetch: whatever the platform default is, both routes wait for a
+// slow upstream exactly as long.
+export const maxDuration = 30;
+
 // The same merge as app/kanji/[character]/page.tsx: N5 first, and `.find`
 // takes the first match, so a character on two lists resolves to its lowest
 // level, exactly as its page does. Only characters with a page get an image.
