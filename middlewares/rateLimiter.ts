@@ -19,7 +19,7 @@ const rateLimit = (limit: number, windowMs: number) => {
   const requests = new Map<string, { count: number; timestamp: number }>();
 
   // Forget every address whose window has passed. The privacy policy says the
-  // sign-up, feedback and advertising forms hold an IP in memory for their
+  // sign-up and feedback forms hold an IP in memory for their
   // ten-minute window, so an expired entry must not sit here until that same
   // address happens to come back. Swept on every check, because a serverless
   // instance has no timer it can rely on; there are only ever a few entries.

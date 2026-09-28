@@ -45,6 +45,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-icons'],
   },
+  async redirects() {
+    return [
+      // The sponsor-slot sales page, retired 2026-09-28. It sold a banner that
+      // had not rendered anywhere since the ad slot was dropped on 2026-08-01,
+      // so it goes rather than being hidden. Permanent, so the indexed URL
+      // passes to the homepage instead of decaying into a 404.
+      { source: '/advertise', destination: '/', permanent: true },
+    ];
+  },
   async headers() {
     // Next's dev-mode react-refresh runtime evaluates a string as JavaScript.
     // Without 'unsafe-eval' the whole main-app chunk throws an EvalError, which

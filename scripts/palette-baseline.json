@@ -5,9 +5,6 @@
   "app/admin/review/page.tsx": {
     "stock": 3
   },
-  "app/advertise/page.tsx": {
-    "deadAlpha": 14
-  },
   "app/free-resources/kana-sheets/page.tsx": {
     "literal": 2
   },
@@ -71,7 +68,7 @@
     "blackWhite": 4
   },
   "app/tos/page.tsx": {
-    "stock": 4
+    "stock": 3
   },
   "components/AnnouncementBanner.tsx": {
     "deadAlpha": 1,
@@ -141,10 +138,6 @@
   },
   "components/sections/Problem.tsx": {
     "stock": 3
-  },
-  "components/sections/advertise/AdvertiseContactForm.tsx": {
-    "deadAlpha": 16,
-    "stock": 2
   },
   "components/sentences/furigana.tsx": {
     "stock": 7

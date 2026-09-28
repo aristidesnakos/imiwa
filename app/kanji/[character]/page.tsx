@@ -369,7 +369,7 @@ export default async function KanjiDetailPage({ params }: Props) {
       {/* <main id="main-content" tabIndex={-1}>, not <div>: Header and Footer emit banner/contentinfo landmarks,
           so without this every word of the page sits outside any landmark and
           there is no way to jump past the sticky header. The rest of the site
-          (app/page.tsx, /tos, /advertise, …) already does this; the /kanji/*
+          (app/page.tsx, /tos, …) already does this; the /kanji/*
           family was the holdout. */}
       <main id="main-content" tabIndex={-1} className="container mx-auto p-8 max-w-4xl">
         {/* Breadcrumbs (mirror the BreadcrumbList JSON-LD, level step included) */}

@@ -89,9 +89,6 @@ const Header = () => {
           >
             Free Resources
           </Link>
-          <Link href="/advertise" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
-            Advertise
-          </Link>
         </nav>
 
         <Sheet>
@@ -143,11 +140,6 @@ const Header = () => {
                   }}
                 >
                   Free Resources
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link href="/advertise" className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
-                  Advertise
                 </Link>
               </SheetClose>
             </nav>

@@ -33,18 +33,21 @@ export const metadata = getSEOTags({
  *    identical for every recipient (lib/email/utm.ts); DataFast reads them on
  *    arrival. The unsubscribe link and the confirmation email carry none
  *    (asserted by scripts/validate-subscribe.ts).
- *  - The sign-up, feedback and advertising routes share one in-memory rate
- *    limiter (middlewares/rateLimiter.ts) that forgets an IP once its
- *    ten-minute window has passed; the policy states that ten minutes.
- *  - Feedback and advertising inquiries are emailed to config.resend.supportEmail
- *    (no FEEDBACK_/INQUIRY_WEBHOOK_URL is set in Vercel as of this rewrite; if
- *    one is ever set, the chat tool it posts to becomes a processor to name).
+ *  - The sign-up and feedback routes share one in-memory rate limiter
+ *    (middlewares/rateLimiter.ts) that forgets an IP once its ten-minute
+ *    window has passed; the policy states that ten minutes.
+ *  - Feedback is emailed to config.resend.supportEmail (no FEEDBACK_WEBHOOK_URL
+ *    is set in Vercel as of this rewrite; if one is ever set, the chat tool it
+ *    posts to becomes a processor to name).
+ *  - There is no advertising form. /advertise and /api/advertise were removed
+ *    on 2026-09-28, which is when the advertiser data this policy used to list
+ *    (company, website, budget) stopped being collected.
  *
  * The controller identity and postal address come from `config.business`, the
  * same definition the email footer renders, so the two cannot disagree.
  */
 
-const LAST_UPDATED = "September 27, 2026";
+const LAST_UPDATED = "September 28, 2026";
 
 const H2 = "mb-3 text-xl font-semibold text-japan-deep-ocean";
 const H3 = "mb-2 mt-6 text-base font-semibold text-japan-deep-ocean";
@@ -124,7 +127,7 @@ export default function PrivacyPolicy() {
             </li>
             <li>
               <strong>Server logs (Vercel).</strong> Our host records requests, including IP address and
-              browser, to run and secure the site. Our sign-up, feedback and advertising forms also hold your
+              browser, to run and secure the site. Our sign-up and feedback forms also hold your
               IP address in memory for ten minutes, to limit repeated submissions. Legal basis: our
               legitimate interests.
             </li>
@@ -177,10 +180,9 @@ export default function PrivacyPolicy() {
 
           <h3 className={H3}>When you write to us</h3>
           <p className={P}>
-            Replies to our emails, messages from the site’s feedback form, and advertising inquiries reach our
-            inbox with whatever you included: typically your name, email address and message, and for
-            advertisers your company, website and budget. We use them to answer you. Legal basis: our
-            legitimate interests, or steps you asked us to take before entering an agreement.
+            Replies to our emails and messages from the site’s feedback form reach our inbox with whatever
+            you included: typically your name, email address and message. We use them to answer you. Legal
+            basis: our legitimate interests.
           </p>
 
           <h3 className={H3}>Buying the book</h3>

@@ -13,8 +13,8 @@ import config from '@/config';
 
 export const runtime = 'nodejs';
 
-// 2 submissions per 10 minutes per IP — the same shape as /api/feedback and
-// /api/advertise. This endpoint is public and unauthenticated, so without it
+// 2 submissions per 10 minutes per IP — the same shape as /api/feedback. This
+// endpoint is public and unauthenticated, so without it
 // the form can be used to subscription-bomb arbitrary addresses through our
 // domain — which now burns OUR sending reputation rather than a vendor's.
 //

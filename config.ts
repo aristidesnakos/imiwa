@@ -31,7 +31,7 @@ const config = {
     // Inbound destinations — deliberately still llanai.com. These are where
     // mail LANDS, never a sender identity, and llanai.com is a live Google
     // Workspace inbox that is actually read. Nothing user-visible carries
-    // either value: /api/feedback and /api/advertise send *to* supportEmail,
+    // either value: /api/feedback sends *to* supportEmail,
     // and forwardRepliesTo is only the inbound webhook's forward target.
     supportEmail: "ari@llanai.com",
     forwardRepliesTo: "ari@llanai.com",

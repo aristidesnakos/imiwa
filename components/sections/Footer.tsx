@@ -89,14 +89,6 @@ const Footer = () => {
                   <ExternalLink className="w-3 h-3" />
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/advertise"
-                  className="text-sm text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors"
-                >
-                  Advertise with Us
-                </Link>
-              </li>
             </ul>
           </div>
 

@@ -395,8 +395,8 @@ export default function LandingPage() {
                   points per channel of the fill the filter produced, with the
                   label at 5.59:1. It is still not an alpha hover (`/90`): alpha
                   composites against whatever is behind the button, so the same
-                  class darkened on this navy section but LIGHTENED on the
-                  advertise page.
+                  class darkened on this navy section but LIGHTENED on a
+                  light one.
 
                   The focus ring is inverted here, and this is the only place on
                   the site that needs it. The shared ring is deep ocean on a
