@@ -545,14 +545,15 @@ the whole path works — each stage fails in a place the previous stage cannot s
    Preview useless for testing this path, which is the one place you would want to test it. The CLI
    in this repo is old enough that `vercel env add … preview` needs the interactive prompt; add it
    from the Vercel dashboard, or upgrade the CLI first.
-2. **The GitHub repository secrets are not set, so the weekly job cannot schedule anything.** On
-   2026-09-27 the repository's only secret was `GSC_SERVICE_ACCOUNT_KEY`. The job
-   needs `RESEND_API_KEY`, a **Full access** key, and `RESEND_WEEKLY_STORIES_SEGMENT_ID`, the same
-   segment id Vercel Production has. Until both exist, every Wednesday and Friday run fails and opens
-   "Weekly broadcast cannot run: Resend secrets are missing", by design; it never skips quietly. The
-   end-to-end walk needs `RESEND_API_KEY` too, with `EMAIL_TOKEN_SECRET`, which must be the **same
-   value** production signs with; `pnpm check-subscribe-e2e` and its Friday job stay skipped until
-   they exist. Add all three under Settings → Secrets and variables → Actions.
+2. ~~**The GitHub repository secrets are not set, so the weekly job cannot schedule anything.**~~
+   **`RESEND_API_KEY` and `RESEND_WEEKLY_STORIES_SEGMENT_ID` set 2026-09-28.** A dry run from the
+   Actions tab the same day listed Resend's broadcasts (so the key is Full access; a Sending-access
+   key is refused), found none on the account, and planned Episode 6 for Saturday 2026-10-03 13:00
+   UTC with both guards passing. What a dry run cannot prove is the segment id: it is first used by
+   the real create call, so a wrong one fails that run loudly with an issue, and Friday's run is the
+   retry. **Still open:** `EMAIL_TOKEN_SECRET`, which must be the **same value** production signs
+   with. Until it exists, `pnpm check-subscribe-e2e` and its Friday job stay skipped. Add it under
+   Settings → Secrets and variables → Actions.
 3. **Kit: nothing to migrate.** The Kit trial ended without a charge, and the account holds 0
    subscribers (checked 2026-09-27). `KIT_API_KEY` and `KIT_FORM_ID` were deleted from Vercel on
    2026-09-16 and nothing in this project touches Kit. Closing the account is optional housekeeping
@@ -576,7 +577,7 @@ the whole path works — each stage fails in a place the previous stage cannot s
 7. ~~**The Friday checks described above are not running.**~~ **Committed 2026-09-24.** Until then
    [`.github/workflows/subscribe-live-check.yml`](../../.github/workflows/subscribe-live-check.yml)
    existed only in a working tree, so GitHub had never run it. It runs from the push that puts it on
-   `main`; its end-to-end job stays skipped until gap 2's secrets exist.
+   `main`; its end-to-end job stays skipped until gap 2's `EMAIL_TOKEN_SECRET` exists.
 8. **GDPR Art. 27 — an EU representative.** The operator is a US company with no EU establishment,
    sending a regular newsletter to EU (and UK) residents. Art. 27 asks such a controller to appoint
    a representative in the Union unless its processing is "occasional", and a weekly send is not
