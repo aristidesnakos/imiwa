@@ -39,7 +39,7 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   { path: '/free-resources/kanji-sheets/n2-sheets', lastmod: '2026-01-24', priority: '0.7' },
   { path: '/free-resources/kanji-sheets/n1-sheets', lastmod: '2026-01-24', priority: '0.7' },
   { path: '/privacy-policy', lastmod: '2026-09-28', priority: '0.7' },
-  { path: '/tos', lastmod: '2026-09-28', priority: '0.7' },
+  { path: '/tos', lastmod: '2026-09-29', priority: '0.7' },
 ];
 
 export async function GET() {

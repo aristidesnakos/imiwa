@@ -27,7 +27,7 @@ export default function TermsOfService() {
       </Link>
 
       <h1 className="text-3xl font-extrabold mb-8">Terms and Conditions for {config.appName}</h1>
-      <p className="text-sm text-gray-600 mb-8">Last Updated: September 28, 2026</p>
+      <p className="text-sm text-gray-600 mb-8">Last Updated: September 29, 2026</p>
 
       <div className="prose prose-slate max-w-none space-y-8">
         <section>
@@ -143,20 +143,40 @@ export default function TermsOfService() {
               <Link href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="underline">
                 CC BY-SA 3.0
               </Link>
+              . We restyle the diagrams for display and print (for example their colours, line widths, fonts and size),
+              but we do not change the strokes or their order. Our modified diagrams are shared under the same licence, and
+              each standalone diagram image carries KanjiVG&rsquo;s copyright notice and a note of what we changed.
+            </li>
+            <li>
+              <strong>Some kanji readings and meanings</strong> come from the KANJIDIC dictionary file, the property of the
+              Electronic Dictionary Research and Development Group, used in conformance with the Group&rsquo;s{' '}
+              <Link href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener noreferrer" className="underline">
+                licence
+              </Link>{' '}
+              (CC BY-SA 4.0).
+            </li>
+            <li>
+              <strong>Example sentences</strong> come from the Tatoeba Project and are used under the licence shown with
+              each sentence, such as{' '}
+              <Link href="https://creativecommons.org/licenses/by/2.0/fr/" target="_blank" rel="noopener noreferrer" className="underline">
+                CC BY 2.0 FR
+              </Link>
               .
             </li>
           </ul>
           <p>
-            These materials are reproduced without modification. Attribution appears in the site footer on every page.
-            We apply no technological measure that would restrict your exercise of the rights those licences grant you.
+            The site footer credits all three on every page, and each example sentence also credits its own author and
+            licence where it appears. We apply no technological measure that would restrict your exercise of the rights
+            those licences grant you.
           </p>
 
           <h3 className="text-lg font-medium mt-4">What remains ours</h3>
           <p>
-            Everything that is not Third-Party Licensed Material remains ours and is expressly reserved — including our
-            written explanations and commentary, our selection, arrangement and presentation of any material (including our
-            compilation of third-party licensed material), our source code, designs, and our Marks. Open licences covering
-            individual components do not extend to the surrounding work.
+            Everything that is not Third-Party Licensed Material, or an adaptation of it that its licence requires us to
+            share under the same terms, remains ours and is expressly reserved — including our written explanations and
+            commentary, our selection, arrangement and presentation of any material (including our compilation of
+            third-party licensed material), our source code, designs, and our Marks. Open licences covering individual
+            components do not extend to the surrounding work.
           </p>
         </section>
 
