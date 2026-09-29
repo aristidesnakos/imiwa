@@ -42,11 +42,10 @@ account, because everything is stored in the browser.
 #### 1. Kanji dictionary and search
 - **Multi-level organisation** — characters categorised by JLPT level, deduplicated to the lowest
   level a character appears in
-- **Search** — by character, English meaning, onyomi or kunyomi. Search still matches **kana only**,
-  so `水`, `water` and `みず` all match while `mizu` and `sui` do not; describe this feature as
-  "meaning or kana reading", never just "reading". Romaji itself is no longer missing from the
-  codebase — `lib/romaji/` derives it and the detail pages and their metadata carry it — but the
-  search predicate has not been wired to it yet.
+- **Search** — by character, English meaning, or reading in kana (either script) or romaji, so
+  `水`, `water`, `みず`, `スイ`, `mizu` and `sui` all find 水, and a pasted word such as `日本` finds
+  each of its kanji. Exact matches rank first. `lib/kanji-search.ts` is the whole predicate;
+  `pnpm validate:search` holds it to that.
 - **Deep linking** — `/kanji?search=…` is wired to a schema.org `SearchAction`
 - **Character detail pages** — statically generated for all 1,896 characters
 

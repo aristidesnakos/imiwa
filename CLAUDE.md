@@ -35,6 +35,7 @@ the closest thing to "running a single test":
 ```bash
 pnpm validate:schema         # structured data / JSON-LD across page types
 pnpm validate:kanji-data     # the level lists: no duplicates, one code point, readings present
+pnpm validate:search         # /kanji search: romaji, both kana scripts, meanings; nothing old lost
 pnpm validate:romaji         # kana->Hepburn rules + a leakage sweep over every reading
 pnpm validate:sentences      # published example sentences against lib/sentences/types.ts
 pnpm validate:announcements  # announcement config + a replay of the acknowledgement model
@@ -169,7 +170,8 @@ type, and runs in the kanji-data CI job.
 
 `lib/romaji/` derives romaji from the kana readings at runtime. Nothing is stored: baking romaji
 into `lib/constants/*` would add an estimated 15–25 kB gzipped to the `/kanji` client bundle, which
-has roughly 44 kB of headroom against a Lighthouse budget that is an `error`, not a warning.
+has roughly 41 KiB of script headroom (measured 2026-09-29) against a Lighthouse budget that is an
+`error`, not a warning.
 
 Two layers, and callers should use the upper one:
 
@@ -189,6 +191,13 @@ unconverted kana reaches the output. That sweep is the actual contract.
 Why it exists: a learner who has heard a word searches "michi kanji", not "みち" — they usually
 cannot type kana yet, which is why they are looking the character up. With no romaji anywhere,
 `/kanji/道` was unmatchable for that whole query class and Google ranked the homepage instead.
+
+The `/kanji` search box uses the same layer, through `lib/kanji-search.ts`: a query matches the
+character (or each kanji of a pasted word), a meaning, or a reading in either kana script or in
+romaji, via each reading's `searchKeys`. Exact matches rank first. Until 2026-09-29 it matched
+the raw fields by substring, so "mizu" found nothing, すい missed every onyomi stored in katakana,
+and たべる missed 食 behind its `た（べる）` annotation. `validate:search` sweeps all three across every
+kanji and also asserts that nothing the old predicate found stopped matching.
 
 ### No server-side user state
 
@@ -417,6 +426,6 @@ structurally separate from licensed text, or the result becomes Adapted Material
   without filtering to the files you touched. In a git worktree under `.claude/worktrees/`,
   `pnpm lint` fails outright because ESLint also loads the parent checkout's config; lint the
   touched files with `npx eslint --no-eslintrc -c .eslintrc.json <files>` instead.
-- Search matches **kana only** — `水`, `water` and `みず` match; `mizu` and `sui` do not. Describe the
-  feature as "meaning or kana reading", never just "reading".
+- Search matches the character, a meaning, or a reading in kana or romaji: `水`, `water`, `みず`,
+  `スイ`, `mizu` and `sui` all find 水. Describe it as "meaning or reading, in kana or romaji".
 - `docs/learnings/development-guide.md` holds the project's general SOLID/spec-driven guidance.

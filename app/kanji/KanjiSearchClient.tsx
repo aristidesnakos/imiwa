@@ -21,6 +21,7 @@ import {
   type JlptLevel,
 } from '@/lib/levels';
 import { ArrowRight, Brain, Check, Filter, Search } from 'lucide-react';
+import { searchKanji } from '@/lib/kanji-search';
 import { useKanjiProgress } from '@/hooks/useKanjiProgress';
 import { useKanjiSRS } from '@/hooks/useKanjiSRS';
 
@@ -182,16 +183,9 @@ export function KanjiSearchClient() {
   );
 
   const filtered = useMemo(() => {
-    let kanjiSet = levelKanji;
-    if (search) {
-      const lower = search.toLowerCase();
-      kanjiSet = kanjiSet.filter(k =>
-        k.kanji.includes(search) ||
-        k.meaning.toLowerCase().includes(lower) ||
-        k.onyomi.toLowerCase().includes(lower) ||
-        k.kunyomi.toLowerCase().includes(lower)
-      );
-    }
+    // Character, meaning, and reading in kana or romaji, best matches first:
+    // lib/kanji-search.ts. A blank search returns the level's list untouched.
+    let kanjiSet = searchKanji(levelKanji, search);
     if (showOnlyUnlearned) {
       kanjiSet = kanjiSet.filter(k => !isKanjiLearned(k.kanji));
     }
@@ -219,8 +213,8 @@ export function KanjiSearchClient() {
           <div className="relative sm:w-64 shrink-0">
             <Search aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              aria-label="Search kanji by meaning or kana reading"
-              placeholder='e.g. 水, "water", くだ...'
+              aria-label="Search kanji by character, meaning, or reading in kana or romaji"
+              placeholder="e.g. 水, water, みず, mizu"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 w-full"
@@ -419,7 +413,7 @@ export function KanjiSearchClient() {
             />
           </div>
           <div className="text-lg mb-2 font-medium">No kanji found</div>
-          <div className="text-sm">Tan couldn&apos;t find that one. Try an English meaning, or a reading in kana.</div>
+          <div className="text-sm">Tan couldn&apos;t find that one. Try an English meaning, or a reading in kana or romaji.</div>
         </div>
       )}
     </div>

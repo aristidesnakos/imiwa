@@ -62,7 +62,7 @@ const FEATURES = [
   {
     icon: Search,
     title: 'Readings & instant search',
-    body: 'Find any kanji by character, meaning, on’yomi or kun’yomi — with all readings and meanings on every card.',
+    body: 'Find any kanji by character, meaning, or reading in kana or romaji — with all readings and meanings on every card.',
     accent: 'var(--sakura-waters)',
   },
 ];

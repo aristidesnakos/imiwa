@@ -148,9 +148,10 @@ function HubGuide() {
             you left.
           </li>
           <li>
-            Search by kanji, English meaning or kana reading: <span lang="ja">水</span>,
-            &ldquo;water&rdquo; and <span lang="ja">みず</span> all find <span lang="ja">水</span>.
-            Romaji such as &ldquo;mizu&rdquo; does not, so type the reading in kana.
+            Search by kanji, English meaning, or reading in kana or romaji: <span lang="ja">水</span>,
+            &ldquo;water&rdquo;, <span lang="ja">みず</span> and &ldquo;mizu&rdquo; all find{' '}
+            <span lang="ja">水</span>. Paste a word such as <span lang="ja">日本</span> to find each of
+            its kanji.
           </li>
           <li>Click any kanji to open its page, with the stroke order animation, readings and meanings.</li>
           <li>Practice writing by following the animated stroke sequences.</li>

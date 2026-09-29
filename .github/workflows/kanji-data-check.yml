@@ -41,6 +41,9 @@ on:
       # The N5 quiz builds every question from this data and its readings.
       - 'components/levels/quiz/**'
       - 'scripts/validate-quiz.ts'
+      # The /kanji search reads the same data through the same readings.
+      - 'lib/kanji-search.ts'
+      - 'scripts/validate-kanji-search.ts'
       # Consumes the romaji transform to build titles and descriptions, so a
       # change here can leak annotation syntax into a <title> without touching
       # lib/romaji/ at all.
@@ -59,6 +62,9 @@ on:
       # The N5 quiz builds every question from this data and its readings.
       - 'components/levels/quiz/**'
       - 'scripts/validate-quiz.ts'
+      # The /kanji search reads the same data through the same readings.
+      - 'lib/kanji-search.ts'
+      - 'scripts/validate-kanji-search.ts'
       - 'lib/seo/kanji-optimization.ts'
       - 'scripts/validate-romaji.ts'
       - 'scripts/validate-kanji-data.ts'
@@ -110,3 +116,10 @@ jobs:
       # directly, not through a package.json script.
       - name: Validate the N5 quiz
         run: npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts
+
+      # The search's promises, swept over every kanji: each romaji spelling, each
+      # reading in either kana script and each meaning finds its kanji, and nothing
+      # the old kana-only predicate found is lost. A failure renders on /kanji as
+      # "No kanji found", which looks like a character the dictionary lacks.
+      - name: Validate the /kanji search
+        run: pnpm validate:search
