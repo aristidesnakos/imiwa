@@ -73,4 +73,16 @@ export const ANNOUNCEMENT_QUEUE: readonly Announcement[] = [
     shouldShow: (signals) => signals.learnedCount >= 5,
     note: 'Last, to buy three weeks for the cumulative-series and 24H bucket fixes.',
   },
+  {
+    id: 'romaji-search-2026-09',
+    startsAt: '2026-09-29',
+    expiresAt: '2026-10-11',
+    // Returning visitors are the audience, and search-2026-08 above taught them
+    // the opposite: meaning or kana only, because "mizu" found nothing. The
+    // /kanji guide said the same. Someone who cannot type kana, and learned
+    // not to try, has no other way of finding out that it works now.
+    message: 'Search now understands romaji: type mizu to find 水, or paste a word like 日本 to find each kanji.',
+    cta: { label: 'Try a search', href: '/kanji' },
+    note: 'Corrects search-2026-08 for the people it reached.',
+  },
 ];
