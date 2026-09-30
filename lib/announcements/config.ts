@@ -76,7 +76,9 @@ export const ANNOUNCEMENT_QUEUE: readonly Announcement[] = [
   {
     id: 'romaji-search-2026-09',
     startsAt: '2026-09-29',
-    expiresAt: '2026-10-11',
+    // Cut from 2026-10-11 to make room for stories-romaji-2026-10: one bar at a
+    // time, and this one had already had a week.
+    expiresAt: '2026-10-04',
     // Returning visitors are the audience, and search-2026-08 above taught them
     // the opposite: meaning or kana only, because "mizu" found nothing. The
     // /kanji guide said the same. Someone who cannot type kana, and learned
@@ -84,5 +86,16 @@ export const ANNOUNCEMENT_QUEUE: readonly Announcement[] = [
     message: 'Search now understands romaji: type mizu to find 水, or paste a word like 日本 to find each kanji.',
     cta: { label: 'Try a search', href: '/kanji' },
     note: 'Corrects search-2026-08 for the people it reached.',
+  },
+  {
+    id: 'stories-romaji-2026-10',
+    startsAt: '2026-10-05',
+    expiresAt: '2026-10-16',
+    // Only true once the per-panel toggle is live on the episode pages
+    // (components/stories/StoryPanel.tsx): the start date is the gate, so check
+    // the toggle is deployed before this day, not after.
+    message: 'New: romaji readings for the stories. Use the toggle on each comic panel.',
+    cta: { label: 'Read the latest story', href: '/stories' },
+    note: 'Announces the per-panel romaji toggle; the same readings are always shown in the weekly email.',
   },
 ];
