@@ -8,7 +8,15 @@
  * is unversioned, so a video id put there would be unrecoverable. This file is
  * tracked, small and imports nothing.
  *
- * To attach a video: add one line keyed by the episode slug, e.g.
+ * This file is kept current by `.github/workflows/sync-story-videos.yml`
+ * (`pnpm stories:sync-videos`), daily: it reads the channel's public feed and
+ * ADDS a line for an upload whose title lists (before the `|`) at least three
+ * kanji that all belong to exactly one episode's focusKanji. It never overwrites
+ * or removes a line, so a hand edit here is final: to fix a wrong match, replace
+ * the id on the line. Do not just delete it: the next run re-adds it while the
+ * video's title still matches, so fix the title on YouTube too.
+ *
+ * To attach a video by hand: add one line keyed by the episode slug, e.g.
  *
  *   'tan-climbs-the-mountain': { youtubeId: 'dQw4w9WgXcQ' },
  *
