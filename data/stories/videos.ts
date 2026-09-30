@@ -18,9 +18,14 @@
  *
  * To attach a video by hand: add one line keyed by the episode slug, e.g.
  *
- *   'tan-climbs-the-mountain': { youtubeId: 'dQw4w9WgXcQ' },
+ *   'tan-climbs-the-mountain': { youtubeId: 'dQw4w9WgXcQ', aspect: 'portrait' },
  *
- * then run `pnpm validate:stories`, which checks the id's shape, that the slug
+ * `aspect` is optional and means the shape of the VIDEO, not the thumbnail:
+ * 'portrait' for a vertical YouTube Short (1080x1920, 9:16), 'landscape' (the
+ * default when omitted) for an ordinary 16:9 upload. It picks the player box and
+ * the thumbnail. The sync adds `aspect: 'portrait'` itself when the feed links
+ * the upload as /shorts/, but like the id it never edits an existing line, so
+ * for a line already here you change the aspect by hand. Then run `pnpm validate:stories`, which checks the id's shape, that the slug
  * is a registered episode, and that no id is used twice. An episode with no
  * entry renders no video section at all, and the empty map is valid.
  *
@@ -35,11 +40,18 @@
 export interface EpisodeVideo {
   /** The 11-character YouTube video id (the `v=` value), nothing else. */
   youtubeId: string;
+  /**
+   * The video's shape. Omitted means 'landscape'. 'portrait' is a vertical
+   * Short: the page draws a 9:16 box and uses a portrait thumbnail.
+   */
+  aspect?: VideoAspect;
 }
 
+export type VideoAspect = 'portrait' | 'landscape';
+
 export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {
-  'tan-climbs-the-mountain': { youtubeId: 'sIi1M-d-gTg' },
-  'tan-finds-the-river': { youtubeId: '4wNQgUiBU6s' },
-  'tan-goes-to-school': { youtubeId: 'opwFPNQom8Y' },
-  'a-rainy-day-off': { youtubeId: 'ZMNIAOPGigg' },
+  'tan-climbs-the-mountain': { youtubeId: 'sIi1M-d-gTg', aspect: 'portrait' },
+  'tan-finds-the-river': { youtubeId: '4wNQgUiBU6s', aspect: 'portrait' },
+  'tan-goes-to-school': { youtubeId: 'opwFPNQom8Y', aspect: 'portrait' },
+  'a-rainy-day-off': { youtubeId: 'ZMNIAOPGigg', aspect: 'portrait' },
 };

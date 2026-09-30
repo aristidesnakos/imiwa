@@ -65,12 +65,18 @@ async function main(): Promise<void> {
   const after = renderVideosFile(before, plan.additions, EPISODES);
   // Read the result back the way the next run will, so a rewrite that mangled
   // the file fails here rather than at the next build.
-  const wrote = new Map(parseVideosFile(after).entries.map(e => [e.slug, e.youtubeId]));
-  for (const [slug, id] of Object.entries(plan.additions)) {
-    if (wrote.get(slug) !== id) throw new Error(`rewrite lost ${slug} -> ${id}`);
+  const wrote = new Map(parseVideosFile(after).entries.map(e => [e.slug, e]));
+  for (const [slug, v] of Object.entries(plan.additions)) {
+    const got = wrote.get(slug);
+    if (got?.youtubeId !== v.youtubeId || (got.aspect ?? 'landscape') !== v.aspect) {
+      throw new Error(`rewrite lost ${slug} -> ${v.youtubeId} (${v.aspect})`);
+    }
   }
   for (const [slug, v] of Object.entries(EPISODE_VIDEOS)) {
-    if (wrote.get(slug) !== v.youtubeId) throw new Error(`rewrite changed existing entry ${slug}`);
+    const got = wrote.get(slug);
+    if (got?.youtubeId !== v.youtubeId || got.aspect !== v.aspect) {
+      throw new Error(`rewrite changed existing entry ${slug}`);
+    }
   }
   writeFileSync(VIDEOS_FILE, after);
   console.log(`linked ${added.length} video(s) in data/stories/videos.ts.`);

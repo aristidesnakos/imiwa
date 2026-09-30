@@ -30,10 +30,11 @@ export function EpisodeVideoSection({ episode }: { episode: Episode }) {
       </h2>
       <VideoFacade
         title={title}
-        thumbnailUrl={youtubeThumbnailUrl(video.youtubeId)}
+        thumbnailUrl={youtubeThumbnailUrl(video.youtubeId, video.aspect)}
         embedUrl={youtubeEmbedUrl(video.youtubeId)}
+        aspect={video.aspect}
       />
-      <p className="mt-3 text-sm">
+      <p className={`mt-3 text-sm ${video.aspect === 'portrait' ? 'text-center' : ''}`}>
         <a
           href={youtubeWatchUrl(video.youtubeId)}
           target="_blank"

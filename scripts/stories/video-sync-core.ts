@@ -16,9 +16,17 @@
  * ("Can You Read 雨 天 気 休 日?"), so a correctly titled upload links itself.
  *
  * THE WRITE RULE. Add only. A slug that already has an entry is never changed
- * (a hand fix must stick), nothing is ever removed, and an id that is already
- * mapped to some episode is never put on a second one.
+ * (a hand fix must stick, and that includes its `aspect`), nothing is ever
+ * removed, and an id that is already mapped to some episode is never put on a
+ * second one.
+ *
+ * THE ASPECT RULE. A new entry gets `aspect: 'portrait'` when the feed links the
+ * upload as `youtube.com/shorts/<id>` (the entry's `rel="alternate"` link), which
+ * is how the feed marks a vertical Short; anything else is landscape and is
+ * written with no `aspect` field, the default. Only ever applied to a new line.
  */
+
+export type VideoAspect = 'portrait' | 'landscape';
 
 export interface SyncEpisode {
   slug: string;
@@ -31,6 +39,8 @@ export interface FeedEntry {
   title: string;
   /** ISO timestamp as the feed gives it; only ever compared. */
   published: string;
+  /** 'portrait' when the entry's alternate link is a /shorts/ URL; absent means landscape. */
+  aspect?: VideoAspect;
 }
 
 export const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
@@ -50,6 +60,20 @@ function decodeXml(s: string): string {
 }
 
 /**
+ * The video's shape from the entry's own alternate link. The feed gives a Short
+ * `<link rel="alternate" href="https://www.youtube.com/shorts/<id>"/>` and an
+ * ordinary upload `.../watch?v=<id>`. Attribute order is not relied on.
+ */
+function feedAspect(entryBody: string): VideoAspect {
+  for (const tag of entryBody.matchAll(/<link\b[^>]*>/g)) {
+    if (!/\brel="alternate"/.test(tag[0])) continue;
+    const href = /\bhref="([^"]*)"/.exec(tag[0])?.[1] ?? '';
+    if (/^https?:\/\/(?:www\.|m\.)?youtube\.com\/shorts\//.test(href)) return 'portrait';
+  }
+  return 'landscape';
+}
+
+/**
  * Entries of a YouTube Atom feed. Tolerant on purpose: a regex per field, so an
  * added element or a reordering does not break it. Throws only when the text is
  * not an Atom feed at all (an HTML error page, an empty body). A feed with no
@@ -65,7 +89,7 @@ export function parseFeed(xml: string): FeedEntry[] {
     const title = /<title>([\s\S]*?)<\/title>/.exec(body)?.[1];
     const published = /<published>\s*([^<\s]+)\s*<\/published>/.exec(body)?.[1];
     if (!videoId || !YOUTUBE_ID_RE.test(videoId) || title === undefined || !published) continue;
-    entries.push({ videoId, title: decodeXml(title).trim(), published });
+    entries.push({ videoId, title: decodeXml(title).trim(), published, aspect: feedAspect(body) });
   }
   return entries;
 }
@@ -94,9 +118,14 @@ export function matchEpisode(title: string, episodes: readonly SyncEpisode[]): M
   };
 }
 
+export interface NewVideo {
+  youtubeId: string;
+  aspect: VideoAspect;
+}
+
 export interface SyncPlan {
-  /** slug -> id, new entries only. */
-  additions: Record<string, string>;
+  /** slug -> the new entry; new entries only. */
+  additions: Record<string, NewVideo>;
   /** Human-readable lines, in the order the videos were considered. */
   report: string[];
 }
@@ -110,7 +139,7 @@ export function planSync(
   episodes: readonly SyncEpisode[],
   existing: Readonly<Record<string, { youtubeId: string }>>,
 ): SyncPlan {
-  const additions: Record<string, string> = {};
+  const additions: Record<string, NewVideo> = {};
   const report: string[] = [];
   const idToSlug = new Map<string, string>();
   for (const [slug, v] of Object.entries(existing)) idToSlug.set(v.youtubeId, slug);
@@ -135,11 +164,12 @@ export function planSync(
     } else if (has(existing, slug)) {
       report.push(`kept: ${slug} already has ${existing[slug].youtubeId}; ${label} left unlinked`);
     } else if (has(additions, slug)) {
-      report.push(`duplicate: ${label} also matches ${slug}, which takes ${additions[slug]} (earlier upload)`);
+      report.push(`duplicate: ${label} also matches ${slug}, which takes ${additions[slug].youtubeId} (earlier upload)`);
     } else {
-      additions[slug] = e.videoId;
+      const aspect = e.aspect ?? 'landscape';
+      additions[slug] = { youtubeId: e.videoId, aspect };
       idToSlug.set(e.videoId, slug);
-      report.push(`add: ${slug} -> ${e.videoId}`);
+      report.push(`add: ${slug} -> ${e.videoId}${aspect === 'portrait' ? ' (portrait)' : ''}`);
     }
   }
   return { additions, report };
@@ -150,12 +180,15 @@ export function planSync(
 const MAP_DECL = 'export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {';
 // Leading comment/blank lines, then one single-line entry. Anything else in the
 // body is something regenerating would lose, so it is an error, not a guess.
+// `aspect` is optional, after `youtubeId`: { youtubeId: 'x' } or { youtubeId: 'x', aspect: 'portrait' }.
 const ENTRY_RE =
-  /((?:[ \t]*\/\/[^\n]*\n|[ \t]*\n)*)[ \t]*['"]?([\w-]+)['"]?[ \t]*:[ \t]*\{[ \t]*youtubeId[ \t]*:[ \t]*['"]([^'"\n]*)['"][ \t]*,?[ \t]*\}[ \t]*,?[ \t]*\n/g;
+  /((?:[ \t]*\/\/[^\n]*\n|[ \t]*\n)*)[ \t]*['"]?([\w-]+)['"]?[ \t]*:[ \t]*\{[ \t]*youtubeId[ \t]*:[ \t]*['"]([^'"\n]*)['"][ \t]*,?[ \t]*(?:aspect[ \t]*:[ \t]*['"]([^'"\n]*)['"][ \t]*,?[ \t]*)?\}[ \t]*,?[ \t]*\n/g;
 
 interface ParsedEntry {
   slug: string;
   youtubeId: string;
+  /** As written; undefined when the line has no `aspect`. Carried through a rewrite untouched. */
+  aspect?: string;
   /** Comment lines directly above the entry; they travel with it when entries are sorted. */
   leading: string;
 }
@@ -183,7 +216,7 @@ export function parseVideosFile(source: string): { entries: ParsedEntry[]; trail
       .filter(line => line.trim().startsWith('//'))
       .map(line => `${line}\n`)
       .join('');
-    entries.push({ slug: m[2], youtubeId: m[3], leading });
+    entries.push({ slug: m[2], youtubeId: m[3], aspect: m[4], leading });
     consumed = m.index + m[0].length;
   }
   const trailing = body.slice(consumed);
@@ -198,19 +231,25 @@ export function parseVideosFile(source: string): { entries: ParsedEntry[]; trail
  */
 export function renderVideosFile(
   source: string,
-  additions: Readonly<Record<string, string>>,
+  additions: Readonly<Record<string, NewVideo>>,
   episodes: readonly SyncEpisode[],
 ): string {
   const { head, tail } = splitFile(source);
   const { entries, trailing } = parseVideosFile(source);
   const have = new Set(entries.map(e => e.slug));
-  for (const [slug, youtubeId] of Object.entries(additions)) {
+  for (const [slug, { youtubeId, aspect }] of Object.entries(additions)) {
     if (have.has(slug)) throw new Error(`videos.ts: refusing to overwrite ${slug}`);
-    entries.push({ slug, youtubeId, leading: '' });
+    // Landscape is the default, so it is left out rather than written.
+    entries.push({ slug, youtubeId, aspect: aspect === 'portrait' ? aspect : undefined, leading: '' });
   }
   const number = (slug: string) => episodes.find(e => e.slug === slug)?.number ?? Infinity;
   entries.sort((a, b) => number(a.slug) - number(b.slug) || a.slug.localeCompare(b.slug));
-  const lines = entries.map(e => `${e.leading}  '${e.slug}': { youtubeId: '${e.youtubeId}' },\n`).join('');
+  const lines = entries
+    .map(e => {
+      const aspect = e.aspect === undefined ? '' : `, aspect: '${e.aspect}'`;
+      return `${e.leading}  '${e.slug}': { youtubeId: '${e.youtubeId}'${aspect} },\n`;
+    })
+    .join('');
   const body = entries.length === 0 && trailing === '' ? '' : `\n${lines}${trailing}`;
   return `${head}${body}${tail}`;
 }

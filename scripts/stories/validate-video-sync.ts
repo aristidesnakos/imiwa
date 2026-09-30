@@ -18,6 +18,7 @@ import {
   titleKanji,
   type FeedEntry,
   type SyncEpisode,
+  type VideoAspect,
 } from './video-sync-core';
 
 const issues: string[] = [];
@@ -90,8 +91,26 @@ const feedXml = `<?xml version="1.0"?>
   <id>yt:video:AAAAAAAAAAA</id>
   <yt:videoId>AAAAAAAAAAA</yt:videoId>
   <title>Read 雨 天 気 &amp; more | Story #3</title>
+  <link rel="alternate" href="https://www.youtube.com/shorts/AAAAAAAAAAA"/>
   <published>2026-09-28T20:21:57+00:00</published>
   <media:group><media:title>not this one</media:title></media:group>
+ </entry>
+ <entry>
+  <yt:videoId>BBBBBBBBBBB</yt:videoId>
+  <title>A horizontal upload</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=BBBBBBBBBBB"/>
+  <published>2026-09-27T00:00:00+00:00</published>
+ </entry>
+ <entry>
+  <yt:videoId>CCCCCCCCCCC</yt:videoId>
+  <title>A short, href before rel</title>
+  <link href="https://www.youtube.com/shorts/CCCCCCCCCCC" rel="alternate"/>
+  <published>2026-09-26T00:00:00+00:00</published>
+ </entry>
+ <entry>
+  <yt:videoId>DDDDDDDDDDD</yt:videoId>
+  <title>No link at all</title>
+  <published>2026-09-25T00:00:00+00:00</published>
  </entry>
  <entry>
   <yt:videoId>not-an-id</yt:videoId>
@@ -100,26 +119,55 @@ const feedXml = `<?xml version="1.0"?>
  </entry>
 </feed>`;
 const parsed = parseFeed(feedXml);
-eq(parsed.length, 1, 'parseFeed drops an entry with a malformed id');
+eq(parsed.length, 4, 'parseFeed drops an entry with a malformed id');
 eq(
   parsed[0],
-  { videoId: 'AAAAAAAAAAA', title: 'Read 雨 天 気 & more | Story #3', published: '2026-09-28T20:21:57+00:00' },
-  'parseFeed reads id/title/published, decodes entities, ignores media:title',
+  {
+    videoId: 'AAAAAAAAAAA',
+    title: 'Read 雨 天 気 & more | Story #3',
+    published: '2026-09-28T20:21:57+00:00',
+    aspect: 'portrait',
+  },
+  'parseFeed reads id/title/published, decodes entities, ignores media:title, and marks a /shorts/ link portrait',
+);
+eq(
+  parsed.map(p => [p.videoId, p.aspect]),
+  [
+    ['AAAAAAAAAAA', 'portrait'],
+    ['BBBBBBBBBBB', 'landscape'],
+    ['CCCCCCCCCCC', 'portrait'],
+    ['DDDDDDDDDDD', 'landscape'],
+  ],
+  'aspect: /shorts/ is portrait (either attribute order); /watch?v= or no link is landscape',
 );
 eq(parseFeed('<feed xmlns="http://www.w3.org/2005/Atom"></feed>'), [], 'an empty feed is valid');
 check(throws(() => parseFeed('<html><body>429 Too Many Requests</body></html>')), 'parseFeed throws on a response that is not a feed');
 
 // --- planning: add-only, earliest wins, never overwrite ------------------------
-const v = (videoId: string, title: string, published: string): FeedEntry => ({ videoId, title, published });
+const v = (videoId: string, title: string, published: string, aspect?: VideoAspect): FeedEntry => ({
+  videoId,
+  title,
+  published,
+  aspect,
+});
 const entries = [
   v('LATER_____1', 'Read 山 木 大 | x', '2026-09-20T00:00:00+00:00'),
-  v('EARLY_____1', 'Read 山 木 大 | x', '2026-09-10T00:00:00+00:00'),
-  v('THREE_____1', 'Read 雨 天 気 | x', '2026-09-11T00:00:00+00:00'),
+  v('EARLY_____1', 'Read 山 木 大 | x', '2026-09-10T00:00:00+00:00', 'portrait'),
+  v('THREE_____1', 'Read 雨 天 気 | x', '2026-09-11T00:00:00+00:00', 'landscape'),
   v('SECOND____1', 'Read 雨 天 気 | x', '2026-09-12T00:00:00+00:00'),
   v('FOREIGN___1', 'Read 雨 天 犬 | x', '2026-09-13T00:00:00+00:00'),
 ];
 const plan = planSync(entries, fx, {});
-eq(plan.additions, { one: 'EARLY_____1', three: 'THREE_____1' }, 'duplicate for one episode: the earliest upload wins');
+eq(
+  plan.additions,
+  { one: { youtubeId: 'EARLY_____1', aspect: 'portrait' }, three: { youtubeId: 'THREE_____1', aspect: 'landscape' } },
+  'duplicate for one episode: the earliest upload wins, and its aspect comes with it',
+);
+eq(
+  planSync([v('NOASPECT__1', 'Read 雨 天 気 | x', '2026-09-11T00:00:00+00:00')], fx, {}).additions,
+  { three: { youtubeId: 'NOASPECT__1', aspect: 'landscape' } },
+  'an entry with no aspect is landscape',
+);
 check(plan.report.some(l => l.startsWith('duplicate:') && l.includes('LATER_____1')), 'the later duplicate is reported');
 check(plan.report.some(l => l.startsWith('duplicate:') && l.includes('SECOND____1')), 'a second upload for another episode is reported');
 check(plan.report.some(l => l.startsWith('unmatched:') && l.includes('FOREIGN___1')), 'an unmatched title is reported, not mapped');
@@ -141,31 +189,61 @@ export interface EpisodeVideo {
 
 `;
 const empty = `${header}export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {};\n`;
-const filled = renderVideosFile(empty, { three: 'THREE_____1', one: 'EARLY_____1' }, fx);
+const filled = renderVideosFile(
+  empty,
+  {
+    three: { youtubeId: 'THREE_____1', aspect: 'landscape' },
+    one: { youtubeId: 'EARLY_____1', aspect: 'portrait' },
+  },
+  fx,
+);
 check(filled.startsWith(header), 'the header is kept byte for byte');
 eq(
   filled.slice(header.length),
-  `export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {\n  'one': { youtubeId: 'EARLY_____1' },\n  'three': { youtubeId: 'THREE_____1' },\n};\n`,
-  'entries are written sorted by episode number, one per line',
+  `export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {\n  'one': { youtubeId: 'EARLY_____1', aspect: 'portrait' },\n  'three': { youtubeId: 'THREE_____1' },\n};\n`,
+  'entries are written sorted by episode number, one per line; portrait adds aspect, landscape (the default) writes none',
 );
 eq(
-  parseVideosFile(filled).entries.map(e => [e.slug, e.youtubeId]),
+  parseVideosFile(filled).entries.map(e => [e.slug, e.youtubeId, e.aspect]),
   [
-    ['one', 'EARLY_____1'],
-    ['three', 'THREE_____1'],
+    ['one', 'EARLY_____1', 'portrait'],
+    ['three', 'THREE_____1', undefined],
   ],
   'the written file parses back',
 );
 
 const withComment = `${header}export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {\n  // fixed by hand: the upload was re-done\n  'three': { youtubeId: 'HANDFIX___1' },\n};\n`;
-const merged = renderVideosFile(withComment, { one: 'EARLY_____1' }, fx);
+const merged = renderVideosFile(withComment, { one: { youtubeId: 'EARLY_____1', aspect: 'landscape' } }, fx);
 check(
   merged.includes(`  // fixed by hand: the upload was re-done\n  'three': { youtubeId: 'HANDFIX___1' },`),
   'an existing entry and the comment above it survive, unchanged',
 );
 check(merged.indexOf("'one'") < merged.indexOf("'three'"), 'a new earlier episode sorts above an existing later one');
 eq(renderVideosFile(merged, {}, fx), merged, 'rewriting with no additions is a no-op');
-check(throws(() => renderVideosFile(withComment, { three: 'OTHER_____1' }, fx)), 'the writer refuses to overwrite an entry');
+check(
+  throws(() => renderVideosFile(withComment, { three: { youtubeId: 'OTHER_____1', aspect: 'portrait' } }, fx)),
+  'the writer refuses to overwrite an entry',
+);
+
+// An existing line's aspect (set by hand, in any of its three states) survives a
+// rewrite byte for byte: the sync never edits an entry it did not create.
+const aspects = `${header}export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {\n  'one': { youtubeId: 'ONE_______1', aspect: 'landscape' },\n  'two': { youtubeId: 'TWO_______1', aspect: 'portrait' },\n  'three': { youtubeId: 'THREE_____1' },\n};\n`;
+eq(renderVideosFile(aspects, {}, fx), aspects, 'explicit landscape, portrait and no aspect all survive a no-op rewrite');
+eq(
+  parseVideosFile(aspects).entries.map(e => e.aspect),
+  ['landscape', 'portrait', undefined],
+  'parseVideosFile reads the aspect of each line',
+);
+const aspectHand = planSync(
+  [v('FEEDSHORT_1', 'Read 雨 天 気 | x', '2026-09-11T00:00:00+00:00', 'portrait')],
+  fx,
+  { three: { youtubeId: 'HANDFIX___1' } },
+);
+eq(aspectHand.additions, {}, 'a Short in the feed does not change the aspect of an episode that already has a line');
+check(
+  renderVideosFile(aspects, { ...aspectHand.additions }, fx).includes("'three': { youtubeId: 'THREE_____1' },"),
+  'a line with no aspect stays without one',
+);
 check(
   throws(() => parseVideosFile(`${header}export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {\n  ...SPREAD,\n};\n`)),
   'a body the writer does not understand is an error, not a silent rewrite',

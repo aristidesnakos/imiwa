@@ -26,6 +26,7 @@ import type { Episode, EpisodeReadings } from '../../lib/stories/types';
 import { EPISODE_VIDEOS } from '../../data/stories/videos';
 import {
   YOUTUBE_ID_RE,
+  videoForSlug,
   videoObjectJsonLd,
   youtubeEmbedUrl,
   youtubeThumbnailUrl,
@@ -379,6 +380,13 @@ function validateVideos(): void {
       );
       continue;
     }
+    // Optional; absent means landscape. Anything else would silently render as
+    // landscape (videoForSlug falls back), so a typo in it must fail here.
+    if (video.aspect !== undefined && video.aspect !== 'portrait' && video.aspect !== 'landscape') {
+      issues.push(
+        `videos: ${slug} has aspect ${JSON.stringify(video.aspect)}; it must be 'portrait', 'landscape' or omitted`,
+      );
+    }
     const other = owner.get(video.youtubeId);
     if (other) issues.push(`videos: ${video.youtubeId} is attached to both ${other} and ${slug}`);
     owner.set(video.youtubeId, slug);
@@ -396,6 +404,33 @@ function validateVideos(): void {
     if (!had) EPISODE_VIDEOS[episode.slug] = { youtubeId: FIXTURE_ID };
     const id = EPISODE_VIDEOS[episode.slug].youtubeId;
     const node = videoObjectJsonLd(episode, pageUrl);
+    // The aspect: resolved by the lookup, and it picks the thumbnail. Replayed for
+    // both shapes whatever the real map holds.
+    const shaped = (aspect: 'portrait' | 'landscape' | undefined) => {
+      EPISODE_VIDEOS[episode.slug] = { youtubeId: id, aspect };
+      return { video: videoForSlug(episode.slug), node: videoObjectJsonLd(episode, pageUrl) };
+    };
+    const shapeProblem = (msg: string) => issues.push(`videos: aspect fixture: ${msg}`);
+    const omitted = shaped(undefined);
+    if (omitted.video?.aspect !== 'landscape') shapeProblem('an entry with no aspect must resolve to landscape');
+    const wide = shaped('landscape');
+    if (wide.video?.aspect !== 'landscape') shapeProblem("aspect 'landscape' must resolve to landscape");
+    const tall = shaped('portrait');
+    if (tall.video?.aspect !== 'portrait') shapeProblem("aspect 'portrait' must resolve to portrait");
+    if (youtubeThumbnailUrl(id, 'landscape') !== `https://i.ytimg.com/vi/${id}/hqdefault.jpg`) {
+      shapeProblem('the landscape thumbnail is not hqdefault');
+    }
+    if (youtubeThumbnailUrl(id, 'portrait') !== `https://i.ytimg.com/vi/${id}/oar2.jpg`) {
+      shapeProblem('the portrait thumbnail is not the portrait oar2 frame');
+    }
+    if ((tall.node?.thumbnailUrl as string[] | undefined)?.[0] !== youtubeThumbnailUrl(id, 'portrait')) {
+      shapeProblem('a portrait video\'s VideoObject must carry the portrait thumbnail');
+    }
+    if ((wide.node?.thumbnailUrl as string[] | undefined)?.[0] !== youtubeThumbnailUrl(id, 'landscape')) {
+      shapeProblem('a landscape video\'s VideoObject must carry the landscape thumbnail');
+    }
+    if (had) EPISODE_VIDEOS[episode.slug] = saved;
+    else EPISODE_VIDEOS[episode.slug] = { youtubeId: FIXTURE_ID };
     const problem = (msg: string) => issues.push(`videos: VideoObject fixture: ${msg}`);
     if (!node) {
       problem('builder returned nothing for a mapped episode');
@@ -411,7 +446,8 @@ function validateVideos(): void {
       problem('embedUrl is not the youtube-nocookie embed');
     }
     const thumbs = node.thumbnailUrl;
-    if (!Array.isArray(thumbs) || thumbs[0] !== youtubeThumbnailUrl(id)) {
+    const aspect = videoForSlug(episode.slug)?.aspect;
+    if (!Array.isArray(thumbs) || thumbs[0] !== youtubeThumbnailUrl(id, aspect)) {
       problem('thumbnailUrl is not the ytimg thumbnail');
     }
     if (!String(node.name ?? '').trim() || !String(node.description ?? '').trim()) {

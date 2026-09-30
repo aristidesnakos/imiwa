@@ -330,12 +330,26 @@ the fallback (the latest episode) is already correct for every surface that has 
 `pnpm validate:subscribe` asserts both halves.
 
 **An episode can have a companion YouTube video, on the episode page only — never in the email.**
-Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId }`), a tracked file
+Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId, aspect? }`), a tracked file
 because the generated `ep-NN.ts` are not editable and the strips repo is unversioned; no entry means
 no video. `EpisodeVideoSection` renders nothing without an entry, and otherwise a
 "Watch the episode" heading, a lazy `i.ytimg.com` thumbnail, a real "Watch on YouTube" link, and a tiny
 client facade (`VideoFacade`) that creates the `youtube-nocookie.com` iframe only on click, so the
-page's transfer and script budgets do not move. `videoObjectJsonLd()` adds a linked VideoObject,
+page's transfer and script budgets do not move.
+
+**`aspect` is the shape of the video: `'portrait'` or `'landscape'` (the default when omitted).** The
+channel publishes vertical YouTube Shorts (1080x1920; episodes 1-4 are all `portrait`). A Short in a
+16:9 box is a cropped thumbnail and a pillarboxed player, so `portrait` renders a 9:16 box, centred and
+capped at 18rem wide (288px, `VideoFacade`'s `BOX`), which is 512px tall on both a phone and a
+desktop, and `videoForSlug()` resolves the default so callers never see `undefined`. The thumbnail
+follows it through `youtubeThumbnailUrl(id, aspect)`: landscape is `hqdefault` (480x360, letterboxed,
+`object-cover` trims the bars); portrait is `oar2.jpg`, YouTube's own 1080x1920 frame (~160 kB, 200 on
+all four Shorts). `hqdefault` of a Short is a 4:3 picture with black pillars and `oardefault` 404s; `frame0.jpg` is
+portrait too but only 268x480, soft at 2x. `oar2` is undocumented: if YouTube ever drops it, the box stays and only the picture goes,
+so re-measure (`curl -sI`, then check the dimensions) before trusting it for a new video. The
+`VideoObject` carries the same thumbnail. `validate:stories` rejects any other `aspect` value and replays
+both shapes; `validate:schema` asserts the built page has the 9:16 (`aspect-[9/16]`) or 16:9
+(`aspect-video`) box and the matching thumbnail. `videoObjectJsonLd()` adds a linked VideoObject,
 `next.config.js` lists the embed host in `frame-src`, and `validate:stories` / `validate:schema` check
 id shape, slug, duplicates and the emitted markup. The privacy policy names the thumbnail and player
 (its header lists the claim); re-read it if the facade ever loads either earlier.
@@ -347,7 +361,11 @@ first `|`; if there are at least three and they are all in **exactly one** regis
 `focusKanji`, that video belongs to that episode. Anything else (a foreign kanji, fewer than three, a
 set two episodes could claim) is printed as `unmatched` and never mapped; it is not a failure. It is
 **add-only**: an episode that already has an entry is never changed, nothing is removed, an id already
-mapped is never reused, and of two videos for one episode the earliest upload wins. The job
+mapped is never reused, and of two videos for one episode the earliest upload wins. A new entry gets
+`aspect: 'portrait'` when the feed entry's `rel="alternate"` link is `youtube.com/shorts/<id>` (the
+feed's marker for a Short; all four real entries are), and no `aspect` field otherwise. That is only
+ever applied to a *new* line: the sync never edits an existing one, so to change the aspect of a line
+already in the file, edit it by hand. The job
 validates, then commits `feat(stories): link new episode video(s) from the YouTube channel` as
 github-actions[bot] with no skip-CI marker, so Vercel deploys it; a failure opens a `video-sync` issue.
 A bot push made with `GITHUB_TOKEN` does not trigger other workflows, so Lighthouse and schema CI do

@@ -69,6 +69,7 @@ import {
   videoForSlug,
   youtubeEmbedUrl,
   youtubeThumbnailUrl,
+  type VideoAspect,
   youtubeWatchUrl,
 } from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
@@ -952,6 +953,7 @@ function validateVideoObject(
   node: Node,
   pageUrl: string,
   youtubeId: string,
+  aspect: VideoAspect,
   publishedAt: string | null
 ): void {
   const T = 'VideoObject';
@@ -975,12 +977,12 @@ function validateVideoObject(
     'The privacy-enhanced embed host, for the mapped id.'
   );
   const thumbs = Array.isArray(node.thumbnailUrl) ? node.thumbnailUrl : [node.thumbnailUrl];
-  if (!thumbs.includes(youtubeThumbnailUrl(youtubeId))) {
+  if (!thumbs.includes(youtubeThumbnailUrl(youtubeId, aspect))) {
     fail({
       file,
       schemaType: T,
       field: 'thumbnailUrl',
-      expected: `includes ${youtubeThumbnailUrl(youtubeId)}`,
+      expected: `includes ${youtubeThumbnailUrl(youtubeId, aspect)} (the ${aspect} thumbnail)`,
       actual: JSON.stringify(node.thumbnailUrl),
     });
   }
@@ -1006,9 +1008,13 @@ function validateVideoObject(
 }
 
 /** The episode page's video section: present exactly when a video is mapped. */
-function validateVideoMarkup(file: string, html: string, youtubeId: string | null): void {
+function validateVideoMarkup(
+  file: string,
+  html: string,
+  video: { youtubeId: string; aspect: VideoAspect } | null
+): void {
   const T = 'episode video section';
-  if (youtubeId === null) {
+  if (video === null) {
     if (html.includes('id="video-heading"') || html.includes('i.ytimg.com') || html.includes('youtube-nocookie.com')) {
       fail({
         file,
@@ -1020,9 +1026,15 @@ function validateVideoMarkup(file: string, html: string, youtubeId: string | nul
     }
     return;
   }
+  const { youtubeId } = video;
   const expectations: [string, string][] = [
     ['a heading with id="video-heading"', 'id="video-heading"'],
-    ['the lazy ytimg thumbnail', `src="${youtubeThumbnailUrl(youtubeId)}"`],
+    ['the lazy ytimg thumbnail', `src="${youtubeThumbnailUrl(youtubeId, video.aspect)}"`],
+    // The box must have the video's own shape: a Short in a 16:9 box is the bug
+    // this asserts against (cropped thumbnail, pillarboxed player).
+    video.aspect === 'portrait'
+      ? ['a 9:16 player box (aspect-[9/16])', 'aspect-[9/16]']
+      : ['a 16:9 player box (aspect-video)', 'aspect-video'],
     ['a real "Watch on YouTube" link (the no-JS fallback)', `href="${youtubeWatchUrl(youtubeId)}"`],
   ];
   for (const [what, needle] of expectations) {
@@ -1293,7 +1305,7 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
       }
       const publishedAt = asString(resources[0]?.datePublished);
       for (const video of videoObjects) {
-        validateVideoObject(file, video, expectedStoryUrl, mappedVideo.youtubeId, publishedAt);
+        validateVideoObject(file, video, expectedStoryUrl, mappedVideo.youtubeId, mappedVideo.aspect, publishedAt);
         const linked = asObject(resources[0]?.video);
         requireEquals(
           file,
@@ -1304,7 +1316,7 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
           'The LearningResource must point at its VideoObject.'
         );
       }
-      validateVideoMarkup(file, html, mappedVideo.youtubeId);
+      validateVideoMarkup(file, html, mappedVideo);
     }
 
     const storyCrumbs = entitiesOfType(entities, 'BreadcrumbList');
