@@ -42,6 +42,7 @@ pnpm validate:announcements  # announcement config + a replay of the acknowledge
 pnpm announcements:status    # human-readable state of the announcement queue
 pnpm validate:palette        # brand-palette alignment in app/ and components/
 pnpm validate:stories        # episode data: strict N5, bubble geometry, targets, quiz, assets
+pnpm validate:video-sync     # the YouTube-title -> episode matching rule and the videos.ts rewrite
 npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts   # N5 quiz: one right answer per question
 ```
 
@@ -329,14 +330,31 @@ the fallback (the latest episode) is already correct for every surface that has 
 `pnpm validate:subscribe` asserts both halves.
 
 **An episode can have a companion YouTube video, on the episode page only — never in the email.**
-Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId }`), a tracked hand-edited
-file because the generated `ep-NN.ts` are not editable and the strips repo is unversioned; empty means
-no video anywhere. `EpisodeVideoSection` renders nothing without an entry, and otherwise a
+Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId }`), a tracked file
+because the generated `ep-NN.ts` are not editable and the strips repo is unversioned; no entry means
+no video. `EpisodeVideoSection` renders nothing without an entry, and otherwise a
 "Watch the episode" heading, a lazy `i.ytimg.com` thumbnail, a real "Watch on YouTube" link, and a tiny
 client facade (`VideoFacade`) that creates the `youtube-nocookie.com` iframe only on click, so the
 page's transfer and script budgets do not move. `videoObjectJsonLd()` adds a linked VideoObject,
 `next.config.js` lists the embed host in `frame-src`, and `validate:stories` / `validate:schema` check
-id shape, slug, duplicates and the emitted markup. Re-read the privacy policy before the first id ships.
+id shape, slug, duplicates and the emitted markup. The privacy policy names the thumbnail and player
+(its header lists the claim); re-read it if the facade ever loads either earlier.
+
+**The video map keeps itself current.** `.github/workflows/sync-story-videos.yml` runs daily (05:17
+UTC, and on demand) and `pnpm stories:sync-videos [--dry-run]` reads the channel's public Atom feed
+(no key). The rule, in `scripts/stories/video-sync-core.ts`: take the kanji in the title before the
+first `|`; if there are at least three and they are all in **exactly one** registered episode's
+`focusKanji`, that video belongs to that episode. Anything else (a foreign kanji, fewer than three, a
+set two episodes could claim) is printed as `unmatched` and never mapped; it is not a failure. It is
+**add-only**: an episode that already has an entry is never changed, nothing is removed, an id already
+mapped is never reused, and of two videos for one episode the earliest upload wins. The job
+validates, then commits `feat(stories): link new episode video(s) from the YouTube channel` as
+github-actions[bot] with no skip-CI marker, so Vercel deploys it; a failure opens a `video-sync` issue.
+A bot push made with `GITHUB_TOKEN` does not trigger other workflows, so Lighthouse and schema CI do
+not run on it; `validate:stories` inside the job is its gate. `pnpm validate:video-sync` asserts the
+rule against fixtures, including the four real titles. **To fix a wrong match, replace the id on that
+line** (deleting it is undone by the next run while the title still matches; fix the title on YouTube
+too). Titles must list the episode's focus kanji, as "Can You Read 雨 天 気 休 日? | ..." does.
 
 The two `EmailSignupSource` entries (`story-episode-quiz`, `story-hub`) are split deliberately: one
 subscriber read six panels first and the other did not, and per-surface rate is the only read on who

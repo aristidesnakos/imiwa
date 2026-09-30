@@ -140,7 +140,9 @@ A job with no secrets does the same.
    so `/stories/<slug>` and its email images are live. The script never commits, pushes or calls
    Resend. The broadcast links to the page and quotes it. Imported by Wednesday 12:07 UTC, the episode
    gets a three-day review window; by Friday 12:07 UTC, one day. After Friday's run, run the workflow
-   by hand before Saturday 12:30 UTC, or the episode waits a week.
+   by hand before Saturday 12:30 UTC, or the episode waits a week. The episode's YouTube video links
+   itself once uploaded ([`sync-story-videos.yml`](../../.github/workflows/sync-story-videos.yml),
+   daily): its title must list the episode's focus kanji before the `|`.
 2. **Review in the window.** The review issue arrives when the job schedules. Open the broadcast in
    Resend and run [`docs/prd/episode-spec.md`](../prd/episode-spec.md) §A7. Items 1–3 and 10 are
    machine-checked by `validate:stories`. Items 4–9 (Gmail web, Gmail mobile, Outlook.com, clip
