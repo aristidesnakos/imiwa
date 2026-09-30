@@ -64,6 +64,13 @@ import {
 } from '../lib/seo/site';
 import { levelPages } from '../lib/levels';
 import { KANJIVG_LICENCE } from '../lib/kanjivg';
+import {
+  YOUTUBE_ID_RE,
+  videoForSlug,
+  youtubeEmbedUrl,
+  youtubeThumbnailUrl,
+  youtubeWatchUrl,
+} from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -432,6 +439,8 @@ function requireNotForbiddenName(
   }
 }
 
+const YOUTUBE_THUMBNAIL_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/;
+
 /** Recursively resolve every image/logo URL reachable from an entity. */
 const IMAGE_FIELDS = new Set(['logo', 'image', 'thumbnailUrl', 'contentUrl', 'primaryImageOfPage']);
 
@@ -457,6 +466,10 @@ function checkAssetsDeep(file: string, schemaType: string, node: unknown, trail:
         }
       }
       for (const url of urls) {
+        // The one off-site image we emit: a companion video's YouTube
+        // thumbnail. It cannot be resolved offline, so its shape is asserted
+        // instead, in validateVideoObject.
+        if (YOUTUBE_THUMBNAIL_RE.test(url)) continue;
         requireCanonicalHost(file, schemaType, `${nextTrail} (url)`, url);
         const res = resolveAsset(url);
         if (!res.ok) {
@@ -928,6 +941,109 @@ function relative(p: string): string {
 }
 
 /**
+ * A story episode's VideoObject, emitted only when `data/stories/videos.ts`
+ * maps the episode. Checked against that map, so a page that dropped the block,
+ * or kept it after the video was removed, both fail. Fields are asserted, not
+ * trusted, for the usual reason: nothing else runs this code until the first
+ * real id is added.
+ */
+function validateVideoObject(
+  file: string,
+  node: Node,
+  pageUrl: string,
+  youtubeId: string,
+  publishedAt: string | null
+): void {
+  const T = 'VideoObject';
+  for (const field of ['name', 'description', 'thumbnailUrl', 'uploadDate', 'embedUrl']) {
+    requireField(file, T, node, field);
+  }
+  requireEquals(
+    file,
+    T,
+    '@id',
+    asString(node['@id']) ?? '',
+    `${pageUrl}#video`,
+    'The LearningResource links to this @id through `video`.'
+  );
+  requireEquals(
+    file,
+    T,
+    'embedUrl',
+    asString(node.embedUrl) ?? '',
+    youtubeEmbedUrl(youtubeId),
+    'The privacy-enhanced embed host, for the mapped id.'
+  );
+  const thumbs = Array.isArray(node.thumbnailUrl) ? node.thumbnailUrl : [node.thumbnailUrl];
+  if (!thumbs.includes(youtubeThumbnailUrl(youtubeId))) {
+    fail({
+      file,
+      schemaType: T,
+      field: 'thumbnailUrl',
+      expected: `includes ${youtubeThumbnailUrl(youtubeId)}`,
+      actual: JSON.stringify(node.thumbnailUrl),
+    });
+  }
+  const uploaded = asString(node.uploadDate);
+  if (uploaded === null || !ISO_DATE_RE.test(uploaded)) {
+    fail({
+      file,
+      schemaType: T,
+      field: 'uploadDate',
+      expected: 'an ISO date (YYYY-MM-DD)',
+      actual: JSON.stringify(node.uploadDate),
+    });
+  } else if (publishedAt !== null && uploaded !== publishedAt) {
+    fail({
+      file,
+      schemaType: T,
+      field: 'uploadDate',
+      expected: JSON.stringify(publishedAt),
+      actual: JSON.stringify(uploaded),
+      hint: "It is the episode's publishedAt by design.",
+    });
+  }
+}
+
+/** The episode page's video section: present exactly when a video is mapped. */
+function validateVideoMarkup(file: string, html: string, youtubeId: string | null): void {
+  const T = 'episode video section';
+  if (youtubeId === null) {
+    if (html.includes('id="video-heading"') || html.includes('i.ytimg.com') || html.includes('youtube-nocookie.com')) {
+      fail({
+        file,
+        schemaType: T,
+        field: '(block)',
+        expected: 'absent: no video is mapped for this episode',
+        actual: 'video markup present',
+      });
+    }
+    return;
+  }
+  const expectations: [string, string][] = [
+    ['a heading with id="video-heading"', 'id="video-heading"'],
+    ['the lazy ytimg thumbnail', `src="${youtubeThumbnailUrl(youtubeId)}"`],
+    ['a real "Watch on YouTube" link (the no-JS fallback)', `href="${youtubeWatchUrl(youtubeId)}"`],
+  ];
+  for (const [what, needle] of expectations) {
+    if (!html.includes(needle)) {
+      fail({ file, schemaType: T, field: '(block)', expected: what, actual: 'missing from the server HTML' });
+    }
+  }
+  // The player must be click-loaded: an iframe in the server HTML would pull
+  // YouTube's payload and cookies into every page view.
+  if (html.includes('youtube-nocookie.com/embed')) {
+    fail({
+      file,
+      schemaType: T,
+      field: '(block)',
+      expected: 'no iframe in the server HTML (it loads on click)',
+      actual: 'embed URL present',
+    });
+  }
+}
+
+/**
  * A story episode's LearningResource block.
  *
  * `Article` describes a piece of writing about something; an episode is a
@@ -1148,6 +1264,48 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
       });
     }
     for (const resource of resources) validateLearningResource(file, resource, expectedStoryUrl);
+
+    // Companion video: emitted and rendered exactly when data/stories/videos.ts
+    // maps this episode, and linked into the graph from the LearningResource.
+    const mappedVideo = videoForSlug(opts.storySlug);
+    const videoObjects = entitiesOfType(entities, 'VideoObject');
+    if (!mappedVideo || !YOUTUBE_ID_RE.test(mappedVideo.youtubeId)) {
+      if (videoObjects.length > 0) {
+        fail({
+          file,
+          schemaType: 'VideoObject',
+          field: '(block)',
+          expected: 'absent: no video is mapped for this episode',
+          actual: `${videoObjects.length} VideoObject(s) present`,
+        });
+      }
+      validateVideoMarkup(file, html, null);
+    } else {
+      if (videoObjects.length !== 1) {
+        fail({
+          file,
+          schemaType: 'VideoObject',
+          field: '(block)',
+          expected: 'exactly one VideoObject entity',
+          actual: `${videoObjects.length} - page has ${entities.map(typeOf).join(', ')}`,
+          hint: 'A video is mapped in data/stories/videos.ts; see app/stories/[slug]/page.tsx.',
+        });
+      }
+      const publishedAt = asString(resources[0]?.datePublished);
+      for (const video of videoObjects) {
+        validateVideoObject(file, video, expectedStoryUrl, mappedVideo.youtubeId, publishedAt);
+        const linked = asObject(resources[0]?.video);
+        requireEquals(
+          file,
+          'LearningResource',
+          'video[@id]',
+          asString(linked?.['@id']) ?? '',
+          asString(video['@id']) ?? '',
+          'The LearningResource must point at its VideoObject.'
+        );
+      }
+      validateVideoMarkup(file, html, mappedVideo.youtubeId);
+    }
 
     const storyCrumbs = entitiesOfType(entities, 'BreadcrumbList');
     if (storyCrumbs.length === 0) {
@@ -1592,7 +1750,8 @@ function main(): void {
   console.log(`  - Every entity URL is on ${SITE_HOST}; apex ${APEX_HOST} absent from the build`);
   console.log('  - FAQPage and BreadcrumbList well-formed; sitemap + robots canonical');
   console.log('  - Every kanji <url> in the sitemap lists exactly its own stroke-order image');
-  console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page\n');
+  console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page');
+  console.log('  - Episode videos: a VideoObject and a click-to-load section exactly where data/stories/videos.ts maps one\n');
 }
 
 main();

@@ -101,7 +101,8 @@ const nextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'self'",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              // youtube-nocookie.com: the episode video facade's player iframe, created only on click.
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube-nocookie.com",
               "connect-src 'self' https://api.stripe.com https://us-assets.i.posthog.com https://app.posthog.com https://api.openai.com https://upload.uploadthing.com wss: https:"
             ].join('; '),
           },

@@ -23,6 +23,13 @@ import { join, resolve } from 'node:path';
 
 import { EPISODES, UPCOMING } from '../../lib/stories';
 import type { Episode, EpisodeReadings } from '../../lib/stories/types';
+import { EPISODE_VIDEOS } from '../../data/stories/videos';
+import {
+  YOUTUBE_ID_RE,
+  videoObjectJsonLd,
+  youtubeEmbedUrl,
+  youtubeThumbnailUrl,
+} from '../../lib/stories/videos';
 import { READINGS, readingsForSlug } from '../../lib/stories/readings';
 import { isKanaSubsequence, readingProblems } from '../../lib/stories/reading-check';
 import { N5_KANJI } from '../../lib/constants/n5-kanji';
@@ -348,6 +355,77 @@ function validateReadingsCoverDisk(): void {
   }
 }
 
+/**
+ * Companion videos (`data/stories/videos.ts`). The empty map is valid: most
+ * episodes will never have one. What it must not hold is an id that cannot be a
+ * YouTube id (the page would embed a dead player), a slug no episode owns (a
+ * video attached to nothing, invisibly), or one id on two episodes.
+ *
+ * Also replays the VideoObject builder against a fixture, because with an empty
+ * map nothing else ever runs it: a typo in it would first show up the day the
+ * first real id is added.
+ */
+function validateVideos(): void {
+  const slugs = new Set(EPISODES.map(e => e.slug));
+  const owner = new Map<string, string>();
+  for (const [slug, video] of Object.entries(EPISODE_VIDEOS)) {
+    if (!slugs.has(slug)) {
+      issues.push(`videos: "${slug}" is not a registered episode slug`);
+    }
+    if (typeof video?.youtubeId !== 'string' || !YOUTUBE_ID_RE.test(video.youtubeId)) {
+      issues.push(
+        `videos: ${slug} has youtubeId ${JSON.stringify(video?.youtubeId)}, which is not 11 characters of [A-Za-z0-9_-] ` +
+          `(the id only, not a URL)`,
+      );
+      continue;
+    }
+    const other = owner.get(video.youtubeId);
+    if (other) issues.push(`videos: ${video.youtubeId} is attached to both ${other} and ${slug}`);
+    owner.set(video.youtubeId, slug);
+  }
+
+  // Fixture: the same builder the page calls, with a real-looking id injected
+  // for the duration of the check.
+  const episode = EPISODES[0];
+  if (!episode) return;
+  const FIXTURE_ID = 'dQw4w9WgXcQ';
+  const pageUrl = `https://example.test/stories/${episode.slug}`;
+  const had = Object.prototype.hasOwnProperty.call(EPISODE_VIDEOS, episode.slug);
+  const saved = EPISODE_VIDEOS[episode.slug];
+  try {
+    if (!had) EPISODE_VIDEOS[episode.slug] = { youtubeId: FIXTURE_ID };
+    const id = EPISODE_VIDEOS[episode.slug].youtubeId;
+    const node = videoObjectJsonLd(episode, pageUrl);
+    const problem = (msg: string) => issues.push(`videos: VideoObject fixture: ${msg}`);
+    if (!node) {
+      problem('builder returned nothing for a mapped episode');
+      return;
+    }
+    if (node['@type'] !== 'VideoObject') problem('@type is not VideoObject');
+    if (node['@id'] !== `${pageUrl}#video`) problem('@id is not <page>#video');
+    if (node.uploadDate !== episode.publishedAt) problem('uploadDate is not the episode publishedAt');
+    if (
+      node.embedUrl !== youtubeEmbedUrl(id) ||
+      !String(node.embedUrl).startsWith('https://www.youtube-nocookie.com/embed/')
+    ) {
+      problem('embedUrl is not the youtube-nocookie embed');
+    }
+    const thumbs = node.thumbnailUrl;
+    if (!Array.isArray(thumbs) || thumbs[0] !== youtubeThumbnailUrl(id)) {
+      problem('thumbnailUrl is not the ytimg thumbnail');
+    }
+    if (!String(node.name ?? '').trim() || !String(node.description ?? '').trim()) {
+      problem('name or description is empty');
+    }
+  } finally {
+    if (had) EPISODE_VIDEOS[episode.slug] = saved;
+    else delete EPISODE_VIDEOS[episode.slug];
+  }
+  if (!had && videoObjectJsonLd(episode, pageUrl) !== undefined) {
+    issues.push('videos: an episode with no mapped video must yield no VideoObject');
+  }
+}
+
 function main(): void {
   // First, and before the early return: an empty registry with episode files
   // on disk is the episode 6 failure in its most complete form.
@@ -361,6 +439,7 @@ function main(): void {
   for (const episode of EPISODES) validate(episode);
   selfTestReadingCheck();
   validateReadingsCoverDisk();
+  validateVideos();
 
   // Cross-episode rules. Slugs are URLs and numbers are the season's spine, so
   // a collision in either is a routing bug rather than a content one.

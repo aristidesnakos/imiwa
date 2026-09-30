@@ -328,6 +328,16 @@ resolved against the registry on the way in and shape-checked on the way out. A 
 the fallback (the latest episode) is already correct for every surface that has no episode.
 `pnpm validate:subscribe` asserts both halves.
 
+**An episode can have a companion YouTube video, on the episode page only — never in the email.**
+Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId }`), a tracked hand-edited
+file because the generated `ep-NN.ts` are not editable and the strips repo is unversioned; empty means
+no video anywhere. `EpisodeVideoSection` renders nothing without an entry, and otherwise a
+"Watch the episode" heading, a lazy `i.ytimg.com` thumbnail, a real "Watch on YouTube" link, and a tiny
+client facade (`VideoFacade`) that creates the `youtube-nocookie.com` iframe only on click, so the
+page's transfer and script budgets do not move. `videoObjectJsonLd()` adds a linked VideoObject,
+`next.config.js` lists the embed host in `frame-src`, and `validate:stories` / `validate:schema` check
+id shape, slug, duplicates and the emitted markup. Re-read the privacy policy before the first id ships.
+
 The two `EmailSignupSource` entries (`story-episode-quiz`, `story-hub`) are split deliberately: one
 subscriber read six panels first and the other did not, and per-surface rate is the only read on who
 actually engages.

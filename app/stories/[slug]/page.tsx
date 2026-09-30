@@ -11,8 +11,10 @@ import EmailCapture from '@/components/EmailCapture';
 import { CTASection } from '@/components/CTASection';
 import { StoryPanel } from '@/components/stories/StoryPanel';
 import { panelRomaji } from '@/lib/stories/romaji-lines';
+import { EpisodeVideoSection } from '@/components/stories/EpisodeVideoSection';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { EPISODES, episodeBySlug, episodeLines } from '@/lib/stories';
+import { videoObjectJsonLd } from '@/lib/stories/videos';
 
 /**
  * One episode of The Travels of Tan.
@@ -88,6 +90,11 @@ export default async function EpisodePage({ params }: Props) {
    * actually describe it — the level it is pitched at, the words it teaches —
    * have no home on Article.
    */
+  const pageUrl = `${SITE_URL}/stories/${episode.slug}`;
+  // Only when data/stories/videos.ts maps this episode. The LearningResource
+  // points at it by @id so the two read as one graph.
+  const videoObject = videoObjectJsonLd(episode, pageUrl);
+
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -102,6 +109,7 @@ export default async function EpisodePage({ params }: Props) {
       datePublished: episode.publishedAt,
       isAccessibleForFree: true,
       image: `${SITE_URL}${episode.ogImage}`,
+      ...(videoObject ? { video: { '@id': videoObject['@id'] } } : {}),
       publisher: {
         '@type': 'Organization',
         name: SITE_NAME,
@@ -128,6 +136,7 @@ export default async function EpisodePage({ params }: Props) {
         },
       ],
     },
+    ...(videoObject ? [videoObject] : []),
   ];
 
   return (
@@ -209,6 +218,9 @@ export default async function EpisodePage({ params }: Props) {
             ))}
           </div>
         </section>
+
+        {/* Renders nothing unless data/stories/videos.ts maps this episode. */}
+        <EpisodeVideoSection episode={episode} />
 
         {/*
           The transcript IS a second copy of the bubbles, and saying otherwise
