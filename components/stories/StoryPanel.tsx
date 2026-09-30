@@ -1,5 +1,14 @@
 import Image from 'next/image';
 import type { Panel } from '@/lib/stories/types';
+import {
+  BORDER,
+  JA_SIZE,
+  NARRATION_RADIUS,
+  PAD,
+  RADIUS,
+  TAIL,
+  TAIL_DROP,
+} from '@/lib/stories/bubble-style';
 
 /**
  * One comic panel: the art, with real HTML speech bubbles positioned over it.
@@ -14,16 +23,10 @@ import type { Panel } from '@/lib/stories/types';
  *
  * The type scale is in `cqw` against a `container-type: inline-size` panel:
  * the strip renders at a fixed 1080px and can use pixels, a panel here is
- * whatever width the viewport gives it. Every number below is the strip's own
- * `px / 506px cell` ratio, so a fluid panel matches the fixed export.
+ * whatever width the viewport gives it. The numbers live in
+ * `lib/stories/bubble-style.ts`, shared with the email panel renderer
+ * (`scripts/stories/render-email-panels.ts`) so the two cannot drift.
  */
-const JA_SIZE = '5.3cqw'; // a 27px face in a 506px cell
-const PAD = '1.8cqw 2.4cqw';
-const BORDER = 'max(2px, 0.6cqw)';
-const RADIUS = '3.2cqw';
-const TAIL = '3.2cqw';
-const TAIL_DROP = '-2.2cqw';
-
 export function StoryPanel({ panel, priority = false }: { panel: Panel; priority?: boolean }) {
   return (
     <figure className="m-0">
@@ -78,7 +81,7 @@ export function StoryPanel({ panel, priority = false }: { panel: Panel; priority
                 color: 'var(--ink-black)',
                 border: `${BORDER} solid var(--ink-black)`,
                 background: narration ? 'var(--narration-paper)' : 'var(--speech-paper)',
-                borderRadius: narration ? '1.2cqw' : RADIUS,
+                borderRadius: narration ? NARRATION_RADIUS : RADIUS,
                 fontWeight: narration ? 600 : 700,
               }}
             >

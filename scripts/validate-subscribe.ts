@@ -411,6 +411,50 @@ for (const episode of EPISODES) {
   }
 }
 
+// --- Bubbled panels in the episode email ------------------------------------
+//
+// Each panel is `stories/<slug>/e<N>.jpg`: the art with its speech bubbles baked
+// in (scripts/stories/render-email-panels.ts), because a mail client cannot lay
+// text over an image. `validate:stories` asserts the files exist; this asserts
+// the email actually points at them, and that the alt text carries the whole
+// story for a client that blocks images.
+
+/** Attribute values as written in the HTML, unescaped. */
+function attrsIn(html: string, tag: string, attr: string): string[] {
+  return [...html.matchAll(new RegExp(`<${tag}[^>]*\\s${attr}="([^"]*)"`, 'g'))].map(match =>
+    match[1].replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&')
+  );
+}
+
+for (const episode of EPISODES) {
+  const html = quizEmailHtml(episode, SAMPLE_UNSUBSCRIBE);
+  const srcs = attrsIn(html, 'img', 'src');
+  check(
+    `${episode.slug}: the HTML shows exactly its bubbled panels, e1..e${episode.panels.length}`,
+    JSON.stringify(srcs) ===
+      JSON.stringify(episode.panels.map((_, i) => `${SITE_URL}/stories/${episode.slug}/e${i + 1}.jpg`))
+  );
+  check(
+    `${episode.slug}: no email image is the bare, bubble-less art`,
+    !srcs.some(src => /\/p\d\.(jpg|webp)$/.test(src))
+  );
+  const alts = attrsIn(html, 'img', 'alt');
+  check(
+    `${episode.slug}: each panel's alt text carries its beat and every line, Japanese and English`,
+    alts.length === episode.panels.length &&
+      episode.panels.every(
+        (panel, i) =>
+          alts[i].includes(panel.beat) &&
+          panel.lines.every(line => alts[i].includes(line.ja) && alts[i].includes(line.en))
+      )
+  );
+  const text = quizEmailText(episode, SAMPLE_UNSUBSCRIBE);
+  check(
+    `${episode.slug}: the plain text still carries every Japanese line`,
+    episode.panels.every(panel => panel.lines.every(line => text.includes(line.ja)))
+  );
+}
+
 if (newestEpisode) {
   const slug = newestEpisode.slug;
   const sends = [

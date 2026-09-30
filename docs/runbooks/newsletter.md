@@ -126,8 +126,13 @@ A job with no secrets does the same.
 
 1. **Import the episode by Friday.** `strips/ep-NN/script.json` in the strips repo is the source of
    truth; `scripts/stories/import-episode.py` derives `data/stories/ep-NN.ts` and the art, and the
-   generated file is not editable. Run `pnpm validate:stories` (the contract: a failure is a content
-   bug, not a lint nit), then merge and deploy so `/stories/<slug>` is live. The broadcast links to the
+   generated file is not editable. Register it in `lib/stories/index.ts`, then run
+   `pnpm stories:render-email-panels <slug>`: the email shows each panel with its speech bubbles baked
+   into a JPEG (`public/stories/<slug>/e1.jpg`..`e6.jpg`, because a mail client cannot lay text over an
+   image), and the importer does not make them. Look at the email before it goes: `pnpm email:preview
+   <slug> --local` writes it to a file to open in a browser. Run `pnpm validate:stories` (the contract: a
+   failure is a content bug, not a lint nit, and it fails while any `e*.jpg` is missing), then merge and
+   deploy so `/stories/<slug>` and its email images are live. The broadcast links to the
    page and quotes it. Imported by Wednesday 12:07 UTC, the episode gets a three-day review window;
    by Friday 12:07 UTC, one day. After Friday's run, run the workflow by hand before Saturday
    12:30 UTC, or the episode waits a week.

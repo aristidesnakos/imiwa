@@ -36,6 +36,18 @@ WHAT IT EMITS
   public/stories/<slug>/pN.jpg   the email-compatible panel derivative
   public/stories/<slug>/og.jpg   the composited square, for OpenGraph only
 
+It does NOT make the email's panels. The weekly email shows
+public/stories/<slug>/e1.jpg..e6.jpg: the art with its speech bubbles baked in,
+because a mail client cannot lay text over an image. Those come from a second
+step, run after this one and after the episode is registered in
+lib/stories/index.ts:
+
+    pnpm stories:render-email-panels <slug>
+
+(scripts/stories/render-email-panels.ts; it needs Chrome, and it is TypeScript
+because it reads the same bubble geometry and type scale the site does.)
+`pnpm validate:stories` fails until all six exist.
+
 The panel PNGs from ChatGPT carry NO text: the model draws scenes only and
 every glyph is set by code. `build.py` composites the Japanese into the social
 exports. The *site* does the same job in React instead — it positions real HTML
@@ -272,7 +284,13 @@ def main() -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(emit_episode(script, published, ep_dir), encoding='utf-8')
     print(f'  data {dest.relative_to(REPO)}')
-    print('\nNow add it to lib/stories/index.ts if it is new, then run pnpm validate:stories.')
+    print(
+        '\nNext:'
+        '\n  1. add it to lib/stories/index.ts if it is new'
+        f"\n  2. pnpm stories:render-email-panels {script['slug']}   (the email's bubbled panels, e1..e6.jpg)"
+        '\n  3. pnpm validate:stories'
+        '\n  4. commit public/stories/<slug>/ including the e*.jpg files, then deploy'
+    )
 
 
 if __name__ == '__main__':

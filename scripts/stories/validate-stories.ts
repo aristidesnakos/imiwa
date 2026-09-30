@@ -18,7 +18,7 @@
  * what the reader sees.
  */
 
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { EPISODES, UPCOMING } from '../../lib/stories';
@@ -185,7 +185,30 @@ function validate(episode: Episode): void {
   if (!existsSync(join(PUBLIC_DIR, episode.ogImage))) {
     fail(episode, `ogImage ${episode.ogImage} is not in public/`);
   }
+
+  // 8. The email's bubbled panels. The weekly email shows e1..eN.jpg, the art
+  //    with its bubbles baked in, because a mail client cannot lay text over an
+  //    image. Nothing else notices a missing one: the email would go out with
+  //    a broken image. Made by `pnpm stories:render-email-panels <slug>`.
+  episode.panels.forEach((_, i) => {
+    const file = `e${i + 1}.jpg`;
+    const path = join(ART_DIR, episode.slug, file);
+    if (!existsSync(path)) {
+      fail(
+        episode,
+        `email panel stories/${episode.slug}/${file} is missing; run pnpm stories:render-email-panels ${episode.slug}`,
+      );
+    } else if (statSync(path).size > EMAIL_PANEL_MAX_BYTES) {
+      fail(
+        episode,
+        `email panel ${file} is ${Math.round(statSync(path).size / 1024)} kB, over the ${EMAIL_PANEL_MAX_BYTES / 1024} kB cap`,
+      );
+    }
+  });
 }
+
+/** An email panel is a 1040px JPEG; the render script aims under 150 kB. */
+const EMAIL_PANEL_MAX_BYTES = 200 * 1024;
 
 /**
  * The disk against the registry. Every other check reads EPISODES, so an

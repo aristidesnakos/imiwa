@@ -291,6 +291,15 @@ as an email generated from the same typed data (`lib/email/quiz-email.ts`). The 
 header records why (Outlook blocks images; the file is outside this repo, so reading it needs the
 `fs` path Next cannot trace).
 
+**The email shows the panels the way the page does, with the bubbles baked into a JPEG.** A mail
+client cannot lay text over an image, so `pnpm stories:render-email-panels <slug>` (puppeteer, already
+a dependency) flattens each panel to `public/stories/<slug>/e1.jpg`..`e6.jpg` from the same `bubble`
+geometry, the type scale in `lib/stories/bubble-style.ts` (shared with `StoryPanel`) and the hex tokens
+in `globals.css`. `quiz-email.ts` shows those, with the Japanese and English in the alt text and the
+English as text under each. Running it is part of importing an episode; `validate:stories` fails on a
+missing file and `validate:subscribe` on an email that does not reference them. `pnpm email:preview
+<slug> --local` writes the email to a file to look at.
+
 Which episode gets sent travels inside the signed confirm token as an optional `episode` slug,
 resolved against the registry on the way in and shape-checked on the way out. A malformed slug is
 **dropped, never fatal** — refusing consent over a cosmetic claim would lose a real subscriber, and

@@ -17,6 +17,10 @@ export type { EpisodeEmailKind } from '@/lib/email/utm';
  * refuse to run while it is not, and `pnpm validate:subscribe` asserts both
  * footers carry it.
  *
+ * Each panel is a JPEG with the speech bubbles baked in (see `emailPanelUrl`),
+ * followed by the English lines as text. The Japanese is in the image, in its
+ * alt text and in the plain-text part.
+ *
  * `kind` says which of the two sends this is, and travels as `utm_content` on
  * the content links (lib/email/utm.ts) so DataFast can tell their arrivals
  * apart. It defaults to 'welcome' so the confirm route's call is unchanged;
@@ -50,9 +54,25 @@ export function episodeUrl(episode: Episode): string {
   return `${SITE_URL}/stories/${episode.slug}`;
 }
 
-/** The website uses WebP; email clients receive the compatible JPEG derivative. */
-export function emailPanelUrl(panelArt: string): string {
-  return `${SITE_URL}${panelArt.replace(/\.webp$/, '.jpg')}`;
+/**
+ * The panel as the email shows it: the art with its speech bubbles baked in,
+ * `public/stories/<slug>/e<N>.jpg` (N is 1-based). A mail client cannot lay
+ * text over an image, so `scripts/stories/render-email-panels.ts` flattens what
+ * the site draws in HTML; `pnpm validate:stories` fails if a registered
+ * episode is missing one. The bare art (`pN.jpg`) is no longer used here.
+ */
+export function emailPanelUrl(episode: Episode, panelIndex: number): string {
+  return `${SITE_URL}/stories/${episode.slug}/e${panelIndex + 1}.jpg`;
+}
+
+/**
+ * Alt text for a baked panel: the beat, then every line in Japanese and
+ * English. The bubbles are pixels now, so a client that blocks images (Outlook
+ * by default) still gets the whole story from this.
+ */
+function emailPanelAlt(panel: Episode['panels'][number]): string {
+  const dialogue = panel.lines.map(line => `${line.ja} (${line.en})`).join(' ');
+  return `${panel.beat}. ${dialogue}`;
 }
 
 export function quizEmailSubject(episode: Episode): string {
@@ -124,19 +144,20 @@ export function quizEmailHtml(
   // must carry as `&amp;`. The unsubscribe link below is deliberately not
   // passed through this (lib/email/utm.ts says why).
   const contentHref = (url: string) => escapeHtml(withNewsletterUtm(url, episode.slug, kind));
+  // The image carries the Japanese in its bubbles, so the rows under it are
+  // the English only. The Japanese survives in the alt text and in the
+  // plain-text part, so nothing depends on the image loading.
   const story = episode.panels
     .map(
       (panel, i) => `
         <tr><td style="padding:0 0 24px;">
-          <img src="${emailPanelUrl(panel.art)}" alt="${escapeHtml(panel.beat)}" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;" />
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SOFT_MIST};">
-            <tr><td style="padding:12px 16px 2px;font-size:16px;line-height:1.55;color:${INK_BLACK};"><strong>Panel ${i + 1}</strong></td></tr>${panel.lines
-              .map(
-                line => `
-            <tr><td style="padding:6px 16px 0;font-size:16px;line-height:1.55;color:${INK_BLACK};">${escapeHtml(line.ja)}</td></tr>
-            <tr><td style="padding:0 16px 8px;font-size:14px;line-height:1.5;color:${MOUNTAIN_MIST};">${escapeHtml(line.en)}</td></tr>`
-              )
-              .join('')}
+          <img src="${emailPanelUrl(episode, i)}" alt="${escapeHtml(emailPanelAlt(panel))}" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;" />
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SOFT_MIST};">${panel.lines
+            .map(
+              (line, j) => `
+            <tr><td style="padding:${j === 0 ? '12px' : '0'} 16px ${j === panel.lines.length - 1 ? '12px' : '6px'};font-size:14px;line-height:1.5;color:${MOUNTAIN_MIST};">${escapeHtml(line.en)}</td></tr>`
+            )
+            .join('')}
           </table>
         </td></tr>`
     )
