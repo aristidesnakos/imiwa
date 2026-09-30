@@ -257,7 +257,7 @@ focus character across episodes.
 | 3 | Tan goes to school | 学 校 先 生 語 | 学校, 先生, 学生, 日本語 | written 2026-09-16 | never: before the first broadcast | — |
 | 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | written 2026-09-23 | never: before the first broadcast | — |
 | 5 | The train to Tokyo | 電 車 東 行 来 | 電車, 東京, 行く, 来る | written 2026-09-24 | never: before the first broadcast | — |
-| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | written 2026-09-27 | Sat 2026-10-03 | — |
+| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | written 2026-09-27 | never: reached every subscriber through the welcome card | — |
 
 The send is **Saturday at 13:00 UTC** (the day decided 2026-09-16, the time 2026-09-27); write-by
 is the Wednesday before, which is the room the A7 checklist and one round of fixes need, and the day
@@ -266,9 +266,10 @@ the weekly job first runs. The cadence is defined once in `config.newsletter` an
 calendar.
 
 **Scheduled** is the Saturday the queue gives an episode. The weekly job books episodes in Resend in
-`number` order, one per Saturday, from `config.newsletter.firstBroadcastEpisode` (6). Episodes 1 to
-5 went up on the site before the list's first broadcast, so they are never broadcast; a new
-subscriber meets them through the site and the welcome card. **Sent** is filled only from Resend's
+`number` order, one per Saturday, from `config.newsletter.firstBroadcastEpisode` (7). Episodes 1 to
+6 have already reached every subscriber, so they are never broadcast: 1 to 5 went up on the site
+before the list's first broadcast, and 6 went out through the welcome card (a new subscriber's
+confirmation email carries the latest episode). **Sent** is filled only from Resend's
 record of an actual send (the job's closing comment on the review issue, `pnpm newsletter:stats`, or
 the dashboard) and reads "—" until then. **Sent is a record, never a plan.** A single Send column
 conflated the two twice: episodes 3 and 4 carried Saturdays, 2026-09-19 and 2026-09-26, that passed

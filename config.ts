@@ -58,10 +58,13 @@ const config = {
     // pre-send checklist and one round of fixes actually need.
     writeLeadDays: 3,
     // The lowest episode number the weekly job will ever broadcast. Episodes 1
-    // to 5 went up before the list had received a single broadcast, and a new
-    // subscriber meets them through the site and the welcome card instead; the
-    // job never sends them. The queue starts here and runs in episode order.
-    firstBroadcastEpisode: 6,
+    // to 6 have already reached every subscriber: 1 to 5 through the site and
+    // the welcome card, and 6 through the welcome card, because a new
+    // subscriber's confirmation email carries the latest episode. So the job
+    // never broadcasts them. Moved from 6 to 7 on 2026-09-30 by the owner, who
+    // had Episode 6's scheduled broadcast deleted. The queue starts here and
+    // runs in episode order.
+    firstBroadcastEpisode: 7,
   },
   // Who legally sends the newsletter, and where post reaches them. One
   // definition for three obligations that must agree: the email footer

@@ -16,8 +16,9 @@ import { EPISODE as EP03 } from '../../data/stories/ep-03';
 import { EPISODE as EP04 } from '../../data/stories/ep-04';
 import { EPISODE as EP05 } from '../../data/stories/ep-05';
 import { EPISODE as EP06 } from '../../data/stories/ep-06';
+import { EPISODE as EP07 } from '../../data/stories/ep-07';
 
-export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05, EP06];
+export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05, EP06, EP07];
 
 /**
  * Episodes written and validated against the N5 list upstream, but still

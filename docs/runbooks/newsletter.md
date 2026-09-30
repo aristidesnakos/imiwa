@@ -17,8 +17,9 @@
 > Wednesday and Friday at 12:07 UTC, schedules the next episode in Resend for Saturday at 13:00 UTC,
 > and opens a GitHub issue to review it ([the Saturday ritual](#the-saturday-ritual)). Resend still
 > does the sending. Its two repository secrets were set on 2026-09-28, and a dry run that day
-> planned Episode 6 for Sat 2026-10-03 13:00 UTC ([Known gaps](#known-gaps) 2). The Wednesday
-> 2026-09-30 run books it. The segment holds 4 confirmed subscribers and none of the owner's own
+> planned Episode 6 for Sat 2026-10-03 13:00 UTC ([Known gaps](#known-gaps) 2). On 2026-09-30 the
+> owner deleted that scheduled broadcast and moved `firstBroadcastEpisode` to 7, so the Wednesday
+> 2026-09-30 run books Episode 7 for that Saturday instead. The segment holds 4 confirmed subscribers and none of the owner's own
 > addresses (2026-09-27), so add one before that send. [Known gaps](#known-gaps) 6, a real unsubscribe, is worth doing before
 > it too. Both legal prerequisites were met on 2026-09-23 and 2026-09-24:
 > [The postal address](#the-postal-address).
@@ -31,7 +32,7 @@ three quiz questions, and the answers. The promise is made in the email body its
 
 The cadence is now a value, not prose. `config.newsletter` in [`config.ts`](../../config.ts) holds
 `sendDay: 6` (**Saturday**, decided 2026-09-16), `sendTimeUtc: '13:00'` and `writeLeadDays: 3`, so
-write-by is the **Wednesday** before, plus `firstBroadcastEpisode: 6`, where the broadcast queue
+write-by is the **Wednesday** before, plus `firstBroadcastEpisode: 7`, where the broadcast queue
 starts. [`lib/email/send-schedule.ts`](../../lib/email/send-schedule.ts) derives `nextSendDate()`,
 `nextSendAt()`, `writeByDate(sendDate)` and `sendDayName()` from that config so nobody counts off a
 calendar again — which is how the Send column in
@@ -87,13 +88,14 @@ plan and change nothing. Each run:
    [`lib/email/broadcast.ts`](../../lib/email/broadcast.ts) gives it. Only broadcasts to the
    weekly-stories segment count.
 3. **Picks the next episode:** the lowest-numbered registered episode, from
-   `config.newsletter.firstBroadcastEpisode` (6) up, that has no broadcast scheduled, queued,
-   sending, sent or cancelled. It goes by `number`, never `publishedAt`. Episodes 1 to 5 went up
-   before the list's first broadcast and are never sent; subscribers meet them on the site and
-   through the welcome card.
+   `config.newsletter.firstBroadcastEpisode` (7) up, that has no broadcast scheduled, queued,
+   sending, sent or cancelled. It goes by `number`, never `publishedAt`. Episodes 1 to 6 have
+   already reached every subscriber and are never sent: 1 to 5 went up before the list's first
+   broadcast, and 6 went out through the welcome card, since a new subscriber's confirmation email
+   carries the latest episode. Subscribers meet them on the site and through the welcome card.
 4. **Does nothing if a send is already booked.** If any episode broadcast is scheduled, whatever its
    date, or any other broadcast has the Saturday, the job leaves it: one broadcast per send slot.
-   So episode 6 goes out on Sat 2026-10-03, and an episode 7 would wait for the Saturday after.
+   So episode 7 goes out on Sat 2026-10-03, and an episode 8 would wait for the Saturday after.
 5. **Guards the send.** It refuses unless the episode page answers 200 in production (episode 6 once
    shipped as a 404 on a green validator) and `config.business.postalAddress` passes
    `postalAddressProblems`. A run that finds an episode already scheduled checks its page again.
@@ -110,7 +112,7 @@ plan and change nothing. Each run:
    record of when the broadcast went out.
 8. **With nothing to schedule, it does not fail.** It opens "No episode queued for Saturday
    YYYY-MM-DD — import one by Friday": the write-by reminder. Season one is fully published, so from
-   Sat 2026-10-10 on this is the expected state until an episode 7 is imported.
+   Sat 2026-10-10 on this is the expected state until an episode 8 is imported.
 
 It never sends, and it never reads a contact. It makes at most two calls that change anything,
 create a draft and schedule it, and Resend does the queueing, throttling, unsubscribe filtering and
