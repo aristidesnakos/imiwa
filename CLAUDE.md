@@ -306,6 +306,13 @@ the panel render is part of importing an episode; `validate:stories` fails on a
 missing file and `validate:subscribe` on an email that does not reference them. `pnpm email:preview
 <slug> --local` writes the email to a file to look at.
 
+**The page shows the same romaji behind a per-panel toggle, with no client JavaScript.** `StoryPanel`
+takes `romaji` (from `panelRomaji`) and renders it in the caption, always in the server HTML and
+`display: none` until a checkbox-in-a-label pill is checked (`group-has-[:checked]`). The pill
+straddles the panel's top edge rather than sitting on the art, because 28 of 42 panels have a bubble
+running to the right edge within 2-5% of the top; a geometry check over every panel at three widths
+found no overlap with the pill or its ~44px hit area. Keep it out of the art unless the bubbles move.
+
 Which episode gets sent travels inside the signed confirm token as an optional `episode` slug,
 resolved against the registry on the way in and shape-checked on the way out. A malformed slug is
 **dropped, never fatal** — refusing consent over a cosmetic claim would lose a real subscriber, and

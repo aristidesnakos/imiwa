@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import EmailCapture from '@/components/EmailCapture';
 import { CTASection } from '@/components/CTASection';
 import { StoryPanel } from '@/components/stories/StoryPanel';
+import { panelRomaji } from '@/lib/stories/romaji-lines';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { EPISODES, episodeBySlug, episodeLines } from '@/lib/stories';
 
@@ -197,9 +198,14 @@ export default async function EpisodePage({ params }: Props) {
           <h2 id="comic-heading" className="sr-only">
             The comic
           </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
             {episode.panels.map((panel, i) => (
-              <StoryPanel key={panel.id} panel={panel} priority={i === 0} />
+              <StoryPanel
+                key={panel.id}
+                panel={panel}
+                priority={i === 0}
+                romaji={panelRomaji(episode.slug, panel.id)}
+              />
             ))}
           </div>
         </section>
