@@ -37,4 +37,9 @@ export interface EpisodeVideo {
   youtubeId: string;
 }
 
-export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {};
+export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {
+  'tan-climbs-the-mountain': { youtubeId: 'sIi1M-d-gTg' },
+  'tan-finds-the-river': { youtubeId: '4wNQgUiBU6s' },
+  'tan-goes-to-school': { youtubeId: 'opwFPNQom8Y' },
+  'a-rainy-day-off': { youtubeId: 'ZMNIAOPGigg' },
+};
