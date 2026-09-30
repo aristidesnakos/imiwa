@@ -1,0 +1,58 @@
+name: Organic Push Monitor
+
+# Weekly read of what the two Web-only monitors cannot see: Google Image search
+# traffic, per-URL index status for the hand-requested pages (N5, N4, /stories),
+# and the sitemap's last-read time. Appended to data/organic-push-history.json.
+# See the header of scripts/check-organic-push.ts. Records only — never alarms.
+
+on:
+  # After indexation-alarm (07:00) and query-performance (08:00) so the three
+  # commit-backs never race on the same minute.
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: organic-push-monitor
+  cancel-in-progress: false
+
+jobs:
+  organic-push:
+    name: Read image traffic and per-URL index status
+    runs-on: ubuntu-latest
+    # ~260 URL Inspection calls at 4-way concurrency is a few minutes.
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Take the reading
+        env:
+          GSC_SERVICE_ACCOUNT_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_KEY }}
+          GSC_PROPERTY_TYPE: ${{ vars.GSC_PROPERTY_TYPE }}
+          GSC_PROPERTY: ${{ vars.GSC_PROPERTY }}
+        run: pnpm exec tsx --tsconfig tsconfig.json scripts/check-organic-push.ts
+
+      - name: Commit updated history
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain data/organic-push-history.json)" ]; then
+            echo "No change — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/organic-push-history.json
+          # [skip ci]: the file ships no runtime code, so no Vercel deploy.
+          git commit -m "chore(seo): record organic-push reading [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

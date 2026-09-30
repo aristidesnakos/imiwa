@@ -9,6 +9,7 @@
     "lint": "next lint",
     "analyze": "ANALYZE=true next build",
     "check-indexation": "tsx --tsconfig tsconfig.json scripts/check-indexation.ts",
+    "check-organic-push": "tsx --tsconfig tsconfig.json scripts/check-organic-push.ts",
     "check-index-status": "tsx --tsconfig tsconfig.json scripts/check-index-status.ts",
     "check-subscribe-live": "tsx --tsconfig tsconfig.json scripts/check-subscribe-live.ts",
     "check-subscribe-e2e": "tsx --tsconfig tsconfig.json scripts/check-subscribe-e2e.ts",

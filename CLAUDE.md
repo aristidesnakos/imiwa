@@ -385,6 +385,12 @@ Two weekly Search Console monitors exist and they answer different questions —
   corpus. It is a progress tracker and **never goes red because a number failed to improve** — only
   because the job itself broke. Both use the one `GSC_SERVICE_ACCOUNT_KEY`.
 
+A third, `check-organic-push.ts` (Mon 09:00 UTC, `data/organic-push-history.json`), records what
+those two cannot: Image-search traffic per day (`type: 'image'`), URL Inspection state for the
+hand-requested N5/N4/`/stories` pages (with a diff against the last reading), and the sitemap's
+`lastDownloaded`. It records only and never alarms. Its watch list is ~260 URLs; the Inspection API
+allows 2,000/day, so never point it at the whole sitemap.
+
 A 403 from either usually means the Search Console API is disabled on the *Google Cloud project*,
 not that Search Console permissions are wrong. The scripts special-case that message because the two
 send you to completely different consoles.
