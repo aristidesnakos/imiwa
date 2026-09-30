@@ -3,6 +3,7 @@ import config from '@/config';
 import { postalAddressLine } from '@/lib/business/postal-address';
 import { withNewsletterUtm, type EpisodeEmailKind } from '@/lib/email/utm';
 import type { Episode } from '@/lib/stories/types';
+import { panelRomaji } from '@/lib/stories/romaji-lines';
 
 export type { EpisodeEmailKind } from '@/lib/email/utm';
 
@@ -105,7 +106,8 @@ export function quizEmailText(
 
   episode.panels.forEach((panel, i) => {
     lines.push(`--- Panel ${i + 1} ---`, panel.beat);
-    panel.lines.forEach(line => lines.push(line.ja, line.en));
+    const romaji = panelRomaji(episode.slug, panel.id);
+    panel.lines.forEach((line, j) => lines.push(line.ja, ...(romaji ? [romaji[j]] : []), line.en));
     lines.push('');
   });
 
@@ -144,23 +146,34 @@ export function quizEmailHtml(
   // must carry as `&amp;`. The unsubscribe link below is deliberately not
   // passed through this (lib/email/utm.ts says why).
   const contentHref = (url: string) => escapeHtml(withNewsletterUtm(url, episode.slug, kind));
-  // The image carries the Japanese in its bubbles, so the rows under it are
-  // the English only. The Japanese survives in the alt text and in the
-  // plain-text part, so nothing depends on the image loading.
+  // The image carries the Japanese in its bubbles. Under it, per line: the
+  // romaji (authored readings, see lib/stories/readings.ts), then the English.
+  // The Japanese survives in the alt text and in the plain-text part, so
+  // nothing depends on the image loading.
   const story = episode.panels
-    .map(
-      (panel, i) => `
+    .map((panel, i) => {
+      const romaji = panelRomaji(episode.slug, panel.id);
+      const rows = panel.lines.flatMap((line, j) => [
+        ...(romaji
+          ? [{ style: `font-size:13px;line-height:1.45;font-style:italic;color:${MOUNTAIN_MIST};`, text: romaji[j] }]
+          : []),
+        { style: `font-size:14px;line-height:1.5;color:${MOUNTAIN_MIST};`, text: line.en },
+      ]);
+      const body = rows
+        .map(({ style, text }, k) => {
+          const top = k === 0 ? '12px' : '0';
+          const bottom = k === rows.length - 1 ? '12px' : '4px';
+          return `
+            <tr><td style="padding:${top} 16px ${bottom};${style}">${escapeHtml(text)}</td></tr>`;
+        })
+        .join('');
+      return `
         <tr><td style="padding:0 0 24px;">
           <img src="${emailPanelUrl(episode, i)}" alt="${escapeHtml(emailPanelAlt(panel))}" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;" />
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SOFT_MIST};">${panel.lines
-            .map(
-              (line, j) => `
-            <tr><td style="padding:${j === 0 ? '12px' : '0'} 16px ${j === panel.lines.length - 1 ? '12px' : '6px'};font-size:14px;line-height:1.5;color:${MOUNTAIN_MIST};">${escapeHtml(line.en)}</td></tr>`
-            )
-            .join('')}
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SOFT_MIST};">${body}
           </table>
-        </td></tr>`
-    )
+        </td></tr>`;
+    })
     .join('');
   const questions = episode.quiz
     .map(

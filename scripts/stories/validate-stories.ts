@@ -22,7 +22,9 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { EPISODES, UPCOMING } from '../../lib/stories';
-import type { Episode } from '../../lib/stories/types';
+import type { Episode, EpisodeReadings } from '../../lib/stories/types';
+import { READINGS, readingsForSlug } from '../../lib/stories/readings';
+import { isKanaSubsequence, readingProblems } from '../../lib/stories/reading-check';
 import { N5_KANJI } from '../../lib/constants/n5-kanji';
 import { N4_KANJI } from '../../lib/constants/n4-kanji';
 import { N3_KANJI } from '../../lib/constants/n3-kanji';
@@ -190,6 +192,8 @@ function validate(episode: Episode): void {
   //    with its bubbles baked in, because a mail client cannot lay text over an
   //    image. Nothing else notices a missing one: the email would go out with
   //    a broken image. Made by `pnpm stories:render-email-panels <slug>`.
+  validateReadings(episode);
+
   episode.panels.forEach((_, i) => {
     const file = `e${i + 1}.jpg`;
     const path = join(ART_DIR, episode.slug, file);
@@ -205,6 +209,64 @@ function validate(episode: Episode): void {
       );
     }
   });
+}
+
+/**
+ * 9. Readings. Every line has authored pronunciation kana (the romaji line in
+ *    the email and on the page is derived from it), and it agrees with the
+ *    dialogue. Only the Japanese reviewer can say a reading is right; this
+ *    catches the ones that are plainly not.
+ */
+function validateReadings(episode: Episode): void {
+  for (const problem of readingProblems(episode, readingsForSlug(episode.slug))) {
+    fail(episode, `readings: ${problem}`);
+  }
+}
+
+/**
+ * A check nobody has seen fail is not known to work: feed the reading check
+ * fixtures that are each wrong in one way and require that every one is caught,
+ * and that a correct one passes.
+ */
+function selfTestReadingCheck(): void {
+  const episode = EPISODES[0];
+  if (!episode) return;
+  const good = readingsForSlug(episode.slug);
+  if (!good) return; // reported per episode
+  const clone = (mutate: (panels: Record<string, string[]>) => void): EpisodeReadings => {
+    const panels = JSON.parse(JSON.stringify(good.panels)) as Record<string, string[]>;
+    mutate(panels);
+    return { slug: good.slug, panels };
+  };
+  const firstPanel = episode.panels[0].id;
+  const fixtures: [string, EpisodeReadings | undefined][] = [
+    ['no readings file', undefined],
+    ['a missing panel', clone(p => delete p[firstPanel])],
+    ['an extra panel', clone(p => (p.P99 = ['あ']))],
+    ['a missing line', clone(p => p[firstPanel].pop())],
+    ['a kanji left in', clone(p => (p[firstPanel][0] = '大きい やまです。'))],
+    ['Latin letters', clone(p => (p[firstPanel][0] = 'おおきい yama|です。'))],
+    ['a dropped kana', clone(p => (p[firstPanel][0] = p[firstPanel][0].replace('です', '')))],
+    // Only kana the dialogue spells out can be checked: a wrong reading of a
+    // kanji (やま for 山 written かわ) is for the reviewer, not for this.
+    ['a changed kana', clone(p => (p[firstPanel][0] = p[firstPanel][0].replace('です', 'だす')))],
+  ];
+  for (const [what, readings] of fixtures) {
+    if (readingProblems(episode, readings).length === 0) {
+      issues.push(`the readings check did not catch a fixture with ${what}`);
+    }
+  }
+  if (readingProblems(episode, good).length > 0) {
+    issues.push('the readings check rejected the real readings of the first episode');
+  }
+  // The particle rewrites it must accept: は~わ, へ~え, を~お.
+  const accepts: [string, string][] = [
+    ['タンは うちへ 行きます。', 'タン|わ うち|え いきます。'],
+    ['ごはんを たべます。', 'ごはん|お たべます。'],
+  ];
+  for (const [ja, reading] of accepts) {
+    if (!isKanaSubsequence(ja, reading)) issues.push(`the readings check rejected "${reading}" for "${ja}"`);
+  }
 }
 
 /** An email panel is a 1040px JPEG; the render script aims under 150 kB. */
@@ -269,6 +331,23 @@ function validateRegistryCoversDisk(): void {
   }
 }
 
+/** A readings file the registry does not import, or one for no episode, is dead weight that looks done. */
+function validateReadingsCoverDisk(): void {
+  const dir = join(DATA_DIR, 'readings');
+  const files = existsSync(dir) ? readdirSync(dir).filter(f => /^ep-\d+\.ts$/.test(f)) : [];
+  const expected = new Set(READINGS.map(r => EPISODES.find(e => e.slug === r.slug)).map(e => e && `ep-${String(e.number).padStart(2, '0')}.ts`));
+  for (const file of files) {
+    if (!expected.has(file)) {
+      issues.push(`data/stories/readings/${file} is not imported by lib/stories/readings.ts (or matches no episode)`);
+    }
+  }
+  for (const reading of READINGS) {
+    if (!EPISODES.some(e => e.slug === reading.slug)) {
+      issues.push(`readings for "${reading.slug}" match no registered episode`);
+    }
+  }
+}
+
 function main(): void {
   // First, and before the early return: an empty registry with episode files
   // on disk is the episode 6 failure in its most complete form.
@@ -280,6 +359,8 @@ function main(): void {
   }
 
   for (const episode of EPISODES) validate(episode);
+  selfTestReadingCheck();
+  validateReadingsCoverDisk();
 
   // Cross-episode rules. Slugs are URLs and numbers are the season's spine, so
   // a collision in either is a routing bug rather than a content one.

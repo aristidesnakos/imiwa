@@ -48,6 +48,12 @@ lib/stories/index.ts:
 because it reads the same bubble geometry and type scale the site does.)
 `pnpm validate:stories` fails until all six exist.
 
+Nor does it make the READINGS. The email shows a romaji line under each panel,
+and a program cannot choose a reading for a kanji (十 is じゅう or とお), so
+data/stories/readings/ep-NN.ts is drafted by hand, registered in
+lib/stories/readings.ts, and checked by the Japanese reviewer. `pnpm
+validate:stories` fails until it exists and agrees with the dialogue.
+
 The panel PNGs from ChatGPT carry NO text: the model draws scenes only and
 every glyph is set by code. `build.py` composites the Japanese into the social
 exports. The *site* does the same job in React instead — it positions real HTML
@@ -288,8 +294,11 @@ def main() -> None:
         '\nNext:'
         '\n  1. add it to lib/stories/index.ts if it is new'
         f"\n  2. pnpm stories:render-email-panels {script['slug']}   (the email's bubbled panels, e1..e6.jpg)"
-        '\n  3. pnpm validate:stories'
-        '\n  4. commit public/stories/<slug>/ including the e*.jpg files, then deploy'
+        f"\n  3. draft data/stories/readings/ep-{script['episode']:02d}.ts (pronunciation kana, one per line; the"
+        '\n     email shows romaji made from it) and add it to lib/stories/readings.ts;'
+        '\n     the Japanese reviewer checks it. Conventions: the header of lib/stories/readings.ts'
+        '\n  4. pnpm validate:stories'
+        '\n  5. commit public/stories/<slug>/ including the e*.jpg files, then deploy'
     )
 
 

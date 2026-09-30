@@ -53,6 +53,7 @@ import {
   confirmationEmailText,
 } from '../lib/email/confirmation-email';
 import { EPISODES, episodesNewestFirst } from '../lib/stories';
+import { panelRomaji } from '../lib/stories/romaji-lines';
 import { SITE_URL } from '../lib/seo/site';
 
 const SECRET = 'test-secret-not-used-anywhere-real';
@@ -453,6 +454,25 @@ for (const episode of EPISODES) {
     `${episode.slug}: the plain text still carries every Japanese line`,
     episode.panels.every(panel => panel.lines.every(line => text.includes(line.ja)))
   );
+  // The romaji line: between the image and the English, for every line, in both
+  // parts. Its source is authored readings, which validate:stories checks.
+  const romajiOrder = episode.panels.every(panel => {
+    const romaji = panelRomaji(episode.slug, panel.id);
+    return (
+      romaji !== null &&
+      romaji.length === panel.lines.length &&
+      panel.lines.every((line, i) => {
+        const inHtml = html.indexOf(`>${romaji[i]}</td>`);
+        return (
+          romaji[i].length > 0 &&
+          inHtml > -1 &&
+          html.indexOf(`>${line.en.replace(/&/g, '&amp;')}</td>`, inHtml) > inHtml &&
+          text.includes(`${line.ja}\n${romaji[i]}\n${line.en}`)
+        );
+      })
+    );
+  });
+  check(`${episode.slug}: every line's romaji is in the HTML and the plain text, before its English`, romajiOrder);
 }
 
 if (newestEpisode) {

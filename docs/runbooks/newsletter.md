@@ -129,7 +129,11 @@ A job with no secrets does the same.
    generated file is not editable. Register it in `lib/stories/index.ts`, then run
    `pnpm stories:render-email-panels <slug>`: the email shows each panel with its speech bubbles baked
    into a JPEG (`public/stories/<slug>/e1.jpg`..`e6.jpg`, because a mail client cannot lay text over an
-   image), and the importer does not make them. Look at the email before it goes: `pnpm email:preview
+   image), and the importer does not make them. Also draft `data/stories/readings/ep-NN.ts`, the
+   pronunciation kana for every line, and register it in `lib/stories/readings.ts`: the email prints a
+   romaji line under each panel, made from it, and a program cannot pick a reading for 十 (じゅう or
+   とお). The Japanese reviewer checks it before the send; conventions are in the header of
+   `lib/stories/readings.ts`. Look at the email before it goes: `pnpm email:preview
    <slug> --local` writes it to a file to open in a browser. Run `pnpm validate:stories` (the contract: a
    failure is a content bug, not a lint nit, and it fails while any `e*.jpg` is missing), then merge and
    deploy so `/stories/<slug>` and its email images are live. The broadcast links to the

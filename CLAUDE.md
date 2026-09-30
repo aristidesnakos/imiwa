@@ -296,7 +296,13 @@ client cannot lay text over an image, so `pnpm stories:render-email-panels <slug
 a dependency) flattens each panel to `public/stories/<slug>/e1.jpg`..`e6.jpg` from the same `bubble`
 geometry, the type scale in `lib/stories/bubble-style.ts` (shared with `StoryPanel`) and the hex tokens
 in `globals.css`. `quiz-email.ts` shows those, with the Japanese and English in the alt text and the
-English as text under each. Running it is part of importing an episode; `validate:stories` fails on a
+romaji line and then the English as text under each. The romaji comes from **authored readings**,
+`data/stories/readings/ep-NN.ts` (pronunciation kana per line, registered by static import in
+`lib/stories/readings.ts`, conventions in its header), because a program cannot choose a reading for
+十 (じゅう or とお); the Japanese reviewer checks them, and `lib/stories/romaji-lines.ts`
+(`panelRomaji`) derives the romaji through `hepburn.ts`. Drafting readings is part of importing an
+episode; `validate:stories` fails without them and checks each line against the dialogue. Running
+the panel render is part of importing an episode; `validate:stories` fails on a
 missing file and `validate:subscribe` on an email that does not reference them. `pnpm email:preview
 <slug> --local` writes the email to a file to look at.
 

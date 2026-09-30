@@ -153,3 +153,18 @@ export interface UpcomingEpisode {
    */
   teaches: string[];
 }
+
+/**
+ * Pronunciation kana for one episode: how each line of dialogue is SAID.
+ *
+ * Authored, never derived. The dialogue has kanji (十, 来ました) and a program
+ * cannot choose a reading for them (十 is じゅう or とお), so a person writes
+ * these and the Japanese reviewer checks them. `lib/stories/readings.ts`
+ * documents the conventions; `validate:stories` holds the contract.
+ */
+export interface EpisodeReadings {
+  /** Must equal the episode's slug. */
+  slug: string;
+  /** Panel id (`P1`…) to one reading per line, in the panel's line order. */
+  panels: Record<string, string[]>;
+}
