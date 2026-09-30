@@ -18,10 +18,11 @@
  *
  * Episode page only. The email deliberately never shows the video.
  *
- * Before the FIRST entry goes live, re-read `app/privacy-policy/page.tsx`: the
- * section loads its thumbnail from i.ytimg.com (Google) as it scrolls into
- * view, and the player from youtube-nocookie.com only on click, and the policy
- * does not yet name either.
+ * The privacy policy names the thumbnail (i.ytimg.com, loaded on scroll) and the
+ * player (youtube-nocookie.com, loaded only on click) under "Videos on story
+ * pages" and lists Google (YouTube) as a provider. If either ever loads
+ * earlier, or a second embed host appears, update `app/privacy-policy/page.tsx`
+ * first (its header lists the claim to re-check).
  */
 export interface EpisodeVideo {
   /** The 11-character YouTube video id (the `v=` value), nothing else. */
