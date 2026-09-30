@@ -11,8 +11,8 @@ brand awareness feeds it, and the question is whether the **storyline** is worth
 **Answer: the storyline is the unit, the strip is its picture, the book is its product.** The
 strip and the story are not two channels; they are one weekly episode with three outputs. Gag strips
 have one output and no product at the end. `episode-spec.md` Part B already holds the spine — six
-themed episodes of *The Travels of Tan* (mountain → river → school → rainy day → train to Tokyo →
-family), 30 focus kanji verified in N5, pre-encoded links. Strict N5 cannot carry a plot (§A4), so
+themed episodes of *The Travels of Tan* (mountain → river → school → rainy day → train east →
+family; first written "train to Tokyo", but 京 is N4, so episode 5 teaches 東 as "east"), 30 focus kanji verified in N5, pre-encoded links. Strict N5 cannot carry a plot (§A4), so
 the continuity is the **journey**, not cause and effect: one place per episode, Tan moving through
 Japan, meeting each kanji where it lives (a sign, a menu, a station board). That is a storyline the
 grammar supports, and it is the one the docs already started.

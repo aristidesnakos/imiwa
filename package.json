@@ -28,6 +28,8 @@
     "stories:sync-videos": "tsx --tsconfig tsconfig.json scripts/stories/sync-videos.ts",
     "validate:video-sync": "tsx --tsconfig tsconfig.json scripts/stories/validate-video-sync.ts",
     "stories:ship":"tsx --tsconfig tsconfig.json scripts/stories/ship-episode.ts",
+    "stories:episode-issue": "tsx --tsconfig tsconfig.json scripts/stories/episode-issue.ts create",
+    "stories:episode-status": "tsx --tsconfig tsconfig.json scripts/stories/episode-issue.ts status",
     "email:preview": "tsx --tsconfig tsconfig.json scripts/stories/preview-email.ts",
     "stories:create-broadcast": "tsx --tsconfig tsconfig.json scripts/stories/create-broadcast.ts",
     "stories:schedule-broadcast": "tsx --tsconfig tsconfig.json scripts/stories/schedule-weekly-broadcast.ts",

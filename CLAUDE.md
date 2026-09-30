@@ -77,7 +77,10 @@ pnpm stories:create-broadcast <episode-slug>     # a Resend draft, never a send 
 pnpm newsletter:stats                            # read-only Resend report (Full access key)
 ```
 
-`docs/runbooks/newsletter.md` is the operator procedure and the first thing to read here. The short
+`docs/runbooks/weekly-episode.md` is the end-to-end weekly procedure (one episode a week, built a week
+ahead, approvals as a GitHub issue per episode: `pnpm stories:episode-issue <n>`, `pnpm
+stories:episode-status <n>`); `docs/runbooks/newsletter.md` is the email half and the first thing to read
+about the send. The short
 version: the send is **Saturday at 13:00 UTC** (`config.newsletter`, derived by
 `lib/email/send-schedule.ts`), write-by is the Wednesday before, and **the weekly send is scheduled
 by a job** (since 2026-09-27, reversing an earlier "no cron" decision). Every Wednesday and Friday at
@@ -331,7 +334,7 @@ the fallback (the latest episode) is already correct for every surface that has 
 
 **An episode can have a companion YouTube video, on the episode page only — never in the email.**
 Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId, aspect? }`), a tracked file
-because the generated `ep-NN.ts` are not editable and the strips repo is unversioned; no entry means
+because the generated `ep-NN.ts` are not editable and the strips repo is a local repo with no remote; no entry means
 no video. `EpisodeVideoSection` renders nothing without an entry, and otherwise a
 "Watch the episode" heading, a lazy `i.ytimg.com` thumbnail, a real "Watch on YouTube" link, and a tiny
 client facade (`VideoFacade`) that creates the `youtube-nocookie.com` iframe only on click, so the

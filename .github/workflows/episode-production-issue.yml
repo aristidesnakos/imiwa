@@ -1,0 +1,166 @@
+name: Episode Production Issue
+
+# Opens the production issue (the owner's approval checklist) for the next
+# episode to be BUILT, every Monday, so the week's checklist is on his phone
+# even if no scheduled task on his Mac runs.
+#
+# "Next to be built" is the highest of the registered episodes (lib/stories/
+# index.ts) and every episode that already has a production issue, open or
+# closed, plus one, never past 14. Closed counts too: an episode whose issue was
+# closed after approval but which is not registered yet (it ships on the
+# Wednesday) must not be opened a second time. A guard stops it opening more
+# when two issues already wait on an unregistered episode: production is that
+# far behind and another checklist would only pile up.
+#
+# Everything is decided by scripts/stories/episode-issue.ts, which is also what
+# the scheduled tasks run, and which is idempotent: an episode that already has
+# an issue is reported, not duplicated. It needs no strips folder. Without one the
+# title falls back to `Episode N`, and a person or task renames the issue (the
+# lookup matches on "Episode N production", so a rename is safe); or pass the
+# title when running the workflow by hand.
+#
+# Procedure, and the body format the tasks parse: docs/runbooks/weekly-episode.md.
+#
+# Failing opens (or comments on) an alarm issue, as weekly-broadcast.yml does:
+# a red run in the Actions tab is not a notification.
+
+on:
+  schedule:
+    # Mondays 06:13 UTC: the start of the build week (the Monday script step in
+    # the runbook), at an off-the-hour minute because GitHub delays and
+    # sometimes drops the top-of-hour runs.
+    - cron: '13 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: 'Episode number to open (blank: the next one to be built)'
+        type: string
+        default: ''
+      title:
+        description: 'Episode title, e.g. "How much is it?" (blank: from the season file if present, else "Episode N")'
+        type: string
+        default: ''
+      dry_run:
+        description: 'Only print the title and body; nothing is created'
+        type: boolean
+        default: false
+
+# Never two at once: two runs could each decide the same episode is next.
+concurrency:
+  group: episode-production-issue
+  cancel-in-progress: false
+
+jobs:
+  open-issue:
+    name: Open the production issue for the next episode to build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # Checkout needs contents: read, and declaring any permission drops the
+      # rest. issues: write is the only write the job has.
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Open the production issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Explicit rather than inferred from the git remote.
+          GH_REPO: ${{ github.repository }}
+          EPISODE: ${{ inputs.episode }}
+          TITLE: ${{ inputs.title }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        shell: bash
+        run: |
+          set -o pipefail
+          args=()
+          if [ -n "$EPISODE" ]; then args+=("$EPISODE"); else args+=(--next); fi
+          if [ -n "$TITLE" ]; then args+=(--title "$TITLE"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          # stdout is the script's JSON result, stderr its commentary.
+          pnpm -s stories:episode-issue "${args[@]}" 2> >(tee -a "$RUNNER_TEMP/episode-production.log" >&2) | tee "$RUNNER_TEMP/episode-production.json"
+          action=$(grep -m1 '"action"' "$RUNNER_TEMP/episode-production.json" | sed 's/.*: *"\([a-z-]*\)".*/\1/')
+          echo "episode-issue: ${action:-unknown}" >> "$GITHUB_STEP_SUMMARY"
+          case "$action" in
+            created)  echo "::notice::Opened the production issue. See the job output for the link." ;;
+            exists)   echo "::notice::That episode already has a production issue; nothing created." ;;
+            skipped)  echo "::notice::Nothing opened: $(grep -m1 '"reason"' "$RUNNER_TEMP/episode-production.json")" ;;
+          esac
+
+      - name: Report that the production issue job did not run
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_LABEL: production-alarm
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # `gh issue create --label X` hard-fails on a label that does not
+          # exist, which would swallow the alert. Create on demand.
+          gh label create "$ISSUE_LABEL" \
+            --color B60205 \
+            --description "Automated episode-production monitoring" \
+            >/dev/null 2>&1 || true
+
+          ISSUE_TITLE='🚨 [Episode production] Weekly production-issue job failed'
+          export ISSUE_TITLE
+
+          BODY_FILE="$RUNNER_TEMP/episode-production-alarm.md"
+          LOG_FILE="$RUNNER_TEMP/episode-production.log"
+          {
+            printf '%s\n' "The job that opens this week's episode production issue failed, so **the owner's approval checklist for the episode now being built may not exist.**"
+            printf '\n**Failed run:** %s\n' "$RUN_URL"
+            if [ -s "$LOG_FILE" ]; then
+              printf '\nThe end of its output:\n\n```\n'
+              tail -n 30 "$LOG_FILE"
+              printf '```\n'
+            else
+              printf '\nIt failed before the script printed anything: checkout, dependency install, or runner setup. The run log says which step.\n'
+            fi
+            cat <<'EOF'
+
+          Open it by hand: Actions → Episode Production Issue → Run workflow (leave the episode blank for the next
+          one), or `pnpm stories:episode-issue <n>` on a machine with `gh` signed in. It is idempotent. Then close this
+          issue.
+
+          Runbook: `docs/runbooks/weekly-episode.md`.
+
+          _Opened automatically by `.github/workflows/episode-production-issue.yml`._
+          EOF
+          } > "$BODY_FILE"
+
+          # Comment on the open alarm rather than stacking a new one every run.
+          EXISTING=$(gh issue list \
+            --state open \
+            --label "$ISSUE_LABEL" \
+            --limit 100 \
+            --json number,title \
+            --jq 'map(select(.title == $ENV.ISSUE_TITLE)) | .[0].number // empty') || EXISTING=
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file "$BODY_FILE"
+            echo "Commented on existing issue #${EXISTING}."
+          else
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label "$ISSUE_LABEL" \
+              --body-file "$BODY_FILE"
+          fi

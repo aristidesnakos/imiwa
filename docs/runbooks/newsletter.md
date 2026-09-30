@@ -1,5 +1,9 @@
 # Newsletter runbook — the weekly story
 
+> **Producing and releasing an episode end to end** (script, Japanese read, art, ship, the YouTube Short,
+> the approval issue, the scheduled tasks) is [`weekly-episode.md`](./weekly-episode.md). This page is the
+> email half: how the send is scheduled, reviewed, cancelled and measured.
+
 > **Fixed 2026-09-16: production accepts subscribers again.**
 > `RESEND_WEEKLY_STORIES_SEGMENT_ID` had never been set in Vercel, so
 > [`app/api/subscribe/confirm/route.ts`](../../app/api/subscribe/confirm/route.ts) answered
@@ -111,8 +115,11 @@ plan and change nothing. Each run:
    comments on it while it is open. The Wednesday after the send, the job closes it with Resend's
    record of when the broadcast went out.
 8. **With nothing to schedule, it does not fail.** It opens "No episode queued for Saturday
-   YYYY-MM-DD — import one by Friday": the write-by reminder. Season one is fully published, so from
-   Sat 2026-10-10 on this is the expected state until an episode 8 is imported.
+   YYYY-MM-DD — import one by Friday": the write-by reminder. Every episode imported so far is booked or
+   sent, so once episode 7 has gone out (Sat 2026-10-03) this is the state on any week whose episode has not
+   been shipped by Wednesday. The season has 14 episodes, built a week ahead and shipped each Wednesday
+   ([`weekly-episode.md`](./weekly-episode.md)); a reminder on a week with an unshipped episode means
+   a gate was late.
 
 It never sends, and it never reads a contact. It makes at most two calls that change anything,
 create a draft and schedule it, and Resend does the queueing, throttling, unsubscribe filtering and
@@ -124,7 +131,8 @@ A job with no secrets does the same.
 
 ### What a person still does
 
-1. **Import the episode by Friday.** Build the strip in the strips repo
+1. **Import the episode by Friday** (by Wednesday 11:30 UTC in the weekly cadence: the step-by-step and
+   the approval gates are in [`weekly-episode.md`](./weekly-episode.md)). Build the strip in the strips repo
    (`strips/ep-NN/script.json` is the source of truth), then run `pnpm stories:ship <ep-number>`
    (`--dry-run` first if you like; `--published YYYY-MM-DD` to set the date). It runs
    `scripts/stories/import-episode.py`, registers the episode in `lib/stories/index.ts` (skipping that

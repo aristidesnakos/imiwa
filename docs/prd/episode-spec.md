@@ -256,8 +256,20 @@ focus character across episodes.
 | 2 | Tan finds the river | 川 水 下 小 白 | 川, 水, 下, 小さい, 白い | written 2026-09-14 | never: before the first broadcast | — |
 | 3 | Tan goes to school | 学 校 先 生 語 | 学校, 先生, 学生, 日本語 | written 2026-09-16 | never: before the first broadcast | — |
 | 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | written 2026-09-23 | never: before the first broadcast | — |
-| 5 | The train to Tokyo | 電 車 東 行 来 | 電車, 東京, 行く, 来る | written 2026-09-24 | never: before the first broadcast | — |
-| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の人, 女の人 | written 2026-09-27 | never: reached every subscriber through the welcome card | — |
+| 5 | The train east | 電 車 東 行 来 | 電車, 東, 行く, 来る | written 2026-09-24 | never: before the first broadcast | — |
+| 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の子, 女の子 | written 2026-09-27 | never: reached every subscriber through the welcome card | — |
+
+**Corrected 2026-09-30.** Episode 5 was written here as "The train to Tokyo / 東京", but 京 is not one of
+the 82 N5 kanji, so 東京 cannot appear in a strict-N5 episode: the episode is "The train east", teaches 東
+as "east", and keeps the destination in kana (`strips/season-01.json` records the change). Episode 6 was
+written with 男の人 / 女の人; the all-animal world made it 男の子 / 女の子 (a boy and a girl tanuki), the same two
+kanji. The focus kanji columns were never affected, and every episode is built and read from
+`strips/ep-NN/script.json`, not from this table.
+
+**Episodes 7-14 have no row here.** Their theme, focus kanji and vocab are in `strips/season-01.json`,
+and their release Saturdays (episode 8 is 2026-10-10, each later one a week on) are in
+[`docs/runbooks/weekly-episode.md`](../runbooks/weekly-episode.md). Add one row per episode to this table
+and to "The reply question" below in the commit that ships it.
 
 The send is **Saturday at 13:00 UTC** (the day decided 2026-09-16, the time 2026-09-27); write-by
 is the Wednesday before, which is the room the A7 checklist and one round of fixes need, and the day
@@ -327,3 +339,9 @@ just collecting praise:
 | 4 | What's the hardest part of studying kanji for you right now? | Feature demand, unprompted |
 | 5 | Would you want these at N4 as well, or a back catalogue of N5? | Direct read on the paid-reader thesis |
 | 6 | What would make you recommend this to someone? | Whatever they name is the product |
+
+**Episodes 7-14 still need a question each.** Write it on the Monday the script is written (one line, always
+an invitation to reply, never a link, rotating as above) and show it in the Japanese-read comment on the
+episode's production issue; the rows live here. Note that as of 2026-09-30 `lib/email/quiz-email.ts` does not
+render a per-episode question: its body carries one fixed reply line, so block 7 of A2 is not yet what the
+generated email does. Wiring it is an owner decision; until then these rows are editorial only.
