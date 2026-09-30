@@ -36,6 +36,8 @@ WHAT IT EMITS
   public/stories/<slug>/pN.jpg   the email-compatible panel derivative
   public/stories/<slug>/og.jpg   the composited square, for OpenGraph only
 
+Normally run through `pnpm stories:ship <ep-number>`, which also does the steps below.
+
 It does NOT make the email's panels. The weekly email shows
 public/stories/<slug>/e1.jpg..e6.jpg: the art with its speech bubbles baked in,
 because a mail client cannot lay text over an image. Those come from a second
@@ -291,14 +293,10 @@ def main() -> None:
     dest.write_text(emit_episode(script, published, ep_dir), encoding='utf-8')
     print(f'  data {dest.relative_to(REPO)}')
     print(
-        '\nNext:'
-        '\n  1. add it to lib/stories/index.ts if it is new'
-        f"\n  2. pnpm stories:render-email-panels {script['slug']}   (the email's bubbled panels, e1..e6.jpg)"
-        f"\n  3. draft data/stories/readings/ep-{script['episode']:02d}.ts (pronunciation kana, one per line; the"
-        '\n     email shows romaji made from it) and add it to lib/stories/readings.ts;'
-        '\n     the Japanese reviewer checks it. Conventions: the header of lib/stories/readings.ts'
-        '\n  4. pnpm validate:stories'
-        '\n  5. commit public/stories/<slug>/ including the e*.jpg files, then deploy'
+        '\nThis was step 1. `pnpm stories:ship <ep-number>` does all of it in order: this import, the'
+        '\nlib/stories/index.ts registration, the email panels and the validators, and it stops where a'
+        '\nperson is needed: data/stories/readings/ep-NN.ts (drafted, then checked by the Japanese reviewer;'
+        '\nconventions in the header of lib/stories/readings.ts).'
     )
 
 

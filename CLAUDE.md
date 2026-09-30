@@ -70,6 +70,7 @@ pnpm submit-indexnow
 ```bash
 pnpm check-subscribe-live                        # is the signup path configured? (no secrets)
 pnpm check-subscribe-e2e                         # walk it with a real address, then clean up
+pnpm stories:ship <ep-number> [--dry-run]        # import, register, email panels, validators; stops at readings
 pnpm stories:schedule-broadcast --dry-run        # what the weekly job would schedule; needs no key
 pnpm stories:create-broadcast <episode-slug>     # a Resend draft, never a send (manual fallback)
 pnpm newsletter:stats                            # read-only Resend report (Full access key)
@@ -248,6 +249,14 @@ A weekly six-panel comic, every word inside JLPT N5. `strips/ep-NN/script.json` 
 `data/stories/ep-NN.ts` and re-encodes the art into `public/stories/<slug>/`. **The generated data
 files are not editable** — edit the script and re-import, or the page and the strip posted to
 Pinterest end up saying different things with nothing reporting it.
+
+**Commissioning an episode is `pnpm stories:ship <ep-number>`** (`scripts/stories/ship-episode.ts`; add
+`--published YYYY-MM-DD`, or `--dry-run` to see the plan). It runs the importer, adds the import and
+`EPISODES` entry to `lib/stories/index.ts` (dropping a matching `UPCOMING` entry), renders the email
+panels and runs `validate:stories`, `validate:subscribe` and `validate:broadcast`. It is idempotent: a
+re-import keeps the existing `publishedAt`. It **stops** if `data/stories/readings/ep-NN.ts` is missing or
+unregistered, because the readings are drafted and reviewed by people. It never commits, pushes or calls
+Resend; it prints what to commit and the Wednesday / Friday 12:07 UTC deadlines.
 
 `lib/stories/index.ts` is the registry and uses **static imports, not `fs`**, for the same reason
 `lib/sentences/published.ts` does. Its imports are relative rather than `@/`, because

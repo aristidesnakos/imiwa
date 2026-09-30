@@ -25,6 +25,7 @@
     "sentences:publish": "tsx --tsconfig tsconfig.json scripts/sentences/publish.ts",
     "validate:stories": "tsx --tsconfig tsconfig.json scripts/stories/validate-stories.ts",
     "stories:render-email-panels": "tsx --tsconfig tsconfig.json scripts/stories/render-email-panels.ts",
+    "stories:ship": "tsx --tsconfig tsconfig.json scripts/stories/ship-episode.ts",
     "email:preview": "tsx --tsconfig tsconfig.json scripts/stories/preview-email.ts",
     "stories:create-broadcast": "tsx --tsconfig tsconfig.json scripts/stories/create-broadcast.ts",
     "stories:schedule-broadcast": "tsx --tsconfig tsconfig.json scripts/stories/schedule-weekly-broadcast.ts",

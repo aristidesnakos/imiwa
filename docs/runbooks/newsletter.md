@@ -124,22 +124,23 @@ A job with no secrets does the same.
 
 ### What a person still does
 
-1. **Import the episode by Friday.** `strips/ep-NN/script.json` in the strips repo is the source of
-   truth; `scripts/stories/import-episode.py` derives `data/stories/ep-NN.ts` and the art, and the
-   generated file is not editable. Register it in `lib/stories/index.ts`, then run
-   `pnpm stories:render-email-panels <slug>`: the email shows each panel with its speech bubbles baked
-   into a JPEG (`public/stories/<slug>/e1.jpg`..`e6.jpg`, because a mail client cannot lay text over an
-   image), and the importer does not make them. Also draft `data/stories/readings/ep-NN.ts`, the
-   pronunciation kana for every line, and register it in `lib/stories/readings.ts`: the email prints a
-   romaji line under each panel, made from it, and a program cannot pick a reading for 十 (じゅう or
-   とお). The Japanese reviewer checks it before the send; conventions are in the header of
-   `lib/stories/readings.ts`. Look at the email before it goes: `pnpm email:preview
-   <slug> --local` writes it to a file to open in a browser. Run `pnpm validate:stories` (the contract: a
-   failure is a content bug, not a lint nit, and it fails while any `e*.jpg` is missing), then merge and
-   deploy so `/stories/<slug>` and its email images are live. The broadcast links to the
-   page and quotes it. Imported by Wednesday 12:07 UTC, the episode gets a three-day review window;
-   by Friday 12:07 UTC, one day. After Friday's run, run the workflow by hand before Saturday
-   12:30 UTC, or the episode waits a week.
+1. **Import the episode by Friday.** Build the strip in the strips repo
+   (`strips/ep-NN/script.json` is the source of truth), then run `pnpm stories:ship <ep-number>`
+   (`--dry-run` first if you like; `--published YYYY-MM-DD` to set the date). It runs
+   `scripts/stories/import-episode.py`, registers the episode in `lib/stories/index.ts` (skipping that
+   once shipped episode 6 as a 404), runs `pnpm stories:render-email-panels <slug>` (the email's
+   `e1.jpg`..`e6.jpg`, bubbles baked in because a mail client cannot lay text over an image) and then
+   `validate:stories`, `validate:subscribe` and `validate:broadcast`. It is safe to re-run. It
+   **stops** until `data/stories/readings/ep-NN.ts` exists and is registered in
+   `lib/stories/readings.ts`: that is the pronunciation kana for every line, which the email turns
+   into a romaji line, and a program cannot pick a reading for 十 (じゅう or とお). Ask Claude to draft it
+   from the generated data file (conventions are in the header of `lib/stories/readings.ts`); the
+   Japanese reviewer checks it before the send. Then look at the email (`pnpm email:preview <slug>
+   --local` writes it to a file to open in a browser), commit what the script lists and push to `main`
+   so `/stories/<slug>` and its email images are live. The script never commits, pushes or calls
+   Resend. The broadcast links to the page and quotes it. Imported by Wednesday 12:07 UTC, the episode
+   gets a three-day review window; by Friday 12:07 UTC, one day. After Friday's run, run the workflow
+   by hand before Saturday 12:30 UTC, or the episode waits a week.
 2. **Review in the window.** The review issue arrives when the job schedules. Open the broadcast in
    Resend and run [`docs/prd/episode-spec.md`](../prd/episode-spec.md) §A7. Items 1–3 and 10 are
    machine-checked by `validate:stories`. Items 4–9 (Gmail web, Gmail mobile, Outlook.com, clip
