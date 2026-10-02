@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Youtube } from "lucide-react";
 // Client child inside a server component: Footer itself stays a server component.
 import { StudyNavLinks } from "@/components/nav/StudyNavLinks";
 import { levelPagePath } from "@/lib/levels";
@@ -130,16 +130,27 @@ const Footer = () => {
             <div className="text-sm text-japan-mountain-mist text-center sm:text-left">
               © {new Date().getFullYear()} MichiKanji. All rights reserved.
             </div>
-            <div className="text-sm text-japan-mountain-mist text-center sm:text-right">
-              Made by{" "}
-              <Link 
-                href="https://theauspiciouscompany.com" 
-                target="_blank" 
+            <div className="flex items-center gap-4">
+              <Link
+                href="https://www.youtube.com/@officialmichikanji"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-japan-sakura-waters transition-colors underline"
+                className="text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors"
+                aria-label="MichiKanji YouTube channel"
               >
-                The Auspicious Company
+                <Youtube className="w-5 h-5" />
               </Link>
+              <div className="text-sm text-japan-mountain-mist text-center sm:text-right">
+                Made by{" "}
+                <Link
+                  href="https://theauspiciouscompany.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-japan-sakura-waters transition-colors underline"
+                >
+                  The Auspicious Company
+                </Link>
+              </div>
             </div>
           </div>
         </div>
