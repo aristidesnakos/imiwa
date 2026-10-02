@@ -79,8 +79,20 @@ const Footer = () => {
             <h3 className="font-semibold mb-4 text-japan-deep-ocean">Resources</h3>
             <ul className="space-y-2">
               <li>
-                <Link 
-                  href="https://llanai.com" 
+                {/* Site-wide, so every page names who is behind it. prefetch is
+                    off for the same reason as the other links that render on
+                    every page: it would add a route payload to each page's budget. */}
+                <Link
+                  href="/about"
+                  prefetch={false}
+                  className="text-sm text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors"
+                >
+                  About MichiKanji
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://llanai.com"
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-sm text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors flex items-center gap-1"
@@ -252,7 +264,13 @@ const Footer = () => {
             </p>
             <p className="text-xs text-japan-mountain-mist leading-relaxed">
               MichiKanji is lovingly crafted by{' '}
-              <span className="font-medium">Ari Nakos</span>{' '}
+              <Link
+                href="/about"
+                prefetch={false}
+                className="hover:text-japan-sakura-waters underline transition-colors font-medium"
+              >
+                Ari Nakos
+              </Link>{' '}
               of{' '}
               <Link 
                 href="https://theauspiciouscompany.com" 

@@ -67,6 +67,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               },
               sameAs: [
                 'https://twitter.com/just_aristides',
+                // The brand's own channel, so the entity resolves to one
+                // profile set across the site, /about and the video pages.
+                'https://www.youtube.com/@officialmichikanji',
               ]
             },
             {

@@ -38,6 +38,9 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   { path: '/free-resources/kanji-sheets/n3-sheets', lastmod: '2026-01-24', priority: '0.7' },
   { path: '/free-resources/kanji-sheets/n2-sheets', lastmod: '2026-01-24', priority: '0.7' },
   { path: '/free-resources/kanji-sheets/n1-sheets', lastmod: '2026-01-24', priority: '0.7' },
+  // Who makes the site and where its data comes from. Low priority: it exists
+  // to be found when someone asks "who is behind this", not to rank for a query.
+  { path: '/about', lastmod: '2026-10-02', priority: '0.5' },
   { path: '/privacy-policy', lastmod: '2026-09-28', priority: '0.7' },
   { path: '/tos', lastmod: '2026-09-29', priority: '0.7' },
 ];
