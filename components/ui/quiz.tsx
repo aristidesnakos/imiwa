@@ -245,7 +245,7 @@ function Quiz({ questions, onComplete, className, ...props }: QuizProps) {
           </li>
         ))}
         <li className="flex min-h-14 items-center justify-between gap-3 bg-muted px-5 py-2 text-sm sm:px-6">
-          <span className="tabular-nums">
+          <span className="whitespace-nowrap tabular-nums">
             {result.complete ? (
               <span className="font-medium">
                 {result.correct} of {result.total} correct
