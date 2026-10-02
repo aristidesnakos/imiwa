@@ -12,6 +12,8 @@ import { CTASection } from '@/components/CTASection';
 import { StoryPanel } from '@/components/stories/StoryPanel';
 import { panelRomaji } from '@/lib/stories/romaji-lines';
 import { EpisodeVideoSection } from '@/components/stories/EpisodeVideoSection';
+import { Quiz, type QuizQuestion } from '@/components/ui/quiz';
+import { optionLetter } from '@/lib/quiz';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { EPISODES, episodeBySlug, episodeLines } from '@/lib/stories';
 import { videoObjectJsonLd } from '@/lib/stories/videos';
@@ -30,9 +32,6 @@ export const revalidate = 86400;
 interface Props {
   params: Promise<{ slug: string }>;
 }
-
-/** Multiple-choice labels. Three options today; the validator allows more. */
-const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /**
  * Quiz options are the one field in an episode that is not reliably Japanese: a
@@ -83,6 +82,26 @@ export default async function EpisodePage({ params }: Props) {
   const lines = episodeLines(episode);
   const previous = EPISODES.find(e => e.number === episode.number - 1);
   const next = EPISODES.find(e => e.number === episode.number + 1);
+
+  // Three lines of hierarchy per question: the thing asked about (large, from
+  // `Quiz`), the question in Japanese when there is one (a step down, still
+  // ink), then the English gloss (smallest, muted).
+  const quizQuestions: QuizQuestion[] = episode.quiz.map(question => ({
+    prompt: question.prompt,
+    promptLang: langOf(question.prompt),
+    hint: (
+      <>
+        {question.ask && (
+          <p lang="ja" className="text-base text-foreground [word-break:keep-all]">
+            {question.ask}
+          </p>
+        )}
+        <p>{question.askEn}</p>
+      </>
+    ),
+    options: question.options.map(option => ({ label: option, lang: langOf(option) })),
+    answer: question.answer,
+  }));
 
   /**
    * `LearningResource` rather than `Article`. The kanji pages are articles about
@@ -292,76 +311,34 @@ export default async function EpisodePage({ params }: Props) {
           that does not rank, which costs more than a signup is worth. And the
           form promised a card the send path could not yet produce.
 
-          Answers go in a `<details>` rather than at the foot of the page:
-          "scroll past the answers" is not a gate, and a reader who has to pass
-          them to reach the next episode has already read them.
+          Tapping an option shows at once whether it was right (see
+          components/ui/quiz.tsx, a crisp-ui item). That replaced a static
+          list plus a `<details>` answer key: a reader had to scroll down and
+          compare by eye, and an answer key one click away is not a gate anyway.
 
-          Server-rendered, no client boundary, so the whole block costs nothing
-          against this route's script budget.
+          `Quiz` is a client component, but React still server-renders it, so
+          every question and option is in the HTML as before; only the answering
+          needs script. The `<noscript>` key keeps the answers reachable without
+          it, which is also where the one block of text this page cannot show
+          interactively stays crawlable.
         */}
         <section className={SECTION_BAND} aria-labelledby="quiz-heading">
           <h2 id="quiz-heading" className={`${SECTION_HEADING} mb-6`}>
             Test yourself on this episode
           </h2>
-          <ol className="space-y-6">
-            {episode.quiz.map((question, i) => (
-              <li key={i} className="rounded-lg border border-border bg-card px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-japan-mountain-mist">
-                  Question {i + 1}
-                </p>
-                <p
-                  lang={langOf(question.prompt)}
-                  className="mt-2 text-xl font-semibold [word-break:keep-all]"
-                >
-                  {question.prompt}
-                </p>
-                {question.ask && (
-                  <p lang="ja" className="mt-1 text-base [word-break:keep-all]">
-                    {question.ask}
-                  </p>
-                )}
-                <p className="mt-1 text-sm text-japan-mountain-mist">{question.askEn}</p>
-                <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-                  {question.options.map((option, j) => (
-                    <li
-                      key={j}
-                      className="flex items-baseline gap-2 rounded-md border border-border bg-japan-soft-mist px-3 py-2"
-                    >
-                      <span className="text-sm font-semibold text-japan-mountain-mist">
-                        {OPTION_LETTERS[j]}
-                      </span>
-                      <span lang={langOf(option)} className="[word-break:keep-all]">
-                        {option}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ol>
-
-          <details className="mt-6 rounded-lg border border-border bg-japan-soft-mist px-4 py-3">
-            <summary className="cursor-pointer font-medium text-japan-deep-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              Show the answers
-            </summary>
-            <ol className="mt-3 space-y-2">
+          <Quiz questions={quizQuestions} />
+          <noscript>
+            <ol className="mt-6 space-y-1 text-sm">
               {episode.quiz.map((question, i) => (
                 <li key={i}>
-                  <span className="text-japan-mountain-mist">Question {i + 1}: </span>
-                  <span className="font-semibold text-japan-mountain-mist">
-                    {OPTION_LETTERS[question.answer]}
-                  </span>
-                  <span className="text-japan-mountain-mist"> — </span>
-                  <span
-                    lang={langOf(question.options[question.answer])}
-                    className="font-semibold [word-break:keep-all]"
-                  >
+                  Answer {i + 1}: {optionLetter(question.answer)} —{' '}
+                  <span lang={langOf(question.options[question.answer])}>
                     {question.options[question.answer]}
                   </span>
                 </li>
               ))}
             </ol>
-          </details>
+          </noscript>
         </section>
 
         {/*
