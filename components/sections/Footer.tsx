@@ -135,7 +135,7 @@ const Footer = () => {
                 href="https://www.youtube.com/@officialmichikanji"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-japan-mountain-mist hover:text-japan-sakura-waters transition-colors"
+                className="text-coral-sunset hover:brightness-90 transition-all"
                 aria-label="MichiKanji YouTube channel"
               >
                 <Youtube className="w-5 h-5" />
