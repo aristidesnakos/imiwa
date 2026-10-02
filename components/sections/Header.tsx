@@ -89,6 +89,13 @@ const Header = () => {
           >
             Free Resources
           </Link>
+          {/* Last, because it is about the site rather than a way to study.
+              prefetch is off like the footer's links to it: this header renders
+              on every page, and a route payload per page counts against the
+              byte budgets. */}
+          <Link href="/about" prefetch={false} className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
+            About
+          </Link>
         </nav>
 
         <Sheet>
@@ -140,6 +147,11 @@ const Header = () => {
                   }}
                 >
                   Free Resources
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link href="/about" prefetch={false} className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]">
+                  About
                 </Link>
               </SheetClose>
             </nav>
