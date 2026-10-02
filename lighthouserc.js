@@ -266,7 +266,14 @@ module.exports = {
           // Six WebP panels, but next/image serves a responsive size rather
           // than the 1092px master — the whole page lands under the kanji
           // detail route, not over it, which the paper budget got badly wrong.
-          totalKb: 365, // 315 kB measured 2026-09-24 (was 367), +16%
+          // 365 KiB held. 315 kB measured 2026-09-24 (was 367), +16%; then 346 kB
+          // measured 2026-10-02 once the episode carried its video poster. That
+          // poster is YouTube's 1080x1920 oar2.jpg (~155 kB), which pushed the
+          // page to 482 kB until VideoFacade sent it through next/image (it is
+          // now one 640w file, ~19 kB). The budget was NOT raised for it: the
+          // thumbnail is the only thing that was ever over, and re-baselining on
+          // an unresized poster would have given a regression 100 kB of room.
+          totalKb: 365,
           perfScore: 0.85, // 0.98 measured
         }),
         // A JLPT level list (/kanji/n5, and later n4..n1). Measured 2026-09-24,

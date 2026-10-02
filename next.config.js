@@ -20,6 +20,20 @@ const nextConfig = {
         pathname: '/a/**',
       },
       {
+        // The episode video's poster, resized for its box by
+        // components/stories/VideoFacade.tsx: oar2.jpg (a Short's 1080x1920
+        // frame) and hqdefault.jpg (landscape), the two files
+        // lib/stories/videos.ts youtubeThumbnailUrl() can return.
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        pathname: '/vi/*/oar2.jpg',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        pathname: '/vi/*/hqdefault.jpg',
+      },
+      {
         protocol: 'https',
         hostname: 'pbs.twimg.com',
         pathname: '/profile_images/**',

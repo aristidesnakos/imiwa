@@ -1031,7 +1031,11 @@ function validateVideoMarkup(
   const { youtubeId } = video;
   const expectations: [string, string][] = [
     ['a heading with id="video-heading"', 'id="video-heading"'],
-    ['the lazy ytimg thumbnail', `src="${youtubeThumbnailUrl(youtubeId, video.aspect)}"`],
+    // The thumbnail is resized by next/image, so the server HTML carries the
+    // optimiser URL with the YouTube URL encoded inside it, never the YouTube
+    // URL as a bare src (the privacy policy promises the browser does not
+    // contact i.ytimg.com).
+    ['the ytimg thumbnail, resized through /_next/image', `/_next/image?url=${encodeURIComponent(youtubeThumbnailUrl(youtubeId, video.aspect))}`],
     // The box must have the video's own shape: a Short in a 16:9 box is the bug
     // this asserts against (cropped thumbnail, pillarboxed player).
     video.aspect === 'portrait'
@@ -1043,6 +1047,15 @@ function validateVideoMarkup(
     if (!html.includes(needle)) {
       fail({ file, schemaType: T, field: '(block)', expected: what, actual: 'missing from the server HTML' });
     }
+  }
+  if (/\b(?:src|srcset)="https:\/\/i\.ytimg\.com/i.test(html)) {
+    fail({
+      file,
+      schemaType: T,
+      field: 'thumbnail',
+      expected: 'no bare i.ytimg.com src (the privacy policy says the browser does not contact YouTube for it)',
+      actual: 'an <img> loads i.ytimg.com directly',
+    });
   }
   // The player must be click-loaded: an iframe in the server HTML would pull
   // YouTube's payload and cookies into every page view. The bare embed URL is

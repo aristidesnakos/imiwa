@@ -39,10 +39,13 @@ export const metadata = getSEOTags({
  *  - Feedback is emailed to config.resend.supportEmail (no FEEDBACK_WEBHOOK_URL
  *    is set in Vercel as of this rewrite; if one is ever set, the chat tool it
  *    posts to becomes a processor to name).
- *  - Story episode pages that have a companion video show a thumbnail from
- *    i.ytimg.com, loaded by the browser as it scrolls into view, so Google
- *    receives the visitor's IP address and browser details without any click.
- *    The player (youtube-nocookie.com) is created only on click
+ *  - Story episode pages that have a companion video show a thumbnail that
+ *    goes through the Next.js image optimiser (next.config.js
+ *    images.remotePatterns, VideoFacade): the browser asks this site for it
+ *    and our server fetches it from i.ytimg.com, so Google does NOT receive
+ *    the visitor's IP address from the thumbnail. validate:schema asserts the
+ *    page never carries a bare i.ytimg.com src. The player (youtube-nocookie.com)
+ *    is created only on click
  *    (components/stories/VideoFacade.tsx), and "Watch on YouTube" is a plain
  *    outbound link. Which episodes have one is data/stories/videos.ts, which a
  *    daily job now fills in, so the claim is "some episode pages", never a
@@ -143,9 +146,9 @@ export default function PrivacyPolicy() {
             </li>
             <li>
               <strong>Videos on story pages (YouTube).</strong> Some story episode pages show a video from
-              our YouTube channel. Such a page shows a thumbnail image served by YouTube’s servers
-              (Google), so when it loads as you scroll to it, Google receives your IP address and browser
-              details, as with any image from another site. The video itself is not loaded until you click
+              our YouTube channel. Such a page shows a thumbnail image taken from YouTube. Our
+              server fetches it from YouTube (Google) and passes a resized copy on to you, so your browser
+              does not contact YouTube to show it. The video itself is not loaded until you click
               it; clicking loads YouTube’s privacy-enhanced player (youtube-nocookie.com), and from then
               on Google’s privacy policy applies to what YouTube collects. The “Watch on YouTube” link
               takes you to YouTube. Legal basis: our legitimate interests in showing our own lessons.
@@ -220,7 +223,7 @@ export default function PrivacyPolicy() {
             <li><strong>DataFast</strong>: visit analytics</li>
             <li><strong>Ahrefs</strong>: optional analytics, only with your consent</li>
             <li><strong>Google Workspace</strong>: our email inbox</li>
-            <li><strong>Google (YouTube)</strong>: serves the thumbnail and player for the videos on some story pages, as described above</li>
+            <li><strong>Google (YouTube)</strong>: serves the thumbnail (to our server) and the player (to your browser, after you click) for the videos on some story pages, as described above</li>
           </ul>
           <p className={`${P} mt-3`}>
             We also disclose information when the law requires it, or to protect our rights or the safety of

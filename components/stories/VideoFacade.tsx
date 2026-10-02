@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 /**
@@ -19,9 +20,11 @@ const BOX: Record<Aspect, string> = {
   landscape: 'aspect-video w-full',
   portrait: 'mx-auto aspect-[9/16] w-full max-w-[18rem]',
 };
-const THUMB_SIZE: Record<Aspect, { width: number; height: number }> = {
-  landscape: { width: 480, height: 360 },
-  portrait: { width: 1080, height: 1920 },
+// What the box is at its widest, so next/image picks a file no bigger than the
+// box needs: 18rem (288px) for a Short, the 832px column for landscape.
+const THUMB_SIZES: Record<Aspect, string> = {
+  landscape: '(min-width: 896px) 832px, 100vw',
+  portrait: '288px',
 };
 
 /**
@@ -34,9 +37,14 @@ const THUMB_SIZE: Record<Aspect, { width: number; height: number }> = {
  * small. The URLs are passed in rather than built here so the client bundle
  * carries no id logic.
  *
- * A plain `<img>`, not `next/image`: i.ytimg.com is not in `images.remotePatterns`
- * and is not worth adding there, because the optimiser would only proxy a
- * JPEG that YouTube already serves from its own CDN.
+ * The thumbnail goes through `next/image` (i.ytimg.com is in
+ * `images.remotePatterns`, for exactly the two files `youtubeThumbnailUrl`
+ * builds). A portrait `oar2.jpg` is a 1080x1920 JPEG of ~155 kB shown in a
+ * 288px-wide box; resized it is a fraction of that, which is the difference
+ * between the episode page being inside its Lighthouse byte budget and 108 kB
+ * over it. It also means the visitor's browser talks to this site rather than
+ * i.ytimg.com when the thumbnail loads, which the privacy policy's YouTube
+ * bullet promises: keep EVERY thumbnail on this path, or that bullet is wrong.
  *
  * `aspect` defaults to landscape. The caller passes the thumbnail that matches
  * it (`youtubeThumbnailUrl(id, aspect)`): a landscape `hqdefault` is 4:3 with
@@ -78,15 +86,12 @@ export function VideoFacade({
           className="group absolute inset-0 block h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           {/* The thumbnail already has the box's shape (see the header); object-cover only trims hqdefault's letterbox bars in a landscape box. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- see the header: i.ytimg.com is deliberately not an optimiser host */}
-          <img
+          <Image
             src={thumbnailUrl}
             alt=""
-            width={THUMB_SIZE[aspect].width}
-            height={THUMB_SIZE[aspect].height}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover"
+            fill
+            sizes={THUMB_SIZES[aspect]}
+            className="object-cover"
           />
           <span
             aria-hidden
