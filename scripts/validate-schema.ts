@@ -440,7 +440,8 @@ function requireNotForbiddenName(
   }
 }
 
-const YOUTUBE_THUMBNAIL_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/;
+// hqdefault for landscape, oar2 for a portrait Short (see youtubeThumbnailUrl).
+const YOUTUBE_THUMBNAIL_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/(?:hqdefault|oar2)\.jpg$/;
 
 /** Recursively resolve every image/logo URL reachable from an entity. */
 const IMAGE_FIELDS = new Set(['logo', 'image', 'thumbnailUrl', 'contentUrl', 'primaryImageOfPage']);
@@ -469,8 +470,9 @@ function checkAssetsDeep(file: string, schemaType: string, node: unknown, trail:
       for (const url of urls) {
         // The one off-site image we emit: a companion video's YouTube
         // thumbnail. It cannot be resolved offline, so its shape is asserted
-        // instead, in validateVideoObject.
-        if (YOUTUBE_THUMBNAIL_RE.test(url)) continue;
+        // instead, in validateVideoObject. Only `thumbnailUrl` is exempt: the
+        // same host in a logo or image field is still a failure.
+        if (key === 'thumbnailUrl' && YOUTUBE_THUMBNAIL_RE.test(url)) continue;
         requireCanonicalHost(file, schemaType, `${nextTrail} (url)`, url);
         const res = resolveAsset(url);
         if (!res.ok) {
@@ -1043,14 +1045,15 @@ function validateVideoMarkup(
     }
   }
   // The player must be click-loaded: an iframe in the server HTML would pull
-  // YouTube's payload and cookies into every page view.
-  if (html.includes('youtube-nocookie.com/embed')) {
+  // YouTube's payload and cookies into every page view. The bare embed URL is
+  // legitimate text: the VideoObject's embedUrl carries it in the JSON-LD.
+  if (/<iframe\b[^>]*youtube-nocookie\.com/i.test(html)) {
     fail({
       file,
       schemaType: T,
       field: '(block)',
       expected: 'no iframe in the server HTML (it loads on click)',
-      actual: 'embed URL present',
+      actual: 'an <iframe> pointing at youtube-nocookie.com is present',
     });
   }
 }
