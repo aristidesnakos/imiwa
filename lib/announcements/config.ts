@@ -18,14 +18,18 @@
  * Ordering is chronological. Selection walks this array and takes the first
  * live, unacknowledged entry.
  *
- * ── Not scheduled ────────────────────────────────────────────────────────
- * **Example sentences.** `data/sentences/published/N5.json` is still empty
- * (82 candidates sit in the queue, 0 decisions recorded), so kanji pages
- * render no sentence section and there is nothing to announce. Do not add an
- * entry for it until published sentences exist — a banner leading to a page
- * with no visible change is the most expensive mistake available here, because
- * it teaches people our announcements are not worth clicking. The gate is
- * review throughput, not engineering.
+ * ── Held back ────────────────────────────────────────────────────────────
+ * Sentences for N4–N1 stay unannounced: only N5 is published, and a banner
+ * leading to a page with no visible change is the most expensive mistake
+ * available here, because it teaches people our announcements are not worth
+ * clicking. Say "N5" in the copy for as long as that is true.
+ *
+ * ── Why these three, in this order (2026-10-02) ──────────────────────────
+ * DataFast, Aug 1 – Oct 2: 213 people saw a bar, 3 clicked (1.4%), 10%
+ * dismissed (guardrail is 40%). The bar is safe and reaches ~3 people a day,
+ * so it is a supplement, not the channel. Spend its few impressions on what a
+ * returning learner cannot find on their own: sentences (published 2026-08-29,
+ * never announced), then the Tan comic, then the N5 quiz.
  */
 
 import type { Announcement } from './types';
@@ -88,14 +92,38 @@ export const ANNOUNCEMENT_QUEUE: readonly Announcement[] = [
     note: 'Corrects search-2026-08 for the people it reached.',
   },
   {
-    id: 'stories-romaji-2026-10',
+    id: 'sentences-2026-10',
     startsAt: '2026-10-05',
     expiresAt: '2026-10-16',
-    // Only true once the per-panel toggle is live on the episode pages
-    // (components/stories/StoryPanel.tsx): the start date is the gate, so check
-    // the toggle is deployed before this day, not after.
-    message: 'New: romaji readings for the stories. Use the toggle on each comic panel.',
+    // 229 sentences across all 82 N5 kanji (published 2026-08-29), each credited
+    // to its Tatoeba author. "N5" stays in the copy: N4–N1 pages have none.
+    // The CTA is the list because a dynamic /kanji/<char> is not a route the
+    // validator can resolve; every N5 kanji on it opens onto its sentences.
+    message: 'Every N5 kanji now has real example sentences, each credited to its author.',
+    cta: { label: 'Pick an N5 kanji', href: '/kanji/n5' },
+    note: 'First: the biggest shipped-but-unannounced content, and the claim is true on every N5 page.',
+  },
+  {
+    id: 'stories-romaji-2026-10',
+    startsAt: '2026-10-19',
+    expiresAt: '2026-10-30',
+    // Leads with the comic, not the toggle: most of the audience has never heard
+    // of /stories, and "romaji for the stories" assumes they have. Only true
+    // once the per-panel toggle is live (components/stories/StoryPanel.tsx,
+    // deployed 2026-09-30).
+    message: "Tan's weekly N5 comic now has romaji under every panel. Use the toggle on any episode.",
     cta: { label: 'Read the latest story', href: '/stories' },
-    note: 'Announces the per-panel romaji toggle; the same readings are always shown in the weekly email.',
+    note: 'Introduces the stories to returning learners, with the romaji toggle as the reason to look now.',
+  },
+  {
+    id: 'n5-quiz-2026-11',
+    startsAt: '2026-11-02',
+    expiresAt: '2026-11-13',
+    // Four choices for every one of the 82 kanji, one right answer each
+    // (scripts/validate-quiz.ts). It already drew 97 starts from 27 visitors
+    // with no promotion, so this is amplification, not discovery.
+    message: 'Test yourself: a free quiz on all 82 N5 kanji, four choices each.',
+    cta: { label: 'Take the quiz', href: '/kanji/n5/quiz' },
+    note: 'Last: needs the least explaining and already converts without help.',
   },
 ];
