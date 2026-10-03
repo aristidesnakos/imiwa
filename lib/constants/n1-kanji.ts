@@ -46,6 +46,7 @@ export const N1_KANJI: KanjiData[] = [
   { kanji: "肝", onyomi: "きも", kunyomi: "", meaning: "liver, innards, courage" },
   { kanji: "脩", onyomi: "シュウ", kunyomi: "おさ.める", meaning: "discipline, conduct oneself well, study, master" },
   { kanji: "腐", onyomi: "フ", kunyomi: "くさ.る, くさ.れる", meaning: "rot, decay, sour" },
+  { kanji: "黴", onyomi: "バイ", kunyomi: "かび", meaning: "mold, mildew" },
   { kanji: "藍", onyomi: "あい", kunyomi: "", meaning: "dyer's knotweed (Persicaria tinctoria, used to produce indigo dye), indigo (dye), indigo (colour)" },
   { kanji: "藩", onyomi: "はん", kunyomi: "", meaning: "han (estate of a daimyo in the Edo and early Meiji periods), feudal domain, fief" },
   { kanji: "街", onyomi: "まち", kunyomi: "", meaning: "town, block, neighbourhood" },
