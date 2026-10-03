@@ -11,7 +11,7 @@ export const NON_JLPT_KANJI: KanjiData[] = [
   // Fabric Patterns/Dyeing
   { kanji: "縞", onyomi: "こう", kunyomi: "しま", meaning: "stripe" },
   { kanji: "絣", onyomi: "へい", kunyomi: "かすり", meaning: "splashed pattern (on cloth)" },
-  { kanji: "綛", onyomi: "かせ", kunyomi: "", meaning: "splashed dye pattern" },
+  { kanji: "綛", onyomi: "", kunyomi: "かせ", meaning: "splashed dye pattern" },
   { kanji: "繧", onyomi: "うん", kunyomi: "", meaning: "a method of dyeing" },
   { kanji: "繝", onyomi: "かん", kunyomi: "", meaning: "a method of dyeing" },
   { kanji: "纈", onyomi: "けつ", kunyomi: "", meaning: "tie-dyeing" },
@@ -140,5 +140,5 @@ export const NON_JLPT_KANJI: KanjiData[] = [
   { kanji: "綮", onyomi: "けい", kunyomi: "", meaning: "emblem on banner" },
   { kanji: "纛", onyomi: "とう、とく", kunyomi: "", meaning: "flag, banner" },
   { kanji: "纜", onyomi: "らん", kunyomi: "ともづな", meaning: "hawser, mooring rope" },
-  { kanji: "縅", onyomi: "おどし", kunyomi: "", meaning: "the thread/braid (of armour)" }
+  { kanji: "縅", onyomi: "", kunyomi: "おどし", meaning: "the thread/braid (of armour)" }
 ];

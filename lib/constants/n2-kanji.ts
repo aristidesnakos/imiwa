@@ -192,7 +192,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "敬", onyomi: "けい", kunyomi: "うやま（う）", meaning: "awe, respect, honor, revere" },
 
   // Clothing/Appearance/Decoration
-  { kanji: "装", onyomi: "そう、しょう", kunyomi: "よそ（う）", meaning: "attire, dress, pretend, disguise, profess" },
+  { kanji: "装", onyomi: "そう、しょう", kunyomi: "よそお（う）、よそお（い）", meaning: "attire, dress, pretend, disguise, profess" },
   { kanji: "飾", onyomi: "しょく", kunyomi: "かざ（る）", meaning: "decorate, ornament, adorn" },
 
   // Observation/Inspection/Vision
@@ -214,7 +214,7 @@ export const N2_KANJI: KanjiData[] = [
 
   // Secrecy/Privacy/Density
   { kanji: "密", onyomi: "みつ", kunyomi: "", meaning: "secrecy, density (pop), minuteness, carefulness" },
-  { kanji: "秘", onyomi: "ひ", kunyomi: "", meaning: "secret, conceal" },
+  { kanji: "秘", onyomi: "ひ", kunyomi: "ひ（める）", meaning: "secret, conceal" },
 
   // Health/Well-being/Peace
   { kanji: "康", onyomi: "こう", kunyomi: "", meaning: "ease, peace" },
@@ -256,7 +256,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "姿", onyomi: "し", kunyomi: "すがた", meaning: "figure, form, shape" },
 
   // Response/Reaction
-  { kanji: "応", onyomi: "おう", kunyomi: "", meaning: "apply, answer, yes, OK, reply, accept" },
+  { kanji: "応", onyomi: "おう", kunyomi: "こた（える）", meaning: "apply, answer, yes, OK, reply, accept" },
   { kanji: "誘", onyomi: "ゆう", kunyomi: "さそ（う）", meaning: "entice, lead, tempt, invite, ask, call for, seduce, allure" },
 
   // Emotions/Feelings
@@ -304,7 +304,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "震", onyomi: "しん", kunyomi: "ふる（う）、ふる（える）", meaning: "quake, shake, tremble, quiver" },
 
   // Promises/Agreements/Contracts
-  { kanji: "契", onyomi: "けい", kunyomi: "", meaning: "pledge, promise, vow" },
+  { kanji: "契", onyomi: "けい", kunyomi: "ちぎ（る）", meaning: "pledge, promise, vow" },
 
   // Discarding/Abandoning
   { kanji: "捨", onyomi: "しゃ", kunyomi: "す（てる）", meaning: "discard, throw away, abandon, resign, reject, sacrifice" },
@@ -345,7 +345,7 @@ export const N2_KANJI: KanjiData[] = [
   // Animals/Creatures
   { kanji: "獣", onyomi: "じゅう", kunyomi: "けもの", meaning: "animal, beast" },
   { kanji: "亀", onyomi: "き", kunyomi: "かめ", meaning: "tortoise, turtle" },
-  { kanji: "羽", onyomi: "う、わ", kunyomi: "はね、は", meaning: "feather, wing, counter for birds and rabbits" },
+  { kanji: "羽", onyomi: "う", kunyomi: "はね、は、わ", meaning: "feather, wing, counter for birds and rabbits" },
 
   // Plants/Nature
   { kanji: "咲", onyomi: "しょう", kunyomi: "さ（く）", meaning: "blossom, bloom" },
@@ -355,7 +355,7 @@ export const N2_KANJI: KanjiData[] = [
   // Containers/Vessels
   { kanji: "瓶", onyomi: "びん", kunyomi: "", meaning: "bottle, vial, jar, jug, vat, urn" },
   { kanji: "缶", onyomi: "かん", kunyomi: "", meaning: "can, container, jar radical (no. 121)" },
-  { kanji: "皿", onyomi: "さら", kunyomi: "", meaning: "dish, a helping, plate" },
+  { kanji: "皿", onyomi: "", kunyomi: "さら", meaning: "dish, a helping, plate" },
 
   // Counting/Numbers
   { kanji: "隻", onyomi: "せき", kunyomi: "", meaning: "vessels, counter for ships, fish, birds, arrows, one of a pair" },
@@ -382,7 +382,7 @@ export const N2_KANJI: KanjiData[] = [
   { kanji: "沿", onyomi: "えん", kunyomi: "そ（う）", meaning: "run alongside, follow along, run along, lie along" },
 
   // Handling/Treatment
-  { kanji: "扱", onyomi: "あつ", kunyomi: "あつ（かう）", meaning: "handle, deal with, dispose of, treat, entertain, receive guests" },
+  { kanji: "扱", onyomi: "", kunyomi: "あつか（う）", meaning: "handle, deal with, dispose of, treat, entertain, receive guests" },
 
   // Weakness/Frailty
 

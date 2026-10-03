@@ -25,7 +25,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "彼", onyomi: "ひ", kunyomi: "かれ、かの", meaning: "he, him" },
   { kanji: "君", onyomi: "くん", kunyomi: "きみ", meaning: "you, male name suffix" },
   { kanji: "祖", onyomi: "そ", kunyomi: "", meaning: "ancestor, pioneer, founder" },
-  { kanji: "息", onyomi: "むす、そく", kunyomi: "いき", meaning: "breath, son, interest (on money)" },
+  { kanji: "息", onyomi: "そく", kunyomi: "いき", meaning: "breath, son, interest (on money)" },
   { kanji: "王", onyomi: "おう", kunyomi: "", meaning: "king, rule" },
 
   // Time/Periods/Age
@@ -49,8 +49,8 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "横", onyomi: "おう", kunyomi: "よこ", meaning: "sideways, side" },
   { kanji: "路", onyomi: "ろ、る", kunyomi: "みち", meaning: "path, route, road" },
   { kanji: "途", onyomi: "と", kunyomi: "みち", meaning: "route, way, road" },
-  { kanji: "片", onyomi: "ヘン", kunyomi: "かた", meaning: "one-sided, fragment, piece" },
-  { kanji: "辺", onyomi: "ヘン", kunyomi: "あたり、ほとり", meaning: "area, vicinity, around, nearby" },
+  { kanji: "片", onyomi: "へん", kunyomi: "かた", meaning: "one-sided, fragment, piece" },
+  { kanji: "辺", onyomi: "へん", kunyomi: "あたり、ほとり", meaning: "area, vicinity, around, nearby" },
 
   // Buildings/Places/Housing
   { kanji: "宅", onyomi: "たく", kunyomi: "", meaning: "home, house, residence" },
@@ -138,7 +138,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "受", onyomi: "じゅ", kunyomi: "う（ける）", meaning: "accept, undergo, answer (phone), take" },
   { kanji: "付", onyomi: "ふ", kunyomi: "つ（ける）", meaning: "adhere, attach, refer to" },
   { kanji: "返", onyomi: "へん", kunyomi: "かえ（す）", meaning: "return, answer" },
-  { kanji: "払", onyomi: "", kunyomi: "はら（う）", meaning: "pay" },
+  { kanji: "払", onyomi: "ふつ", kunyomi: "はら（う）", meaning: "pay" },
   { kanji: "交", onyomi: "こう", kunyomi: "まじ（わる）、ま（ぜる）、か（わす）", meaning: "mingle, mixing, association" },
 
   // Production/Creation Verbs
@@ -186,7 +186,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "敗", onyomi: "はい", kunyomi: "やぶ（れる）", meaning: "failure, defeat" },
 
   // Joining/Combining
-  { kanji: "合", onyomi: "ごう、が、か", kunyomi: "あ（う）、あい", meaning: "fit, suit, join, 0.1" },
+  { kanji: "合", onyomi: "ごう、がっ、かっ", kunyomi: "あ（う）、あい", meaning: "fit, suit, join, 0.1" },
   { kanji: "組", onyomi: "そ", kunyomi: "く（む）、くみ", meaning: "association, assemble, unite" },
   { kanji: "参", onyomi: "さん", kunyomi: "まい（る）", meaning: "going, coming, participate" },
   { kanji: "加", onyomi: "か", kunyomi: "くわ（える）", meaning: "add, addition, increase, join" },
@@ -244,7 +244,7 @@ export const N3_KANJI: KanjiData[] = [
 
   // Abstraction/Characteristics
   { kanji: "性", onyomi: "せい、しょう", kunyomi: "", meaning: "sex, gender, nature" },
-  { kanji: "的", onyomi: "てき", kunyomi: "", meaning: "mark, target, object, adjective ending" },
+  { kanji: "的", onyomi: "てき", kunyomi: "まと", meaning: "mark, target, object, adjective ending" },
   { kanji: "形", onyomi: "けい、ぎょう", kunyomi: "かた、かたち、なり", meaning: "shape, form, style" },
   { kanji: "状", onyomi: "じょう", kunyomi: "", meaning: "conditions, form, appearance" },
   { kanji: "様", onyomi: "よう", kunyomi: "さま、さん", meaning: "manner, situation, polite suffix" },
@@ -269,7 +269,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "余", onyomi: "よ", kunyomi: "あま（る）", meaning: "too much, surplus" },
 
   // Investigation/Research/Study
-  { kanji: "調", onyomi: "ちょう", kunyomi: "しら（べる）、との（う）", meaning: "tune, tone, meter, prepare, investigate" },
+  { kanji: "調", onyomi: "ちょう", kunyomi: "しら（べる）、ととの（う）、ととの（える）", meaning: "tune, tone, meter, prepare, investigate" },
   { kanji: "観", onyomi: "かん", kunyomi: "み（る）", meaning: "outlook, appearance, condition" },
 
   // Representation/Display
@@ -284,23 +284,23 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "馬", onyomi: "ば", kunyomi: "うま", meaning: "horse" },
   { kanji: "船", onyomi: "せん", kunyomi: "ふね、ふな", meaning: "ship, boat" },
   { kanji: "箱", onyomi: "そう", kunyomi: "はこ", meaning: "box, chest" },
-  { kanji: "機", onyomi: "き", kunyomi: "", meaning: "machine, airplane, opportunity" },
+  { kanji: "機", onyomi: "き", kunyomi: "はた", meaning: "machine, airplane, opportunity" },
 
   // Nature/Natural Phenomena
   { kanji: "景", onyomi: "けい", kunyomi: "", meaning: "scenery, view" },
   { kanji: "光", onyomi: "こう", kunyomi: "ひか（る）、ひかり", meaning: "ray, light" },
   { kanji: "陽", onyomi: "よう", kunyomi: "ひ", meaning: "sunshine, positive" },
   { kanji: "雪", onyomi: "せつ", kunyomi: "ゆき", meaning: "snow" },
-  { kanji: "曇", onyomi: "うん", kunyomi: "くも（る）、くも", meaning: "cloud, cloudy" },
-  { kanji: "候", onyomi: "こう", kunyomi: "", meaning: "climate, season, weather" },
+  { kanji: "曇", onyomi: "どん", kunyomi: "くも（る）", meaning: "cloud, cloudy" },
+  { kanji: "候", onyomi: "こう", kunyomi: "そうろう", meaning: "climate, season, weather" },
   { kanji: "煙", onyomi: "えん", kunyomi: "けむ（る）、けむり", meaning: "smoke" },
   { kanji: "流", onyomi: "りゅう、る", kunyomi: "なが（れる）", meaning: "current, flow" },
   { kanji: "球", onyomi: "きゅう", kunyomi: "たま", meaning: "ball, sphere" },
 
   // Plants
-  { kanji: "葉", onyomi: "こう", kunyomi: "は", meaning: "leaf, plane, needle, blade, counter for flat things" },
+  { kanji: "葉", onyomi: "よう", kunyomi: "は", meaning: "leaf, plane, needle, blade, counter for flat things" },
   { kanji: "草", onyomi: "そう", kunyomi: "くさ", meaning: "grass, weeds, herbs" },
-  { kanji: "畑", onyomi: "はた", kunyomi: "はたけ", meaning: "field (for crops)" },
+  { kanji: "畑", onyomi: "", kunyomi: "はたけ、はた", meaning: "field (for crops)" },
   { kanji: "植", onyomi: "しょく", kunyomi: "う（える）、う（わる）", meaning: "plant, put in, insert" },
 
   // Body Parts
@@ -322,7 +322,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "段", onyomi: "だん", kunyomi: "", meaning: "grade, steps, stairs" },
 
   // Tools/Equipment/Facilities
-  { kanji: "具", onyomi: "ぐ", kunyomi: "そな（える）、つばさ（に）", meaning: "tool, utensil" },
+  { kanji: "具", onyomi: "ぐ", kunyomi: "そな（える）、つぶさ（に）", meaning: "tool, utensil" },
   { kanji: "術", onyomi: "じゅつ", kunyomi: "すべ", meaning: "art, technique, skill, means, trick" },
   { kanji: "備", onyomi: "び", kunyomi: "そな（える）", meaning: "equip, provision, preparation" },
   { kanji: "規", onyomi: "き", kunyomi: "", meaning: "standard, measure" },
@@ -333,7 +333,7 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "情", onyomi: "じょう、せい", kunyomi: "なさ（け）", meaning: "feelings, emotion, passion" },
   { kanji: "愛", onyomi: "あい", kunyomi: "いと（しい）、まな", meaning: "love, affection" },
   { kanji: "喜", onyomi: "き", kunyomi: "よろこ（ぶ）", meaning: "rejoice, take pleasure in" },
-  { kanji: "幸", onyomi: "こう", kunyomi: "さいわ（い）、さら、しあわ（せ）", meaning: "happiness, blessing, fortune" },
+  { kanji: "幸", onyomi: "こう", kunyomi: "さいわ（い）、さち、しあわ（せ）", meaning: "happiness, blessing, fortune" },
   { kanji: "望", onyomi: "ぼう", kunyomi: "のぞ（む）、もち", meaning: "ambition, full moon, hope, desire, aspire to, expect" },
   { kanji: "欲", onyomi: "よく", kunyomi: "ほ（しい）", meaning: "longing, greed, passion" },
   { kanji: "願", onyomi: "がん", kunyomi: "ねが（う）", meaning: "petition, request, wish" },
@@ -382,10 +382,10 @@ export const N3_KANJI: KanjiData[] = [
   { kanji: "類", onyomi: "るい", kunyomi: "たぐ（い）", meaning: "sort, kind, variety, class, genus" },
   { kanji: "他", onyomi: "た", kunyomi: "ほか", meaning: "other, another" },
   { kanji: "等", onyomi: "とう", kunyomi: "ひと（しい）、など", meaning: "etc., and so forth" },
-  { kanji: "彙", onyomi: "イ", kunyomi: "はりねずみ", meaning: "same kind, collect, classify, category, hedgehog" },
+  { kanji: "彙", onyomi: "い", kunyomi: "はりねずみ", meaning: "same kind, collect, classify, category, hedgehog" },
 
   // Similarity/Difference
-  { kanji: "似", onyomi: "じ、ね", kunyomi: "に（る）", meaning: "becoming, resemble, imitate" },
+  { kanji: "似", onyomi: "じ", kunyomi: "に（る）", meaning: "becoming, resemble, imitate" },
   { kanji: "違", onyomi: "い", kunyomi: "ちが（う）、たが（う）", meaning: "difference, differ" },
   { kanji: "差", onyomi: "さ", kunyomi: "さ（す）", meaning: "distinction, difference, variation" },
   { kanji: "両", onyomi: "りょう", kunyomi: "ふたつ", meaning: "both" },
@@ -452,7 +452,7 @@ export const N3_KANJI: KanjiData[] = [
 
   // Action/Conduct/Behavior
   { kanji: "伝", onyomi: "でん", kunyomi: "つた（わる）", meaning: "transmit, follow, report, legend, tradition" },
-  { kanji: "訪", onyomi: "ほう", kunyomi: "とおず（れる）、たず（ねる）", meaning: "call, visit" },
+  { kanji: "訪", onyomi: "ほう", kunyomi: "おとず（れる）、たず（ねる）", meaning: "call, visit" },
   { kanji: "留", onyomi: "りゅう、る", kunyomi: "と（まる）、とど（める）", meaning: "detain, fasten, halt, stop" },
   { kanji: "戻", onyomi: "れい", kunyomi: "もど（る）", meaning: "re-, return, revert" },
   { kanji: "徒", onyomi: "と", kunyomi: "", meaning: "on foot, junior" },
@@ -479,7 +479,7 @@ export const N3_KANJI: KanjiData[] = [
   // People/Personnel/Customers
   { kanji: "客", onyomi: "きゃく、かく", kunyomi: "", meaning: "guest, visitor, customer" },
   { kanji: "誰", onyomi: "すい", kunyomi: "だれ", meaning: "who, someone, somebody" },
-  { kanji: "皆", onyomi: "", kunyomi: "みな、みんな", meaning: "all, everyone, everybody" },
+  { kanji: "皆", onyomi: "かい", kunyomi: "みな、みんな", meaning: "all, everyone, everybody" },
 
   // Cause/Reason/Origin
   { kanji: "因", onyomi: "いん", kunyomi: "よ（る）、ちな（む）", meaning: "cause, factor, depend on" },

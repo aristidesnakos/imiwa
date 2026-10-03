@@ -13,12 +13,12 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "場", onyomi: "じょう", kunyomi: "ば", meaning: "location, place" },
   { kanji: "員", onyomi: "いん", kunyomi: "", meaning: "employee, member, number, the one in charge" },
   { kanji: "事", onyomi: "じ", kunyomi: "こと", meaning: "matter, thing, fact, business, reason, possibly" },
-  { kanji: "仕", onyomi: "し", kunyomi: "", meaning: "attend, doing, official, serve" },
+  { kanji: "仕", onyomi: "し", kunyomi: "つか（える）", meaning: "attend, doing, official, serve" },
   { kanji: "用", onyomi: "よう", kunyomi: "もち（いる）", meaning: "utilize, business, service, use, employ" },
 
   // Self/Identity/Essence
   { kanji: "自", onyomi: "じ、し", kunyomi: "みずか（ら）", meaning: "oneself" },
-  { kanji: "身", onyomi: "しん", kunyomi: "", meaning: "body" },
+  { kanji: "身", onyomi: "しん", kunyomi: "み", meaning: "body" },
   { kanji: "体", onyomi: "たい", kunyomi: "からだ", meaning: "body, substance, object, reality" },
   { kanji: "心", onyomi: "しん", kunyomi: "こころ", meaning: "heart, mind, spirit" },
 
@@ -95,11 +95,11 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "習", onyomi: "しゅう", kunyomi: "なら（う）", meaning: "learn" },
   { kanji: "教", onyomi: "きょう", kunyomi: "おし（える）、おそ（わる）", meaning: "teach, faith, doctrine" },
   { kanji: "研", onyomi: "けん", kunyomi: "と（ぐ）", meaning: "polish, study of, sharpen" },
-  { kanji: "究", onyomi: "きゅう", kunyomi: "", meaning: "research, study" },
+  { kanji: "究", onyomi: "きゅう", kunyomi: "きわ（める）", meaning: "research, study" },
   { kanji: "勉", onyomi: "べん", kunyomi: "つと（める）", meaning: "exertion, endeavor, effort" },
 
   // Writing/Reading/Literary Verbs
-  { kanji: "字", onyomi: "じ", kunyomi: "", meaning: "character, letter, word" },
+  { kanji: "字", onyomi: "じ", kunyomi: "あざ", meaning: "character, letter, word" },
   { kanji: "文", onyomi: "ぶん、もん", kunyomi: "ふみ", meaning: "sentence, literature, style, art" },
 
   // Creation/Making Verbs
@@ -267,7 +267,7 @@ export const N4_KANJI: KanjiData[] = [
 
   // Nearness
   { kanji: "近", onyomi: "きん", kunyomi: "ちか（い）", meaning: "near, early, akin, tantamount" },
-  { kanji: "早", onyomi: "そう、さ", kunyomi: "はや（い）", meaning: "early, fast" },
+  { kanji: "早", onyomi: "そう、さっ", kunyomi: "はや（い）", meaning: "early, fast" },
 
   // Speed
   { kanji: "急", onyomi: "きゅう", kunyomi: "いそ（ぐ）", meaning: "hurry, emergency, sudden, steep" },
@@ -285,7 +285,7 @@ export const N4_KANJI: KanjiData[] = [
   { kanji: "私", onyomi: "し", kunyomi: "わたくし、わたし", meaning: "private, I, me" },
 
   // Public/Official
-  { kanji: "公", onyomi: "こう", kunyomi: "", meaning: "public, prince, official, governmental" },
+  { kanji: "公", onyomi: "こう", kunyomi: "おおやけ", meaning: "public, prince, official, governmental" },
 
   // Flavor
   { kanji: "味", onyomi: "み", kunyomi: "あじ", meaning: "flavor, taste" },

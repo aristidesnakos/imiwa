@@ -43,16 +43,16 @@
  * least one reading.
  *
  * ---------------------------------------------------------------------------
- * Two allowlists, and why they are allowlists rather than failures
+ * Two allowlists, both empty
  * ---------------------------------------------------------------------------
  *
- * The corpus carries real, committed debt: 39 entries have neither onyomi nor
- * kunyomi, and 38 of those also have no meaning. They render a `/kanji/X` page
- * that is a character and nothing else. That is bad, but it is *known* bad —
- * failing on it would mean this validator could never be turned on. So the
- * exact characters are enumerated below and a new one is a hard failure, while
- * an allowlisted character that *gains* the missing field is reported as a
- * stale entry to delete. The lists only ever shrink.
+ * The corpus used to carry 39 N1 entries with neither onyomi nor kunyomi, 38
+ * of them with no meaning either: a `/kanji/X` page that was a character and
+ * nothing else. They were enumerated here so the validator could be turned on
+ * while the debt stood, with a new one a hard failure. All 39 were filled from
+ * KANJIDIC2 on 2026-10-03 (scripts/kanjidic-fill.ts, reviewed by hand), and
+ * both lists are now empty. Keep them empty: an entry needs a reason that
+ * survives review, not a gap in the data.
  *
  * ---------------------------------------------------------------------------
  * NON_JLPT_KANJI is checked, but it is not on the site
@@ -72,6 +72,7 @@ import { N4_KANJI } from '../lib/constants/n4-kanji';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
 import { NON_JLPT_KANJI } from '../lib/constants/non-jlpt-kanji';
 import { N5_SEQUENCE } from '../lib/levels/n5-sequence';
+import { kanjiReadings } from '../lib/romaji/readings';
 
 // The `KanjiData` type is deliberately not imported — only the values are — so
 // this script survives the type moving between modules.
@@ -100,39 +101,23 @@ const NON_JLPT: readonly [string, string, readonly Entry[]] = [
 const ALL = [...JLPT, NON_JLPT];
 
 /**
- * Entries with neither onyomi nor kunyomi. All 39 are in N1.
+ * Entries with neither onyomi nor kunyomi. Empty since 2026-10-03.
  *
  * A reading-less entry renders a kanji page with no readings at all: no romaji
  * (`lib/romaji/readings.ts` produces an empty set), so no romaji in the title,
- * none in the JSON-LD, and no search key — the character is unreachable by any
+ * none in the JSON-LD, and no search key. The character is unreachable by any
  * query except the character itself, which is the query a learner cannot type.
- *
- * Fill these in and delete them from here. Nothing may be added.
  */
-const NO_READINGS_ALLOWED: ReadonlySet<string> = new Set([
-  '舜', '芙', '芳', '茂', '莉', '菊', '菖', '萌', '蒔', '蓄',
-  '蓉', '蕉', '蛮', '融', '衰', '衷', '褒', '訴', '診', '詐',
-  '詢', '諄', '謹', '輔', '輝', '迭', '逐', '逓', '逝', '還',
-  '那', '郁', '酔', '酬', '酵', '醸', '釈', '銘', '鋳',
-]);
+const NO_READINGS_ALLOWED: ReadonlySet<string> = new Set<string>([]);
 
 /**
- * Entries with an empty meaning. All 38 are in N1, and all 38 are also in
- * NO_READINGS_ALLOWED above — they are the entries that were committed as a
- * bare character with every other field left as `""`.
+ * Entries with an empty meaning. Empty since 2026-10-03.
  *
  * A meaning-less entry is worse than a reading-less one for the same reason it
  * is easier to miss: the page still renders, the heading still says the
  * character, and the description simply is not there.
- *
- * Fill these in and delete them from here. Nothing may be added.
  */
-const NO_MEANING_ALLOWED: ReadonlySet<string> = new Set([
-  '芙', '芳', '茂', '莉', '菊', '菖', '萌', '蒔', '蓄', '蓉',
-  '蕉', '蛮', '融', '衰', '衷', '褒', '訴', '診', '詐', '詢',
-  '諄', '謹', '輔', '輝', '迭', '逐', '逓', '逝', '還', '那',
-  '郁', '酔', '酬', '酵', '醸', '釈', '銘', '鋳',
-]);
+const NO_MEANING_ALLOWED: ReadonlySet<string> = new Set<string>([]);
 
 // ---------------------------------------------------------------------------
 // Harness
@@ -283,7 +268,7 @@ section('4. One code point per kanji field');
 }
 
 // ---------------------------------------------------------------------------
-// 5. Every entry has a meaning (allowlist: 38 known-bare N1 entries)
+// 5. Every entry has a meaning
 // ---------------------------------------------------------------------------
 
 section('5. Meanings');
@@ -314,11 +299,11 @@ section('5. Meanings');
 }
 
 // ---------------------------------------------------------------------------
-// 6. Every entry has at least one reading (allowlist: 39 known-bare N1 entries)
+// 6. Every entry has at least one reading
 // ---------------------------------------------------------------------------
 // An empty onyomi, or an empty kunyomi, is normal and common on its own —
 // plenty of characters genuinely have only one kind, and across the JLPT lists
-// alone 45 entries have no onyomi and 737 have no kunyomi. Only *neither* is a
+// alone 22 entries have no onyomi and 561 have no kunyomi (2026-10-03). Only *neither* is a
 // defect. (The tallies printed below span all six files, non-JLPT included, so
 // they run a little higher than those two figures.)
 
@@ -362,6 +347,54 @@ section('6. Readings');
         : `stale NO_READINGS_ALLOWED entry: ${kanji} is no longer in the corpus — remove it from the allowlist`
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// 6b. Every onyomi item has the shape of an on reading
+// ---------------------------------------------------------------------------
+// Check 6 counts a field as "has a reading" whatever is in it, so for years it
+// passed 130-odd entries whose onyomi field held a native word: 源 みなもと,
+// 皿 さら, 翼 つばさ. Those pages taught a kun reading as the on reading, and
+// the romaji, the JSON-LD and the search keys all followed it.
+//
+// Sino-Japanese readings are one mora, or two where the second is い, う, ん,
+// き, く, ち or つ (っ covers the clipped forms がっ, かっ). A yōon is one
+// mora. When this check was written it flagged 137 entries and every one was
+// a real misfiling, with no false positives. It cannot see a one-mora kun such
+// as 矢 や, or a typo with a plausible shape (葉 こう); scripts/kanjidic-fill.ts
+// compares against KANJIDIC2 and catches those.
+
+section('6b. Onyomi shape');
+{
+  const SMALL = /[ゃゅょぁぃぅぇぉ]/;
+  const morae = (kana: string): string[] => {
+    const out: string[] = [];
+    for (const ch of kana) {
+      if (SMALL.test(ch) && out.length) out[out.length - 1] += ch;
+      else out.push(ch);
+    }
+    return out;
+  };
+  const onShaped = (kana: string): boolean => {
+    const m = morae(kana);
+    return m.length === 1 || (m.length === 2 && /^[いうんきくちつっ]$/.test(m[1]));
+  };
+
+  const problems: string[] = [];
+  let items = 0;
+  for (const [level, file, list] of ALL) {
+    for (const entry of list) {
+      for (const reading of kanjiReadings(entry).onyomi) {
+        items++;
+        if (onShaped(reading.kanaFull)) continue;
+        problems.push(
+          `${file}: ${entry.kanji} (${level}) has "${reading.raw}" as an onyomi, but no on reading has that shape — ` +
+            `it is probably a kun reading or a word. Move it to kunyomi and check the onyomi against KANJIDIC2.`
+        );
+      }
+    }
+  }
+  check('onyomi item that cannot be an on reading', problems, `${items} onyomi items, each shaped like an on reading`);
 }
 
 // ---------------------------------------------------------------------------
