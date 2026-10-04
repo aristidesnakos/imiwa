@@ -54,4 +54,6 @@ export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {
   'tan-finds-the-river': { youtubeId: '4wNQgUiBU6s', aspect: 'portrait' },
   'tan-goes-to-school': { youtubeId: 'opwFPNQom8Y', aspect: 'portrait' },
   'a-rainy-day-off': { youtubeId: 'ZMNIAOPGigg', aspect: 'portrait' },
+  'the-train-east': { youtubeId: '7raFdU85yCI', aspect: 'portrait' },
+  'tans-family-and-friends': { youtubeId: 'VJMFVI5jsQc', aspect: 'portrait' },
 };
