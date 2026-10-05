@@ -87,6 +87,17 @@ export const EMAIL_SIGNUP_SOURCES = [
    * every level's sheets page, so N4-N1 reuse it if they ever carry the form.
    */
   'kanji-level-sheets',
+  /**
+   * The form on the results screen of the JLPT-format mode of the N5 quiz
+   * (/kanji/n5/quiz). Someone here has just answered twelve questions in the
+   * shape of the real exam's kanji section, so the intent is exam preparation,
+   * which neither the level list (studying a set) nor the story shelf
+   * (browsing) is. Kept apart from `kanji-level-list` for that reason, and
+   * because the visitor arrives having finished something rather than
+   * browsing: the question it answers is whether people who sit exam-shaped
+   * questions will join a weekly story list at all.
+   */
+  'jlpt-format-results',
 ] as const;
 
 /**

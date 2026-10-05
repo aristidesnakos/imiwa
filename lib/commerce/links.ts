@@ -186,6 +186,16 @@ export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
  *     choosing a whole level want the free pack directly above it; stop giving
  *     the book that slot.
  *
+ *   · `n5_jlpt_format_book_click` — the results screen of the JLPT-format mode
+ *     on `/kanji/n5/quiz` (added 5 Oct 2026). Its visitors have just sat twelve
+ *     exam-shaped questions and been shown what they missed, which is the
+ *     moment a bound book of every N5 character is most plausible. High → exam
+ *     preparation is a buyer intent the site can serve and the mode earns more
+ *     questions. Low → quiz-takers want free practice, not a paperback; stop
+ *     giving the results screen that slot. Fired from a server-rendered
+ *     `data-fast-goal` attribute (BookCTA is passed into the client quiz as a
+ *     slot), so the quiz carries no extra script for it.
+ *
  * A funnel step matches a goal NAME and ignores properties (verified: the
  * dashboard's step editor takes a goal name, and the shipped script sends
  * properties as event metadata). Pooling these behind one name with a `source`
@@ -206,12 +216,13 @@ export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
  * and it is not defined until something renders it, because an unused goal name
  * is a permanent line in a list that never shrinks.
  */
-export type BookSurface = 'n5Sheets' | 'kanjiDetail' | 'n5List';
+export type BookSurface = 'n5Sheets' | 'kanjiDetail' | 'n5List' | 'jlptFormat';
 
 export const BOOK_CLICK_GOALS = {
   n5Sheets: 'n5_sheets_book_click',
   kanjiDetail: 'kanji_detail_book_click',
   n5List: 'n5_list_book_click',
+  jlptFormat: 'n5_jlpt_format_book_click',
 } as const satisfies Record<BookSurface, string>;
 
 /**
@@ -276,6 +287,7 @@ export const BOOK_ATTRIBUTION_TAGS: Record<BookSurface, string> = {
   n5Sheets: '',
   kanjiDetail: '',
   n5List: '',
+  jlptFormat: '',
 };
 
 /**

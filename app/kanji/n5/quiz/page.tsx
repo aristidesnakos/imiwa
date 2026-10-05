@@ -7,7 +7,38 @@ import { getSEOTags } from '@/lib/seo';
 import { SITE_URL } from '@/lib/seo/site';
 import { levelHref } from '@/lib/levels';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
+import { BookCTA } from '@/components/commerce/BookCTA';
+import EmailCapture from '@/components/EmailCapture';
+import type { PublishedFile } from '@/lib/jlpt/types';
+import jlptPublished from '@/data/jlpt/published/N5.json';
 import { N5QuizClient } from './N5QuizClient';
+import { JlptFormatQuiz } from './JlptFormatQuiz';
+import { QuizModes } from './QuizModes';
+import {
+  JLPT_SAMPLE_INDEX_URL,
+  JLPT_SAMPLE_QUESTIONS_URL,
+  groupSets,
+  largestSet,
+} from './jlpt-format';
+
+/**
+ * THE ASK ON THE JLPT-FORMAT RESULTS SCREEN. One constant so it can be reviewed in one
+ * place. It describes only what the app can send: the double-opt-in confirmation, the
+ * welcome quiz card on the latest episode (lib/email/quiz-email.ts), and then the weekly
+ * Travels of Tan broadcast. It must not promise new question sets, JLPT practice or
+ * anything else.
+ */
+const JLPT_RESULTS_SIGNUP_COPY = {
+  title: 'Join the weekly Travels of Tan newsletter',
+  description:
+    'Each week, one short Japanese comic written only in N5, with a quiz card on the words it teaches. It is the story newsletter, not more question sets.',
+  cta: 'Send me the stories',
+  successTitle: 'Nearly there',
+  successMessage:
+    'Check your inbox for a confirmation link. Tap it to join, and we will send you the latest episode with its quiz card.',
+  footnote:
+    'We send one confirmation email first. Nothing else arrives until you tap it, and you can unsubscribe anytime.',
+} as const;
 
 /**
  * /kanji/n5/quiz — a free quiz on the N5 kanji, and the per-level way into
@@ -32,6 +63,16 @@ import { N5QuizClient } from './N5QuizClient';
 
 const PATH = '/kanji/n5/quiz';
 const N5_COUNT = N5_KANJI.length;
+
+/**
+ * The published JLPT-format items. Only reviewed items are ever in this file, and it is
+ * empty until some are: with none, the page below is the kanji quiz exactly as it was —
+ * no tab, no section, no empty state. Imported here, in the server page, and handed down
+ * as a prop; the (much larger) example-sentence data is never imported by this route.
+ */
+const JLPT_ITEMS = (jlptPublished as unknown as PublishedFile).items;
+const JLPT_SETS = groupSets(JLPT_ITEMS);
+const JLPT_SHAPE = largestSet(JLPT_SETS);
 /** `/kanji/n5` — or, if N5 ever lost its page, /kanji filtered to it. */
 const N5_LIST = levelHref('N5');
 
@@ -141,7 +182,30 @@ export default function N5QuizPage() {
           </p>
         </div>
 
-        <N5QuizClient />
+        {JLPT_SHAPE ? (
+          <QuizModes
+            kanjiQuiz={<N5QuizClient />}
+            jlptQuiz={
+              <JlptFormatQuiz
+                items={JLPT_ITEMS}
+                book={<BookCTA surface="jlptFormat" variant="band" className="mt-0" />}
+                signup={
+                  <EmailCapture
+                    source="jlpt-format-results"
+                    title={JLPT_RESULTS_SIGNUP_COPY.title}
+                    description={JLPT_RESULTS_SIGNUP_COPY.description}
+                    cta={JLPT_RESULTS_SIGNUP_COPY.cta}
+                    successTitle={JLPT_RESULTS_SIGNUP_COPY.successTitle}
+                    successMessage={JLPT_RESULTS_SIGNUP_COPY.successMessage}
+                    footnote={JLPT_RESULTS_SIGNUP_COPY.footnote}
+                  />
+                }
+              />
+            }
+          />
+        ) : (
+          <N5QuizClient />
+        )}
 
         {/* Written for the person deciding whether to play, and it is also the
             page's only prose: the quiz itself is a form until someone starts.
@@ -186,6 +250,67 @@ export default function N5QuizPage() {
             </p>
           </div>
         </section>
+
+        {/* The JLPT-format mode, described. Renders nothing until there are published
+            items, like the other empty-is-valid sections. Deliberately says what the
+            mode is NOT: its questions are ours, in the real format, and a set is a small
+            slice of the real exam. No FAQ markup: this page has none. */}
+        {JLPT_SHAPE && (
+          <section className={SECTION_BAND} aria-labelledby="jlpt-format-heading">
+            <h2 id="jlpt-format-heading" className={`${SECTION_HEADING} text-japan-deep-ocean`}>
+              JLPT-format questions: our own, in the shape of the real exam
+            </h2>
+            <div className="mt-4 space-y-4 text-japan-ink-black">
+              <p>
+                The <strong>JLPT format</strong> tab above plays our own practice questions in the same
+                two formats that open the vocabulary part of the real N5 exam. Pick one of{' '}
+                {JLPT_SETS.length} {JLPT_SETS.length === 1 ? 'set' : 'sets'} and answer{' '}
+                {JLPT_SHAPE.all.length} questions in order, with the answer after each one. Each question
+                is built on a real example sentence from Tatoeba, credited beside it.
+              </p>
+              <ul className="list-disc space-y-2 pl-5">
+                <li>
+                  <strong>Mondai 1</strong> ({JLPT_SHAPE.mondai1.length} per set): a word in kanji is
+                  underlined in a sentence, and you choose how it is read from four kana spellings.
+                </li>
+                <li>
+                  <strong>Mondai 2</strong> ({JLPT_SHAPE.mondai2.length} per set): a word in hiragana is
+                  underlined, and you choose the kanji it is written with.
+                </li>
+              </ul>
+              <p>
+                These are not questions from the JLPT, and a set is only a small slice of the real exam,
+                which asks far more questions of many other kinds. Your score tells you how a set went,
+                not what you would score on the day. For real questions, use the official free{' '}
+                <a
+                  href={JLPT_SAMPLE_QUESTIONS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={TEXT_LINK}
+                >
+                  sample questions
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>{' '}
+                and{' '}
+                <a
+                  href={JLPT_SAMPLE_INDEX_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={TEXT_LINK}
+                >
+                  practice workbook
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+                .
+              </p>
+              <p>
+                <a href="#jlpt-format" className={TEXT_LINK}>
+                  Go to the JLPT-format questions
+                </a>
+              </p>
+            </div>
+          </section>
+        )}
       </main>
     </>
   );
