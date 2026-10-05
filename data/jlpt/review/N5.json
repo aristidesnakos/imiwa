@@ -1,0 +1,2410 @@
+{
+  "level": "N5",
+  "excluded": [
+    {
+      "surface": "本気",
+      "reading": "ほんき",
+      "reason": "colloquial; likely above N5"
+    },
+    {
+      "surface": "一生",
+      "reading": "いっしょう",
+      "reason": "abstract; likely above N5"
+    },
+    {
+      "surface": "万一",
+      "reading": "まんいち",
+      "reason": "likely above N5"
+    },
+    {
+      "surface": "一雨",
+      "reading": "ひとあめ",
+      "reason": "literary; likely above N5"
+    },
+    {
+      "surface": "中小",
+      "reading": "ちゅうしょう",
+      "reason": "business term; likely above N5"
+    },
+    {
+      "surface": "北国",
+      "reading": "きたぐに",
+      "reason": "literary; likely above N5"
+    },
+    {
+      "surface": "南北",
+      "reading": "なんぼく",
+      "reason": "likely above N5"
+    },
+    {
+      "surface": "天国",
+      "reading": "てんごく",
+      "reason": "likely above N5"
+    },
+    {
+      "surface": "年上",
+      "reading": "としうえ",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "人前",
+      "reading": "ひとまえ",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "時半",
+      "reading": "じはん",
+      "reason": "a fragment of 〜時半, not a word on its own"
+    },
+    {
+      "surface": "一千",
+      "reading": "いっせん",
+      "reason": "unnatural; 千 alone is the usual spelling"
+    },
+    {
+      "surface": "山分け",
+      "reading": "やまわけ",
+      "reason": "colloquial; likely above N5"
+    },
+    {
+      "surface": "友人",
+      "reading": "ゆうじん",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "外出",
+      "reading": "がいしゅつ",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "読書",
+      "reading": "どくしょ",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "休日",
+      "reading": "きゅうじつ",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "先日",
+      "reading": "せんじつ",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "半日",
+      "reading": "はんにち",
+      "reason": "also valid as はんじつ"
+    },
+    {
+      "surface": "女子",
+      "reading": "じょし",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "男子",
+      "reading": "だんし",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "電子",
+      "reading": "でんし",
+      "reason": "likely above N5"
+    },
+    {
+      "surface": "火山",
+      "reading": "かざん",
+      "reason": "possibly N4"
+    },
+    {
+      "surface": "二十四時間",
+      "reading": "にじゅうよじかん",
+      "reason": "long; the reading is a chain of exceptions"
+    },
+    {
+      "surface": "何",
+      "reading": "なに",
+      "reason": "the reading depends on the next word (なに/なん); no single right answer"
+    },
+    {
+      "surface": "十",
+      "reading": "じゅう",
+      "reason": "とお is also valid in many contexts"
+    },
+    {
+      "surface": "上",
+      "reading": "うえ",
+      "reason": "のぼ・あ・かみ are valid in other words; the stem alone is ambiguous"
+    },
+    {
+      "surface": "下",
+      "reading": "した",
+      "reason": "same ambiguity as 上"
+    }
+  ],
+  "items": [
+    {
+      "id": "n5-s1-m1-1",
+      "mondai": 1,
+      "set": 1,
+      "no": 1,
+      "candidateId": "tatoeba-1979859-72344",
+      "surface": "七時",
+      "reading": "しちじ",
+      "before": "もうすぐ",
+      "target": "七時",
+      "after": "だ。学校に行かなくちゃ。",
+      "english": "It is close to seven o'clock. We have to go to school.",
+      "answerText": "しちじ",
+      "distractors": [
+        {
+          "text": "しちし",
+          "rule": "dakuten"
+        },
+        {
+          "text": "しちとき",
+          "rule": "on-kun"
+        },
+        {
+          "text": "しっちじ",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 1979859,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/1979859"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m1-2",
+      "mondai": 1,
+      "set": 1,
+      "no": 2,
+      "candidateId": "tatoeba-123363-280634",
+      "surface": "時間",
+      "reading": "じかん",
+      "before": "読書をする",
+      "target": "時間",
+      "after": "さえもない。",
+      "english": "I have no time even for reading.",
+      "answerText": "じかん",
+      "distractors": [
+        {
+          "text": "じがん",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ときかん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "じっかん",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 123363,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/123363"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m1-3",
+      "mondai": 1,
+      "set": 1,
+      "no": 3,
+      "candidateId": "tatoeba-11883556-13673573",
+      "surface": "大学",
+      "reading": "だいがく",
+      "before": "その",
+      "target": "大学",
+      "after": "って、名門なの？",
+      "english": "Is that university a prestigious one?",
+      "answerText": "だいがく",
+      "distractors": [
+        {
+          "text": "たいがく",
+          "rule": "dakuten"
+        },
+        {
+          "text": "だいがっく",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "おおがく",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 11883556,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11883556"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m1-4",
+      "mondai": 1,
+      "set": 1,
+      "no": 4,
+      "candidateId": "tatoeba-171595-242880",
+      "surface": "気分",
+      "reading": "きぶん",
+      "before": "今日は出かけたい",
+      "target": "気分",
+      "after": "だ。",
+      "english": "I feel like going out today.",
+      "answerText": "きぶん",
+      "distractors": [
+        {
+          "text": "いきぶん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "ぎぶん",
+          "rule": "dakuten"
+        },
+        {
+          "text": "きふん",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 171595,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/171595"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m1-5",
+      "mondai": 1,
+      "set": 1,
+      "no": 5,
+      "candidateId": "tatoeba-84839-318875",
+      "surface": "父さん",
+      "reading": "とうさん",
+      "before": "",
+      "target": "父さん",
+      "after": "、何をしてたの？",
+      "english": "What were you doing, Dad?",
+      "answerText": "とうさん",
+      "distractors": [
+        {
+          "text": "どうさん",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ちちさん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "とさん",
+          "rule": "long-vowel"
+        }
+      ],
+      "source": {
+        "sentenceId": 84839,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/84839"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m1-6",
+      "mondai": 1,
+      "set": 1,
+      "no": 6,
+      "candidateId": "tatoeba-144776-269788",
+      "surface": "話す",
+      "reading": "はなす",
+      "before": "親友とはなんでも",
+      "target": "話す",
+      "after": "ことができる。",
+      "english": "I can talk about anything with my best friend.",
+      "answerText": "はなす",
+      "distractors": [
+        {
+          "text": "はなしす",
+          "rule": "on-kun"
+        },
+        {
+          "text": "はなっす",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "はなず",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 144776,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/144776"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m1-7",
+      "mondai": 1,
+      "set": 1,
+      "no": 7,
+      "candidateId": "tatoeba-10050407-10085397",
+      "surface": "西",
+      "reading": "にし",
+      "before": "アイルランドは",
+      "target": "西",
+      "after": "ヨーロッパにある。",
+      "english": "Ireland is in western Europe.",
+      "answerText": "にし",
+      "distractors": [
+        {
+          "text": "にじ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "にっし",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "せい",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 10050407,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10050407"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m2-1",
+      "mondai": 2,
+      "set": 1,
+      "no": 1,
+      "candidateId": "tatoeba-8596858-5679117",
+      "surface": "三百",
+      "reading": "さんびゃく",
+      "before": "クリスマスにトムから",
+      "target": "さんびゃく",
+      "after": "ドルのギフトカードもらったんだ。",
+      "english": "I received a $300 gift card from Tom for Christmas.",
+      "answerText": "三百",
+      "distractors": [
+        {
+          "text": "山百",
+          "rule": "same-reading"
+        },
+        {
+          "text": "三月",
+          "rule": "look-alike"
+        },
+        {
+          "text": "三日",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 8596858,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/8596858"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m2-2",
+      "mondai": 2,
+      "set": 1,
+      "no": 2,
+      "candidateId": "tatoeba-231792-69159",
+      "surface": "先月",
+      "reading": "せんげつ",
+      "before": "あなたは",
+      "target": "せんげつ",
+      "after": "から日本にいますか。",
+      "english": "Have you been in Japan since last month?",
+      "answerText": "先月",
+      "distractors": [
+        {
+          "text": "先円",
+          "rule": "look-alike"
+        },
+        {
+          "text": "川月",
+          "rule": "same-reading"
+        },
+        {
+          "text": "先日",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 231792,
+        "contributor": "arihato",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/231792"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m2-3",
+      "mondai": 2,
+      "set": 1,
+      "no": 3,
+      "candidateId": "tatoeba-194721-31894",
+      "surface": "日本語",
+      "reading": "にほんご",
+      "before": "メアリーは",
+      "target": "にほんご",
+      "after": "が話せる。",
+      "english": "Mary can speak Japanese.",
+      "answerText": "日本語",
+      "distractors": [
+        {
+          "text": "日木語",
+          "rule": "look-alike"
+        },
+        {
+          "text": "月本語",
+          "rule": "look-alike"
+        },
+        {
+          "text": "日来語",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 194721,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/194721"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: にっぽんご"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m2-4",
+      "mondai": 2,
+      "set": 1,
+      "no": 4,
+      "candidateId": "tatoeba-149633-264925",
+      "surface": "三十分",
+      "reading": "さんじゅっぷん",
+      "before": "七時",
+      "target": "さんじゅっぷん",
+      "after": "だった。",
+      "english": "It was seven thirty.",
+      "answerText": "三十分",
+      "distractors": [
+        {
+          "text": "三午分",
+          "rule": "look-alike"
+        },
+        {
+          "text": "三千分",
+          "rule": "look-alike"
+        },
+        {
+          "text": "川十分",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 149633,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/149633"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: さんじっぷん"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s1-m2-5",
+      "mondai": 2,
+      "set": 1,
+      "no": 5,
+      "candidateId": "tatoeba-10932447-10540232",
+      "surface": "十一月",
+      "reading": "じゅういちがつ",
+      "before": "今日は、二千十六年",
+      "target": "じゅういちがつ",
+      "after": "二十三日です。",
+      "english": "Today is 23 November 2016.",
+      "answerText": "十一月",
+      "distractors": [
+        {
+          "text": "十一白",
+          "rule": "look-alike"
+        },
+        {
+          "text": "十一円",
+          "rule": "look-alike"
+        },
+        {
+          "text": "千一月",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 10932447,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10932447"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-1",
+      "mondai": 1,
+      "set": 2,
+      "no": 1,
+      "candidateId": "tatoeba-123075-280925",
+      "surface": "二人",
+      "reading": "ふたり",
+      "before": "",
+      "target": "二人",
+      "after": "はハネムーンに出かけた。",
+      "english": "The couple went off on their honeymoon.",
+      "answerText": "ふたり",
+      "distractors": [
+        {
+          "text": "ふったり",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "ふうたり",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "ぶたり",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 123075,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/123075"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-2",
+      "mondai": 1,
+      "set": 2,
+      "no": 2,
+      "candidateId": "tatoeba-4292002-6586843",
+      "surface": "大学生",
+      "reading": "だいがくせい",
+      "before": "",
+      "target": "大学生",
+      "after": "なんだし，もっとフィーバーしようぜ！",
+      "english": "Since we're college students, let's go all out!",
+      "answerText": "だいがくせい",
+      "distractors": [
+        {
+          "text": "だいがぐせい",
+          "rule": "dakuten"
+        },
+        {
+          "text": "だいまなせい",
+          "rule": "on-kun"
+        },
+        {
+          "text": "だいがくっせい",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 4292002,
+        "contributor": "admiral",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/4292002"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-3",
+      "mondai": 1,
+      "set": 2,
+      "no": 3,
+      "candidateId": "tatoeba-184398-21526",
+      "surface": "九時",
+      "reading": "くじ",
+      "before": "学校は",
+      "target": "九時",
+      "after": "から始まります。",
+      "english": "School begins at nine.",
+      "answerText": "くじ",
+      "distractors": [
+        {
+          "text": "くうじ",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "くどき",
+          "rule": "on-kun"
+        },
+        {
+          "text": "ぐじ",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 184398,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/184398"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-4",
+      "mondai": 1,
+      "set": 2,
+      "no": 4,
+      "candidateId": "tatoeba-124844-279149",
+      "surface": "電気",
+      "reading": "でんき",
+      "before": "",
+      "target": "電気",
+      "after": "をつけていただけませんか。",
+      "english": "Would you be so kind as to turn the light on?",
+      "answerText": "でんき",
+      "distractors": [
+        {
+          "text": "でんぎ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "でんいき",
+          "rule": "on-kun"
+        },
+        {
+          "text": "てんき",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 124844,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/124844"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-5",
+      "mondai": 1,
+      "set": 2,
+      "no": 5,
+      "candidateId": "tatoeba-173257-241213",
+      "surface": "高い",
+      "reading": "たかい",
+      "before": "",
+      "target": "高い",
+      "after": "んだろ。やめとくよ。",
+      "english": "I'm sure it costs a pretty penny. I'll pass.",
+      "answerText": "たかい",
+      "distractors": [
+        {
+          "text": "たっかい",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "たがい",
+          "rule": "dakuten"
+        },
+        {
+          "text": "こうい",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 173257,
+        "contributor": "KK_kaku_",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/173257"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-6",
+      "mondai": 1,
+      "set": 2,
+      "no": 6,
+      "candidateId": "tatoeba-10899663-10899664",
+      "surface": "休み",
+      "reading": "やすみ",
+      "before": "きょうかぜで学校を",
+      "target": "休み",
+      "after": "ました。",
+      "english": "I didn't go to school today because I had a cold.",
+      "answerText": "やすみ",
+      "distractors": [
+        {
+          "text": "やずみ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "やすうみ",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "きゅうみ",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 10899663,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10899663"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m1-7",
+      "mondai": 1,
+      "set": 2,
+      "no": 7,
+      "candidateId": "tatoeba-75577-328141",
+      "surface": "男",
+      "reading": "おとこ",
+      "before": "あんないい",
+      "target": "男",
+      "after": "そうそういないぞ！！",
+      "english": "There aren't many blokes that nice!",
+      "answerText": "おとこ",
+      "distractors": [
+        {
+          "text": "なん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "おとっこ",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "おうとこ",
+          "rule": "long-vowel"
+        }
+      ],
+      "source": {
+        "sentenceId": 75577,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/75577"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m2-1",
+      "mondai": 2,
+      "set": 2,
+      "no": 1,
+      "candidateId": "tatoeba-194727-31900",
+      "surface": "中国語",
+      "reading": "ちゅうごくご",
+      "before": "メアリーは",
+      "target": "ちゅうごくご",
+      "after": "がわかります。",
+      "english": "Mary understands Chinese.",
+      "answerText": "中国語",
+      "distractors": [
+        {
+          "text": "中国午",
+          "rule": "same-reading"
+        },
+        {
+          "text": "中国話",
+          "rule": "look-alike"
+        },
+        {
+          "text": "中国後",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 194727,
+        "contributor": "KK_kaku_",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/194727"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m2-2",
+      "mondai": 2,
+      "set": 2,
+      "no": 2,
+      "candidateId": "tatoeba-10574504-10300095",
+      "surface": "小学校",
+      "reading": "しょうがっこう",
+      "before": "この本はね、",
+      "target": "しょうがっこう",
+      "after": "の時に読んだよ。",
+      "english": "I read this book when I was in elementary school.",
+      "answerText": "小学校",
+      "distractors": [
+        {
+          "text": "水学校",
+          "rule": "look-alike"
+        },
+        {
+          "text": "小学行",
+          "rule": "same-reading"
+        },
+        {
+          "text": "生学校",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 10574504,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10574504"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m2-3",
+      "mondai": 2,
+      "set": 2,
+      "no": 3,
+      "candidateId": "tatoeba-173213-241258",
+      "surface": "高校",
+      "reading": "こうこう",
+      "before": "",
+      "target": "こうこう",
+      "after": "ではサッカーチームに入っています。",
+      "english": "I am on our high school soccer team.",
+      "answerText": "高校",
+      "distractors": [
+        {
+          "text": "行校",
+          "rule": "same-reading"
+        },
+        {
+          "text": "高後",
+          "rule": "same-reading"
+        },
+        {
+          "text": "後校",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 173213,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/173213"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m2-4",
+      "mondai": 2,
+      "set": 2,
+      "no": 4,
+      "candidateId": "tatoeba-11469088-6435317",
+      "surface": "来年",
+      "reading": "らいねん",
+      "before": "",
+      "target": "らいねん",
+      "after": "の１０月で、トムは３０になるんだ。",
+      "english": "Tom is going to be thirty next October.",
+      "answerText": "来年",
+      "distractors": [
+        {
+          "text": "木年",
+          "rule": "look-alike"
+        },
+        {
+          "text": "本年",
+          "rule": "look-alike"
+        },
+        {
+          "text": "東年",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 11469088,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11469088"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s2-m2-5",
+      "mondai": 2,
+      "set": 2,
+      "no": 5,
+      "candidateId": "tatoeba-11029490-13700891",
+      "surface": "今日",
+      "reading": "きょう",
+      "before": "よーし、",
+      "target": "きょう",
+      "after": "は食うぞお。",
+      "english": "Right then, I'm going to stuff my face today!",
+      "answerText": "今日",
+      "distractors": [
+        {
+          "text": "今月",
+          "rule": "look-alike"
+        },
+        {
+          "text": "今円",
+          "rule": "look-alike"
+        },
+        {
+          "text": "今白",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 11029490,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11029490"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: こんにち"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-1",
+      "mondai": 1,
+      "set": 3,
+      "no": 1,
+      "candidateId": "tatoeba-124800-279193",
+      "surface": "電車",
+      "reading": "でんしゃ",
+      "before": "",
+      "target": "電車",
+      "after": "の中ですりにやられちゃったんだ。",
+      "english": "I had my pocket picked on the train.",
+      "answerText": "でんしゃ",
+      "distractors": [
+        {
+          "text": "でんしょ",
+          "rule": "small-kana"
+        },
+        {
+          "text": "でんじゃ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "でんくるま",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 124800,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/124800"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-2",
+      "mondai": 1,
+      "set": 3,
+      "no": 2,
+      "candidateId": "tatoeba-84418-319296",
+      "surface": "中国",
+      "reading": "ちゅうごく",
+      "before": "父は",
+      "target": "中国",
+      "after": "へ行ってしまった。",
+      "english": "My father has gone to China.",
+      "answerText": "ちゅうごく",
+      "distractors": [
+        {
+          "text": "ちゅうごっく",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "ちゅうこく",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ちゅごく",
+          "rule": "long-vowel"
+        }
+      ],
+      "source": {
+        "sentenceId": 84418,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/84418"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-3",
+      "mondai": 1,
+      "set": 3,
+      "no": 3,
+      "candidateId": "tatoeba-174393-1269153",
+      "surface": "午後",
+      "reading": "ごご",
+      "before": "",
+      "target": "午後",
+      "after": "はどうやら雨になりそうだ。",
+      "english": "It seems like it might rain this afternoon.",
+      "answerText": "ごご",
+      "distractors": [
+        {
+          "text": "ごあと",
+          "rule": "on-kun"
+        },
+        {
+          "text": "こご",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ごうご",
+          "rule": "long-vowel"
+        }
+      ],
+      "source": {
+        "sentenceId": 174393,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/174393"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-4",
+      "mondai": 1,
+      "set": 3,
+      "no": 4,
+      "candidateId": "tatoeba-2429718-326485",
+      "surface": "電話",
+      "reading": "でんわ",
+      "before": "6時半に",
+      "target": "電話",
+      "after": "してください。",
+      "english": "Call me at six-thirty, please.",
+      "answerText": "でんわ",
+      "distractors": [
+        {
+          "text": "てんわ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "でんはな",
+          "rule": "on-kun"
+        },
+        {
+          "text": "でんはなし",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 2429718,
+        "contributor": "tommy_san",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/2429718"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-5",
+      "mondai": 1,
+      "set": 3,
+      "no": 5,
+      "candidateId": "tatoeba-997286-70346",
+      "surface": "友だち",
+      "reading": "ともだち",
+      "before": "あなたの",
+      "target": "友だち",
+      "after": "によろしく。",
+      "english": "Say hello to your friends.",
+      "answerText": "ともだち",
+      "distractors": [
+        {
+          "text": "ともうだち",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "どもだち",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ゆうだち",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 997286,
+        "contributor": "mookeee",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/997286"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-6",
+      "mondai": 1,
+      "set": 3,
+      "no": 6,
+      "candidateId": "tatoeba-226039-9050043",
+      "surface": "母さん",
+      "reading": "かあさん",
+      "before": "「",
+      "target": "母さん",
+      "after": "どこにいるの？」「キッチンよ」",
+      "english": "\"Where's mom?\" \"She's in the kitchen.\"",
+      "answerText": "かあさん",
+      "distractors": [
+        {
+          "text": "かあっさん",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "ははさん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "かあざん",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 226039,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/226039"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m1-7",
+      "mondai": 1,
+      "set": 3,
+      "no": 7,
+      "candidateId": "tatoeba-11058413-7488958",
+      "surface": "刀",
+      "reading": "かたな",
+      "before": "俺の",
+      "target": "刀",
+      "after": "はどこだ？",
+      "english": "Where's my sword?",
+      "answerText": "かたな",
+      "distractors": [
+        {
+          "text": "がたな",
+          "rule": "dakuten"
+        },
+        {
+          "text": "とう",
+          "rule": "on-kun"
+        },
+        {
+          "text": "かったな",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 11058413,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11058413"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m2-1",
+      "mondai": 2,
+      "set": 3,
+      "no": 1,
+      "candidateId": "tatoeba-143831-10495902",
+      "surface": "人間",
+      "reading": "にんげん",
+      "before": "水がなければ、",
+      "target": "にんげん",
+      "after": "は生きられない。",
+      "english": "Without water, people couldn't live.",
+      "answerText": "人間",
+      "distractors": [
+        {
+          "text": "入間",
+          "rule": "look-alike"
+        },
+        {
+          "text": "人見",
+          "rule": "same-reading"
+        },
+        {
+          "text": "人聞",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 143831,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/143831"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: じんかん"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m2-2",
+      "mondai": 2,
+      "set": 3,
+      "no": 2,
+      "candidateId": "tatoeba-208264-45521",
+      "surface": "十分",
+      "reading": "じゅうぶん",
+      "before": "その大きさで",
+      "target": "じゅうぶん",
+      "after": "ですか。",
+      "english": "Is it large enough?",
+      "answerText": "十分",
+      "distractors": [
+        {
+          "text": "十聞",
+          "rule": "same-reading"
+        },
+        {
+          "text": "午分",
+          "rule": "look-alike"
+        },
+        {
+          "text": "千分",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 208264,
+        "contributor": "KK_kaku_",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/208264"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: じっぷん、じゅっぷん"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m2-3",
+      "mondai": 2,
+      "set": 3,
+      "no": 3,
+      "candidateId": "tatoeba-171353-243121",
+      "surface": "六月",
+      "reading": "ろくがつ",
+      "before": "今年の",
+      "target": "ろくがつ",
+      "after": "はあまり雨の日がなかった。",
+      "english": "There were not many rainy days in June this year.",
+      "answerText": "六月",
+      "distractors": [
+        {
+          "text": "六円",
+          "rule": "look-alike"
+        },
+        {
+          "text": "六日",
+          "rule": "look-alike"
+        },
+        {
+          "text": "六白",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 171353,
+        "contributor": null,
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/171353"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m2-4",
+      "mondai": 2,
+      "set": 3,
+      "no": 4,
+      "candidateId": "tatoeba-9472440-9673009",
+      "surface": "八日",
+      "reading": "ようか",
+      "before": "日本では、八月",
+      "target": "ようか",
+      "after": "はヒゲの日です。",
+      "english": "The eighth of August is Beard Day in Japan.",
+      "answerText": "八日",
+      "distractors": [
+        {
+          "text": "八円",
+          "rule": "look-alike"
+        },
+        {
+          "text": "八白",
+          "rule": "look-alike"
+        },
+        {
+          "text": "八月",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 9472440,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/9472440"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s3-m2-5",
+      "mondai": 2,
+      "set": 3,
+      "no": 5,
+      "candidateId": "tatoeba-11257897-7920489",
+      "surface": "一円",
+      "reading": "いちえん",
+      "before": "",
+      "target": "いちえん",
+      "after": "も使わなかった。",
+      "english": "I didn't spend a penny.",
+      "answerText": "一円",
+      "distractors": [
+        {
+          "text": "一白",
+          "rule": "look-alike"
+        },
+        {
+          "text": "一月",
+          "rule": "look-alike"
+        },
+        {
+          "text": "一日",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 11257897,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11257897"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-1",
+      "mondai": 1,
+      "set": 4,
+      "no": 1,
+      "candidateId": "tatoeba-81248-322467",
+      "surface": "毎年",
+      "reading": "まいとし",
+      "before": "",
+      "target": "毎年",
+      "after": "ここに来なきゃ。",
+      "english": "I'll have to come here every year.",
+      "answerText": "まいとし",
+      "distractors": [
+        {
+          "text": "まいねん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "まいとうし",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "まいとっし",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 81248,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/81248"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-2",
+      "mondai": 1,
+      "set": 4,
+      "no": 2,
+      "candidateId": "tatoeba-157196-10533434",
+      "surface": "午前",
+      "reading": "ごぜん",
+      "before": "",
+      "target": "午前",
+      "after": "中はずっと本を読んでました。",
+      "english": "I've been reading a book all morning.",
+      "answerText": "ごぜん",
+      "distractors": [
+        {
+          "text": "こぜん",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ごうぜん",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "ごまえ",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 157196,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/157196"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-3",
+      "mondai": 1,
+      "set": 4,
+      "no": 3,
+      "candidateId": "tatoeba-10156639-10562271",
+      "surface": "今年",
+      "reading": "ことし",
+      "before": "天気が悪くて",
+      "target": "今年",
+      "after": "は天の川が見れないわね。",
+      "english": "We can't see the Milky Way this year because of the bad weather, huh?",
+      "answerText": "ことし",
+      "distractors": [
+        {
+          "text": "ごとし",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ことっし",
+          "rule": "small-tsu"
+        },
+        {
+          "text": "ことうし",
+          "rule": "long-vowel"
+        }
+      ],
+      "source": {
+        "sentenceId": 10156639,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10156639"
+      },
+      "flags": [
+        "other valid readings excluded from distractors: こんねん",
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-4",
+      "mondai": 1,
+      "set": 4,
+      "no": 4,
+      "candidateId": "tatoeba-169504-244982",
+      "surface": "三時",
+      "reading": "さんじ",
+      "before": "",
+      "target": "三時",
+      "after": "でどうでしょうか。",
+      "english": "Would three o'clock be all right?",
+      "answerText": "さんじ",
+      "distractors": [
+        {
+          "text": "ざんじ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "さんとき",
+          "rule": "on-kun"
+        },
+        {
+          "text": "さんどき",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 169504,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/169504"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-5",
+      "mondai": 1,
+      "set": 4,
+      "no": 5,
+      "candidateId": "tatoeba-10962448-12883665",
+      "surface": "出かける",
+      "reading": "でかける",
+      "before": "いつパーティーに",
+      "target": "出かける",
+      "after": "の？",
+      "english": "When will you leave for the party?",
+      "answerText": "でかける",
+      "distractors": [
+        {
+          "text": "でいかける",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "てかける",
+          "rule": "dakuten"
+        },
+        {
+          "text": "でかっける",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 10962448,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10962448"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-6",
+      "mondai": 1,
+      "set": 4,
+      "no": 6,
+      "candidateId": "tatoeba-173570-240900",
+      "surface": "後ろ",
+      "reading": "うしろ",
+      "before": "校長が先生の",
+      "target": "後ろ",
+      "after": "から入ってきた。",
+      "english": "The principal came in after the teacher.",
+      "answerText": "うしろ",
+      "distractors": [
+        {
+          "text": "ううしろ",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "こうろ",
+          "rule": "on-kun"
+        },
+        {
+          "text": "うじろ",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 173570,
+        "contributor": "KK_kaku_",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/173570"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m1-7",
+      "mondai": 1,
+      "set": 4,
+      "no": 7,
+      "candidateId": "tatoeba-10899809-10899810",
+      "surface": "国",
+      "reading": "くに",
+      "before": "三年前この",
+      "target": "国",
+      "after": "へ来ました。",
+      "english": "I came to this country three years ago.",
+      "answerText": "くに",
+      "distractors": [
+        {
+          "text": "こく",
+          "rule": "on-kun"
+        },
+        {
+          "text": "くうに",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "ぐに",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 10899809,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10899809"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m2-1",
+      "mondai": 2,
+      "set": 4,
+      "no": 1,
+      "candidateId": "tatoeba-172471-242004",
+      "surface": "今月",
+      "reading": "こんげつ",
+      "before": "",
+      "target": "こんげつ",
+      "after": "いっぱいここにいます。",
+      "english": "I will stay here all this month.",
+      "answerText": "今月",
+      "distractors": [
+        {
+          "text": "今日",
+          "rule": "look-alike"
+        },
+        {
+          "text": "金月",
+          "rule": "same-reading"
+        },
+        {
+          "text": "今円",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 172471,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/172471"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m2-2",
+      "mondai": 2,
+      "set": 4,
+      "no": 2,
+      "candidateId": "tatoeba-11648687-21520",
+      "surface": "四月",
+      "reading": "しがつ",
+      "before": "学校は",
+      "target": "しがつ",
+      "after": "からです。",
+      "english": "School begins in April.",
+      "answerText": "四月",
+      "distractors": [
+        {
+          "text": "四日",
+          "rule": "look-alike"
+        },
+        {
+          "text": "子月",
+          "rule": "same-reading"
+        },
+        {
+          "text": "四円",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 11648687,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11648687"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m2-3",
+      "mondai": 2,
+      "set": 4,
+      "no": 3,
+      "candidateId": "tatoeba-10568489-8980397",
+      "surface": "学校",
+      "reading": "がっこう",
+      "before": "",
+      "target": "がっこう",
+      "after": "の先生なんでしょ？",
+      "english": "You're a schoolteacher, aren't you?",
+      "answerText": "学校",
+      "distractors": [
+        {
+          "text": "学後",
+          "rule": "same-reading"
+        },
+        {
+          "text": "学高",
+          "rule": "same-reading"
+        },
+        {
+          "text": "学行",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 10568489,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10568489"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m2-4",
+      "mondai": 2,
+      "set": 4,
+      "no": 4,
+      "candidateId": "tatoeba-229741-67102",
+      "surface": "校長",
+      "reading": "こうちょう",
+      "before": "あれはきっと",
+      "target": "こうちょう",
+      "after": "先生だ。",
+      "english": "I bet he is our principal.",
+      "answerText": "校長",
+      "distractors": [
+        {
+          "text": "行長",
+          "rule": "same-reading"
+        },
+        {
+          "text": "高長",
+          "rule": "same-reading"
+        },
+        {
+          "text": "後長",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 229741,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/229741"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "word may be above N5 (kept so Mondai 2 has 25 usable words): your call"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s4-m2-5",
+      "mondai": 2,
+      "set": 4,
+      "no": 5,
+      "candidateId": "tatoeba-121433-282572",
+      "surface": "白い",
+      "reading": "しろい",
+      "before": "",
+      "target": "しろい",
+      "after": "ベルトがついてるのがいいな。",
+      "english": "I like the one with a white belt.",
+      "answerText": "白い",
+      "distractors": [
+        {
+          "text": "月い",
+          "rule": "look-alike"
+        },
+        {
+          "text": "日い",
+          "rule": "look-alike"
+        },
+        {
+          "text": "円い",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 121433,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/121433"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "weak: look-alikes of a single kanji or an okurigana word read as nonsense; consider replacing"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-1",
+      "mondai": 1,
+      "set": 5,
+      "no": 1,
+      "candidateId": "tatoeba-10965423-12069379",
+      "surface": "外国",
+      "reading": "がいこく",
+      "before": "あの電話で",
+      "target": "外国",
+      "after": "に電話ができますか？",
+      "english": "Can I make an international call with that phone?",
+      "answerText": "がいこく",
+      "distractors": [
+        {
+          "text": "がいこぐ",
+          "rule": "dakuten"
+        },
+        {
+          "text": "がいくに",
+          "rule": "on-kun"
+        },
+        {
+          "text": "がいこっく",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 10965423,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10965423"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-2",
+      "mondai": 1,
+      "set": 5,
+      "no": 2,
+      "candidateId": "tatoeba-11009569-11014606",
+      "surface": "半年",
+      "reading": "はんとし",
+      "before": "そのソフトは",
+      "target": "半年",
+      "after": "前にリリースされたよ。",
+      "english": "That software was released six months ago.",
+      "answerText": "はんとし",
+      "distractors": [
+        {
+          "text": "なかとし",
+          "rule": "on-kun"
+        },
+        {
+          "text": "はんとうし",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "はんとっし",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 11009569,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11009569"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-3",
+      "mondai": 1,
+      "set": 5,
+      "no": 3,
+      "candidateId": "tatoeba-203799-41040",
+      "surface": "学生",
+      "reading": "がくせい",
+      "before": "たくさんの",
+      "target": "学生",
+      "after": "がアルバイトをする。",
+      "english": "A lot of students do part-time jobs.",
+      "answerText": "がくせい",
+      "distractors": [
+        {
+          "text": "がくなま",
+          "rule": "on-kun"
+        },
+        {
+          "text": "がくぜい",
+          "rule": "dakuten"
+        },
+        {
+          "text": "がくせ",
+          "rule": "long-vowel"
+        }
+      ],
+      "source": {
+        "sentenceId": 203799,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/203799"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-4",
+      "mondai": 1,
+      "set": 5,
+      "no": 4,
+      "candidateId": "tatoeba-10899758-12455091",
+      "surface": "半分",
+      "reading": "はんぶん",
+      "before": "パンを",
+      "target": "半分",
+      "after": "食べました。",
+      "english": "I ate half the bread.",
+      "answerText": "はんぶん",
+      "distractors": [
+        {
+          "text": "はんぷん",
+          "rule": "dakuten"
+        },
+        {
+          "text": "なかぶん",
+          "rule": "on-kun"
+        },
+        {
+          "text": "ばんぶん",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 10899758,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10899758"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-5",
+      "mondai": 1,
+      "set": 5,
+      "no": 5,
+      "candidateId": "tatoeba-196626-33806",
+      "surface": "下さい",
+      "reading": "ください",
+      "before": "ペンで書いて",
+      "target": "下さい",
+      "after": "。",
+      "english": "Please write with a pen.",
+      "answerText": "ください",
+      "distractors": [
+        {
+          "text": "ぐださい",
+          "rule": "dakuten"
+        },
+        {
+          "text": "くうださい",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "くだっさい",
+          "rule": "small-tsu"
+        }
+      ],
+      "source": {
+        "sentenceId": 196626,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/196626"
+      },
+      "flags": [],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-6",
+      "mondai": 1,
+      "set": 5,
+      "no": 6,
+      "candidateId": "tatoeba-81613-322102",
+      "surface": "読む",
+      "reading": "よむ",
+      "before": "本を",
+      "target": "読む",
+      "after": "のはとてもおもしろい。",
+      "english": "Reading books is very interesting.",
+      "answerText": "よむ",
+      "distractors": [
+        {
+          "text": "ようむ",
+          "rule": "long-vowel"
+        },
+        {
+          "text": "どくむ",
+          "rule": "on-kun"
+        },
+        {
+          "text": "とくむ",
+          "rule": "on-kun"
+        }
+      ],
+      "source": {
+        "sentenceId": 81613,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/81613"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m1-7",
+      "mondai": 1,
+      "set": 5,
+      "no": 7,
+      "candidateId": "tatoeba-11022939-13140029",
+      "surface": "左",
+      "reading": "ひだり",
+      "before": "そこのかどを",
+      "target": "左",
+      "after": "にまがって。",
+      "english": "Turn left at that corner.",
+      "answerText": "ひだり",
+      "distractors": [
+        {
+          "text": "しゃ",
+          "rule": "on-kun"
+        },
+        {
+          "text": "びだり",
+          "rule": "dakuten"
+        },
+        {
+          "text": "ひたり",
+          "rule": "dakuten"
+        }
+      ],
+      "source": {
+        "sentenceId": 11022939,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/11022939"
+      },
+      "flags": [
+        "very short word: check no distractor is a real word"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m2-1",
+      "mondai": 2,
+      "set": 5,
+      "no": 1,
+      "candidateId": "tatoeba-215152-52450",
+      "surface": "五月",
+      "reading": "ごがつ",
+      "before": "スイスでは",
+      "target": "ごがつ",
+      "after": "に春がくる。",
+      "english": "In Switzerland, spring comes in May.",
+      "answerText": "五月",
+      "distractors": [
+        {
+          "text": "五日",
+          "rule": "look-alike"
+        },
+        {
+          "text": "後月",
+          "rule": "same-reading"
+        },
+        {
+          "text": "午月",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 215152,
+        "contributor": "bunbuku",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/215152"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m2-2",
+      "mondai": 2,
+      "set": 5,
+      "no": 2,
+      "candidateId": "tatoeba-2850571-2921249",
+      "surface": "日本",
+      "reading": "にほん",
+      "before": "",
+      "target": "にほん",
+      "after": "は今午前3時です。",
+      "english": "In Japan, it's three in the morning now.",
+      "answerText": "日本",
+      "distractors": [
+        {
+          "text": "日木",
+          "rule": "look-alike"
+        },
+        {
+          "text": "円本",
+          "rule": "look-alike"
+        },
+        {
+          "text": "日来",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 2850571,
+        "contributor": "tommy_san",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/2850571"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: にっぽん"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m2-3",
+      "mondai": 2,
+      "set": 5,
+      "no": 3,
+      "candidateId": "tatoeba-231729-387584",
+      "surface": "日本人",
+      "reading": "にほんじん",
+      "before": "あなたは中国人ですか、それとも",
+      "target": "にほんじん",
+      "after": "ですか。",
+      "english": "Are you Chinese or Japanese?",
+      "answerText": "日本人",
+      "distractors": [
+        {
+          "text": "白本人",
+          "rule": "look-alike"
+        },
+        {
+          "text": "円本人",
+          "rule": "look-alike"
+        },
+        {
+          "text": "日木人",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 231729,
+        "contributor": "wakatyann630",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/231729"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "other valid readings excluded from distractors: にっぽんじん"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m2-4",
+      "mondai": 2,
+      "set": 5,
+      "no": 4,
+      "candidateId": "tatoeba-10918360-11570649",
+      "surface": "先生",
+      "reading": "せんせい",
+      "before": "",
+      "target": "せんせい",
+      "after": "の車はどこにありますか。",
+      "english": "Where is the teacher's car?",
+      "answerText": "先生",
+      "distractors": [
+        {
+          "text": "先西",
+          "rule": "same-reading"
+        },
+        {
+          "text": "山生",
+          "rule": "same-reading"
+        },
+        {
+          "text": "川生",
+          "rule": "same-reading"
+        }
+      ],
+      "source": {
+        "sentenceId": 10918360,
+        "contributor": "small_snow",
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/10918360"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "n5-s5-m2-5",
+      "mondai": 2,
+      "set": 5,
+      "no": 5,
+      "candidateId": "tatoeba-175628-238836",
+      "surface": "月",
+      "reading": "つき",
+      "before": "",
+      "target": "つき",
+      "after": "は東から上る。",
+      "english": "The moon rises in the east.",
+      "answerText": "月",
+      "distractors": [
+        {
+          "text": "日",
+          "rule": "look-alike"
+        },
+        {
+          "text": "白",
+          "rule": "look-alike"
+        },
+        {
+          "text": "円",
+          "rule": "look-alike"
+        }
+      ],
+      "source": {
+        "sentenceId": 175628,
+        "contributor": null,
+        "license": "CC BY 2.0 FR",
+        "url": "https://tatoeba.org/en/sentences/show/175628"
+      },
+      "flags": [
+        "sentence text altered: target shown in hiragana (CC BY adaptation, change noted on screen)",
+        "weak: look-alikes of a single kanji or an okurigana word read as nonsense; consider replacing"
+      ],
+      "status": "pending"
+    }
+  ]
+}

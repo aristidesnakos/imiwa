@@ -25,7 +25,11 @@
  * distractors come from the rest of the level.
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
+import { ALSO_VALID } from '../lib/jlpt/also-valid';
+import type { JlptItem, PublishedFile, ReviewFile } from '../lib/jlpt/types';
 import { N5_SEQUENCE } from '../lib/levels/n5-sequence';
 import {
   OPTION_COUNT,
@@ -370,6 +374,114 @@ section('6. Pools, lengths and links into the quiz');
   );
   expect('preset: empty', parseQuizPreset('', bank), { groups: [], type: null, length: null });
   check('pools and presets', problems, 'pool resolution, round lengths and query-string presets behave');
+}
+
+section('7. JLPT-format items (Mondai 1 and 2)');
+{
+  const ROOT = path.resolve(__dirname, '..');
+  const readJson = <T>(rel: string): T => JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8')) as T;
+  const review = readJson<ReviewFile>('data/jlpt/review/N5.json');
+  const published = readJson<PublishedFile>('data/jlpt/published/N5.json');
+  const sentences = readJson<{ id: string; japanese: string; tokens: { surface: string; reading?: string }[]; source: { japanese: { sentenceId: number } } }[]>(
+    'data/sentences/published/N5.json'
+  );
+  const bySentence = new Map(sentences.map(s => [s.id, s]));
+  const bySentenceId = new Map(sentences.map(s => [s.source.japanese.sentenceId, s]));
+  const n5Kanji = new Set(N5_KANJI.map(k => k.kanji));
+  const KANJI = /[一-鿿]/;
+  const KANA_ONLY = /^[ぁ-ゟ]+$/;
+
+  // Every reading a reviewer has seen for a surface, and every surface seen for a reading:
+  // a distractor that is one of these is a second right answer.
+  const readingsOf = new Map<string, Set<string>>();
+  const surfacesOf = new Map<string, Set<string>>();
+  for (const s of sentences) {
+    for (const t of s.tokens) {
+      if (!t.reading) continue;
+      readingsOf.set(t.surface, (readingsOf.get(t.surface) ?? new Set()).add(t.reading));
+      surfacesOf.set(t.reading, (surfacesOf.get(t.reading) ?? new Set()).add(t.surface));
+    }
+  }
+
+  // --- the review file: the full 5 x (7 + 5) design, every item built right -------------
+  {
+    const problems: string[] = [];
+    const ids = new Set<string>();
+    for (let set = 1; set <= 5; set += 1) {
+      for (const [mondai, want] of [[1, 7], [2, 5]] as const) {
+        const n = review.items.filter(i => i.set === set && i.mondai === mondai).length;
+        if (n !== want) problems.push(`set ${set} Mondai ${mondai}: ${n} items, expected ${want}`);
+      }
+    }
+    const usedSentences = new Set<string>();
+    for (const i of review.items) {
+      const where = i.id;
+      if (ids.has(i.id)) problems.push(`${where}: duplicate id`);
+      ids.add(i.id);
+      if (usedSentences.has(i.candidateId)) problems.push(`${where}: sentence ${i.candidateId} used by two items`);
+      usedSentences.add(i.candidateId);
+
+      const options = [i.answerText, ...i.distractors.map(d => d.replacedBy ?? d.text)];
+      if (i.distractors.length !== 3) problems.push(`${where}: ${i.distractors.length} distractors, expected 3`);
+      if (new Set(options).size !== options.length) problems.push(`${where}: options are not all different (${options.join(' / ')})`);
+
+      const sentence = bySentence.get(i.candidateId);
+      if (!sentence) { problems.push(`${where}: sentence ${i.candidateId} is not in the published N5 sentences`); continue; }
+      if (i.mondai === 1) {
+        // The stem must be the source sentence, verbatim, with only the target underlined.
+        if (i.before + i.target + i.after !== sentence.japanese) problems.push(`${where}: stem is not the verbatim sentence`);
+        if (i.target !== i.surface) problems.push(`${where}: Mondai 1 target ${i.target} is not the surface ${i.surface}`);
+        if (!readingsOf.get(i.surface)?.has(i.reading)) problems.push(`${where}: ${i.surface} has no reviewed reading ${i.reading}`);
+        const valid = new Set([i.reading, ...(readingsOf.get(i.surface) ?? []), ...(ALSO_VALID[i.surface] ?? [])]);
+        for (const o of options) {
+          if (!KANA_ONLY.test(o)) problems.push(`${where}: option ${o} is not all hiragana`);
+        }
+        for (const d of options.slice(1)) {
+          if (valid.has(d)) problems.push(`${where}: distractor ${d} is a valid reading of ${i.surface} (a second right answer)`);
+        }
+      } else {
+        // Mondai 2 alters the sentence in exactly one way: the target token as hiragana.
+        if (i.before + i.surface + i.after !== sentence.japanese) problems.push(`${where}: sentence with the kanji restored is not verbatim`);
+        if (i.target !== i.reading) problems.push(`${where}: Mondai 2 target ${i.target} is not the reading ${i.reading}`);
+        if (!readingsOf.get(i.surface)?.has(i.reading)) problems.push(`${where}: ${i.surface} has no reviewed reading ${i.reading}`);
+        for (const o of options) {
+          if (!KANJI.test(o)) problems.push(`${where}: option ${o} has no kanji`);
+          for (const c of o) if (KANJI.test(c) && !n5Kanji.has(c)) problems.push(`${where}: option ${o} uses ${c}, which is not an N5 kanji`);
+        }
+        for (const d of options.slice(1)) {
+          if (surfacesOf.get(i.reading)?.has(d)) problems.push(`${where}: distractor ${d} is a reviewed spelling of ${i.reading} (a second right answer)`);
+        }
+      }
+      if (!i.source.url || !i.source.license) problems.push(`${where}: missing attribution`);
+      if (!['pending', 'approved', 'rejected'].includes(i.status)) problems.push(`${where}: bad status ${i.status}`);
+    }
+    check('JLPT review items', problems, `${review.items.length} items: 5 sets x (7 + 5), one sentence each, 4 different options, no distractor a valid answer, stems verbatim`);
+  }
+
+  // --- the published file: only reviewed items, shaped so the UI cannot show a broken one ---
+  {
+    const problems: string[] = [];
+    const reviewById = new Map(review.items.map(i => [i.id, i]));
+    const seen = new Set<string>();
+    for (const i of published.items as JlptItem[]) {
+      const where = `published ${i.id}`;
+      const r = reviewById.get(i.id);
+      if (seen.has(i.id)) problems.push(`${where}: duplicate`);
+      seen.add(i.id);
+      if (!r) { problems.push(`${where}: no such review item`); continue; }
+      if (r.status !== 'approved') problems.push(`${where}: review status is ${r.status}, only approved items may ship`);
+      if (i.options.length !== 4 || new Set(i.options).size !== 4) problems.push(`${where}: needs 4 different options`);
+      if (![0, 1, 2, 3].includes(i.answer)) problems.push(`${where}: answer index ${i.answer} out of range`);
+      if (i.options[i.answer] !== r.answerText) problems.push(`${where}: the option marked right is ${i.options[i.answer]}, not ${r.answerText}`);
+      const wrong = i.options.filter((_, k) => k !== i.answer).sort().join('|');
+      const expected = r.distractors.map(d => d.replacedBy ?? d.text).sort().join('|');
+      if (wrong !== expected) problems.push(`${where}: options differ from the reviewed distractors`);
+      const s = bySentenceId.get(i.source.sentenceId);
+      if (!s) problems.push(`${where}: source sentence ${i.source.sentenceId} unknown`);
+      if (i.before !== r.before || i.target !== r.target || i.after !== r.after) problems.push(`${where}: stem differs from the review item`);
+    }
+    check('JLPT published items', problems, `${published.items.length} published item(s), each approved, exactly one right option, matches its review item`);
+  }
 }
 
 section('Sample questions (seed 1)');
