@@ -4,7 +4,8 @@
  * The contract for the "JLPT format" quiz mode on /kanji/n5/quiz. Two things build
  * against it:
  *
- *   scripts/jlpt/build-items.ts    -> data/jlpt/review/N5.json   (ReviewItem[], pending)
+ *   scripts/jlpt/build-items.ts    -> data/jlpt/review/N5.json   (ReviewItem[], pending;
+ *                                     --replace rebuilds only the `rejected` ones)
  *   scripts/jlpt/publish-items.ts  -> data/jlpt/published/N5.json (JlptItem[], approved only)
  *
  * The shape of the exam is the shape of the real one. N5 Language Knowledge opens with
@@ -98,8 +99,12 @@ export interface ReviewItem {
 
 export interface ReviewFile {
   level: 'N5';
-  /** Words left out on purpose, with the reason, so the call is Ari's. */
-  excluded: { surface: string; reading: string; reason: string }[];
+  /**
+   * Words left out on purpose, with the reason, so the call is Ari's. `build-items.ts
+   * --replace` adds every rejected item's word here ("rejected in review (<id>…)"), with
+   * the sentence it used as `candidateId`, so neither is picked again.
+   */
+  excluded: { surface: string; reading: string; reason: string; candidateId?: string }[];
   items: ReviewItem[];
 }
 

@@ -2,6 +2,9 @@
  * scripts/jlpt/build-items.ts
  *
  *   npx tsx --tsconfig tsconfig.json scripts/jlpt/build-items.ts [--force]
+ *   npx tsx --tsconfig tsconfig.json scripts/jlpt/build-items.ts --replace
+ *
+ *   --review <path>   act on another review file (its CSV is written beside it); for testing
  *
  * Builds the review file for the "JLPT format" quiz: 5 sets x (7 Mondai 1 + 5 Mondai 2)
  * items, from the reviewed N5 example sentences.
@@ -19,7 +22,33 @@
  * This script NEVER approves anything: every item is written `pending`. Nothing reaches
  * the site until Ari flips it to `approved` and `publish-items.ts` compiles it. Because
  * the review file holds those verdicts, an existing file is never overwritten without
- * `--force`.
+ * `--force`, which rebuilds every item and so discards every verdict.
+ *
+ * `--replace` is the way to get a new item for a rejected one without losing the rest.
+ * It takes no ids: it acts on every item whose status is `rejected`.
+ *
+ *   - Every other item stays exactly as it is: status, `replacedBy`, note, flags, order.
+ *   - Each rejected item is rebuilt in the SAME slot (same id, set and number), so every
+ *     set keeps 7 + 5, from the next word in the pool that is in no item of the file,
+ *     not excluded, and has a published sentence no item uses. The pick follows the
+ *     full build's ranking, preferring a word of the rejected one's kind (jukugo,
+ *     okurigana, single kanji) so the set keeps its mix; Mondai 2 slots are filled first,
+ *     as in the full build, because Mondai 2 has far fewer usable words.
+ *   - The new item is `pending`, with fresh distractors from the same generator.
+ *   - The rejected word goes into the file's `excluded` list as "rejected in review", with
+ *     its item id, note and sentence, so neither the word nor that sentence ever comes
+ *     back: not in a later `--replace`, and not in a `--force` rebuild either.
+ *   - The CSV is regenerated from the result. It is a view of the JSON: if it holds review
+ *     work the JSON does not (text under "your edits", or a verdict the JSON lacks), the
+ *     run stops and writes nothing, so that work is moved into the JSON first.
+ *
+ * It prints each replacement (id, old word -> new word) and how many usable words are
+ * left per mondai. A rejected item with no word left to take its slot stays exactly as it
+ * is, still `rejected` (so it never publishes), and the run exits 1 naming it, after
+ * writing the replacements it could make: the fix is more words in POOL. Mondai 2 runs
+ * out first; its generator needs three look-alike or same-reading spellings, and when
+ * this mode was added (2026-10-06) no unused pool word had them. With nothing rejected
+ * it writes nothing, so it is idempotent.
  *
  * Output:
  *   data/jlpt/review/N5.json   the machine-readable review file
@@ -49,9 +78,10 @@ import type {
 
 const ROOT = path.resolve(__dirname, '../..');
 const PUBLISHED = path.join(ROOT, 'data/sentences/published/N5.json');
-const OUT_DIR = path.join(ROOT, 'data/jlpt/review');
-const OUT_JSON = path.join(OUT_DIR, 'N5.json');
-const OUT_CSV = path.join(OUT_DIR, 'N5.csv');
+const DEFAULT_REVIEW = path.join(ROOT, 'data/jlpt/review/N5.json');
+
+/** The `reason` of an excluded entry that `--replace` recorded for a rejected item. */
+const REJECTED_REASON = 'rejected in review';
 
 const SETS = 5;
 const M1_PER_SET = 7;
@@ -500,10 +530,13 @@ const QUOTA: Record<MondaiNumber, Record<Built['kind'], number>> = {
   2: { jukugo: 5, single: 0, okurigana: 0 },
 };
 
-function select(): { m1: Built[][]; m2: Built[][] } {
-  const used = new Set<string>();
-  const usedWords = new Set<string>();
-  const words = POOL.map(w => w.split(':') as [string, string]);
+const WORDS = POOL.map(w => w.split(':') as [string, string]);
+
+/** `blocked` holds words and sentences rejected in an earlier review: never picked again. */
+function select(blocked: { words: Set<string>; sentences: Set<string> }): { m1: Built[][]; m2: Built[][] } {
+  const used = new Set<string>(blocked.sentences);
+  const usedWords = new Set<string>(blocked.words);
+  const words = WORDS;
 
   const take = (mondai: MondaiNumber): Built[][] => {
     const sets: Built[][] = Array.from({ length: SETS }, () => []);
@@ -609,13 +642,223 @@ function toCsv(items: ReviewItem[]): string {
   return '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\n') + '\n';
 }
 
-function main() {
-  const force = process.argv.includes('--force');
-  if (fs.existsSync(OUT_JSON) && !force) {
-    console.error(`${path.relative(ROOT, OUT_JSON)} already exists and may hold review verdicts. Re-run with --force to overwrite.`);
+/** The inverse of `toCsv`'s quoting: rows of cells, BOM dropped. */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let quoted = false;
+  const s = text.replace(/^\uFEFF/, '');
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (quoted) {
+      if (c !== '"') cell += c;
+      else if (s[i + 1] === '"') { cell += '"'; i++; }
+      else quoted = false;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (c !== '\r') cell += c;
+  }
+  if (cell !== '' || row.length > 0) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+/**
+ * Review work in the CSV that the JSON does not hold, which regenerating the CSV would
+ * destroy: any text under "your edits" (the builder never writes any), or a verdict other
+ * than `pending` that the JSON does not have.
+ */
+function csvOnlyReviewWork(csvPath: string, items: ReviewItem[]): string[] {
+  if (!fs.existsSync(csvPath)) return [];
+  const [head, ...rows] = parseCsv(fs.readFileSync(csvPath, 'utf8'));
+  const col = (name: string) => head?.indexOf(name) ?? -1;
+  const [idCol, statusCol, editsCol] = [col('id'), col('status'), col('your edits')];
+  if (idCol < 0 || statusCol < 0 || editsCol < 0) return ['the header is not the one this script writes, so it cannot be checked'];
+  const statusById = new Map(items.map(i => [i.id, i.status as string]));
+  const out: string[] = [];
+  for (const r of rows) {
+    const id = r[idCol] ?? '';
+    const edits = (r[editsCol] ?? '').trim();
+    const status = (r[statusCol] ?? '').trim();
+    if (edits) out.push(`${id}: "your edits" says ${JSON.stringify(edits)}`);
+    if (status && status !== 'pending' && status !== statusById.get(id)) {
+      out.push(`${id}: status is "${status}" in the CSV but "${statusById.get(id) ?? 'missing'}" in the JSON`);
+    }
+  }
+  return out;
+}
+
+/* ───────────────────────── Replacing rejected items in place ─────────────────────── */
+
+const KIND_ORDER = ['jukugo', 'okurigana', 'single'] as const;
+
+/**
+ * Every word that can still fill a slot of `mondai`, best first. Same ranking as `select`:
+ * the kinds the set's quota asks for first (the rejected word's own kind ahead of the
+ * others), most distinct distractor rules first, ties by the same stable hash; then the
+ * kinds the quota does not ask for, in pool order, as `select`'s shortfall fill does.
+ */
+function replacementCandidates(
+  mondai: MondaiNumber,
+  preferKind: Built['kind'],
+  usedWords: Set<string>,
+  usedSentences: Set<string>
+): Built[] {
+  const quotaKinds = KIND_ORDER.filter(k => QUOTA[mondai][k] > 0);
+  const kindRank = [
+    ...quotaKinds.filter(k => k === preferKind),
+    ...quotaKinds.filter(k => k !== preferKind),
+    ...KIND_ORDER.filter(k => !quotaKinds.includes(k)),
+  ];
+  const built = WORDS.flatMap(([surface, reading], poolIndex) => {
+    if (usedWords.has(surface)) return [];
+    const b = build(surface, reading, mondai, usedSentences);
+    return b ? [{ b, poolIndex }] : [];
+  });
+  built.sort((x, y) => {
+    const byKind = kindRank.indexOf(x.b.kind) - kindRank.indexOf(y.b.kind);
+    if (byKind !== 0) return byKind;
+    if (QUOTA[mondai][x.b.kind] === 0) return x.poolIndex - y.poolIndex;
+    return (
+      y.b.distinctRules - x.b.distinctRules ||
+      rnd(`pick${mondai}${x.b.surface}`) - rnd(`pick${mondai}${y.b.surface}`) ||
+      x.poolIndex - y.poolIndex
+    );
+  });
+  return built.map(x => x.b);
+}
+
+/** "12 (jukugo 3, okurigana 4, single 5)" */
+function describeCandidates(cands: Built[]): string {
+  const byKind = KIND_ORDER.map(k => `${k} ${cands.filter(c => c.kind === k).length}`).join(', ');
+  return `${cands.length} (${byKind})`;
+}
+
+const shown = (p: string) => (p.startsWith(ROOT + path.sep) ? path.relative(ROOT, p) : p);
+
+function replaceRejected(jsonPath: string, csvPath: string) {
+  if (!fs.existsSync(jsonPath)) {
+    console.error(`${shown(jsonPath)} does not exist: there is nothing to replace. Build it first (without --replace).`);
     process.exit(1);
   }
-  const { m1, m2 } = select();
+  const text = fs.readFileSync(jsonPath, 'utf8');
+  const file: ReviewFile = JSON.parse(text);
+  const rejected = file.items.filter(i => i.status === 'rejected');
+
+  // Everything in the file is taken: its words and sentences (the rejected ones included,
+  // so a rejected sentence is not handed straight back), the excluded words, and the
+  // sentences of items rejected in earlier runs.
+  const usedWords = new Set<string>([
+    ...file.items.map(i => i.surface),
+    ...Object.keys(EXCLUDED).map(k => k.split(':')[0]),
+    ...file.excluded.map(e => e.surface),
+  ]);
+  const usedSentences = new Set<string>([
+    ...file.items.map(i => i.candidateId),
+    ...file.excluded.flatMap(e => (e.candidateId ? [e.candidateId] : [])),
+  ]);
+
+  const remaining = () =>
+    ([1, 2] as const)
+      .map(m => `Mondai ${m}: ${describeCandidates(replacementCandidates(m, 'jukugo', usedWords, usedSentences))}`)
+      .join('; ');
+
+  if (rejected.length === 0) {
+    console.log(`no rejected items in ${shown(jsonPath)}; nothing written.`);
+    console.log(`words left for a replacement: ${remaining()} (a word usable in both mondai counts in both)`);
+    return;
+  }
+
+  const csvWork = csvOnlyReviewWork(csvPath, file.items);
+  if (csvWork.length > 0) {
+    console.error(`${shown(csvPath)} holds review work that ${shown(jsonPath)} does not, and regenerating the CSV would lose it:`);
+    for (const w of csvWork) console.error(`  - ${w}`);
+    console.error('The JSON is the record. Copy that work into it (status, distractors[].replacedBy, note), or delete the CSV if it is only out of date, then re-run. Nothing was written.');
+    process.exit(1);
+  }
+
+  // Mondai 2 first, as in `select`: it has far fewer usable words, so it gets first pick.
+  const order = [...rejected].sort((a, b) => b.mondai - a.mondai);
+  const replacements = new Map<ReviewItem, ReviewItem>();
+  const unfilled: string[] = [];
+  for (const old of order) {
+    const [best] = replacementCandidates(old.mondai, kindOf(old.surface), usedWords, usedSentences);
+    if (!best) {
+      unfilled.push(`${old.id} (Mondai ${old.mondai}, was ${old.surface})`);
+      continue;
+    }
+    usedWords.add(best.surface);
+    usedSentences.add(best.sentence.id);
+    const item = toReviewItem(best, old.set, old.no);
+    if (item.id !== old.id) throw new Error(`${old.id}: the replacement came out as ${item.id}; set/no/mondai disagree with the id`);
+    replacements.set(old, item);
+  }
+  const failUnfilled = () => {
+    console.error(`\nFAILED: no unused word left for ${unfilled.length} rejected item(s); left as they are, still rejected:`);
+    for (const u of unfilled) console.error(`  - ${u}`);
+    console.error('Add words to POOL in scripts/jlpt/build-items.ts (each needs a published sentence with that exact reviewed reading, and for Mondai 2 three look-alike or same-reading spellings), then re-run.');
+    console.error(`words left for a replacement: ${remaining()}`);
+    process.exit(1);
+  };
+  if (replacements.size === 0) {
+    console.error('nothing was written.');
+    failUnfilled();
+  }
+
+  const done = rejected.filter(old => replacements.has(old));
+  const out: ReviewFile = {
+    ...file,
+    excluded: [
+      ...file.excluded,
+      ...done.map(old => ({
+        surface: old.surface,
+        reading: old.reading,
+        reason: `${REJECTED_REASON} (${old.id}${old.note ? `: ${old.note}` : ''})`,
+        candidateId: old.candidateId,
+      })),
+    ],
+    items: file.items.map(i => replacements.get(i) ?? i),
+  };
+  if (JSON.stringify(file, null, 2) + '\n' !== text) {
+    console.warn(`  ! ${shown(jsonPath)} was not in the builder's 2-space JSON layout; it is rewritten in it (content unchanged apart from the replacements).`);
+  }
+  fs.writeFileSync(jsonPath, JSON.stringify(out, null, 2) + '\n');
+  fs.writeFileSync(csvPath, toCsv(out.items));
+
+  console.log(`replaced ${done.length} rejected item(s), each in its own slot, now pending:`);
+  for (const old of done) {
+    const neu = replacements.get(old)!;
+    console.log(`  ${old.id}  Mondai ${old.mondai}  ${old.surface} (${old.reading}) -> ${neu.surface} (${neu.reading})  sentence ${neu.candidateId}`);
+    if (kindOf(neu.surface) !== kindOf(old.surface)) console.log(`    ! kind changed, ${kindOf(old.surface)} -> ${kindOf(neu.surface)}: no unused ${kindOf(old.surface)} word was left`);
+  }
+  console.log(`recorded ${done.length} rejected word(s) under "excluded"; they and their sentences are not used again.`);
+  console.log(`words left for a replacement: ${remaining()} (a word usable in both mondai counts in both)`);
+  console.log(`wrote ${shown(jsonPath)} and ${shown(csvPath)}`);
+  if (unfilled.length > 0) failUnfilled();
+}
+
+/* ───────────────────────────────────── Full build ───────────────────────────────── */
+
+function buildAll(jsonPath: string, csvPath: string, force: boolean) {
+  if (fs.existsSync(jsonPath) && !force) {
+    console.error(`${shown(jsonPath)} already exists and may hold review verdicts. Re-run with --replace to rebuild only the rejected items, or with --force to rebuild everything (every verdict is lost).`);
+    process.exit(1);
+  }
+  // A rebuild throws the verdicts away, but not the rejections: a rejected word must not come back.
+  const rejectedBefore: ReviewFile['excluded'] = [];
+  if (fs.existsSync(jsonPath)) {
+    try {
+      const prior: ReviewFile = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      rejectedBefore.push(...(prior.excluded ?? []).filter(e => e.reason.startsWith(REJECTED_REASON)));
+    } catch {
+      console.warn(`  ! ${shown(jsonPath)} is not readable JSON; rebuilding without its rejections`);
+    }
+  }
+  const { m1, m2 } = select({
+    words: new Set(rejectedBefore.map(e => e.surface)),
+    sentences: new Set(rejectedBefore.flatMap(e => (e.candidateId ? [e.candidateId] : []))),
+  });
   const items: ReviewItem[] = [];
   for (let s = 0; s < SETS; s++) {
     m1[s].forEach((b, i) => items.push(toReviewItem(b, s + 1, i + 1)));
@@ -623,19 +866,47 @@ function main() {
   }
   const file: ReviewFile = {
     level: 'N5',
-    excluded: Object.entries(EXCLUDED).map(([k, reason]) => {
-      const [surface, reading] = k.split(':');
-      return { surface, reading, reason };
-    }),
+    excluded: [
+      ...Object.entries(EXCLUDED).map(([k, reason]) => {
+        const [surface, reading] = k.split(':');
+        return { surface, reading, reason };
+      }),
+      ...rejectedBefore,
+    ],
     items,
   };
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(OUT_JSON, JSON.stringify(file, null, 2) + '\n');
-  fs.writeFileSync(OUT_CSV, toCsv(items));
+  fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
+  fs.writeFileSync(jsonPath, JSON.stringify(file, null, 2) + '\n');
+  fs.writeFileSync(csvPath, toCsv(items));
   const ruleCount = new Map<DistractorRule, number>();
   for (const i of items) for (const d of i.distractors) ruleCount.set(d.rule, (ruleCount.get(d.rule) ?? 0) + 1);
   console.log(`wrote ${items.length} items (${items.filter(i => i.mondai === 1).length} Mondai 1, ${items.filter(i => i.mondai === 2).length} Mondai 2), ${items.length * 3} distractors`);
   console.log('distractor rules:', Object.fromEntries(ruleCount));
+  if (rejectedBefore.length > 0) console.log(`kept ${rejectedBefore.length} word(s) rejected in review out of the build`);
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const force = args.includes('--force');
+  const replace = args.includes('--replace');
+  const reviewAt = args.indexOf('--review');
+  const reviewArg = reviewAt >= 0 ? args[reviewAt + 1] : undefined;
+  if (reviewAt >= 0 && (!reviewArg || reviewArg.startsWith('--'))) {
+    console.error('--review needs a path to a review .json file');
+    process.exit(1);
+  }
+  if (force && replace) {
+    console.error('--force rebuilds everything and --replace rebuilds only the rejected items: pick one.');
+    process.exit(1);
+  }
+  const jsonPath = reviewArg ? path.resolve(reviewArg) : DEFAULT_REVIEW;
+  if (!jsonPath.endsWith('.json')) {
+    console.error(`${jsonPath}: the review file must end in .json (its CSV is written beside it)`);
+    process.exit(1);
+  }
+  const csvPath = jsonPath.replace(/\.json$/, '.csv');
+  if (replace) replaceRejected(jsonPath, csvPath);
+  else buildAll(jsonPath, csvPath, force);
 }
 
 main();

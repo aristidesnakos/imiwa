@@ -3,11 +3,14 @@
  *
  *   npx tsx --tsconfig tsconfig.json scripts/jlpt/publish-items.ts [--include-pending]
  *
+ *   --review <path> / --out <path>   read / write other files instead; for testing
+ *
  * Compiles the reviewed items (data/jlpt/review/N5.json) into the compact file the quiz
  * imports (data/jlpt/published/N5.json). Only `approved` items are published, so an item
- * nobody has signed off never reaches the site. `--include-pending` exists for local
- * development of the UI against real-shaped data and must never be committed: the
- * committed file holds approved items only.
+ * nobody has signed off never reaches the site, and a `rejected` one never does, not even
+ * with `--include-pending`. A distractor the reviewer replaced ships as its `replacedBy`.
+ * `--include-pending` exists for local development of the UI against real-shaped data and
+ * must never be committed: the committed file holds approved items only.
  *
  * The option order is a deterministic shuffle keyed by the item id, so the right answer
  * is not always in the same slot and rebuilding changes nothing.
@@ -18,8 +21,12 @@ import path from 'node:path';
 import type { JlptItem, PublishedFile, ReviewFile } from '../../lib/jlpt/types';
 
 const ROOT = path.resolve(__dirname, '../..');
-const REVIEW = path.join(ROOT, 'data/jlpt/review/N5.json');
-const OUT = path.join(ROOT, 'data/jlpt/published/N5.json');
+const argAfter = (flag: string) => {
+  const at = process.argv.indexOf(flag);
+  return at >= 0 ? process.argv[at + 1] : undefined;
+};
+const REVIEW = path.resolve(argAfter('--review') ?? path.join(ROOT, 'data/jlpt/review/N5.json'));
+const OUT = path.resolve(argAfter('--out') ?? path.join(ROOT, 'data/jlpt/published/N5.json'));
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -61,4 +68,4 @@ items.sort((a, b) => a.set - b.set || a.mondai - b.mondai || a.id.localeCompare(
 const file: PublishedFile = { level: 'N5', items };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(file) + '\n');
-console.log(`published ${items.length} item(s)${includePending ? ' (INCLUDING PENDING — do not commit)' : ''} -> ${path.relative(ROOT, OUT)}`);
+console.log(`published ${items.length} item(s)${includePending ? ' (INCLUDING PENDING — do not commit)' : ''} -> ${OUT.startsWith(ROOT + path.sep) ? path.relative(ROOT, OUT) : OUT}`);
