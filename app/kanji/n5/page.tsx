@@ -8,6 +8,7 @@ import Header from '@/components/sections/Header';
 import EmailCapture from '@/components/EmailCapture';
 import { BookCTA } from '@/components/commerce/BookCTA';
 import { KanjiListCard } from '@/components/levels/KanjiListCard';
+import { N5QuizLink } from '@/components/levels/N5QuizLink';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -378,6 +379,10 @@ export default function N5KanjiListPage() {
               <ArrowRight aria-hidden />
             </Link>
           </div>
+          {/* The JLPT-format sets, named and linked once there are any. With none this
+              renders nothing and the section is exactly the kanji quiz above: the
+              buttons already link it. */}
+          <N5QuizLink fallback="none" className="mt-5 max-w-3xl text-japan-ink-black" />
         </section>
 
         {/* The one thing on the page nobody else has. Text only, no panel art:

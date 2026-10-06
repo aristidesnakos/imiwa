@@ -9,6 +9,7 @@ import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { KanjiN5WorkbookCTA } from '@/components/kanji/KanjiN5WorkbookCTA';
 import { BookCTA } from '@/components/commerce/BookCTA';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
+import { N5QuizLink } from '@/components/levels/N5QuizLink';
 import { GroupSheetLinks } from '@/components/sheets/GroupSheetLinks';
 import { PrintSteps } from '@/components/sheets/PrintSteps';
 import { SheetContents } from '@/components/sheets/SheetContents';
@@ -243,6 +244,11 @@ export default function N5KanjiSheetsPage() {
         />
 
         <SheetContents className={SECTION_BAND} />
+
+        {/* From writing the kanji to recalling them: the page's one link to the quiz,
+            closing the section that describes practising on a sheet. Last on the page
+            for the same reason as the signup above: here nothing measured moves. */}
+        <N5QuizLink lead="Written a few out? " className="mt-8 text-japan-ink-black" />
       </main>
     </>
   );

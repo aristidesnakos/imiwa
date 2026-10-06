@@ -2,11 +2,10 @@
  * app/kanji/n5/quiz/jlpt-format.ts
  *
  * Pure helpers and constants shared by the server page (copy, counts) and the client
- * quiz (sets, scoring). It imports types only, never the data: the data file is read in
- * page.tsx and handed down, so nothing here can pull the items into a bundle by itself.
+ * quiz (sets, scoring). It imports types only, never the data: the data file is read by
+ * lib/jlpt/published.ts, which only server modules import, and page.tsx hands the items
+ * down, so nothing here can pull the items into a bundle by itself.
  */
-
-import type { JlptItem } from '@/lib/jlpt/types';
 
 /**
  * The official free material. Verified to resolve with a HEAD request on 2026-10-05; the
@@ -16,33 +15,7 @@ import type { JlptItem } from '@/lib/jlpt/types';
 export const JLPT_SAMPLE_QUESTIONS_URL = 'https://www.jlpt.jp/e/samples/forlearners.html';
 export const JLPT_SAMPLE_INDEX_URL = 'https://www.jlpt.jp/e/samples/sampleindex.html';
 
-export interface JlptSet {
-  set: number;
-  mondai1: JlptItem[];
-  mondai2: JlptItem[];
-  /** Mondai 1 first, then Mondai 2: the order they are played in. */
-  all: JlptItem[];
-}
-
-/** Group published items into playable sets, in set order. A set with no items is absent. */
-export function groupSets(items: readonly JlptItem[]): JlptSet[] {
-  const bySet = new Map<number, JlptItem[]>();
-  for (const item of items) {
-    const list = bySet.get(item.set);
-    if (list) list.push(item);
-    else bySet.set(item.set, [item]);
-  }
-  return [...bySet.keys()]
-    .sort((a, b) => a - b)
-    .map(set => {
-      const list = bySet.get(set) as JlptItem[];
-      const mondai1 = list.filter(i => i.mondai === 1);
-      const mondai2 = list.filter(i => i.mondai === 2);
-      return { set, mondai1, mondai2, all: [...mondai1, ...mondai2] };
-    });
-}
-
-/** "7 + 5" style shape of the fullest set, for copy that states it. */
-export function largestSet(sets: readonly JlptSet[]): JlptSet | null {
-  return sets.reduce<JlptSet | null>((best, s) => (!best || s.all.length > best.all.length ? s : best), null);
-}
+// The set grouping lives in lib/jlpt/sets.ts, where pages outside this route can count
+// sets with the same function the quiz plays them with. Re-exported so the quiz's own
+// imports did not have to move.
+export { groupSets, largestSet, type JlptSet } from '@/lib/jlpt/sets';

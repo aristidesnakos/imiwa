@@ -24,6 +24,7 @@ import { ExampleSentencesSection } from '@/components/kanji/ExampleSentencesSect
 import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSection';
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
 import { LevelNavigation, neighboursWithin, type LevelNeighbours } from '@/components/kanji/LevelNavigation';
+import { N5QuizLink } from '@/components/levels/N5QuizLink';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { sentencesForKanji } from '@/lib/sentences/published';
 import { levelHref, levelPagePath, type JlptLevel } from '@/lib/levels';
@@ -577,6 +578,13 @@ export default async function KanjiDetailPage({ params }: Props) {
             itself. Here, after the page's closing moment: someone who has just
             finished this character is the one who wants the next. */}
         {levelNeighbours && <LevelNavigation level={kanjiData.level} neighbours={levelNeighbours} />}
+
+        {/* N5 only: the way from one character to testing the whole level. One line, no
+            heading, centred under the pager's level link because it is the level's other
+            door, not a moment. Server-rendered with prefetch off; see N5QuizLink. */}
+        {kanjiData.level === 'N5' && (
+          <N5QuizLink className="mx-auto mt-3 max-w-xl text-balance text-center text-sm text-japan-mountain-mist" />
+        )}
 
         {/* Related Kanji — last content section, before the commercial blocks. */}
         <RelatedKanjiSection

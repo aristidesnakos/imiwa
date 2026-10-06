@@ -9,17 +9,11 @@ import { levelHref } from '@/lib/levels';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { BookCTA } from '@/components/commerce/BookCTA';
 import EmailCapture from '@/components/EmailCapture';
-import type { PublishedFile } from '@/lib/jlpt/types';
-import jlptPublished from '@/data/jlpt/published/N5.json';
+import { PUBLISHED_JLPT_ITEMS, PUBLISHED_JLPT_SETS, PUBLISHED_JLPT_SHAPE } from '@/lib/jlpt/published';
 import { N5QuizClient } from './N5QuizClient';
 import { JlptFormatQuiz } from './JlptFormatQuiz';
 import { QuizModes } from './QuizModes';
-import {
-  JLPT_SAMPLE_INDEX_URL,
-  JLPT_SAMPLE_QUESTIONS_URL,
-  groupSets,
-  largestSet,
-} from './jlpt-format';
+import { JLPT_SAMPLE_INDEX_URL, JLPT_SAMPLE_QUESTIONS_URL } from './jlpt-format';
 
 /**
  * THE ASK ON THE JLPT-FORMAT RESULTS SCREEN. One constant so it can be reviewed in one
@@ -67,12 +61,14 @@ const N5_COUNT = N5_KANJI.length;
 /**
  * The published JLPT-format items. Only reviewed items are ever in this file, and it is
  * empty until some are: with none, the page below is the kanji quiz exactly as it was —
- * no tab, no section, no empty state. Imported here, in the server page, and handed down
- * as a prop; the (much larger) example-sentence data is never imported by this route.
+ * no tab, no section, no empty state. Read by lib/jlpt/published.ts (server-only, and the
+ * same source the links to this mode count sets from), imported here in the server page
+ * and handed down as a prop; the (much larger) example-sentence data is never imported by
+ * this route.
  */
-const JLPT_ITEMS = (jlptPublished as unknown as PublishedFile).items;
-const JLPT_SETS = groupSets(JLPT_ITEMS);
-const JLPT_SHAPE = largestSet(JLPT_SETS);
+const JLPT_ITEMS = PUBLISHED_JLPT_ITEMS;
+const JLPT_SETS = PUBLISHED_JLPT_SETS;
+const JLPT_SHAPE = PUBLISHED_JLPT_SHAPE;
 /** `/kanji/n5` — or, if N5 ever lost its page, /kanji filtered to it. */
 const N5_LIST = levelHref('N5');
 
