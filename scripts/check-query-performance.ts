@@ -341,6 +341,12 @@ const CREDENTIAL_ENV_VAR = 'GSC_SERVICE_ACCOUNT_KEY';
  * does not say, and the answer decides whether we should emit the macron form,
  * the doubled form, or both in titles. Watching the two typed spellings side by
  * side is the cheapest way to get a real answer instead of a plausible one.
+ *
+ * The last four are the exam-practice queries /kanji/n5/quiz is written for, added
+ * when its JLPT-format mode shipped (2026-10). On 2026-10-05 the site was on page 1
+ * for none of them, and demand for them peaks the week before each JLPT sitting
+ * (first Sunday of December and of July). They answer whether the mode earns search
+ * traffic at all; the decision to build N4 waits on that answer.
  */
 const DEFAULT_WATCHLIST = [
   'michi kanji',
@@ -351,6 +357,10 @@ const DEFAULT_WATCHLIST = [
   'michikanji',
   'kou kanji',
   'ko kanji',
+  'n5 kanji quiz',
+  'jlpt n5 kanji test',
+  'jlpt n5 practice test',
+  'n5 kanji practice test',
 ];
 
 /**
