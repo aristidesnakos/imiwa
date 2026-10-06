@@ -128,10 +128,15 @@ import { cn } from '@/lib/utils';
  * `surface` is a union, not a string, for the reason `EmailSignupSource` is:
  * a misspelt literal invents a series that converts once and never again, and
  * nothing anywhere raises an error.
+ *
+ * A surface may have no click goal at all (`jlptFormat`: its page spends its
+ * one goal on finishing a quiz set). Then the anchor carries neither
+ * `data-fast-goal` nor its property, and the click still reaches DataFast's
+ * exit-click report as an outbound link.
  */
 
 interface BookCTAProps {
-  /** Which placement this is. Picks the goal name and the Attribution tag. */
+  /** Which placement this is. Picks the goal name, if it has one, and the Attribution tag. */
   surface: BookSurface;
   /**
    * `card` — the full offer block, for a page whose job is finished.
@@ -147,6 +152,8 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
 
   const href = bookUrlFor(surface);
   const goal = BOOK_CLICK_GOALS[surface];
+  // A property with no goal to ride on is noise; React omits an undefined attribute.
+  const destination = goal ? BOOK_DESTINATION : undefined;
 
   if (variant === 'band') {
     return (
@@ -197,7 +204,7 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
           target="_blank"
           rel="noopener noreferrer"
           data-fast-goal={goal}
-          data-fast-goal-destination={BOOK_DESTINATION}
+          data-fast-goal-destination={destination}
           className={cn(
             buttonVariants({ size: 'default' }),
             /* `hover:bg-japan-coral-sunset-ink` is not redundant with the resting
@@ -294,7 +301,7 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
              store took the click without putting a vendor in the goal name,
              the same split PACK_DESTINATION makes. */
           data-fast-goal={goal}
-          data-fast-goal-destination={BOOK_DESTINATION}
+          data-fast-goal-destination={destination}
           className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full sm:w-auto')}
         >
           <BookOpen aria-hidden />

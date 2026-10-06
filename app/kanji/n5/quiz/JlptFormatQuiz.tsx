@@ -31,11 +31,28 @@
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * The book offer and the newsletter form arrive as `book` and `signup`, already-built
- * nodes from the server page. BookCTA is a server component whose goal is a plain
- * `data-fast-goal` attribute, so as a slot it costs this bundle nothing; EmailCapture
- * is its own client component either way. Their copy lives in page.tsx, in one place.
+ * nodes from the server page. BookCTA is a server component, so as a slot it costs this
+ * bundle nothing; EmailCapture is its own client component either way. Their copy lives
+ * in page.tsx, in one place.
  *
- * Analytics: no events of our own. The only goal is the book click, fired by the slot.
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ANALYTICS: ONE GOAL, AND IT IS FINISHING A SET
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *   n5_jlpt_format_finish_click   The last question's "See my results" button. The set
+ *                                 number and the score ride along as properties.
+ *
+ * It is a `data-fast-goal` attribute, as on N5QuizClient's last Next button, so it adds
+ * no script: a key and a pointer both go through `.click()` on that button, and the
+ * DataFast script picks the goal up from the click. A replay finishes again and fires
+ * again, so count finishers as visitors, not events.
+ *
+ * Why this is the one goal: it is the denominator of the mode's kill criterion, "stop if
+ * fewer than ~5% of finishers sign up". The numerator already exists, the `email_signup`
+ * goal with source `jlpt-format-results`; without a finish count it divides by nothing.
+ * To keep the mode at one goal, the book on the results screen fires none (its surface
+ * has no entry in BOOK_CLICK_GOALS, lib/commerce/links.ts). Amazon exits from this page
+ * still show in DataFast's exit-click report.
  */
 
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
@@ -655,6 +672,9 @@ export function JlptFormatQuiz({
                 className="min-h-11 w-full sm:w-auto"
                 onClick={next}
                 aria-keyshortcuts="Enter"
+                data-fast-goal={isLast ? 'n5_jlpt_format_finish_click' : undefined}
+                data-fast-goal-set={isLast ? String(play.set.set) : undefined}
+                data-fast-goal-score={isLast ? String(rightSoFar) : undefined}
               >
                 {isLast ? 'See my results' : 'Next question'}
                 <ArrowRight aria-hidden="true" />

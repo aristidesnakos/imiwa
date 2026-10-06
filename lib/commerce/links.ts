@@ -186,15 +186,14 @@ export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
  *     choosing a whole level want the free pack directly above it; stop giving
  *     the book that slot.
  *
- *   · `n5_jlpt_format_book_click` — the results screen of the JLPT-format mode
- *     on `/kanji/n5/quiz` (added 5 Oct 2026). Its visitors have just sat twelve
- *     exam-shaped questions and been shown what they missed, which is the
- *     moment a bound book of every N5 character is most plausible. High → exam
- *     preparation is a buyer intent the site can serve and the mode earns more
- *     questions. Low → quiz-takers want free practice, not a paperback; stop
- *     giving the results screen that slot. Fired from a server-rendered
- *     `data-fast-goal` attribute (BookCTA is passed into the client quiz as a
- *     slot), so the quiz carries no extra script for it.
+ * A SURFACE WITH NO CLICK GOAL: `jlptFormat`, the results screen of the
+ * JLPT-format mode on `/kanji/n5/quiz`. The mode keeps one goal of its own, and
+ * since 6 Oct 2026 that goal is `n5_jlpt_format_finish_click`: the count of
+ * finishers is the denominator of its kill criterion (stop if fewer than ~5% of
+ * finishers sign up), and a book click there answers no decision that criterion
+ * does not. So `jlptFormat` is absent from BOOK_CLICK_GOALS and its anchor
+ * carries no `data-fast-goal`; Amazon exits from the page still show in
+ * DataFast's exit-click report. It keeps its own Attribution tag below.
  *
  * A funnel step matches a goal NAME and ignores properties (verified: the
  * dashboard's step editor takes a goal name, and the shipped script sends
@@ -218,12 +217,12 @@ export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
  */
 export type BookSurface = 'n5Sheets' | 'kanjiDetail' | 'n5List' | 'jlptFormat';
 
-export const BOOK_CLICK_GOALS = {
+/** Partial, like BOOK_SCROLL_GOALS: a surface with no entry fires no click goal. */
+export const BOOK_CLICK_GOALS: Partial<Record<BookSurface, string>> = {
   n5Sheets: 'n5_sheets_book_click',
   kanjiDetail: 'kanji_detail_book_click',
   n5List: 'n5_list_book_click',
-  jlptFormat: 'n5_jlpt_format_book_click',
-} as const satisfies Record<BookSurface, string>;
+};
 
 /**
  * Scroll markers for the book offer. Deliberately only ONE.
@@ -273,8 +272,8 @@ export const BOOK_DESTINATION = 'amazon';
  * and sales PER TAG on a 14-day last-touch window. If Ari's account is
  * eligible, that turns the reconciliation below from a date-coincidence table
  * into real attribution — and because a tag is per link, each surface can
- * carry its own, so Amazon's purchase counts line up one-to-one with the goal
- * names above.
+ * carry its own, so Amazon's purchase counts line up one-to-one with the
+ * surfaces above, and with their goal names where a surface has one.
  *
  * A tag is a query blob (`?maas=…&ref_=aa_maas`, plus `aa_*` campaign params).
  * It goes HERE, on the individual link, and never into `AMAZON_BOOK_URL` —
