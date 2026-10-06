@@ -73,7 +73,13 @@ const JLPT_SHAPE = PUBLISHED_JLPT_SHAPE;
 const N5_LIST = levelHref('N5');
 
 const TITLE = `JLPT N5 Kanji Quiz: Free Practice Test (${N5_COUNT} Kanji)`;
-const DESCRIPTION = `Free JLPT N5 kanji quiz on all ${N5_COUNT} kanji: meanings, readings with romaji, and the kanji for a meaning. Four choices, answers as you go, no sign-up.`;
+/**
+ * Names the JLPT-format sets only while there are published items, counted from the file,
+ * so the snippet never promises a tab the page does not have.
+ */
+const DESCRIPTION = JLPT_SETS.length
+  ? `Free JLPT N5 kanji quiz on all ${N5_COUNT} kanji, plus ${JLPT_SETS.length} ${JLPT_SETS.length === 1 ? 'set' : 'sets'} of our own JLPT-format kanji questions. Readings with romaji, answers as you go, no sign-up.`
+  : `Free JLPT N5 kanji quiz on all ${N5_COUNT} kanji: meanings, readings with romaji, and the kanji for a meaning. Four choices, answers as you go, no sign-up.`;
 
 export const metadata: Metadata = getSEOTags({
   title: TITLE,

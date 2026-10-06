@@ -35,6 +35,12 @@
  * bundle nothing; EmailCapture is its own client component either way. Their copy lives
  * in page.tsx, in one place.
  *
+ * The signup sits directly under the score, above the missed questions (owner's call,
+ * 2026-10-06). The mode is judged on the share of finishers who sign up, and a missed
+ * card is ~257px tall on a phone: below nine of them the form started ~2,800px down, so
+ * the rate would have measured scroll depth. The replay buttons, the book and the
+ * official links follow the missed questions.
+ *
  * ─────────────────────────────────────────────────────────────────────────────
  * ANALYTICS: ONE GOAL, AND IT IS FINISHING A SET
  * ─────────────────────────────────────────────────────────────────────────────
@@ -434,6 +440,10 @@ export function JlptFormatQuiz({
           predict one.
         </p>
 
+        {/* Wrapped, not bare: nodes handed over from a server component trip React's
+            missing-key warning when they sit directly among a parent's children. */}
+        <div className="mt-6">{signup}</div>
+
         {results.missed.length > 0 && (
           <div className="mt-6">
             <h3 className="text-lg font-semibold">The ones to go over</h3>
@@ -490,10 +500,7 @@ export function JlptFormatQuiz({
         </div>
 
         <div className="mt-8 space-y-6 border-t border-border pt-6">
-          {/* Wrapped, not bare: nodes handed over from a server component trip React's
-              missing-key warning when they sit directly among a parent's children. */}
           <div>{book}</div>
-          <div>{signup}</div>
 
           <div>
             <h3 className="text-lg font-semibold text-japan-deep-ocean">
