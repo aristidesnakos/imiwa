@@ -110,5 +110,12 @@ export interface ReviewFile {
 
 export interface PublishedFile {
   level: 'N5';
+  /**
+   * The UTC date (YYYY-MM-DD) the published items last changed, stamped by
+   * scripts/jlpt/publish-items.ts and kept when a rebuild changes nothing. Absent until
+   * the first publish. The sitemap's lastmod for /kanji/n5/quiz reads it, so the date
+   * moves when the page's JLPT tab appears or changes, and never by hand.
+   */
+  updated?: string;
   items: JlptItem[];
 }

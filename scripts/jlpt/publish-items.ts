@@ -65,7 +65,13 @@ for (const r of review.items) {
 }
 items.sort((a, b) => a.set - b.set || a.mondai - b.mondai || a.id.localeCompare(b.id, 'en', { numeric: true }));
 
-const file: PublishedFile = { level: 'N5', items };
+// The date moves only when the items do, so a rebuild that changes nothing leaves the
+// sitemap's lastmod for /kanji/n5/quiz alone (app/sitemap.xml/route.ts).
+const previous: PublishedFile | null = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
+const unchanged = previous !== null && JSON.stringify(previous.items) === JSON.stringify(items);
+const updated = unchanged ? previous.updated : new Date().toISOString().slice(0, 10);
+
+const file: PublishedFile = { level: 'N5', ...(updated ? { updated } : {}), items };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(file) + '\n');
 console.log(`published ${items.length} item(s)${includePending ? ' (INCLUDING PENDING — do not commit)' : ''} -> ${OUT.startsWith(ROOT + path.sep) ? path.relative(ROOT, OUT) : OUT}`);

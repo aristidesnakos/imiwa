@@ -6,6 +6,10 @@ import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
 import { strokeOrderImagePath } from '@/lib/stroke-order-image';
 import { EPISODES } from '@/lib/stories';
+import { PUBLISHED_JLPT_UPDATED } from '@/lib/jlpt/published';
+
+/** The later of two YYYY-MM-DD dates, ignoring a missing one. */
+const later = (a: string, b: string | null): string => (b && b > a ? b : a);
 
 // Static pages, each with the date its content actually last changed.
 //
@@ -24,8 +28,10 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // checks a crawler never satisfies — without this entry it is an orphan.
   { path: '/kanji/review', lastmod: '2026-07-31', priority: '0.6' },
   // Practice, not a list: it is written for "n5 kanji quiz", a different query
-  // from the one the N5 list page answers.
-  { path: '/kanji/n5/quiz', lastmod: '2026-09-24', priority: '0.7' },
+  // from the one the N5 list page answers. Its JLPT-format tab exists only while
+  // there are published items, so the page changes whenever they do: the later of
+  // the template's date and the items' own stamp (scripts/jlpt/publish-items.ts).
+  { path: '/kanji/n5/quiz', lastmod: later('2026-09-24', PUBLISHED_JLPT_UPDATED), priority: '0.7' },
   // The hub, not the episodes: those carry their own publication dates and are
   // emitted below. Priority matches /kanji because it does the same job for a
   // different query class — it is a category page written to rank, not an index.

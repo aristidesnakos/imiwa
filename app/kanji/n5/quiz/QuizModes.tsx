@@ -12,6 +12,12 @@
  * never throws away a round in progress. The kanji quiz is the default, so the server
  * HTML and the first client render agree; `?mode=jlpt` or `#jlpt-format` (the link in
  * the page copy) opens the other tab after mount.
+ *
+ * Choosing a tab writes it back to the address with replaceState: `#jlpt-format` on the
+ * JLPT tab, no hash on the kanji one. A reload or a copied link then opens the tab that
+ * was showing, and the page's own "#jlpt-format" link always changes the hash, so it
+ * still fires `hashchange` for someone who arrived on that hash and then switched to the
+ * kanji quiz. A tab is not a page, so no history entry is added.
  */
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
@@ -38,6 +44,17 @@ export function QuizModes({ kanjiQuiz, jlptQuiz }: { kanjiQuiz: ReactNode; jlptQ
     if (scroll) barRef.current?.scrollIntoView({ block: 'start' });
   }, []);
 
+  const select = useCallback((target: Mode) => {
+    setMode(target);
+    const url = new URL(window.location.href);
+    url.hash = target === 'jlpt' ? 'jlpt-format' : '';
+    if (target === 'kanji') {
+      url.searchParams.delete('mode');
+      url.searchParams.delete('set');
+    }
+    if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+  }, []);
+
   useEffect(() => {
     openFromLocation(false);
     const onHash = () => openFromLocation(true);
@@ -55,7 +72,7 @@ export function QuizModes({ kanjiQuiz, jlptQuiz }: { kanjiQuiz: ReactNode; jlptQ
     if (to < 0) return;
     event.preventDefault();
     const target = TABS[to].mode;
-    setMode(target);
+    select(target);
     tabRefs.current[target]?.focus();
   }
 
@@ -83,7 +100,7 @@ export function QuizModes({ kanjiQuiz, jlptQuiz }: { kanjiQuiz: ReactNode; jlptQ
               aria-selected={selected}
               aria-controls={`quiz-panel-${tab.mode}`}
               tabIndex={selected ? 0 : -1}
-              onClick={() => setMode(tab.mode)}
+              onClick={() => select(tab.mode)}
               className={`min-h-11 rounded-full border-2 px-5 py-1.5 text-sm transition-colors ${RING} ${
                 selected
                   ? `border-japan-deep-ocean font-semibold text-japan-deep-ocean ${WASH_RIGHT}`

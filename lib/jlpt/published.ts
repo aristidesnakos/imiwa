@@ -25,6 +25,9 @@ import published from '@/data/jlpt/published/N5.json';
 /** Every approved N5 item, in set order. Empty until some are approved. */
 export const PUBLISHED_JLPT_ITEMS: JlptItem[] = (published as unknown as PublishedFile).items;
 
+/** When the published items last changed (YYYY-MM-DD), or null if they never have. */
+export const PUBLISHED_JLPT_UPDATED: string | null = (published as unknown as PublishedFile).updated ?? null;
+
 /** The playable sets, in set order. */
 export const PUBLISHED_JLPT_SETS: JlptSet[] = groupSets(PUBLISHED_JLPT_ITEMS);
 

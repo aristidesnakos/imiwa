@@ -254,7 +254,7 @@ export default function N5QuizPage() {
         {JLPT_SHAPE && (
           <section className={SECTION_BAND} aria-labelledby="jlpt-format-heading">
             <h2 id="jlpt-format-heading" className={`${SECTION_HEADING} text-japan-deep-ocean`}>
-              JLPT-format questions: our own, in the shape of the real exam
+              JLPT N5 kanji practice questions: our own, in the exam&rsquo;s format
             </h2>
             <div className="mt-4 space-y-4 text-japan-ink-black">
               <p>

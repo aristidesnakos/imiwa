@@ -480,7 +480,18 @@ section('7. JLPT-format items (Mondai 1 and 2)');
       if (!s) problems.push(`${where}: source sentence ${i.source.sentenceId} unknown`);
       if (i.before !== r.before || i.target !== r.target || i.after !== r.after) problems.push(`${where}: stem differs from the review item`);
     }
-    check('JLPT published items', problems, `${published.items.length} published item(s), each approved, exactly one right option, matches its review item`);
+    // The sitemap's lastmod for the quiz reads this stamp: it must exist once anything
+    // ships, and a future date would claim a change that has not happened yet.
+    const today = new Date().toISOString().slice(0, 10);
+    if (published.updated !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(published.updated)) {
+      problems.push(`published file: updated "${published.updated}" is not YYYY-MM-DD`);
+    } else if (published.updated !== undefined && published.updated > today) {
+      problems.push(`published file: updated ${published.updated} is in the future`);
+    }
+    if (published.items.length > 0 && published.updated === undefined) {
+      problems.push('published file: has items but no updated date; run scripts/jlpt/publish-items.ts');
+    }
+    check('JLPT published items', problems, `${published.items.length} published item(s), each approved, exactly one right option, matches its review item, dated ${published.updated ?? 'never'}`);
   }
 }
 
