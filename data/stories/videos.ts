@@ -56,4 +56,5 @@ export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {
   'a-rainy-day-off': { youtubeId: 'ZMNIAOPGigg', aspect: 'portrait' },
   'the-train-east': { youtubeId: '7raFdU85yCI', aspect: 'portrait' },
   'tans-family-and-friends': { youtubeId: 'VJMFVI5jsQc', aspect: 'portrait' },
+  'counting-at-the-market': { youtubeId: 'LQN6gPIHrOc', aspect: 'portrait' },
 };
