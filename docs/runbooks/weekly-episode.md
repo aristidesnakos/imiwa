@@ -31,14 +31,14 @@ week has three things in flight:
 | Wed-Fri | Owner's pre-send checklist on N's scheduled email (spec A7 items 4-9) | Owner | |
 | Thu-Fri | **Short for N+1** built (two variants), gate posted; default variant after 24 h | Claude, strips + ElevenLabs | SOFT 3 |
 | **Fri D-1** | **Upload Short N**, scheduled for Sat 13:00 UTC | Claude in Chrome, YouTube Studio | |
-| **Sat D** | 13:00 UTC: the email sends (Resend) and the Short goes public (YouTube) | Resend, YouTube | |
-| Sun D+1 | The video links itself to the episode page (05:17 UTC); verify; close the issue | sync job, Claude | |
+| **Sat D** | 13:00 UTC: the email sends (Resend) and the Short goes public (YouTube). 14:17 UTC: the video links itself to the episode page | Resend, YouTube, sync job | |
+| Sun D+1 | Verify the send, the Short and the video link; close the issue | Claude | |
 
 So at any time: N is live on the site since Wednesday, N's email and Short go out Saturday, N+1 is
 being built and is not in any public repo file until its own Wednesday. **The site page is live three
 days before the email and Short.** That is unavoidable (the weekly job books an episode only once its
 page answers 200 in production). The hub, the sitemap and the welcome email (which carries the latest
-episode) show it from Wednesday; its video section stays empty until Sunday.
+episode) show it from Wednesday; its video section stays empty until Saturday afternoon.
 
 Release Saturdays, and when each episode is built and shipped (computed from
 `scripts/stories/episode-issue.ts`: episode 8 is 2026-10-10, each later one a week on):
@@ -274,11 +274,14 @@ The full procedure, with the traps, is the strips folder's `CLAUDE.md` (§0, §0
   checks both (the Studio Shorts tab shows **Public**; the review issue or `pnpm newsletter:stats` shows
   the send) and comments on the production issue. Not sent: [`newsletter.md`](./newsletter.md),
   "Cancelling or rescheduling" and "Known gaps".
-- **Sun 05:17 UTC.** `sync-story-videos.yml` reads the channel feed and adds
+- **Sat 14:17 UTC.** `sync-story-videos.yml` reads the channel feed and adds
   `'<slug>': { youtubeId }` to `data/stories/videos.ts` if the title's kanji before the `|` match
   exactly one episode. A Sunday task checks `origin/main`. Not linked: the title had fewer than three
   focus kanji or a kanji from another episode. Fix the title on YouTube and run the workflow, or add
-  the line by hand (`pnpm validate:stories`; replace, never delete, a wrong id).
+  the line by hand (`pnpm validate:stories`; replace, never delete, a wrong id). Not linked and a
+  `video-sync` issue is open: YouTube's feed was down (it is, for hours every night; see the
+  workflow header). The next day's run links it; to link it sooner, run the workflow by hand after
+  08:00 UTC.
 - **Then** close the production issue with a comment (release time, Short URL, send record), and
   note the Short's 7-day read date. The Part B "Sent" column is filled from Resend's record, never
   from the plan, in the next ship commit.

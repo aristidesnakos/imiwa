@@ -357,9 +357,15 @@ both shapes; `validate:schema` asserts the built page has the 9:16 (`aspect-[9/1
 id shape, slug, duplicates and the emitted markup. The privacy policy names the thumbnail and player
 (its header lists the claim); re-read it if the facade ever loads either earlier.
 
-**The video map keeps itself current.** `.github/workflows/sync-story-videos.yml` runs daily (05:17
+**The video map keeps itself current.** `.github/workflows/sync-story-videos.yml` runs daily (14:17
 UTC, and on demand) and `pnpm stories:sync-videos [--dry-run]` reads the channel's public Atom feed
-(no key). The rule, in `scripts/stories/video-sync-core.ts`: take the kanji in the title before the
+(no key). **The hour is load-bearing.** YouTube's feed endpoint is down for hours every day:
+00:35-07:00 UTC when probed from a runner every 5 minutes on 2026-10-07, with the channel,
+uploads-playlist and Shorts-playlist feeds failing together, so no other feed URL is a fallback and
+retrying inside the window is pointless. The old 05:17 slot failed on five of seven days (issue #46).
+`validate:video-sync` refuses a cron within an hour of that window or not after the Saturday release
+(`config.newsletter.sendTimeUtc`), and the workflow header has the measurement. A failed day loses
+nothing: the feed lists the latest 15 uploads and the next good run links whatever was missed. The rule, in `scripts/stories/video-sync-core.ts`: take the kanji in the title before the
 first `|`; if there are at least three and they are all in **exactly one** registered episode's
 `focusKanji`, that video belongs to that episode. Anything else (a foreign kanji, fewer than three, a
 set two episodes could claim) is printed as `unmatched` and never mapped; it is not a failure. It is

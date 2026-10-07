@@ -6,8 +6,13 @@
  * Asserts the rules of `video-sync-core.ts` against fixtures: the four real
  * channel titles, and every way a title must NOT be matched. No network. The
  * sync job commits to main with no human looking, so its matching rule is held
- * to the same standard as the data it writes.
+ * to the same standard as the data it writes. Also asserts the job's schedule
+ * (see the end of this file).
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import config from '../../config';
 import { EPISODES } from '../../lib/stories';
 import {
   matchEpisode,
@@ -249,9 +254,60 @@ check(
   'a body the writer does not understand is an error, not a silent rewrite',
 );
 
+// --- the schedule ----------------------------------------------------------------
+// YouTube's feed endpoint is down for hours every day: 00:35-07:00 UTC when
+// measured from a GitHub runner on 2026-10-07, every feed URL at once (the
+// workflow header has the numbers). A cron inside it fails nearly every day, as
+// 05:17 did. It must also run after the Saturday release (the Short goes public
+// at the newsletter send time), or a Short waits a day to be linked. The outage
+// bound keeps an hour of margin each side. If the outage moves, re-measure it and
+// move both this window and the cron.
+const OUTAGE_UTC = { from: '00:35', to: '07:00' };
+const MARGIN_MINUTES = 60;
+const minutes = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+};
+
+/** What is wrong with one cron line of the sync job; empty when nothing is. */
+function scheduleProblems(cron: string, releaseUtc: string): string[] {
+  const [min, hour, dom, month, dow] = cron.trim().split(/\s+/);
+  if (!/^\d+$/.test(min) || !/^\d+$/.test(hour) || dom !== '*' || month !== '*' || dow !== '*') {
+    return [`'${cron}' must run daily at one fixed minute and hour`];
+  }
+  const at = Number(hour) * 60 + Number(min);
+  const clock = `${hour.padStart(2, '0')}:${min.padStart(2, '0')} UTC`;
+  const problems: string[] = [];
+  // The window plus its margins, on a 24-hour circle (it may start before midnight).
+  const from = minutes(OUTAGE_UTC.from) - MARGIN_MINUTES;
+  const span = minutes(OUTAGE_UTC.to) + MARGIN_MINUTES - from;
+  if ((at - from + 1440) % 1440 <= span) {
+    problems.push(`${clock} is within an hour of YouTube's daily feed outage (${OUTAGE_UTC.from}-${OUTAGE_UTC.to} UTC)`);
+  }
+  if (at <= minutes(releaseUtc)) {
+    problems.push(`${clock} is not after the Saturday release (${releaseUtc} UTC), so a Short would wait a day`);
+  }
+  return problems;
+}
+
+eq(scheduleProblems('17 14 * * *', '13:00'), [], 'schedule: 14:17 is clear of the outage and after a 13:00 release');
+check(scheduleProblems('17 5 * * *', '13:00').length === 2, 'schedule: 05:17 (the old slot) is refused');
+check(scheduleProblems('50 23 * * *', '13:00').length === 1, 'schedule: 23:50 is refused, the margin crosses midnight');
+check(scheduleProblems('30 7 * * *', '13:00').length === 2, 'schedule: 07:30 is refused, inside the margin');
+check(scheduleProblems('30 8 * * *', '13:00').length === 1, 'schedule: 08:30 clears the outage but precedes the release');
+check(scheduleProblems('0 13 * * *', '13:00').length === 1, 'schedule: running at the release minute is too early');
+check(scheduleProblems('*/30 * * * *', '13:00').length === 1, 'schedule: a non-daily cron is refused');
+
+const workflow = readFileSync(resolve(__dirname, '../../.github/workflows/sync-story-videos.yml'), 'utf8');
+const crons = [...workflow.matchAll(/^\s*-\s*cron:\s*'([^']+)'/gm)].map(m => m[1]);
+check(crons.length > 0, 'schedule: no cron found in .github/workflows/sync-story-videos.yml');
+for (const cron of crons) {
+  for (const p of scheduleProblems(cron, config.newsletter.sendTimeUtc)) issues.push(`schedule: ${p}`);
+}
+
 if (issues.length > 0) {
   console.error(`\n${issues.length} issue(s):\n`);
   for (const i of issues) console.error(`  ✗ ${i}`);
   process.exit(1);
 }
-console.log('video-sync: matching, planning, feed parsing and file rewriting — 0 issues.');
+console.log(`video-sync: matching, planning, feed parsing, file rewriting and the schedule (${crons.join(', ')}) — 0 issues.`);

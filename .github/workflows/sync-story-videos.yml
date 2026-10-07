@@ -1,7 +1,28 @@
 name: Sync Story Videos
 
 # Links each episode's YouTube video from the channel's public feed, so the
-# owner uploads a video and nothing else. Daily, at an off-the-hour minute.
+# owner uploads a video and nothing else. Daily at 14:17 UTC: an hour after the
+# Saturday release (config.newsletter.sendTimeUtc, 13:00), so a Short is linked
+# the day it goes public.
+#
+# The hour is load-bearing. YouTube's feed endpoint goes down for hours every
+# day: measured from a GitHub runner every 5 minutes, 2026-10-06 16:23 to
+# 2026-10-07 08:50 UTC, every request answered 200 except 00:35-07:00 UTC, when
+# 95% were a 404 (or 500) HTML page with no cache headers. The channel feed, the
+# uploads-playlist feed (UU...) and the Shorts-playlist feed (UUSH...) failed
+# together, cache-busted or not, so no other feed URL is a fallback and no retry
+# inside the window helps. The old 05:17 slot failed on five of the seven days
+# from 2026-10-01 (issue #46); one success ran six hours late, the other caught
+# one of the window's sporadic 200s. It is not the runner's IP: five runners on
+# five Azure IPs all read the feed at 16:20 UTC. Public reports since December 2025 describe
+# the same daily outage, at an hour that has moved before. If this job starts
+# failing with "HTTP 404", the window has moved: probe it again and move the cron.
+# `pnpm validate:video-sync` refuses a cron within an hour of the measured window
+# or not after the Saturday release.
+#
+# A failed day loses nothing: the feed lists the latest 15 uploads and the sync
+# reads all of it, so the next good run links whatever was missed.
+#
 # `pnpm stories:sync-videos` matches a title to an episode by the kanji listed
 # before the "|" (at least three, all inside exactly one episode's focusKanji),
 # only ADDS entries to data/stories/videos.ts, and never overwrites a hand fix.
@@ -19,7 +40,7 @@ name: Sync Story Videos
 
 on:
   schedule:
-    - cron: '17 5 * * *'
+    - cron: '17 14 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -119,7 +140,9 @@ jobs:
 
           ### Likely causes
 
-          1. YouTube's feed was unreachable or not a feed (a transient outage clears by itself on the next run).
+          1. YouTube's feed answered 404 or 500. It is down for hours every day (00:35-07:00 UTC when measured on
+             2026-10-07, see the workflow header) and this job runs outside that window. One failed day loses nothing;
+             several in a row mean the window has moved over 14:17 UTC: re-measure it and move the cron.
           2. `pnpm validate:stories` failed on the new link (bad id shape, duplicate id): fix `data/stories/videos.ts` by hand.
           3. The push was rejected (branch protection, or a conflicting commit).
 
