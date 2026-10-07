@@ -23,7 +23,7 @@
  * should read, as a single line.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * THE BOOK BAND
+ * THE BOOK CARD
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * Under the strip, on N5 pages only, sits the paid book. A free N5-pack link
@@ -32,15 +32,15 @@
  * had to read both to tell "free" from "paid" apart. The free pack lost its
  * slot here (it is still offered at full strength on the N5 sheets hub page).
  *
- * What replaced it was first that same line with an accent chip around it, and
- * a chip under a bordered strip reads as a label ON the strip, not as a second
- * offer — on top of which its text failed AA at 4.32:1. It is now a tinted
- * band: a headline, one line of substance, a terracotta button and Tan at the
- * trailing edge. That is the heaviest thing on this page after the character
- * itself, deliberately, and it is still quieter than Print — the band's button
- * is auto-width on desktop and a different colour, so the primary free action
- * keeps the row above to itself. See components/commerce/BookCTA.tsx, whose
- * notes carry the measured contrast ratios.
+ * The book itself went from an underlined line, to an accent chip (which read
+ * as a label ON the strip and failed AA at 4.32:1), to a tinted text band with
+ * Tan, and — by owner decision on 2026-10-07 — to BookCTA's `nextStep` card:
+ * the real cover, the cover's own numbers and a filled terracotta button, the
+ * design the N5 sheets page shipped in 2db4db0. The visitor sees the object
+ * they would be buying, not a sentence about it. It is the heaviest thing on
+ * the page after the character, deliberately; Print keeps the row above, in
+ * its own colour. See components/commerce/BookCTA.tsx, whose notes carry the
+ * measured contrast ratios and the cover's byte cost.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * WHAT DOES *NOT* BELONG HERE
@@ -65,9 +65,9 @@ import { cn } from '@/lib/utils';
 interface Props {
   kanji: string;
   /**
-   * JLPT level of this character. Only N5 gets the book band below the print
+   * JLPT level of this character. Only N5 gets the book card below the print
    * strip, because N5 is the only level the book actually covers — see the
-   * "THE BOOK BAND" note above.
+   * "THE BOOK CARD" note above.
    */
   level: string;
 }
@@ -112,12 +112,20 @@ export function KanjiActionBar({ kanji, level }: Props) {
           costs almost no reach — the three most-read detail pages (日 595,
           本 261, 時 215 pageviews/month) are all N5.
 
-          The only action below the print strip, so it is shaped like one —
-          see "THE BOOK BAND" above and components/commerce/BookCTA.tsx.
-          Renders nothing until AMAZON_BOOK_URL is filled in, so this costs an
-          unlisted book zero bytes. Tracked as `kanji_detail_book_click` with
-          no client boundary. */}
-      {level === 'N5' && <BookCTA surface="kanjiDetail" variant="band" />}
+          The `nextStep` cover card, the same design the N5 sheets page runs,
+          by owner decision (2026-10-07): every N5 page shows the book itself,
+          not a text band about it. See "THE BOOK CARD" above.
+
+          `surface="kanjiDetail"`, NOT `n5Sheets`, even though the card is the
+          same: the surface picks the goal name, and a click from a reference
+          lookup and a click from the print-intent sheets page are separate
+          questions (BookCTA, "WHY THE GOAL NAME IS A PROP"). Tracked as
+          `kanji_detail_book_click`, with no client boundary and no scroll
+          marker (lib/commerce/links.ts says why). Renders nothing until
+          AMAZON_BOOK_URL is filled in. */}
+      {level === 'N5' && (
+        <BookCTA surface="kanjiDetail" variant="card" design="nextStep" />
+      )}
     </section>
   );
 }
