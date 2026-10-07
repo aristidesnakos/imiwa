@@ -313,9 +313,18 @@ export default function N5KanjiListPage() {
         ))}
 
         {/* Printing. The pack is the lead offer on this page as on the sheets
-            page; the book sits under it and quieter. N5 is the one level the
-            book covers, so this is the most on-target slot it can have — and
-            its own goal name, so that claim gets tested rather than assumed. */}
+            page, and the book sits under it. N5 is the one level the book
+            covers, so this is the most on-target slot it can have — and its own
+            goal name, so that claim gets tested rather than assumed.
+
+            The book is the `nextStep` card, the sheets page's design (owner's
+            call, 2026-10-07: every N5 page shows it). Its heading, "Rather not
+            print 82 pages?", answers the pack button directly above it, which is
+            the same pairing the design was written for. It replaced the coral
+            `band`, so the book now carries a filled terracotta button beside the
+            pack's deep-ocean one: the colours keep the two apart, and the pack
+            still comes first. `mb-0` leaves the gap to the next section to that
+            section's own band spacing; the card's `my-8` still sets the top. */}
         <section className={SECTION_BAND} aria-labelledby="print-heading">
           <h2 id="print-heading" className={SECTION_HEADING}>
             Practise the N5 kanji on paper
@@ -345,7 +354,7 @@ export default function N5KanjiListPage() {
               <ArrowRight aria-hidden />
             </Link>
           </div>
-          <BookCTA surface="n5List" variant="band" className="mt-6" />
+          <BookCTA surface="n5List" variant="card" design="nextStep" className="mb-0" />
         </section>
 
         {/* Practice: the review doc's third block. A quiz is the one thing on

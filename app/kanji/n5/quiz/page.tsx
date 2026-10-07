@@ -184,13 +184,19 @@ export default function N5QuizPage() {
           </p>
         </div>
 
+        {/* The book on the JLPT-format results screen is the `nextStep` card, the
+            sheets page's design (owner's call, 2026-10-07: every N5 page shows
+            it). It sits below the replay buttons, inside the results card, so
+            `my-0` drops the card's own `my-8`: the wrapper's `space-y-6` already
+            spaces it. The kanji quiz (N5QuizClient) offers no book on its
+            results screen. */}
         {JLPT_SHAPE ? (
           <QuizModes
             kanjiQuiz={<N5QuizClient />}
             jlptQuiz={
               <JlptFormatQuiz
                 items={JLPT_ITEMS}
-                book={<BookCTA surface="jlptFormat" variant="band" className="mt-0" />}
+                book={<BookCTA surface="jlptFormat" variant="card" design="nextStep" className="my-0" />}
                 signup={
                   <EmailCapture
                     source="jlpt-format-results"
