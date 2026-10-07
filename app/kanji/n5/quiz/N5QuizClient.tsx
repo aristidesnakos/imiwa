@@ -176,7 +176,16 @@ type FocusTarget = 'setup' | 'question' | 'next' | 'results' | 'marked';
 /** The sticky header's height, roughly. A panel top above this is hidden under it. */
 const HEADER_CLEARANCE = 80;
 
-export function N5QuizClient() {
+interface N5QuizClientProps {
+  /**
+   * The book offer for the results screen, built by the server page: BookCTA is a
+   * server component, and as a slot it stays server-rendered and adds nothing to
+   * this bundle (the same arrangement as JlptFormatQuiz's `book`).
+   */
+  book?: ReactNode;
+}
+
+export function N5QuizClient({ book }: N5QuizClientProps = {}) {
   const { learnedKanji, toggleKanjiLearned } = useKanjiProgress();
 
   // Setup. These defaults are what the server renders.
@@ -604,6 +613,8 @@ export function N5QuizClient() {
             Change the quiz
           </Button>
         </div>
+        {/* After the replay buttons, so playing on stays the first thing offered. */}
+        {book && <div className="mt-8 border-t border-border pt-8">{book}</div>}
       </section>
     );
   } else if (question) {

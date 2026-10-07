@@ -9,6 +9,7 @@ import Header from '@/components/sections/Header';
 import { Badge } from '@/components/ui/badge';
 import EmailCapture from '@/components/EmailCapture';
 import { CTASection } from '@/components/CTASection';
+import { BookCTA } from '@/components/commerce/BookCTA';
 import { StoryPanel } from '@/components/stories/StoryPanel';
 import { panelRomaji } from '@/lib/stories/romaji-lines';
 import { EpisodeVideoSection } from '@/components/stories/EpisodeVideoSection';
@@ -342,7 +343,8 @@ export default async function EpisodePage({ params }: Props) {
         </section>
 
         {/*
-          The offer, and the only thing on this page that asks for anything.
+          The offer, and the first thing on this page that asks for anything
+          (the book follows it; see below).
 
           It sits here rather than at the top on purpose: someone who reaches it
           has read six panels of Japanese, a transcript and a quiz, which makes
@@ -370,6 +372,20 @@ export default async function EpisodePage({ params }: Props) {
             successMessage="Check your inbox — confirm the address and the quiz card follows."
           />
         </section>
+
+        {/* The N5 book, after the newsletter so the free ask stays first (owner's
+            call, 2026-10-07: every N5 page shows it, and an episode is strictly
+            N5). The cover card, opening on this story's kanji rather than the
+            sheets page's printing question; an <h2>, because it is a section of
+            the page and not part of the signup above. `mt-12` matches the
+            section rhythm in place of a band rule: the card has its own border. */}
+        <BookCTA
+          surface="storyEpisode"
+          variant="card"
+          design="nextStep"
+          headingLevel={2}
+          className="mb-0 mt-12"
+        />
 
         {/* Season navigation. Server-rendered, so it is also crawlable depth. */}
         <nav className={SECTION_BAND} aria-label="Episodes">

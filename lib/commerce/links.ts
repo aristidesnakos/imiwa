@@ -215,13 +215,24 @@ export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
  * and it is not defined until something renders it, because an unused goal name
  * is a permanent line in a list that never shrinks.
  */
-export type BookSurface = 'n5Sheets' | 'kanjiDetail' | 'n5List' | 'jlptFormat';
+export type BookSurface =
+  | 'n5Sheets'
+  | 'kanjiDetail'
+  | 'n5List'
+  | 'jlptFormat'
+  | 'n5Quiz'
+  | 'storyEpisode';
 
 /** Partial, like BOOK_SCROLL_GOALS: a surface with no entry fires no click goal. */
 export const BOOK_CLICK_GOALS: Partial<Record<BookSurface, string>> = {
   n5Sheets: 'n5_sheets_book_click',
   kanjiDetail: 'kanji_detail_book_click',
   n5List: 'n5_list_book_click',
+  // From 2026-10-07, when every N5 page took the book. The kanji quiz's results
+  // screen and a story's end are reached by people who finished something, so
+  // a click there is a question worth asking apart from the reference pages.
+  n5Quiz: 'n5_quiz_book_click',
+  storyEpisode: 'story_episode_book_click',
 };
 
 /**
@@ -287,6 +298,8 @@ export const BOOK_ATTRIBUTION_TAGS: Record<BookSurface, string> = {
   kanjiDetail: '',
   n5List: '',
   jlptFormat: '',
+  n5Quiz: '',
+  storyEpisode: '',
 };
 
 /**

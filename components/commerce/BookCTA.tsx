@@ -170,6 +170,12 @@ interface BookCTAProps {
   variant: 'card' | 'band' | 'inline';
   /** `card` only. */
   design?: BookCardDesign;
+  /**
+   * `card` with a cover design only. 2 where the card is a section of the page
+   * in its own right (a kanji page, a story) rather than part of a larger block,
+   * so it does not land in the outline as a subsection of whatever precedes it.
+   */
+  headingLevel?: 2 | 3;
   className?: string;
 }
 
@@ -188,7 +194,36 @@ const BOOK_FACTS = [
   { value: '14', label: 'week plan' },
 ] as const;
 
-export function BookCTA({ surface, variant, design = 'current', className }: BookCTAProps) {
+/**
+ * The `nextStep` card's opening, by surface.
+ *
+ * The default answers the free pack's download button directly above it ("Rather
+ * not print 82 pages?"), which is true on the N5 sheets page, the N5 list and a
+ * kanji page's print strip. A story or a quiz result has no pack above it, so
+ * that question would answer nothing; those surfaces open on what the reader
+ * just did instead. Both claims hold: a story uses only N5 kanji
+ * (`validate:stories` asserts it) and the book covers all 82.
+ */
+const NEXT_STEP_OPENINGS: Partial<Record<BookSurface, { heading: string; lede: string }>> = {
+  storyEpisode: {
+    heading: 'Learn to write the kanji in this story',
+    lede: 'Every one of them is in the workbook.',
+  },
+  n5Quiz: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji, bound in one workbook.' },
+  jlptFormat: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji, bound in one workbook.' },
+};
+const NEXT_STEP_DEFAULT = {
+  heading: 'Rather not print 82 pages?',
+  lede: 'Get them bound in one workbook.',
+} as const;
+
+export function BookCTA({
+  surface,
+  variant,
+  design = 'current',
+  headingLevel = 3,
+  className,
+}: BookCTAProps) {
   if (!hasAmazonListing()) return null;
 
   const href = bookUrlFor(surface);
@@ -318,6 +353,7 @@ export function BookCTA({ surface, variant, design = 'current', className }: Boo
       <BookCoverCard
         surface={surface}
         design={design}
+        headingLevel={headingLevel}
         href={href}
         goal={goal}
         destination={destination}
@@ -409,13 +445,20 @@ interface BookLinkProps {
 function BookCoverCard({
   surface,
   design,
+  headingLevel,
   href,
   goal,
   destination,
   scrollGoal,
   className,
-}: BookLinkProps & { surface: BookSurface; design: Exclude<BookCardDesign, 'current'> }) {
+}: BookLinkProps & {
+  surface: BookSurface;
+  design: Exclude<BookCardDesign, 'current'>;
+  headingLevel: 2 | 3;
+}) {
   const nextStep = design === 'nextStep';
+  const opening = NEXT_STEP_OPENINGS[surface] ?? NEXT_STEP_DEFAULT;
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
 
   return (
     <section className={cn('my-8', className)} aria-labelledby={`book-cta-${surface}`}>
@@ -450,21 +493,19 @@ function BookCoverCard({
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-mountain-mist">
             {nextStep ? 'Paperback · 198 pages' : 'Paperback · Amazon'}
           </p>
-          <h3
+          <Heading
             id={`book-cta-${surface}`}
             className="mt-2 text-xl font-bold text-japan-deep-ocean md:text-2xl"
           >
-            {nextStep ? 'Rather not print 82 pages?' : 'Prefer a book you can write in?'}
-          </h3>
+            {nextStep ? opening.heading : 'Prefer a book you can write in?'}
+          </Heading>
         </div>
 
         <div className="col-span-2 row-start-2 sm:col-span-1 sm:col-start-2">
           {nextStep ? (
             <>
               <p className="max-w-2xl text-sm leading-relaxed text-japan-mountain-mist md:text-base">
-                <strong className="font-semibold text-japan-deep-ocean">
-                  Get them bound in one workbook.
-                </strong>{' '}
+                <strong className="font-semibold text-japan-deep-ocean">{opening.lede}</strong>{' '}
                 <em>N5 Kanji: Stroke Order &amp; Writing Practice</em> gives each kanji a facing
                 spread: stroke order and the words that use it on the left, practice squares on the
                 right, and a 14-week plan takes you through them. No printer, no loose sheets; it

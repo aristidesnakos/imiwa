@@ -122,9 +122,10 @@ export function KanjiActionBar({ kanji, level }: Props) {
           questions (BookCTA, "WHY THE GOAL NAME IS A PROP"). Tracked as
           `kanji_detail_book_click`, with no client boundary and no scroll
           marker (lib/commerce/links.ts says why). Renders nothing until
-          AMAZON_BOOK_URL is filled in. */}
+          AMAZON_BOOK_URL is filled in. `headingLevel={2}`: as an <h3> it was
+          outlined as a fourth subsection of "Meaning and readings". */}
       {level === 'N5' && (
-        <BookCTA surface="kanjiDetail" variant="card" design="nextStep" />
+        <BookCTA surface="kanjiDetail" variant="card" design="nextStep" headingLevel={2} />
       )}
     </section>
   );

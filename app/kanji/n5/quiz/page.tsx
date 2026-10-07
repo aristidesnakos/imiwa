@@ -120,6 +120,9 @@ const RING =
 const CRUMB = `hover:text-japan-deep-ocean ${RING}`;
 const TEXT_LINK = `font-medium text-japan-deep-ocean underline underline-offset-4 hover:no-underline ${RING}`;
 
+/** Built here because BookCTA is a server component and N5QuizClient is not. */
+const KANJI_QUIZ_BOOK = <BookCTA surface="n5Quiz" variant="card" design="nextStep" className="my-0" />;
+
 export default function N5QuizPage() {
   return (
     <>
@@ -188,11 +191,13 @@ export default function N5QuizPage() {
             sheets page's design (owner's call, 2026-10-07: every N5 page shows
             it). It sits below the replay buttons, inside the results card, so
             `my-0` drops the card's own `my-8`: the wrapper's `space-y-6` already
-            spaces it. The kanji quiz (N5QuizClient) offers no book on its
-            results screen. */}
+            spaces it. The kanji quiz (N5QuizClient) shows the same card under its
+            replay buttons, as its own `n5Quiz` surface; both open on "Now learn
+            to write them" rather than the sheets page's printing question, since
+            nothing here prints. */}
         {JLPT_SHAPE ? (
           <QuizModes
-            kanjiQuiz={<N5QuizClient />}
+            kanjiQuiz={<N5QuizClient book={KANJI_QUIZ_BOOK} />}
             jlptQuiz={
               <JlptFormatQuiz
                 items={JLPT_ITEMS}
@@ -212,7 +217,7 @@ export default function N5QuizPage() {
             }
           />
         ) : (
-          <N5QuizClient />
+          <N5QuizClient book={KANJI_QUIZ_BOOK} />
         )}
 
         {/* Written for the person deciding whether to play, and it is also the
