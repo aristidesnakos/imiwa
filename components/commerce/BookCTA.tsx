@@ -135,25 +135,78 @@ import { cn } from '@/lib/utils';
  * exit-click report as an outbound link.
  */
 
+/**
+ * The card's design, for the sequential test on the N5 sheets page (Oct 2026).
+ *
+ * Baseline, 7 Sep – 6 Oct 2026: 422 landed, 160 saw the card (38%), 6 clicked
+ * (3.8% of those who saw it, 1.4% of all who landed). That is ~6 clicks a month,
+ * far too few to split traffic: telling 3.8% from 7.5% needs ~600 viewers per
+ * arm, seven months at this volume. So the designs run one at a time, four weeks
+ * each, and are compared on clicks per LANDED visitor — the one rate that stays
+ * comparable when a design also moves where the offer sits.
+ *
+ *   `current`  — what shipped: text only, outline button.
+ *   `cover`    — the same words beside the real cover. Tests: does seeing the
+ *                object help.
+ *   `nextStep` — cover, copy that answers the free pack directly above it
+ *                (what the book has that 82 printed pages do not), the cover's
+ *                own three numbers, and a filled button.
+ *
+ * Every fact in the copy is printed on the cover or the listing: 82 characters,
+ * 132 squares each, a 14-week plan, 198 pages. Change the book, re-check these.
+ */
+export type BookCardDesign = 'current' | 'cover' | 'nextStep';
+
 interface BookCTAProps {
   /** Which placement this is. Picks the goal name, if it has one, and the Attribution tag. */
   surface: BookSurface;
   /**
-   * `card` — the full offer block, for a page whose job is finished.
-   * `band` — a tinted module for a page whose job is the kanji the reader came
-   *          for: copy leads, Tan closes. See the note above.
+   * `card`   — the full offer block, for a page whose job is finished.
+   * `band`   — a tinted module for a page whose job is the kanji the reader came
+   *            for: copy leads, Tan closes. See the note above.
+   * `inline` — one line with a thumbnail, for slotting under another offer's
+   *            button (the free pack's). See BookInline.
    */
-  variant: 'card' | 'band';
+  variant: 'card' | 'band' | 'inline';
+  /** `card` only. */
+  design?: BookCardDesign;
   className?: string;
 }
 
-export function BookCTA({ surface, variant, className }: BookCTAProps) {
+/** The cover, served from this origin: an Amazon image URL is not ours to keep stable. */
+const COVER = {
+  src: '/assets/book-cover-n5.jpg',
+  width: 600,
+  height: 776,
+  alt: 'Cover of N5 Kanji: Stroke Order & Writing Practice, with Tan the tanuki holding a brush',
+} as const;
+
+/** The cover's own three numbers, repeated so the card and the book say the same thing. */
+const BOOK_FACTS = [
+  { value: '82', label: 'characters' },
+  { value: '132', label: 'squares each' },
+  { value: '14', label: 'week plan' },
+] as const;
+
+export function BookCTA({ surface, variant, design = 'current', className }: BookCTAProps) {
   if (!hasAmazonListing()) return null;
 
   const href = bookUrlFor(surface);
   const goal = BOOK_CLICK_GOALS[surface];
   // A property with no goal to ride on is noise; React omits an undefined attribute.
   const destination = goal ? BOOK_DESTINATION : undefined;
+
+  if (variant === 'inline') {
+    return (
+      <BookInline
+        href={href}
+        goal={goal}
+        destination={destination}
+        scrollGoal={BOOK_SCROLL_GOALS[surface]}
+        className={className}
+      />
+    );
+  }
 
   if (variant === 'band') {
     return (
@@ -260,6 +313,20 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
      is still filling the screen and would mean "they left the pack CTA". */
   const scrollGoal = BOOK_SCROLL_GOALS[surface];
 
+  if (design !== 'current') {
+    return (
+      <BookCoverCard
+        surface={surface}
+        design={design}
+        href={href}
+        goal={goal}
+        destination={destination}
+        scrollGoal={scrollGoal}
+        className={className}
+      />
+    );
+  }
+
   return (
     <section className={cn('my-8', className)} aria-labelledby={`book-cta-${surface}`}>
       <div className="rounded-lg border border-border bg-card p-6 md:p-8">
@@ -310,5 +377,185 @@ export function BookCTA({ surface, variant, className }: BookCTAProps) {
         </a>
       </div>
     </section>
+  );
+}
+
+interface BookLinkProps {
+  href: string;
+  goal: string | undefined;
+  destination: string | undefined;
+  scrollGoal: string | undefined;
+  className?: string;
+}
+
+/**
+ * The `cover` and `nextStep` cards: the `current` card with the book beside it.
+ *
+ * THE COVER IS A LINK TOO, AND OUT OF THE TAB ORDER. People click a product's
+ * picture, so it carries the same goal as the button. A second focusable link to
+ * the same place would be a duplicate stop for keyboard and screen-reader users,
+ * so it is `tabIndex={-1}` and `aria-hidden`; the button is the accessible one.
+ *
+ * BYTES. 600px JPEG source, shown at 88px on a phone and 160px from `sm:` up, so
+ * `next/image` serves a ~2x AVIF of a few kB. It sits below the grid and the
+ * free pack, so the default lazy loading means a visit that never scrolls this
+ * far never fetches it, and it carries no script.
+ *
+ * LAYOUT. Two columns at every width. On a phone the cover shares a row with the
+ * heading only, and the copy and button take the full width beneath, so the
+ * thumbnail never squeezes the paragraph. From `sm:` up the cover spans both
+ * rows, like the free-pack card's image does.
+ */
+function BookCoverCard({
+  surface,
+  design,
+  href,
+  goal,
+  destination,
+  scrollGoal,
+  className,
+}: BookLinkProps & { surface: BookSurface; design: Exclude<BookCardDesign, 'current'> }) {
+  const nextStep = design === 'nextStep';
+
+  return (
+    <section className={cn('my-8', className)} aria-labelledby={`book-cta-${surface}`}>
+      <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 rounded-lg border border-border bg-card p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-x-8 md:p-8">
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          tabIndex={-1}
+          aria-hidden="true"
+          data-fast-goal={goal}
+          data-fast-goal-destination={destination}
+          className="col-start-1 row-start-1 self-start sm:row-end-3"
+        >
+          <Image
+            src={COVER.src}
+            alt=""
+            width={COVER.width}
+            height={COVER.height}
+            sizes="(min-width: 640px) 160px, 88px"
+            className="h-auto w-full rounded-sm shadow-md ring-1 ring-border transition-transform duration-200 hover:-translate-y-0.5"
+          />
+        </a>
+
+        {/* The scroll marker stays on the heading block, as on the `current`
+            card, so "saw the book offer" means the same thing across designs. */}
+        <div
+          className="col-start-2 row-start-1 self-center sm:self-start"
+          data-fast-scroll={scrollGoal}
+          data-fast-scroll-delay={scrollGoal ? String(BOOK_SCROLL_DELAY_MS) : undefined}
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-mountain-mist">
+            {nextStep ? 'Paperback · 198 pages' : 'Paperback · Amazon'}
+          </p>
+          <h3
+            id={`book-cta-${surface}`}
+            className="mt-2 text-xl font-bold text-japan-deep-ocean md:text-2xl"
+          >
+            {nextStep ? 'Rather not print 82 pages?' : 'Prefer a book you can write in?'}
+          </h3>
+        </div>
+
+        <div className="col-span-2 row-start-2 sm:col-span-1 sm:col-start-2">
+          {nextStep ? (
+            <>
+              <p className="max-w-2xl text-sm leading-relaxed text-japan-mountain-mist md:text-base">
+                <strong className="font-semibold text-japan-deep-ocean">
+                  Get them bound in one workbook.
+                </strong>{' '}
+                <em>N5 Kanji: Stroke Order &amp; Writing Practice</em> gives each kanji a facing
+                spread: stroke order and the words that use it on the left, practice squares on the
+                right, and a 14-week plan takes you through them. No printer, no loose sheets; it
+                lies open on your desk.
+              </p>
+              <dl className="mt-4 flex gap-6">
+                {BOOK_FACTS.map((fact) => (
+                  <div key={fact.label} className="flex flex-col-reverse">
+                    <dt className="text-xs text-japan-mountain-mist">{fact.label}</dt>
+                    <dd className="text-2xl font-bold leading-none text-japan-coral-sunset-ink">
+                      {fact.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          ) : (
+            <p className="max-w-2xl text-sm leading-relaxed text-japan-mountain-mist md:text-base">
+              <em>N5 Kanji: Stroke Order &amp; Writing Practice</em> gives all 82 N5 characters a
+              facing spread each — stroke order and the words that use it on the left, 132
+              practice squares on the right. Printed and bound, so it lies open next to you
+              instead of living in a Downloads folder.
+            </p>
+          )}
+
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-fast-goal={goal}
+            data-fast-goal-destination={destination}
+            className={cn(
+              nextStep
+                ? /* The filled terracotta of the `band` variant, and its explicit hover
+                     background for the same reason — see the note there. */
+                  cn(
+                    buttonVariants({ size: 'lg' }),
+                    'bg-japan-coral-sunset-ink text-japan-temple-stone shadow-sm hover:bg-japan-coral-sunset-ink hover:brightness-90',
+                  )
+                : buttonVariants({ variant: 'outline', size: 'lg' }),
+              'mt-5 w-full sm:w-auto',
+            )}
+          >
+            <BookOpen aria-hidden />
+            {nextStep ? 'See the book on Amazon' : 'See it on Amazon'}
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The `inline` variant: one line under the free pack's button, so the book is
+ * seen by everyone who sees the pack, which sits a full card higher than the
+ * book card it replaces (only 38% of visitors reach that card). Deliberately a text link, not a
+ * button: it must not compete with the pack's download, the page's best
+ * conversion.
+ */
+function BookInline({ href, goal, destination, scrollGoal, className }: BookLinkProps) {
+  return (
+    <div
+      className={cn('flex items-center gap-3 border-t border-border pt-4', className)}
+      data-fast-scroll={scrollGoal}
+      data-fast-scroll-delay={scrollGoal ? String(BOOK_SCROLL_DELAY_MS) : undefined}
+    >
+      <Image
+        src={COVER.src}
+        alt=""
+        aria-hidden="true"
+        width={COVER.width}
+        height={COVER.height}
+        sizes="48px"
+        className="h-auto w-12 shrink-0 rounded-sm shadow-sm ring-1 ring-border"
+      />
+      <p className="text-sm leading-relaxed text-japan-mountain-mist">
+        Rather not print 82 pages?{' '}
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-fast-goal={goal}
+          data-fast-goal-destination={destination}
+          className="rounded-sm font-semibold text-japan-deep-ocean underline underline-offset-4 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Get them bound in one workbook
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+        : 198 pages, with a 14-week plan.
+      </p>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { Download } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
@@ -64,10 +65,17 @@ interface KanjiN5WorkbookCTAProps {
    * from them was credited to the N5 page.
    */
   source?: `n${1 | 2 | 3 | 4 | 5}_kanji_sheets_page`;
+  /**
+   * Rendered under the download button: the server page passes
+   * `<BookCTA variant="inline" />` here. A slot rather than an import because
+   * this is a client component and BookCTA is a server one; as a prop it stays
+   * server-rendered and adds nothing to this bundle.
+   */
+  book?: ReactNode;
   className?: string;
 }
 
-export function KanjiN5WorkbookCTA({ source = 'n5_kanji_sheets_page', className = '' }: KanjiN5WorkbookCTAProps) {
+export function KanjiN5WorkbookCTA({ source = 'n5_kanji_sheets_page', book, className = '' }: KanjiN5WorkbookCTAProps) {
   return (
     <div className={cn('my-8', className)}>
       <div className="overflow-hidden rounded-lg border border-border bg-japan-soft-mist">
@@ -108,6 +116,7 @@ export function KanjiN5WorkbookCTA({ source = 'n5_kanji_sheets_page', className 
                 <span className="sr-only"> (PDF, downloads to your device)</span>
               </a>
             </div>
+            {book && <div className="mt-6">{book}</div>}
           </div>
 
           <div className="relative order-1 flex min-h-[200px] items-center justify-center p-6 md:p-8 lg:order-2 lg:h-full">

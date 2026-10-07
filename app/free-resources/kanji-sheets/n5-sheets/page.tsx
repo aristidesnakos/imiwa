@@ -182,8 +182,12 @@ export default function N5KanjiSheetsPage() {
             visitors and produces the best cohort on the site (bounce 29%,
             session 9m58s), and that is not worth trading for a $5.83-net sale
             at this volume. It does mean `n5_sheets_book_click` is a LOWER
-            bound on what the book could do from this page. */}
-        <BookCTA surface="n5Sheets" variant="card" />
+            bound on what the book could do from this page.
+
+            `design="nextStep"` from 7 Oct 2026: the first of the sequential
+            designs in BookCTA, judged after four weeks against the baseline
+            recorded there (6 clicks per 422 landed, 1.4%). */}
+        <BookCTA surface="n5Sheets" variant="card" design="nextStep" />
 
         {/* `scroll-mt-24` keeps the heading clear of the sticky header when the
             hero's in-page link jumps here. */}
