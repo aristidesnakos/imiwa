@@ -258,6 +258,7 @@ focus character across episodes.
 | 4 | A rainy day off | 雨 天 気 休 日 | 雨, 天気, 休む, きょう | written 2026-09-23 | never: before the first broadcast | — |
 | 5 | The train east | 電 車 東 行 来 | 電車, 東, 行く, 来る | written 2026-09-24 | never: before the first broadcast | — |
 | 6 | Tan's family and friends | 父 母 友 男 女 | 父, 母, 友だち, 男の子, 女の子 | written 2026-09-27 | never: reached every subscriber through the welcome card | — |
+| 8 | How much is it? | 百 千 万 円 金 高 何 | 百円, 千円, 一万円, 高い, お金 | written 2026-10-01 | Sat 2026-10-10 | — |
 
 **Corrected 2026-09-30.** Episode 5 was written here as "The train to Tokyo / 東京", but 京 is not one of
 the 82 N5 kanji, so 東京 cannot appear in a strict-N5 episode: the episode is "The train east", teaches 東
@@ -324,6 +325,11 @@ Paste these as the href. Display text stays the kanji.
 | 6 | 友 | `https://michikanji.com/kanji/%E5%8F%8B` |
 | 6 | 男 | `https://michikanji.com/kanji/%E7%94%B7` |
 | 6 | 女 | `https://michikanji.com/kanji/%E5%A5%B3` |
+| 8 | 百 | `https://michikanji.com/kanji/%E7%99%BE` |
+| 8 | 千 | `https://michikanji.com/kanji/%E5%8D%83` |
+| 8 | 万 | `https://michikanji.com/kanji/%E4%B8%87` |
+| 8 | 高 | `https://michikanji.com/kanji/%E9%AB%98` |
+| 8 | 金 | `https://michikanji.com/kanji/%E9%87%91` |
 
 ### The reply question
 
@@ -339,6 +345,7 @@ just collecting praise:
 | 4 | What's the hardest part of studying kanji for you right now? | Feature demand, unprompted |
 | 5 | Would you want these at N4 as well, or a back catalogue of N5? | Direct read on the paid-reader thesis |
 | 6 | What would make you recommend this to someone? | Whatever they name is the product |
+| 8 | Have you ever paid for Japanese study materials — a workbook, an app, a class? What made you say yes, or no? | Willingness to pay and the price anchor; discriminates the paid-reader thesis from free-tool use |
 
 **Episodes 7-14 still need a question each.** Write it on the Monday the script is written (one line, always
 an invitation to reply, never a link, rotating as above) and show it in the Japanese-read comment on the
