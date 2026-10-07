@@ -148,9 +148,10 @@ import { cn } from '@/lib/utils';
  *   `current`  — what shipped: text only, outline button.
  *   `cover`    — the same words beside the real cover. Tests: does seeing the
  *                object help.
- *   `nextStep` — cover, copy that answers the free pack directly above it
- *                (what the book has that 82 printed pages do not), the cover's
- *                own three numbers, and a filled button.
+ *   `nextStep` — cover, a heading that answers the free pack directly above it
+ *                (what the book has that 82 printed pages do not), one sentence
+ *                and a filled button. Trimmed 7 Oct 2026, the day it shipped:
+ *                the paragraph and the 82 / 132 / 14 number row are gone.
  *
  * Every fact in the copy is printed on the cover or the listing: 82 characters,
  * 132 squares each, a 14-week plan, 198 pages. Change the book, re-check these.
@@ -187,13 +188,6 @@ const COVER = {
   alt: 'Cover of N5 Kanji: Stroke Order & Writing Practice, with Tan the tanuki holding a brush',
 } as const;
 
-/** The cover's own three numbers, repeated so the card and the book say the same thing. */
-const BOOK_FACTS = [
-  { value: '82', label: 'characters' },
-  { value: '132', label: 'squares each' },
-  { value: '14', label: 'week plan' },
-] as const;
-
 /**
  * The `nextStep` card's opening, by surface.
  *
@@ -203,19 +197,25 @@ const BOOK_FACTS = [
  * that question would answer nothing; those surfaces open on what the reader
  * just did instead. Both claims hold: a story uses only N5 kanji
  * (`validate:stories` asserts it) and the book covers all 82.
+ *
+ * Each lede is finished by NEXT_STEP_DETAIL, the card's one sentence. It carries
+ * the cover's numbers (132 squares, 14 weeks) in words: the big-number row that
+ * used to repeat them, and a paragraph describing the spread, were cut on
+ * 2026-10-07 as text the cover beside them already shows.
  */
 const NEXT_STEP_OPENINGS: Partial<Record<BookSurface, { heading: string; lede: string }>> = {
   storyEpisode: {
     heading: 'Learn to write the kanji in this story',
-    lede: 'Every one of them is in the workbook.',
+    lede: 'Every one of them is in the workbook',
   },
-  n5Quiz: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji, bound in one workbook.' },
-  jlptFormat: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji, bound in one workbook.' },
+  n5Quiz: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji in one workbook' },
+  jlptFormat: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji in one workbook' },
 };
 const NEXT_STEP_DEFAULT = {
   heading: 'Rather not print 82 pages?',
-  lede: 'Get them bound in one workbook.',
+  lede: 'Get them in one bound workbook',
 } as const;
+const NEXT_STEP_DETAIL = 'with stroke order, 132 practice squares each and a 14-week plan';
 
 export function BookCTA({
   surface,
@@ -440,7 +440,9 @@ interface BookLinkProps {
  * LAYOUT. Two columns at every width. On a phone the cover shares a row with the
  * heading only, and the copy and button take the full width beneath, so the
  * thumbnail never squeezes the paragraph. From `sm:` up the cover spans both
- * rows, like the free-pack card's image does.
+ * rows and sets the card's height: the second row is `1fr`, so it takes what
+ * the cover leaves below the heading, and the button's `mt-auto` puts it level
+ * with the cover's bottom edge. Copy too long for the cover just grows the card.
  */
 function BookCoverCard({
   surface,
@@ -462,7 +464,7 @@ function BookCoverCard({
 
   return (
     <section className={cn('my-8', className)} aria-labelledby={`book-cta-${surface}`}>
-      <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 rounded-lg border border-border bg-card p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-x-8 md:p-8">
+      <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 rounded-lg border border-border bg-card p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:grid-rows-[auto_1fr] sm:gap-x-8 sm:gap-y-2 md:p-8">
         <a
           href={href}
           target="_blank"
@@ -501,27 +503,11 @@ function BookCoverCard({
           </Heading>
         </div>
 
-        <div className="col-span-2 row-start-2 sm:col-span-1 sm:col-start-2">
+        <div className="col-span-2 row-start-2 flex flex-col sm:col-span-1 sm:col-start-2">
           {nextStep ? (
-            <>
-              <p className="max-w-2xl text-sm leading-relaxed text-japan-mountain-mist md:text-base">
-                <strong className="font-semibold text-japan-deep-ocean">{opening.lede}</strong>{' '}
-                <em>N5 Kanji: Stroke Order &amp; Writing Practice</em> gives each kanji a facing
-                spread: stroke order and the words that use it on the left, practice squares on the
-                right, and a 14-week plan takes you through them. No printer, no loose sheets; it
-                lies open on your desk.
-              </p>
-              <dl className="mt-4 flex gap-6">
-                {BOOK_FACTS.map((fact) => (
-                  <div key={fact.label} className="flex flex-col-reverse">
-                    <dt className="text-xs text-japan-mountain-mist">{fact.label}</dt>
-                    <dd className="text-2xl font-bold leading-none text-japan-coral-sunset-ink">
-                      {fact.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </>
+            <p className="max-w-xl text-sm leading-relaxed text-japan-mountain-mist md:text-base">
+              {opening.lede}, {NEXT_STEP_DETAIL}.
+            </p>
           ) : (
             <p className="max-w-2xl text-sm leading-relaxed text-japan-mountain-mist md:text-base">
               <em>N5 Kanji: Stroke Order &amp; Writing Practice</em> gives all 82 N5 characters a
@@ -546,7 +532,7 @@ function BookCoverCard({
                     'bg-japan-coral-sunset-ink text-japan-temple-stone shadow-sm hover:bg-japan-coral-sunset-ink hover:brightness-90',
                   )
                 : buttonVariants({ variant: 'outline', size: 'lg' }),
-              'mt-5 w-full sm:w-auto',
+              'mt-5 w-full sm:mt-auto sm:w-auto sm:self-start',
             )}
           >
             <BookOpen aria-hidden />
