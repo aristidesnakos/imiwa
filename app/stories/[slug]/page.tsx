@@ -243,34 +243,6 @@ export default async function EpisodePage({ params }: Props) {
         <EpisodeVideoSection episode={episode} />
 
         {/*
-          The transcript IS a second copy of the bubbles, and saying otherwise
-          misleads the next editor: the bubbles are real DOM text inside each
-          figure, so a screen reader meets every line here for the second time.
-          It stays because reading the story in sequence, away from the art, is
-          a different act from reading it panel by panel — and because it is
-          what a translator and a crawler get to use. The heading below says so
-          out loud rather than presenting it as new material.
-        */}
-        <section className={SECTION_BAND} aria-labelledby="transcript-heading">
-          <h2 id="transcript-heading" className={`${SECTION_HEADING} mb-6`}>
-            Read it as text
-          </h2>
-          <ol className="space-y-4">
-            {lines.map((line, i) => (
-              <li
-                key={i}
-                className="rounded-lg border border-border bg-japan-soft-mist px-4 py-3"
-              >
-                <p lang="ja" className="text-lg font-medium [word-break:keep-all]">
-                  {line.ja}
-                </p>
-                <p className="mt-1 text-sm text-japan-mountain-mist">{line.en}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/*
           The words, each linking its character's page. Targets only — five
           links with real anchor text, not every kanji in the dialogue. Linking
           all of them wrecks readability and inflates the link count for no
@@ -301,6 +273,48 @@ export default async function EpisodePage({ params }: Props) {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* The N5 book, under the words this episode teaches and before the
+            transcript and the signup (owner's call, 2026-10-09; every N5 page
+            shows it, and an episode is strictly N5). The cover card, opening on
+            this story's kanji rather than the sheets page's printing question;
+            an <h2>, because it is a section of the page. `mt-12` matches the
+            section rhythm in place of a band rule: the card has its own border. */}
+        <BookCTA
+          surface="storyEpisode"
+          variant="card"
+          design="nextStep"
+          headingLevel={2}
+          className="mb-0 mt-12"
+        />
+
+        {/*
+          The transcript IS a second copy of the bubbles, and saying otherwise
+          misleads the next editor: the bubbles are real DOM text inside each
+          figure, so a screen reader meets every line here for the second time.
+          It stays because reading the story in sequence, away from the art, is
+          a different act from reading it panel by panel — and because it is
+          what a translator and a crawler get to use. The heading below says so
+          out loud rather than presenting it as new material.
+        */}
+        <section className={SECTION_BAND} aria-labelledby="transcript-heading">
+          <h2 id="transcript-heading" className={`${SECTION_HEADING} mb-6`}>
+            Read it as text
+          </h2>
+          <ol className="space-y-4">
+            {lines.map((line, i) => (
+              <li
+                key={i}
+                className="rounded-lg border border-border bg-japan-soft-mist px-4 py-3"
+              >
+                <p lang="ja" className="text-lg font-medium [word-break:keep-all]">
+                  {line.ja}
+                </p>
+                <p className="mt-1 text-sm text-japan-mountain-mist">{line.en}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
         {/*
@@ -343,8 +357,7 @@ export default async function EpisodePage({ params }: Props) {
         </section>
 
         {/*
-          The offer, and the first thing on this page that asks for anything
-          (the book follows it; see below).
+          The offer, and the first thing on this page that asks for anything.
 
           It sits here rather than at the top on purpose: someone who reaches it
           has read six panels of Japanese, a transcript and a quiz, which makes
@@ -372,20 +385,6 @@ export default async function EpisodePage({ params }: Props) {
             successMessage="Check your inbox — confirm the address and the quiz card follows."
           />
         </section>
-
-        {/* The N5 book, after the newsletter so the free ask stays first (owner's
-            call, 2026-10-07: every N5 page shows it, and an episode is strictly
-            N5). The cover card, opening on this story's kanji rather than the
-            sheets page's printing question; an <h2>, because it is a section of
-            the page and not part of the signup above. `mt-12` matches the
-            section rhythm in place of a band rule: the card has its own border. */}
-        <BookCTA
-          surface="storyEpisode"
-          variant="card"
-          design="nextStep"
-          headingLevel={2}
-          className="mb-0 mt-12"
-        />
 
         {/* Season navigation. Server-rendered, so it is also crawlable depth. */}
         <nav className={SECTION_BAND} aria-label="Episodes">
