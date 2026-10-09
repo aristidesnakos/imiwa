@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenSecret, verifyConfirmToken } from '@/lib/email/subscribe-token';
 import { mintUnsubscribeToken } from '@/lib/email/unsubscribe-token';
-import { episodeBySlug, episodesNewestFirst } from '@/lib/stories';
+import { EPISODES } from '@/lib/stories';
+import { summariseBroadcast } from '@/lib/email/broadcast-queue';
+import type { BroadcastSummary, ResendBroadcast } from '@/lib/email/broadcast-queue';
+import { welcomeEpisode } from '@/lib/email/welcome-episode';
 import { quizEmailHtml, quizEmailSubject, quizEmailText } from '@/lib/email/quiz-email';
 import { sendEmail } from '@/lib/resend';
 import { SITE_URL } from '@/lib/seo/site';
@@ -11,6 +14,44 @@ export const runtime = 'nodejs';
 
 const RESEND_API = 'https://api.resend.com';
 const NEWSLETTER_SEGMENT_ID = process.env.RESEND_WEEKLY_STORIES_SEGMENT_ID;
+
+/**
+ * Every broadcast on the account, for the welcome email's choice of episode, or
+ * null when Resend cannot be asked. Never throws and never fails the
+ * confirmation: null makes the choice fall back to an episode the weekly job
+ * never broadcasts, which cannot be a second copy of anything.
+ *
+ * Newest first, 100 a page, as the weekly job reads it. A timeout, because the
+ * subscriber is waiting on this redirect.
+ */
+async function listBroadcasts(apiKey: string | undefined): Promise<BroadcastSummary[] | null> {
+  if (!apiKey) return null;
+  const all: BroadcastSummary[] = [];
+  let after: string | undefined;
+  try {
+    for (let page = 0; page < 10; page += 1) {
+      const query = new URLSearchParams({ limit: '100' });
+      if (after) query.set('after', after);
+      const res = await fetch(`${RESEND_API}/broadcasts?${query}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) {
+        console.error('[api/subscribe/confirm] Resend broadcast list failed:', res.status, await res.text());
+        return null;
+      }
+      const body = (await res.json()) as { data?: ResendBroadcast[]; has_more?: boolean };
+      const data = body.data ?? [];
+      all.push(...data.map(summariseBroadcast));
+      if (!body.has_more || data.length === 0) return all;
+      after = data[data.length - 1].id;
+    }
+    console.error('[api/subscribe/confirm] Resend listed more than 1,000 broadcasts; not reading a partial list.');
+  } catch (error) {
+    console.error('[api/subscribe/confirm] Resend broadcast list failed:', error);
+  }
+  return null;
+}
 
 /**
  * POST /api/subscribe/confirm
@@ -140,13 +181,25 @@ export async function POST(request: NextRequest) {
   // retry would be a no-op create followed by the same failure. So this logs and
   // the redirect happens either way.
   //
-  // `episode` is absent for the hub and every non-story surface, and can also be
-  // a slug retired since the token was minted. Both fall back to the latest
-  // episode rather than sending nothing: `/stories` promises a quiz card too,
-  // the newest episode is the honest answer to "which one".
-  const episode =
-    (result.payload.episode ? episodeBySlug(result.payload.episode) : undefined) ??
-    episodesNewestFirst()[0];
+  // Never an episode whose weekly broadcast has not gone out yet: they are in
+  // the segment now, so that broadcast will bring it, and sending it here too
+  // means they get it twice (lib/email/welcome-episode.ts). `episode` is absent
+  // for the hub and every non-story surface, and can also be a slug retired
+  // since the token was minted; both get the newest episode that has gone out,
+  // rather than nothing, because `/stories` promises a quiz card too.
+  const { episode, held } = welcomeEpisode({
+    episodes: EPISODES,
+    requested: result.payload.episode,
+    broadcasts: await listBroadcasts(process.env.RESEND_API_KEY),
+    segmentId: NEWSLETTER_SEGMENT_ID,
+    firstBroadcastEpisode: config.newsletter.firstBroadcastEpisode,
+  });
+  if (held.length > 0) {
+    console.info(
+      `[api/subscribe/confirm] Held until broadcast: Episode ${held.join(', ')}. ` +
+        `Welcome: ${episode ? `Episode ${episode.number}` : 'none'}.`
+    );
+  }
 
   if (episode) {
     // Signed, long-lived, and specific to this address — not the confirm

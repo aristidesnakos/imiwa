@@ -202,7 +202,7 @@ check(
 // A malformed episode must DROP the field, not refuse the token. The address
 // and the source are both intact and signature-verified; refusing consent over
 // a cosmetic claim would lose a real subscriber to a typo, and the fallback
-// (send the latest episode) is already correct for every source that has none.
+// (the newest episode that has gone out) is already correct for every source that has none.
 for (const bad of ['../../etc/passwd', 'Tan Climbs', 'ep 01', '', 'UPPER-CASE']) {
   const forged = verifyConfirmToken(
     jwt.sign({ email: EMAIL, source: SOURCE, episode: bad }, SECRET, {

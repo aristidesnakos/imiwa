@@ -26,6 +26,8 @@
  *   - anything ambiguous (two drafts, a near-miss name that went out, a status
  *     the code does not know) stops the job instead of guessing;
  *   - an episode's broadcast is recognised by its exact name and nothing else;
+ *   - a new subscriber's welcome email never carries an episode whose broadcast
+ *     has not gone out, because that broadcast would send it to them again;
  *   - the email it builds is the weekly one: `utm_content=weekly` on its
  *     content links, Resend's unsubscribe placeholder bare, no `send` or
  *     `scheduled_at` on creation.
@@ -47,8 +49,11 @@ import {
   parseReviewIssueTitle,
   planWeeklyBroadcast,
   reviewIssueTitle,
+  summariseBroadcast,
 } from '../lib/email/broadcast-queue';
 import type { BroadcastSummary, Plan, PlanInput, QueueEpisode, ReviewRecord } from '../lib/email/broadcast-queue';
+import { GONE_OUT_STATUSES, welcomeEpisode } from '../lib/email/welcome-episode';
+import type { WelcomeEpisodeInput } from '../lib/email/welcome-episode';
 import { quizEmailHtml, quizEmailText } from '../lib/email/quiz-email';
 import {
   MIN_SCHEDULE_LEAD_MINUTES,
@@ -251,6 +256,8 @@ const EPISODE_TITLES: Record<number, string> = {
   5: 'The train east',
   6: "Tan's family and friends",
   7: 'Tan at the market',
+  8: 'How much is it?',
+  9: 'Tan takes the bus',
 };
 const fakeEpisodes = (...numbers: number[]): QueueEpisode[] =>
   numbers.map(number => ({ number, slug: `episode-${number}`, titleEn: EPISODE_TITLES[number] }));
@@ -485,6 +492,90 @@ check(
   );
 }
 
+// --- Which: the welcome email ---------------------------------------------------------------
+//
+// The week of 2026-10-07, replayed. Episode 7 went out on Sat 10-03; Episode 8
+// was registered on Wed 10-07 and booked for Sat 10-10; two subscribers who
+// confirmed in between were sent Episode 8 as their welcome, three days before
+// the broadcast would send it to them again.
+
+const ONE_TO_EIGHT = fakeEpisodes(1, 2, 3, 4, 5, 6, 7, 8);
+const SENT_7 = broadcast({
+  episode: 7,
+  status: 'sent',
+  scheduledAt: '2026-10-03 13:00:00+00',
+  sentAt: '2026-10-03 13:01:07+00',
+});
+const BOOKED_8 = broadcast({ episode: 8, status: 'scheduled', scheduledAt: '2026-10-10 13:00:00+00' });
+const SENT_8 = { ...BOOKED_8, status: 'sent', sentAt: '2026-10-10 13:01:00+00' };
+
+function welcome(overrides: Partial<WelcomeEpisodeInput<QueueEpisode>>): number | undefined {
+  return welcomeEpisode({
+    episodes: ONE_TO_EIGHT,
+    broadcasts: [BOOKED_8, SENT_7],
+    segmentId: SEGMENT,
+    firstBroadcastEpisode: 7,
+    ...overrides,
+  }).episode?.number;
+}
+
+check('Episode 8 booked for Saturday: a signup with no episode is welcomed with Episode 7, not 8', welcome({}) === 7);
+check("Episode 8 booked: a signup from Episode 8's own page gets Episode 7 now and 8 on Saturday", welcome({ requested: 'episode-8' }) === 7);
+check("a signup from Episode 7's page gets Episode 7", welcome({ requested: 'episode-7' }) === 7);
+check("a signup from Episode 3's page gets Episode 3, which is below the queue", welcome({ requested: 'episode-3' }) === 3);
+check('a retired slug is treated as no episode', welcome({ requested: 'episode-99' }) === 7);
+check('Episode 8 registered before the job has booked it is held too', welcome({ broadcasts: [SENT_7] }) === 7);
+check('a leftover draft of Episode 8 does not release it', welcome({ broadcasts: [broadcast({ episode: 8 }), SENT_7] }) === 7);
+check('once Episode 8 has gone out, it is the welcome', welcome({ broadcasts: [SENT_8, SENT_7] }) === 8);
+check("once Episode 8 has gone out, a signup from its page gets it", welcome({ broadcasts: [SENT_8, SENT_7], requested: 'episode-8' }) === 8);
+check('gone out is every committed status but scheduled', GONE_OUT_STATUSES.join() === 'queued,sending,sent,canceled');
+for (const status of ['queued', 'sending', 'canceled']) {
+  check(`an Episode 8 broadcast that is ${status} has gone out`, welcome({ broadcasts: [{ ...BOOKED_8, status }, SENT_7] }) === 8);
+}
+check(
+  'Episode 8 sent to another segment, a test send, does not release it',
+  welcome({ broadcasts: [{ ...SENT_8, segmentId: OTHER_SEGMENT }, SENT_7] }) === 7
+);
+check(
+  'a send whose segment Resend did not report counts',
+  welcome({ broadcasts: [{ ...SENT_8, segmentId: null }, SENT_7] }) === 8
+);
+check(
+  'a near-miss name that went out does not release Episode 8',
+  welcome({ broadcasts: [broadcast({ name: 'Episode 8 - How much is it?', status: 'sent' }), SENT_7] }) === 7
+);
+check(
+  'a backlog: Episode 9 registered while 8 still waits, both are held',
+  welcome({ episodes: fakeEpisodes(1, 2, 3, 4, 5, 6, 7, 8, 9) }) === 7
+);
+check('Resend unreachable: the newest episode the job never broadcasts, Episode 6', welcome({ broadcasts: null }) === 6);
+check("Resend unreachable: a signup from Episode 3's page still gets 3", welcome({ broadcasts: null, requested: 'episode-3' }) === 3);
+check("Resend unreachable: a signup from Episode 7's page gets Episode 6", welcome({ broadcasts: null, requested: 'episode-7' }) === 6);
+check(
+  'nothing that may be sent yet means no welcome email, not an early one',
+  welcomeEpisode({ episodes: fakeEpisodes(7, 8), broadcasts: [BOOKED_8], segmentId: SEGMENT, firstBroadcastEpisode: 7 })
+    .episode === undefined
+);
+check(
+  'the held list names what is held, newest first, for the log',
+  welcomeEpisode({ episodes: fakeEpisodes(1, 2, 3, 4, 5, 6, 7, 8, 9), broadcasts: [SENT_7], segmentId: SEGMENT, firstBroadcastEpisode: 7 })
+    .held.join() === '9,8'
+);
+{
+  // The real registry and config, with nothing broadcast: whatever is welcomed
+  // is never an episode the queue still has to send.
+  const real = welcomeEpisode({ episodes: EPISODES, broadcasts: [], segmentId: SEGMENT, firstBroadcastEpisode: newsletter.firstBroadcastEpisode });
+  check(
+    'the real registry, nothing broadcast: the welcome is below the queue',
+    real.episode === undefined || real.episode.number < newsletter.firstBroadcastEpisode
+  );
+}
+
+// How both readers of the ledger see Resend's list.
+check('a listed segment_id is kept', summariseBroadcast({ id: 'x', status: 'sent', segment_id: SEGMENT }).segmentId === SEGMENT);
+check('a legacy audience_id is read as the segment', summariseBroadcast({ id: 'x', status: 'sent', audience_id: SEGMENT }).segmentId === SEGMENT);
+check('a listed broadcast with no segment reads as null', summariseBroadcast({ id: 'x', status: 'sent' }).segmentId === null);
+
 // --- The job's issue titles --------------------------------------------------------------
 
 check(
@@ -596,6 +687,7 @@ Weekly broadcast schedule verified.
   · one broadcast per send day, and a Saturday the job booked and a person cancelled stays cancelled
   · two drafts, a near-miss name that went out, or an unknown status stop the job instead of guessing
   · a broadcast is an episode's only by its exact name, and every episode's name reads back
+  · the welcome email never carries an episode before its broadcast has gone out
   · the broadcast is the weekly email: utm_content=weekly, the unsubscribe placeholder bare, draft-only
 
 PASS — ${passed}/${total} checks passed

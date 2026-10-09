@@ -46,7 +46,7 @@ export const CONFIRM_TOKEN_TTL_SECONDS = 48 * 60 * 60;
  * `/api/subscribe/confirm` and by `pnpm validate:subscribe`, and pulling
  * `lib/stories` in would drag every episode's data into all three to check one
  * string. Resolution belongs at the point of use, where an unknown slug has an
- * obvious answer (send the latest episode instead) rather than being a token
+ * obvious answer (send the newest episode that has gone out instead) rather than being a token
  * validity question.
  *
  * The shape check still matters. It is the same rule `validate:stories` applies
@@ -133,7 +133,7 @@ export function verifyConfirmToken(token: string, secret: string): VerifyResult 
   // A malformed `episode` drops the field rather than invalidating the token.
   // The alternative refuses consent over a cosmetic claim — the address and the
   // source are both intact, and the worst case of dropping it is that the
-  // subscriber gets the latest episode's quiz instead of a specific one.
+  // subscriber gets the newest broadcast episode's quiz instead of a specific one.
   const validEpisode = typeof episode === 'string' && SLUG_RE.test(episode) ? episode : undefined;
 
   const payload: SubscribeTokenPayload = { email, source, ...(validEpisode ? { episode: validEpisode } : {}) };

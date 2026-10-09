@@ -65,7 +65,12 @@ schedule one broadcast to the segment, and Resend sends it.
 
 Which episode the welcome card carries travels inside the signed confirm token as an optional
 `episode` slug, resolved against the registry on the way in and again on the way out. An unknown slug
-is dropped, never fatal, and falls back to the newest episode. The welcome card is also the only
+is dropped, never fatal, and falls back to the newest episode that has gone out. **The welcome card
+never carries an episode before its weekly broadcast has gone out**, even to someone who signed up on
+that episode's page. They are in the segment, so the broadcast brings it to them; sending it in the
+welcome too meant two copies, which is what happened to Episodes 7 and 8. The confirm route reads
+Resend's broadcast list to tell
+([`lib/email/welcome-episode.ts`](../../lib/email/welcome-episode.ts)). The welcome card is also the only
 email in the flow carrying `List-Unsubscribe` / `List-Unsubscribe-Post`
 ([`app/api/unsubscribe/route.ts`](../../app/api/unsubscribe/route.ts)); the confirmation email must
 never grow one, because suppressing the consent email breaks consent itself.
@@ -95,8 +100,9 @@ plan and change nothing. Each run:
    `config.newsletter.firstBroadcastEpisode` (7) up, that has no broadcast scheduled, queued,
    sending, sent or cancelled. It goes by `number`, never `publishedAt`. Episodes 1 to 6 have
    already reached every subscriber and are never sent: 1 to 5 went up before the list's first
-   broadcast, and 6 went out through the welcome card, since a new subscriber's confirmation email
-   carries the latest episode. Subscribers meet them on the site and through the welcome card.
+   broadcast, and 6 went out through the welcome card, since until 2026-10-09 a new subscriber's
+   confirmation email carried the newest registered episode. Subscribers meet them on the site and
+   through the welcome card.
 4. **Does nothing if a send is already booked.** If any episode broadcast is scheduled, whatever its
    date, or any other broadcast has the Saturday, the job leaves it: one broadcast per send slot.
    So episode 7 goes out on Sat 2026-10-03, and an episode 8 would wait for the Saturday after.

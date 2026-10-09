@@ -48,6 +48,7 @@
  * is not documented and is treated as gone out in case the API reports it.
  */
 import { mentionedEpisodeNumber, parseBroadcastName } from './broadcast';
+import type { StoredBroadcast } from './broadcast';
 import { dayBeforeSendName, formatUtcInstant, sendDayName } from './send-schedule';
 
 /** Statuses meaning an episode's broadcast is booked, going out, or has gone out. */
@@ -65,6 +66,43 @@ export interface BroadcastSummary {
   scheduledAt: string | null;
   createdAt?: string | null;
   sentAt?: string | null;
+}
+
+/** One broadcast as Resend's API returns it, before `summariseBroadcast`. */
+export interface ResendBroadcast extends StoredBroadcast {
+  id: string;
+  status: string;
+  created_at?: string | null;
+  scheduled_at?: string | null;
+  sent_at?: string | null;
+}
+
+/**
+ * A Resend broadcast reduced to what the plans read. One definition for both
+ * readers of the ledger, the weekly job and the confirm route's welcome email
+ * (lib/email/welcome-episode.ts), so they can never disagree about which
+ * segment a broadcast went to.
+ */
+export function summariseBroadcast(broadcast: ResendBroadcast): BroadcastSummary {
+  return {
+    id: broadcast.id,
+    name: broadcast.name ?? null,
+    status: broadcast.status,
+    segmentId: broadcast.segment_id ?? broadcast.audience_id ?? null,
+    scheduledAt: broadcast.scheduled_at ?? null,
+    createdAt: broadcast.created_at ?? null,
+    sentAt: broadcast.sent_at ?? null,
+  };
+}
+
+/**
+ * Whether a broadcast counts as a send to the weekly-stories segment. One whose
+ * segment Resend does not report is counted, and so is everything when the
+ * segment itself is unknown, because miscounting the other way could send an
+ * episode twice.
+ */
+export function isToSegment(broadcast: BroadcastSummary, segmentId: string | null): boolean {
+  return segmentId === null || broadcast.segmentId === null || broadcast.segmentId === segmentId;
 }
 
 export interface QueueEpisode {
@@ -169,9 +207,7 @@ export function planWeeklyBroadcast(input: PlanInput): Plan {
     };
   }
 
-  const ours = input.broadcasts.filter(
-    b => input.segmentId === null || b.segmentId === null || b.segmentId === input.segmentId
-  );
+  const ours = input.broadcasts.filter(b => isToSegment(b, input.segmentId));
   const elsewhere = input.broadcasts.length - ours.length;
   if (elsewhere > 0) notes.push(`${elsewhere} broadcast(s) to other segments ignored.`);
 

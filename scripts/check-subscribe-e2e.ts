@@ -72,7 +72,7 @@ const DEFAULT_ORIGIN = 'https://www.michikanji.com';
 const RESEND_API = 'https://api.resend.com';
 
 // `story-hub` deliberately, not `story-episode-quiz`: the hub source carries no
-// episode, so the welcome card falls back to the latest episode and the test
+// episode, so the welcome card falls back to the newest broadcast episode and the test
 // exercises the same path every week regardless of what has been published.
 const TEST_SOURCE: EmailSignupSource = 'story-hub';
 

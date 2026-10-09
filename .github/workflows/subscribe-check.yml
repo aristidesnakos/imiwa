@@ -58,6 +58,7 @@ on:
       # scripts that use them, its validator and the job that runs it.
       - 'lib/email/broadcast.ts'
       - 'lib/email/broadcast-queue.ts'
+      - 'lib/email/welcome-episode.ts'
       - 'lib/email/send-schedule.ts'
       - 'scripts/stories/schedule-weekly-broadcast.ts'
       - 'scripts/stories/create-broadcast.ts'
@@ -89,6 +90,7 @@ on:
       # scripts that use them, its validator and the job that runs it.
       - 'lib/email/broadcast.ts'
       - 'lib/email/broadcast-queue.ts'
+      - 'lib/email/welcome-episode.ts'
       - 'lib/email/send-schedule.ts'
       - 'scripts/stories/schedule-weekly-broadcast.ts'
       - 'scripts/stories/create-broadcast.ts'

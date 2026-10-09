@@ -104,15 +104,16 @@ import {
   mentionedEpisodeNumber,
   parseBroadcastName,
 } from '../../lib/email/broadcast';
-import type { BroadcastPayload, StoredBroadcast } from '../../lib/email/broadcast';
+import type { BroadcastPayload } from '../../lib/email/broadcast';
 import {
   nothingQueuedIssueTitle,
   parseResendTimestamp,
   parseReviewIssueTitle,
   planWeeklyBroadcast,
   reviewIssueTitle,
+  summariseBroadcast,
 } from '../../lib/email/broadcast-queue';
-import type { BroadcastSummary, Decision, ReviewRecord } from '../../lib/email/broadcast-queue';
+import type { BroadcastSummary, Decision, ResendBroadcast, ReviewRecord } from '../../lib/email/broadcast-queue';
 import { MIN_SCHEDULE_LEAD_MINUTES, formatUtcInstant, nextSendAt } from '../../lib/email/send-schedule';
 import { SITE_URL } from '../../lib/seo/site';
 import { EPISODES, episodeBySlug } from '../../lib/stories';
@@ -245,26 +246,6 @@ async function resend<T>(apiKey: string, method: 'GET' | 'POST', path: string, b
   }
 }
 
-interface ResendBroadcast extends StoredBroadcast {
-  id: string;
-  status: string;
-  created_at?: string | null;
-  scheduled_at?: string | null;
-  sent_at?: string | null;
-}
-
-function summarise(broadcast: ResendBroadcast): BroadcastSummary {
-  return {
-    id: broadcast.id,
-    name: broadcast.name ?? null,
-    status: broadcast.status,
-    segmentId: broadcast.segment_id ?? broadcast.audience_id ?? null,
-    scheduledAt: broadcast.scheduled_at ?? null,
-    createdAt: broadcast.created_at ?? null,
-    sentAt: broadcast.sent_at ?? null,
-  };
-}
-
 async function listBroadcasts(apiKey: string): Promise<BroadcastSummary[]> {
   const all: BroadcastSummary[] = [];
   let after: string | undefined;
@@ -273,7 +254,7 @@ async function listBroadcasts(apiKey: string): Promise<BroadcastSummary[]> {
     if (after) query.set('after', after);
     const result = await resend<{ data?: ResendBroadcast[]; has_more?: boolean }>(apiKey, 'GET', `/broadcasts?${query}`);
     const data = result.data ?? [];
-    all.push(...data.map(summarise));
+    all.push(...data.map(summariseBroadcast));
     if (!result.has_more || data.length === 0) return all;
     after = data[data.length - 1].id;
   }

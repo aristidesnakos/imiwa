@@ -329,8 +329,21 @@ found no overlap with the pill or its ~44px hit area. Keep it out of the art unl
 Which episode gets sent travels inside the signed confirm token as an optional `episode` slug,
 resolved against the registry on the way in and shape-checked on the way out. A malformed slug is
 **dropped, never fatal** — refusing consent over a cosmetic claim would lose a real subscriber, and
-the fallback (the latest episode) is already correct for every surface that has no episode.
+the fallback is already correct for every surface that has no episode.
 `pnpm validate:subscribe` asserts both halves.
+
+**The weekly broadcast is the first email to carry an episode.** An episode is live on the site from
+the Wednesday it is registered, but the welcome email never sends one from
+`config.newsletter.firstBroadcastEpisode` up until Resend shows its `Episode N: <title>` broadcast
+to the segment has gone out (`lib/email/welcome-episode.ts`). Until then a new subscriber gets the
+newest episode that has, and the held one arrives in Saturday's broadcast. That applies even to a
+signup from the held episode's own page. The rule is not derived from `publishedAt` or the send
+calendar, because a skipped week or a backlog moves every later send. The confirm route reads the
+broadcast list on every confirmation; if Resend cannot be asked, it falls back to an episode below
+`firstBroadcastEpisode`, because an older episode is the safe failure and a second copy is not. Until
+2026-10-09 the welcome email carried the newest *registered* episode, so everyone who confirmed
+between Wednesday and Saturday got that week's episode twice. `pnpm validate:broadcast` replays that
+week.
 
 **An episode can have a companion YouTube video, on the episode page only — never in the email.**
 Ids live in `data/stories/videos.ts` (`EPISODE_VIDEOS`, slug -> `{ youtubeId, aspect? }`), a tracked file

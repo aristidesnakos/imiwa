@@ -83,7 +83,8 @@ export async function POST(request: NextRequest) {
     // Resolved against the registry, not shape-checked and forwarded. This
     // value decides which episode's quiz card we send, so an unknown slug must
     // not travel inside a token we sign — it is dropped here, and the confirm
-    // flow falls back to the latest episode. An absent episode is normal: every
+    // flow falls back to the newest episode that has gone out (lib/email/
+    // welcome-episode.ts). An absent episode is normal: every
     // surface except an episode page has none.
     const episode = episodeSlug && episodeBySlug(episodeSlug) ? episodeSlug : undefined;
 

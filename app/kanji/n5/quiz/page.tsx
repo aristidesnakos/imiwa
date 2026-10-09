@@ -18,7 +18,7 @@ import { JLPT_SAMPLE_INDEX_URL, JLPT_SAMPLE_QUESTIONS_URL } from './jlpt-format'
 /**
  * THE ASK ON THE JLPT-FORMAT RESULTS SCREEN. One constant so it can be reviewed in one
  * place. It describes only what the app can send: the double-opt-in confirmation, the
- * welcome quiz card on the latest episode (lib/email/quiz-email.ts), and then the weekly
+ * welcome quiz card on the latest broadcast episode (lib/email/quiz-email.ts), and then the weekly
  * Travels of Tan broadcast. It must not promise new question sets, JLPT practice or
  * anything else.
  */

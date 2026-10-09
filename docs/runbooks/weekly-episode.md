@@ -37,8 +37,10 @@ week has three things in flight:
 So at any time: N is live on the site since Wednesday, N's email and Short go out Saturday, N+1 is
 being built and is not in any public repo file until its own Wednesday. **The site page is live three
 days before the email and Short.** That is unavoidable (the weekly job books an episode only once its
-page answers 200 in production). The hub, the sitemap and the welcome email (which carries the latest
-episode) show it from Wednesday; its video section stays empty until Saturday afternoon.
+page answers 200 in production). The hub and the sitemap show it from Wednesday; its video section
+stays empty until Saturday afternoon. The welcome email does **not**: until N's broadcast has gone out,
+a new subscriber is welcomed with N-1 and gets N in Saturday's broadcast, so nobody receives it twice
+(`lib/email/welcome-episode.ts`).
 
 Release Saturdays, and when each episode is built and shipped (computed from
 `scripts/stories/episode-issue.ts`: episode 8 is 2026-10-10, each later one a week on):

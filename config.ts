@@ -59,9 +59,11 @@ const config = {
     writeLeadDays: 3,
     // The lowest episode number the weekly job will ever broadcast. Episodes 1
     // to 6 have already reached every subscriber: 1 to 5 through the site and
-    // the welcome card, and 6 through the welcome card, because a new
-    // subscriber's confirmation email carries the latest episode. So the job
-    // never broadcasts them. Moved from 6 to 7 on 2026-09-30 by the owner, who
+    // the welcome card, and 6 through the welcome card, because until
+    // 2026-10-09 a new subscriber's confirmation email carried the newest
+    // registered episode. So the job never broadcasts them, and the welcome
+    // email may always send them; from here up, it waits for the broadcast
+    // (lib/email/welcome-episode.ts). Moved from 6 to 7 on 2026-09-30 by the owner, who
     // had Episode 6's scheduled broadcast deleted. The queue starts here and
     // runs in episode order.
     firstBroadcastEpisode: 7,
