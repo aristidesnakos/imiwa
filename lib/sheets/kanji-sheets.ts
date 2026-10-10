@@ -69,17 +69,29 @@ export const MIN_ROWS = 1;
 export const MAX_ROWS = 8;
 export const DEFAULT_ROWS = 2;
 
+/**
+ * What the practice squares look like, in either layout.
+ *
+ * `cross` is the site's square with crosshair guides. `genkou` is genkōyōshi
+ * (原稿用紙): plain squares in columns read top to bottom, right to left, each
+ * with a narrow ruby column on its right. In the rows layout a kanji's `rows`
+ * become columns of ten.
+ */
+export const SHEET_GRIDS = ['cross', 'genkou'] as const;
+export type SheetGrid = (typeof SHEET_GRIDS)[number];
+
 export interface SheetOptions {
   layout: SheetLayout;
   /** Rows per kanji. Meaningful only for `layout: 'rows'`; DEFAULT_ROWS otherwise. */
   rows: number;
+  grid: SheetGrid;
 }
 
-export const DEFAULT_SHEET_OPTIONS: SheetOptions = { layout: 'page', rows: DEFAULT_ROWS };
+export const DEFAULT_SHEET_OPTIONS: SheetOptions = { layout: 'page', rows: DEFAULT_ROWS, grid: 'cross' };
 
 /** True for the options a request with none of the new parameters gets. */
 export function isDefaultSheetOptions(options: SheetOptions): boolean {
-  return options.layout === 'page';
+  return options.layout === 'page' && options.grid === 'cross';
 }
 
 /** The cap for one request with these options. */
@@ -116,7 +128,8 @@ export function kanjiSheetsHref(characters: readonly string[]): string {
  * Default options produce exactly the `?characters=` link above, so a set
  * printed one page per kanji lands on the same URL, and the same CDN-cached
  * document, as a group print. A rows link always names `rows`, even at its
- * default, so one set at one size has one URL. Throws over the cap, like
+ * default, so one set at one size has one URL; `grid` appears only when it is
+ * not the default. Throws over the cap, like
  * kanjiSheetsHref: the builder splits a large set before it gets here.
  */
 export function customSheetsHref(characters: readonly string[], options: SheetOptions): string {
@@ -129,5 +142,6 @@ export function customSheetsHref(characters: readonly string[], options: SheetOp
     params.set('layout', 'rows');
     params.set('rows', String(options.rows));
   }
+  if (options.grid !== 'cross') params.set('grid', options.grid);
   return `${KANJI_SHEETS_PATH}?${params.toString()}`;
 }

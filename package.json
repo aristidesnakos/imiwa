@@ -19,6 +19,7 @@
     "validate:romaji": "tsx --tsconfig tsconfig.json scripts/validate-romaji.ts",
     "validate:kanji-data": "tsx --tsconfig tsconfig.json scripts/validate-kanji-data.ts",
     "validate:sheets": "tsx --tsconfig tsconfig.json scripts/validate-sheets.ts",
+    "sheets:genkouyoushi-pdfs": "tsx --tsconfig tsconfig.json scripts/sheets/render-genkouyoushi-pdfs.ts",
     "validate:search": "tsx --tsconfig tsconfig.json scripts/validate-kanji-search.ts",
     "validate:palette": "tsx --tsconfig tsconfig.json scripts/validate-palette.ts",
     "validate:subscribe": "tsx --tsconfig tsconfig.json scripts/validate-subscribe.ts",

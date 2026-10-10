@@ -153,6 +153,27 @@ export default function FreeResourcesPage() {
             </Link>
           </section>
 
+          {/* Blank genkōyōshi. Full width so three cards leave no orphan, and
+              in palette tokens, unlike the two cards above (their stock colours
+              are frozen in scripts/palette-baseline.json). */}
+          <section className="rounded-lg border border-border bg-card p-6 shadow-sm lg:col-span-2">
+            <h2 className="text-xl font-semibold text-japan-deep-ocean">
+              Genkouyoushi Paper (<span lang="ja">原稿用紙</span>)
+            </h2>
+            <p className="mt-2 text-japan-mountain-mist">
+              Blank Japanese manuscript paper: the standard 400-square sheet, and a large-square sheet
+              for beginners. Print it, or download the PDF.
+            </p>
+            <Link
+              href="/free-resources/genkouyoushi"
+              prefetch={false}
+              className={cn(buttonVariants({ variant: 'outline' }), 'mt-4')}
+            >
+              <FileText aria-hidden />
+              Get genkouyoushi paper
+            </Link>
+          </section>
+
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@ import {
   extractStrokeCount,
   prepareStrokeOrder,
   renderMultiSheetDocument,
-  renderRowsDocument,
+  renderCustomDocument,
   renderSheetDocument,
   type PreparedSheet,
   type StrokeOrderAsset,
@@ -32,10 +32,12 @@ import {
  *   &layout=page                    the default: the two documents above
  *   &layout=rows&rows=1..8          several kanji per page, `rows` rows of ten
  *                                   squares each (default 2), max 100 kanji
+ *   &grid=cross|genkou              the squares: crosshair guides (default) or
+ *                                   genkōyōshi columns; with either layout
  *
- * A request with none of the layout parameters, or only their defaults, takes
- * the path it always took: same statuses, same messages, the same bytes,
- * which pnpm validate:sheets holds to golden fixtures. Everything malformed is
+ * A request with none of the layout or grid parameters, or only their
+ * defaults, takes the path it always took: same statuses, same messages, the
+ * same bytes, which pnpm validate:sheets holds to golden fixtures. Everything malformed is
  * refused with a 400 naming the parameter (lib/sheets/request.ts); over a cap
  * is refused, never truncated.
  *
@@ -169,9 +171,9 @@ async function multiSheetResponse(value: string): Promise<NextResponse> {
 }
 
 /**
- * A set in a non-default layout: today, several kanji to a page. Every
- * character passes the same lookup and the same refusals as the several-sheets
- * form, against the cap for the layout asked for.
+ * A set in non-default options: several kanji to a page, or genkōyōshi squares,
+ * or both. Every character passes the same lookup and the same refusals as the
+ * several-sheets form, against the cap for the layout asked for.
  */
 async function customSheetsResponse(value: string, options: SheetOptions): Promise<NextResponse> {
   const parsed = parseCharacters(value, KANJI_MAP, options);
@@ -180,7 +182,7 @@ async function customSheetsResponse(value: string, options: SheetOptions): Promi
   }
 
   const sheets = await prepareSheets(parsed.kanji);
-  return documentResponse(renderRowsDocument(sheets, options.rows), sheets);
+  return documentResponse(renderCustomDocument(sheets, options), sheets);
 }
 
 /**

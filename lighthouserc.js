@@ -199,6 +199,12 @@ module.exports = {
       //                page built for the "n5 kanji" query class
       //   /kanji/n5/quiz  the level quiz: the one client-heavy page in the
       //                level family, carrying the N5 data for play
+      //   /free-resources/kanji-sheets/custom  the sheet builder: a client
+      //                island handed every level's characters as a string,
+      //                and the one page whose budget catches someone importing
+      //                the kanji data into it
+      //   /free-resources/genkouyoushi  blank manuscript paper: two inline
+      //                SVG previews of ~500 rects each
       url: [
         `${HOST}/`,
         `${HOST}/kanji`,
@@ -207,6 +213,8 @@ module.exports = {
         `${HOST}/kanji/n5/quiz`,
         `${HOST}/stories`,
         `${HOST}/stories/tan-climbs-the-mountain`,
+        `${HOST}/free-resources/kanji-sheets/custom`,
+        `${HOST}/free-resources/genkouyoushi`,
       ],
       settings: {
         // --no-sandbox / --disable-dev-shm-usage are required for Chrome in a
@@ -351,6 +359,37 @@ module.exports = {
           scriptKb: 235, // 199 kB measured, +17%
           totalKb: 285, // 247 kB measured, +15%
           perfScore: 0.85, // 0.98 measured
+        }),
+        // The sheet builder and the genkouyoushi page, measured 2026-10-10 on
+        // Ari's Mac against `pnpm build && pnpm start`, 3 runs each, medians:
+        //   builder       190 kB script / 250 kB total, LCP 2.25s, FCP 1.20s, TBT 168ms
+        //   genkouyoushi  187 kB script / 241 kB total, LCP 2.68s, FCP 1.11s, TBT 261ms
+        // Byte budgets +15%, the gate to trust; LCP and FCP ~1.4x; TBT the
+        // shared 600ms alarm. Laptop numbers only: no runner sample yet, so
+        // recalibrate from CI as the header describes once a few runs exist.
+        route({
+          matchingUrlPattern: '^http://localhost:3000/free-resources/kanji-sheets/custom$',
+          lcp: 3200, // 2.25s measured, ~1.4x
+          fcp: 1700, // 1.20s measured, ~1.4x
+          cls: 0.1, // 0.000 measured
+          tbt: 600, // 84-181ms measured
+          // The island is handed 5.7 kB of characters. Importing the kanji
+          // DATA into it instead would put this hundreds of kB over.
+          scriptKb: 220, // 190 kB measured, +16%
+          totalKb: 290, // 250 kB measured, +16%
+          perfScore: 0.85, // 0.96 measured
+        }),
+        route({
+          matchingUrlPattern: '^http://localhost:3000/free-resources/genkouyoushi$',
+          lcp: 3800, // 2.68s measured, ~1.4x
+          fcp: 1600, // 1.11s measured, ~1.4x
+          cls: 0.1, // 0.000 measured
+          // 101-690ms measured: the two previews are ~1,000 SVG rects to lay
+          // out, which is main-thread time with no script in it.
+          tbt: 600,
+          scriptKb: 215, // 187 kB measured, +15%
+          totalKb: 280, // 241 kB measured, +16%
+          perfScore: 0.85, // 0.93 measured
         }),
         route({
           // Percent-encoded segments only, i.e. a character. `/kanji/.+` used

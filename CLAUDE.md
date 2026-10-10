@@ -35,7 +35,7 @@ the closest thing to "running a single test":
 ```bash
 pnpm validate:schema         # structured data / JSON-LD across page types
 pnpm validate:kanji-data     # the level lists: no duplicates, one code point, readings present
-pnpm validate:sheets         # printable sheets: default documents byte-identical to golden fixtures
+pnpm validate:sheets         # printable sheets: golden default documents, rows/genkou pagination, refusals
 pnpm validate:search         # /kanji search: romaji, both kana scripts, meanings; nothing old lost
 pnpm validate:romaji         # kana->Hepburn rules + a leakage sweep over every reading
 pnpm validate:sentences      # published example sentences against lib/sentences/types.ts
@@ -227,14 +227,22 @@ rules in `lib/sheets/request.ts`, the page arithmetic in `lib/sheets/layout.ts`.
 - **The API is strict.** Malformed parameters are a 400 naming the parameter, an unknown character
   is refused with its code point, over a cap is refused, never truncated. Cleaning input is the
   builder's job.
-- **The server paginates `layout=rows`.** Every block has a fixed height from `ROWS_GEOMETRY`, each
-  page is its own box with the KanjiVG credit at its foot, and `kanjiPerPage` is the one formula
-  the renderer and the builder's page count both use. Change a height there, never in the CSS.
+- **The server paginates `layout=rows`.** Every block has a fixed height from `ROWS_GEOMETRY` (and
+  `GENKOU_GEOMETRY` for `grid=genkou`), each page is its own box with the KanjiVG credit at its
+  foot, and `kanjiPerPage` is the one formula the renderer and the builder's page count both use.
+  Change a height there, never in the CSS.
 
 `/free-resources/kanji-sheets/custom` is the builder: a prerendered server page passing each
 level's characters as a string to `components/sheets/SheetBuilder.tsx`. Never import the kanji
 lists into that island. The URL is the set (no storage), and it splits a set over the cap into
 several print links so a visitor never meets a 400.
+
+`grid=genkou` prints genkōyōshi (原稿用紙) squares in either layout; the conventions and their
+sources (JIS S 5508, KOKUYO's sheets: ruby strip on the RIGHT of each column, no guides) are in
+`lib/sheets/layout.ts`. Blank paper lives in `lib/sheets/genkouyoushi.ts`: the
+`/free-resources/genkouyoushi` page, the static `/api/genkouyoushi/<format>` print documents, and
+the PDFs in `public/downloads/`, which `pnpm sheets:genkouyoushi-pdfs` regenerates from the same
+drawing. Rerun it after changing the drawing; `validate:sheets` fails on a missing PDF.
 
 ### No server-side user state
 

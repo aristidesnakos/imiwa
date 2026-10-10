@@ -51,6 +51,75 @@ export const ROWS_GEOMETRY = {
   blockGapPx: 12,
 } as const;
 
+/**
+ * Genkōyōshi (原稿用紙) squares, for `grid=genkou`.
+ *
+ * The conventions, checked 2026-10-10 against JIS S 5508:2010 (原稿用紙), the
+ * ja.wikipedia article 原稿用紙 and KOKUYO's own sheets (ケ-10, ケ-20-5N,
+ * ケ-70N-G): plain squares with no crosshair guides, in columns read top to
+ * bottom and right to left, each column with a narrow strip on its RIGHT for
+ * furigana and corrections (Wikipedia: 「文字右隣り余白」; JIS calls it the
+ * 添削けい). JIS pairs the square and strip at 10 + 4.5, 8.5 + 3.5 and
+ * 8 + 4 mm, a strip 0.41-0.5 of a square, and the ratios below sit in that
+ * range. Reading in from the right edge: the frame, a strip, squares; the last
+ * column's squares meet the left edge of the frame.
+ *
+ * The one-page sheet keeps its 680px width: ten columns of ten squares, a
+ * model in the top square of each column, 100 squares where the crosshair
+ * grid has 80 in about the same height.
+ *
+ * In the rows layout a kanji's `rows` become columns of ten squares, so it
+ * still gets rows × 10 squares and one model per line. A kanji is a vertical
+ * strip: a header column on the right (the kanji, its diagram and readings,
+ * where a vertical text puts its title), then its columns to the left. Strips
+ * fill a band right to left, and two bands fill a page.
+ */
+export const GENKOU_GEOMETRY = {
+  /** The width every sheet prints at: 180mm of A4 between 15mm margins. */
+  contentWidthPx: 680,
+  /** One-page sheet: 10 columns of 10, 48 + 20 = 68px a column, 680 across. */
+  pageColumns: 10,
+  pageSquares: 10,
+  pageSquarePx: 48,
+  pageRubyPx: 20,
+  /** Rows layout: 44px squares (11.6mm) with an 18px strip (0.41). */
+  squarePx: 44,
+  rubyPx: 18,
+  squaresPerColumn: 10,
+  /** The header column on the right of each kanji's strip. */
+  headerWidthPx: 84,
+  /** Between two kanji's strips in a band, and between bands. */
+  stripGapPx: 10,
+  bandGapPx: 12,
+  /** For the grid's frame, which overhangs its squares by a fraction of a pixel. */
+  borderSlackPx: 2,
+} as const;
+
+/** One kanji's strip in the genkōyōshi rows layout: header plus `rows` columns. */
+export function genkouStripWidthPx(rows: number): number {
+  const g = GENKOU_GEOMETRY;
+  return g.headerWidthPx + rows * (g.squarePx + g.rubyPx);
+}
+
+/** A band of strips: one column of squares tall. */
+export function genkouBandHeightPx(): number {
+  const g = GENKOU_GEOMETRY;
+  return g.squaresPerColumn * g.squarePx + g.borderSlackPx;
+}
+
+/** How many kanji's strips fit side by side in one band. */
+export function genkouStripsPerBand(rows: number): number {
+  const g = GENKOU_GEOMETRY;
+  return Math.max(1, Math.floor((g.contentWidthPx + g.stripGapPx) / (genkouStripWidthPx(rows) + g.stripGapPx)));
+}
+
+/** How many bands fit above the credit line. */
+export function genkouBandsPerPage(): number {
+  const g = GENKOU_GEOMETRY;
+  const available = ROWS_GEOMETRY.pageHeightPx - ROWS_GEOMETRY.creditHeightPx;
+  return Math.max(1, Math.floor((available + g.bandGapPx) / (genkouBandHeightPx() + g.bandGapPx)));
+}
+
 /** The fixed height of one kanji's block in the rows layout. */
 export function rowsBlockHeightPx(rows: number): number {
   const g = ROWS_GEOMETRY;
@@ -61,10 +130,12 @@ export function rowsBlockHeightPx(rows: number): number {
  * How many kanji one printed page holds.
  *
  * One, for the page layout. For rows: as many blocks as fit above the credit,
- * with a gap between each pair and none after the last.
+ * with a gap between each pair and none after the last. For rows on
+ * genkōyōshi: bands per page times strips per band.
  */
 export function kanjiPerPage(options: SheetOptions): number {
   if (options.layout === 'page') return 1;
+  if (options.grid === 'genkou') return genkouBandsPerPage() * genkouStripsPerBand(options.rows);
   const g = ROWS_GEOMETRY;
   const available = g.pageHeightPx - g.creditHeightPx;
   return Math.max(1, Math.floor((available + g.blockGapPx) / (rowsBlockHeightPx(options.rows) + g.blockGapPx)));

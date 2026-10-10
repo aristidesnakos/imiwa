@@ -65,12 +65,12 @@ const GROUPS: BuilderGroup[] = N5_SEQUENCE.map((theme) => ({
 const TOTAL_KANJI = LEVELS.reduce((n, level) => n + Array.from(level.characters).length, 0).toLocaleString('en-US');
 
 // The worked example in the copy, from the same arithmetic the printer uses.
-const ONE_ROW = { layout: 'rows', rows: 1 } as const;
+const ONE_ROW = { layout: 'rows', rows: 1, grid: 'cross' } as const;
 const ONE_ROW_PER_PAGE = kanjiPerPage(ONE_ROW);
 const N5_ONE_ROW_PAGES = printedPageCount(N5_KANJI.length, ONE_ROW);
 
 const TITLE = 'Kanji Worksheet Generator — Make Your Own Printable Practice Sheets';
-const DESCRIPTION = `Make your own printable kanji practice sheets: paste any kanji, a word or a vocabulary list, or add a whole JLPT level, then print one kanji per page or several per page with 1 to ${MAX_ROWS} rows each. Free, no signup.`;
+const DESCRIPTION = `Make your own printable kanji practice sheets: paste any kanji, a word or a vocabulary list, or add a whole JLPT level, then print one kanji per page or several per page with 1 to ${MAX_ROWS} rows each, on squares or genkouyoushi. Free, no signup.`;
 
 export const metadata: Metadata = getSEOTags({
   title: TITLE,
@@ -83,6 +83,7 @@ export const metadata: Metadata = getSEOTags({
     'printable kanji worksheets',
     'kanji writing practice',
     'kanji stroke order worksheet',
+    'kanji genkouyoushi',
   ],
   openGraph: {
     title: TITLE,
@@ -193,6 +194,23 @@ export default function CustomKanjiSheetsPage() {
             as many rows of ten squares as you pick, from 1 to {MAX_ROWS}. The first square of every
             row holds a faded copy to trace. With one row each, {ONE_ROW_PER_PAGE} kanji fit on a
             page, so all {N5_KANJI.length} N5 kanji print on {N5_ONE_ROW_PAGES} pages.
+          </p>
+        </section>
+
+        <section aria-labelledby="genkou-heading" className={SECTION_BAND}>
+          <h2 id="genkou-heading" className={cn(SECTION_HEADING, 'text-japan-deep-ocean')}>
+            Kanji practice sheets on genkouyoushi
+          </h2>
+          <p className="mt-3 max-w-3xl leading-relaxed text-japan-ink-black">
+            Choose <strong>Genkouyoushi</strong> under Squares and the practice squares become
+            Japanese manuscript paper: plain squares in columns, written top to bottom and right to
+            left, with the narrow strip for readings on the right of each column and a faded model
+            at the top. With several kanji per page, each kanji gets columns instead of rows. For
+            the paper on its own, there is{' '}
+            <Link href="/free-resources/genkouyoushi" prefetch={false} className={TEXT_LINK}>
+              free printable genkouyoushi paper
+            </Link>
+            .
           </p>
         </section>
 

@@ -3,15 +3,17 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, Link2, Printer, X } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   DEFAULT_ROWS,
   MAX_ROWS,
   MIN_ROWS,
   customSheetsHref,
+  type SheetGrid,
   type SheetLayout,
   type SheetOptions,
 } from '@/lib/sheets/kanji-sheets';
-import { kanjiPerPage, printChunks, totalPrintedPages } from '@/lib/sheets/layout';
+import { GENKOU_GEOMETRY, kanjiPerPage, printChunks, totalPrintedPages } from '@/lib/sheets/layout';
 import { cn } from '@/lib/utils';
 
 /**
@@ -49,8 +51,8 @@ import { cn } from '@/lib/utils';
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * No accounts, no saved sets, no localStorage, so the privacy policy needs no
- * change. The set, layout and rows live in the address bar (replaceState as
- * they change), so a built set is a link a teacher can hand a class. The page
+ * change. The set, layout, rows and grid live in the address bar (replaceState
+ * as they change), so a built set is a link a teacher can hand a class. The page
  * is prerendered; the parameters are read here, after mount.
  *
  * ─────────────────────────────────────────────────────────────────────────────
@@ -70,6 +72,8 @@ import { cn } from '@/lib/utils';
  */
 
 export const CUSTOM_SHEETS_GOAL = 'custom_sheets_submit';
+
+const GENKOUYOUSHI_PATH = '/free-resources/genkouyoushi';
 
 export interface BuilderLevel {
   level: string;
@@ -142,13 +146,15 @@ function appendCharacters(text: string, characters: string): string {
 
 /** The page's own URL for a set: what the address bar and "Copy link" carry. */
 function shareQuery(kanji: readonly string[], options: SheetOptions): string {
-  if (kanji.length === 0) return '';
-  const params = new URLSearchParams({ characters: kanji.join('') });
+  const params = new URLSearchParams();
+  if (kanji.length > 0) params.set('characters', kanji.join(''));
   if (options.layout === 'rows') {
     params.set('layout', 'rows');
     params.set('rows', String(options.rows));
   }
-  return `?${params.toString()}`;
+  if (options.grid !== 'cross') params.set('grid', options.grid);
+  const query = params.toString();
+  return query ? `?${query}` : '';
 }
 
 function plural(n: number, one: string, many: string): string {
@@ -165,6 +171,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
   const [text, setText] = useState('');
   const [layout, setLayout] = useState<SheetLayout>('page');
   const [rows, setRows] = useState(DEFAULT_ROWS);
+  const [grid, setGrid] = useState<SheetGrid>('cross');
   const [sources, setSources] = useState<ReadonlySet<Source>>(new Set());
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [readUrl, setReadUrl] = useState(false);
@@ -175,7 +182,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
 
   const dataset = useMemo(() => new Set(levels.flatMap((l) => Array.from(l.characters))), [levels]);
   const parsed = useMemo(() => parseSet(text, dataset), [text, dataset]);
-  const options: SheetOptions = useMemo(() => ({ layout, rows }), [layout, rows]);
+  const options: SheetOptions = useMemo(() => ({ layout, rows, grid }), [layout, rows, grid]);
   const chunks = useMemo(() => printChunks(parsed.kanji, options), [parsed.kanji, options]);
   const inSet = useMemo(() => new Set(parsed.kanji), [parsed.kanji]);
 
@@ -191,6 +198,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
       setSources(new Set<Source>(['link']));
     }
     if (params.get('layout') === 'rows') setLayout('rows');
+    if (params.get('grid') === 'genkou') setGrid('genkou');
     const rowsParam = Number(params.get('rows'));
     if (Number.isInteger(rowsParam) && rowsParam >= MIN_ROWS && rowsParam <= MAX_ROWS) setRows(rowsParam);
     setReadUrl(true);
@@ -294,7 +302,11 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
       ? 'No kanji yet. Type some above, or add a level or a theme.'
       : [
           plural(count, 'kanji', 'kanji'),
-          layout === 'page' ? 'one page each' : `${plural(rows, 'row', 'rows')} each`,
+          layout === 'page'
+            ? 'one page each'
+            : grid === 'genkou'
+              ? `${plural(rows, 'column', 'columns')} each`
+              : `${plural(rows, 'row', 'rows')} each`,
           plural(pages, 'printed page', 'printed pages'),
         ].join(' · ');
 
@@ -302,6 +314,9 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
   const skippedId = `${ids}-skipped`;
   const chipHelpId = `${ids}-chip-help`;
   const rowsId = `${ids}-rows`;
+  // On genkōyōshi a kanji's lines run down the page, so the control says so.
+  const line = grid === 'genkou' ? { one: 'column', many: 'columns' } : { one: 'row', many: 'rows' };
+  const pageSquares = grid === 'genkou' ? GENKOU_GEOMETRY.pageColumns * GENKOU_GEOMETRY.pageSquares : 80;
 
   return (
     // Without JavaScript this is a plain GET form to the API: the box and the
@@ -467,7 +482,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
             <span>
               <span className="block font-medium text-japan-ink-black">One page per kanji</span>
               <span className="mt-1 block text-sm text-japan-mountain-mist">
-                The full sheet: a large stroke-order diagram, the readings and 80 squares.
+                The full sheet: a large stroke-order diagram, the readings and {pageSquares} squares.
               </span>
             </span>
           </label>
@@ -488,7 +503,9 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
             <span>
               <span className="block font-medium text-japan-ink-black">Several kanji per page</span>
               <span className="mt-1 block text-sm text-japan-mountain-mist">
-                A line of readings and a small diagram, then rows of ten squares.
+                {grid === 'genkou'
+                  ? 'Readings and a small diagram beside columns of ten squares.'
+                  : 'A line of readings and a small diagram, then rows of ten squares.'}
               </span>
             </span>
           </label>
@@ -496,7 +513,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
 
         <div className={cn('mt-3 flex items-center gap-3', layout !== 'rows' && 'opacity-60')}>
           <label htmlFor={rowsId} className="text-sm font-medium text-japan-ink-black">
-            Rows per kanji
+            {grid === 'genkou' ? 'Columns per kanji' : 'Rows per kanji'}
           </label>
           {/* No `name`: without JavaScript the API's default applies, and a
               `rows` sent with the page layout would be refused. */}
@@ -509,7 +526,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
           >
             {Array.from({ length: MAX_ROWS - MIN_ROWS + 1 }, (_, i) => MIN_ROWS + i).map((n) => (
               <option key={n} value={n}>
-                {n} {n === 1 ? 'row' : 'rows'} ({n * 10} squares)
+                {n} {n === 1 ? line.one : line.many} ({n * 10} squares)
               </option>
             ))}
           </select>
@@ -519,6 +536,67 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
             </span>
           )}
         </div>
+
+        <fieldset className="mt-6">
+          <legend className="text-sm font-medium text-japan-ink-black">Squares</legend>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <label
+              className={cn(
+                'flex cursor-pointer gap-3 rounded-lg border p-4',
+                grid === 'cross' ? 'border-japan-deep-ocean bg-japan-soft-mist' : 'border-border'
+              )}
+            >
+              <input
+                type="radio"
+                name="grid"
+                value="cross"
+                checked={grid === 'cross'}
+                onChange={() => setGrid('cross')}
+                className="mt-1 h-4 w-4 accent-[var(--deep-ocean)]"
+              />
+              <span>
+                <span className="block font-medium text-japan-ink-black">Squares with guide lines</span>
+                <span className="mt-1 block text-sm text-japan-mountain-mist">
+                  A cross through each square to place the strokes, written left to right.
+                </span>
+              </span>
+            </label>
+            <label
+              className={cn(
+                'flex cursor-pointer gap-3 rounded-lg border p-4',
+                grid === 'genkou' ? 'border-japan-deep-ocean bg-japan-soft-mist' : 'border-border'
+              )}
+            >
+              <input
+                type="radio"
+                name="grid"
+                value="genkou"
+                checked={grid === 'genkou'}
+                onChange={() => setGrid('genkou')}
+                className="mt-1 h-4 w-4 accent-[var(--deep-ocean)]"
+              />
+              <span>
+                <span className="block font-medium text-japan-ink-black">
+                  Genkouyoushi (<span lang="ja">原稿用紙</span>)
+                </span>
+                <span className="mt-1 block text-sm text-japan-mountain-mist">
+                  Plain squares in columns, top to bottom and right to left, with a strip beside each
+                  for readings.
+                </span>
+              </span>
+            </label>
+          </div>
+          <p className="mt-2 text-sm text-japan-mountain-mist">
+            Want it blank?{' '}
+            <Link
+              href={GENKOUYOUSHI_PATH}
+              prefetch={false}
+              className={cn('rounded-sm text-japan-deep-ocean underline underline-offset-4 hover:no-underline', FOCUS_RING)}
+            >
+              Free printable genkouyoushi paper
+            </Link>
+          </p>
+        </fieldset>
       </fieldset>
 
       <fieldset className="js-only mt-8">
@@ -551,7 +629,7 @@ export function SheetBuilder({ formId, levels, groups }: Props) {
                   data-fast-goal-count={String(chunk.length)}
                   data-fast-goal-layout={layout}
                   data-fast-goal-rows={layout === 'rows' ? String(rows) : undefined}
-                  data-fast-goal-grid="cross"
+                  data-fast-goal-grid={grid}
                   data-fast-goal-source={source}
                   className={buttonVariants({ size: 'lg', variant: index === 0 ? 'default' : 'outline' })}
                 >

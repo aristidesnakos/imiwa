@@ -36,7 +36,9 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // emitted below. Priority matches /kanji because it does the same job for a
   // different query class — it is a category page written to rank, not an index.
   { path: '/stories', lastmod: '2026-09-14', priority: '0.9' },
-  { path: '/free-resources', lastmod: '2026-06-14', priority: '0.7' },
+  { path: '/free-resources', lastmod: '2026-10-10', priority: '0.7' },
+  // Blank manuscript paper, written for "genkouyoushi paper / pdf / template".
+  { path: '/free-resources/genkouyoushi', lastmod: '2026-10-10', priority: '0.7' },
   { path: '/free-resources/kana-sheets', lastmod: '2026-01-10', priority: '0.7' },
   { path: '/free-resources/kanji-sheets', lastmod: '2026-10-10', priority: '0.7' },
   // The builder: written for "kanji worksheet generator", a query the hub's

@@ -21,8 +21,10 @@ import {
   MAX_ROWS,
   MAX_SHEETS_PER_REQUEST,
   MIN_ROWS,
+  SHEET_GRIDS,
   SHEET_LAYOUTS,
   maxKanjiPerRequest,
+  type SheetGrid,
   type SheetLayout,
   type SheetOptions,
 } from './kanji-sheets';
@@ -31,12 +33,13 @@ import {
  * The layout parameters, defaulted, or the first thing wrong with them.
  *
  * A request naming none of them gets DEFAULT_SHEET_OPTIONS, and so does one
- * naming only their default values: `layout=page` is today's sheet, byte for
- * byte, not a new document that happens to look like it.
+ * naming only their default values: `layout=page` or `grid=cross` is today's
+ * sheet, byte for byte, not a new document that happens to look like it.
  */
 export function parseSheetOptions(params: URLSearchParams): SheetOptions | { error: string } {
   const layoutParam = params.get('layout');
   const rowsParam = params.get('rows');
+  const gridParam = params.get('grid');
 
   let layout: SheetLayout = DEFAULT_SHEET_OPTIONS.layout;
   if (layoutParam !== null) {
@@ -46,7 +49,16 @@ export function parseSheetOptions(params: URLSearchParams): SheetOptions | { err
     layout = layoutParam as SheetLayout;
   }
 
-  if (rowsParam === null) return { layout, rows: DEFAULT_ROWS };
+  // Valid with either layout.
+  let grid: SheetGrid = DEFAULT_SHEET_OPTIONS.grid;
+  if (gridParam !== null) {
+    if (!(SHEET_GRIDS as readonly string[]).includes(gridParam)) {
+      return { error: `Unknown grid "${gridParam}": use ${SHEET_GRIDS.join(' or ')}` };
+    }
+    grid = gridParam as SheetGrid;
+  }
+
+  if (rowsParam === null) return { layout, rows: DEFAULT_ROWS, grid };
 
   if (layout !== 'rows') {
     return { error: 'rows only applies with layout=rows' };
@@ -55,7 +67,7 @@ export function parseSheetOptions(params: URLSearchParams): SheetOptions | { err
   if (!/^\d+$/.test(rowsParam) || Number(rowsParam) < MIN_ROWS || Number(rowsParam) > MAX_ROWS) {
     return { error: `rows must be a whole number from ${MIN_ROWS} to ${MAX_ROWS}` };
   }
-  return { layout, rows: Number(rowsParam) };
+  return { layout, rows: Number(rowsParam), grid };
 }
 
 /**

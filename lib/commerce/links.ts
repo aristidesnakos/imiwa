@@ -144,6 +144,34 @@ export const PACK_DOWNLOAD_GOALS = {
 export const PACK_DESTINATION = 'michikanji_site';
 
 /**
+ * Blank genkōyōshi paper as PDFs, served from `public/downloads/` like the
+ * packs: same origin, no gate, one click. Generated, not drawn by hand:
+ * `pnpm sheets:genkouyoushi-pdfs` prints lib/sheets/genkouyoushi.ts to these
+ * files, so rerun it after changing the drawing. `pnpm validate:sheets` fails
+ * if either file is missing.
+ */
+export const PAPER_DOWNLOADS = {
+  standard: '/downloads/michikanji-genkouyoushi-400.pdf',
+  large: '/downloads/michikanji-genkouyoushi-large-squares.pdf',
+} as const;
+
+export const PAPER_FILENAMES = {
+  standard: 'MichiKanji-Genkouyoushi-400.pdf',
+  large: 'MichiKanji-Genkouyoushi-Large-Squares.pdf',
+} as const;
+
+/**
+ * One goal for every control on /free-resources/genkouyoushi, the print
+ * documents and the PDFs alike, with `format` (standard, large) and `output`
+ * (print, pdf) as properties: no decision is taken per format or per output
+ * alone, so they are breakdowns, not names.
+ *
+ * Gate 0: high means printable paper is a traffic door worth more formats.
+ * Low means the page stays up as a search page and gets no further work.
+ */
+export const GENKOUYOUSHI_DOWNLOAD_GOAL = 'genkouyoushi_paper_download';
+
+/**
  * The N5 pack offered on the N5 LIST page (`/kanji/n5`), as opposed to under
  * the N5 sheets. Same file, a different placement, and by the rule above a
  * placement that can be moved or killed on its own gets its own series. Fired

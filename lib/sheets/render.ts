@@ -15,7 +15,16 @@
  */
 
 import type { KanjiWithLevel } from '../constants/kanji-types';
-import { ROWS_GEOMETRY, kanjiPerPage, rowsBlockHeightPx } from './layout';
+import type { SheetOptions } from './kanji-sheets';
+import {
+  GENKOU_GEOMETRY,
+  ROWS_GEOMETRY,
+  genkouBandHeightPx,
+  genkouBandsPerPage,
+  genkouStripsPerBand,
+  kanjiPerPage,
+  rowsBlockHeightPx,
+} from './layout';
 
 // KanjiVG's copyright notice is an XML comment sitting above the root element
 // of every source file. It is returned separately from the diagram rather than
@@ -327,10 +336,44 @@ ${extraStyles}  </style>
 `;
 }
 
+// The one-page sheet's practice grid and its credit, as they have always
+// printed. renderSheet takes them as parameters so the genkōyōshi sheet can
+// swap the grid and say what it changed; at their defaults the output is
+// byte for byte what it was (pnpm validate:sheets).
+function crossPracticeGrid(strokeOrderSvg: string | null): string {
+  return `    <!-- Practice Grid -->
+    <div class="practice-grid">
+      <div class="grid-title">Practice Grid (80 squares)</div>
+      <table class="grid-table">
+        ${Array.from({ length: 8 }, () => `
+          <tr>
+            ${Array.from({ length: 10 }, (_, colIndex) => `
+              <td class="grid-cell ${colIndex === 0 ? 'with-guide' : ''}">
+                ${colIndex === 0 && strokeOrderSvg ? strokeOrderSvg : ''}
+              </td>
+            `).join('')}
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+
+`;
+}
+
+const PAGE_SHEET_CREDIT = `      Stroke order diagram from the KanjiVG project (kanjivg.tagaini.net), copyright
+      &copy; 2009&ndash;2011 Ulrich Apel, released under the Creative Commons
+      Attribution-Share Alike 3.0 licence (creativecommons.org/licenses/by-sa/3.0/).
+      The diagram has been rescaled and, in the practice grid, lightened; those
+      modified diagrams are shared under the same licence.
+      Practice sheet from michikanji.com.
+`;
+
 function renderSheet(
   kanjiData: KanjiWithLevel,
   strokeOrderSvg: string | null,
-  strokeCount: number | null
+  strokeCount: number | null,
+  practice: string = crossPracticeGrid(strokeOrderSvg),
+  credit: string = PAGE_SHEET_CREDIT
 ): string {
   return `  <div class="page-container">
     <!-- Header Section -->
@@ -374,31 +417,9 @@ function renderSheet(
     </div>
     ` : ''}
 
-    <!-- Practice Grid -->
-    <div class="practice-grid">
-      <div class="grid-title">Practice Grid (80 squares)</div>
-      <table class="grid-table">
-        ${Array.from({ length: 8 }, () => `
-          <tr>
-            ${Array.from({ length: 10 }, (_, colIndex) => `
-              <td class="grid-cell ${colIndex === 0 ? 'with-guide' : ''}">
-                ${colIndex === 0 && strokeOrderSvg ? strokeOrderSvg : ''}
-              </td>
-            `).join('')}
-          </tr>
-        `).join('')}
-      </table>
-    </div>
-
-    <!-- Attribution Section -->
+${practice}    <!-- Attribution Section -->
     <p class="sheet-credit">
-      Stroke order diagram from the KanjiVG project (kanjivg.tagaini.net), copyright
-      &copy; 2009&ndash;2011 Ulrich Apel, released under the Creative Commons
-      Attribution-Share Alike 3.0 licence (creativecommons.org/licenses/by-sa/3.0/).
-      The diagram has been rescaled and, in the practice grid, lightened; those
-      modified diagrams are shared under the same licence.
-      Practice sheet from michikanji.com.
-    </p>
+${credit}    </p>
   </div>
 `;
 }
@@ -407,31 +428,68 @@ const DOCUMENT_END = `</body>
 </html>`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// THE ROWS LAYOUT: several kanji to a page
+// THE NEW DOCUMENTS: several kanji to a page, and genkōyōshi squares
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Each kanji gets a block: a header line (the kanji, its meaning and readings,
-// its level and stroke count, and a small stroke-order diagram with KanjiVG's
-// stroke numbers), then `rows` rows of ten squares with the faded model in the
-// first square of each row. The squares are the one-page sheet's own cells,
-// 10% of the width by 60px, so a learner who knows that sheet knows these.
+// Everything below is reached only through non-default options, so none of it
+// can touch the two documents above.
+//
+// ROWS (grid=cross). Each kanji gets a block: a header line (the kanji, its
+// meaning and readings, its level and stroke count, and a small stroke-order
+// diagram with KanjiVG's stroke numbers), then `rows` rows of ten squares with
+// the faded model in the first square of each row. The squares are the
+// one-page sheet's own cells, 10% of the width by 60px, so a learner who knows
+// that sheet knows these.
+//
+// GENKŌYŌSHI (grid=genkou). The conventions and their sources are in
+// lib/sheets/layout.ts (GENKOU_GEOMETRY). On the one-page sheet the 80-square
+// table becomes ten columns of ten. In rows, a kanji is a vertical strip: a
+// header column on the right, then its `rows` columns of ten to the left.
 //
 // Pages are cut here, not by the print engine: see lib/sheets/layout.ts. Every
-// block and every page box has a fixed height taken from ROWS_GEOMETRY, which
-// is what lets the builder's page count and this document agree.
+// block, strip and page box has a fixed height taken from there, which is what
+// lets the builder's page count and this document agree.
 //
 // The diagram is written ONCE per kanji, as a <symbol>, and every place that
 // shows it references it with <use>. A 100-kanji document at eight rows would
 // otherwise inline 900 copies of a 2-7 kB file: megabytes of HTML, against a
 // 4.5 MB response limit, for the same drawing over and over.
 
-const ROWS_CREDIT = `Stroke order diagrams from the KanjiVG project (kanjivg.tagaini.net), copyright
+const CUSTOM_CREDIT = `Stroke order diagrams from the KanjiVG project (kanjivg.tagaini.net), copyright
       &copy; 2009&ndash;2011 Ulrich Apel, released under the Creative Commons
       Attribution-Share Alike 3.0 licence (creativecommons.org/licenses/by-sa/3.0/).
       The diagrams have been rescaled, their stroke numbers enlarged and, in the
       practice squares, lightened; those modified diagrams are shared under the
       same licence.
       Practice sheet from michikanji.com.`;
+
+const PRINT_INSTRUCTIONS =
+  'Press Ctrl+P (&#8984;P on a Mac) to print, or choose Save as PDF in the print dialog to keep them all in one file.';
+
+// The page box every several-to-a-page document prints in, and the hidden
+// sprite its diagrams live in.
+const PAGE_BOX_STYLES = `
+    .diagram-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    @media print {
+      /* The page box, with the credit pinned to its foot. Print only: on
+         screen the pages run on with the dashed rule between them. */
+      .rows-page {
+        display: flex;
+        flex-direction: column;
+        height: ${ROWS_GEOMETRY.pageHeightPx}px;
+      }
+
+      .rows-page .sheet-credit {
+        margin-top: auto;
+      }
+    }
+`;
 
 function rowsStyles(rows: number): string {
   const g = ROWS_GEOMETRY;
@@ -515,26 +573,101 @@ function rowsStyles(rows: number): string {
       width: 100%;
       height: 100%;
     }
+`;
+}
 
-    .diagram-defs {
-      position: absolute;
-      width: 0;
-      height: 0;
-      overflow: hidden;
+// The genkōyōshi squares. The rules are the sheet's own greys: plain squares,
+// no guides, the frame heavier than the rules inside it, as on the real paper.
+const GENKOU_STYLES = `
+    .genkou-grid {
+      display: block;
     }
 
-    @media print {
-      /* The page box, with the credit pinned to its foot. Print only: on
-         screen the pages run on with the dashed rule between them. */
-      .rows-page {
-        display: flex;
-        flex-direction: column;
-        height: ${g.pageHeightPx}px;
-      }
+    .genkou-grid rect {
+      fill: none;
+      stroke: #666;
+      stroke-width: 0.75;
+    }
 
-      .rows-page .sheet-credit {
-        margin-top: auto;
-      }
+    .genkou-grid .gk-frame {
+      stroke: #333;
+      stroke-width: 1.5;
+    }
+
+    .genkou-grid .gk-model {
+      opacity: 0.3;
+    }
+
+    .practice-grid .genkou-grid {
+      width: 100%;
+      height: auto;
+    }
+`;
+
+function genkouRowsStyles(): string {
+  const g = GENKOU_GEOMETRY;
+  return `
+    /* Genkōyōshi in rows: kanji are vertical strips filling bands right to
+       left. Widths and heights from GENKOU_GEOMETRY in lib/sheets/layout.ts. */
+    .gk-band {
+      display: flex;
+      flex-direction: row-reverse;
+      gap: ${g.stripGapPx}px;
+      height: ${genkouBandHeightPx()}px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .gk-band + .gk-band {
+      margin-top: ${g.bandGapPx}px;
+    }
+
+    .gk-strip {
+      display: flex;
+      flex: none;
+      flex-direction: row-reverse;
+      align-items: flex-start;
+    }
+
+    .gk-header {
+      display: flex;
+      flex: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: ${g.headerWidthPx}px;
+      height: ${g.squaresPerColumn * g.squarePx}px;
+      padding-left: 6px;
+      overflow: hidden;
+      font-size: 10.5px;
+      line-height: 13px;
+      text-align: center;
+      color: #333;
+    }
+
+    .gk-kanji {
+      font-size: 44px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .gk-ref {
+      width: 72px;
+      height: 72px;
+      border: 1px solid #ccc;
+      padding: 2px;
+    }
+
+    .gk-ref svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .gk-label {
+      display: block;
+      font-weight: bold;
+      color: #666;
     }
 `;
 }
@@ -569,16 +702,99 @@ function diagramSymbol(character: string, svg: string): string | null {
   return `<symbol id="${diagramId(character)}" viewBox="${viewBox}">${body}</symbol>`;
 }
 
+/** Every kanji's symbol that could be built, keyed by character. */
+function diagramSymbols(sheets: readonly PreparedSheet[]): Map<string, string> {
+  const symbols = new Map<string, string>();
+  for (const sheet of sheets) {
+    const symbol = sheet.strokeOrderSvg ? diagramSymbol(sheet.kanjiData.kanji, sheet.strokeOrderSvg) : null;
+    if (symbol) symbols.set(sheet.kanjiData.kanji, symbol);
+  }
+  return symbols;
+}
+
+function diagramSprite(symbols: ReadonlyMap<string, string>): string {
+  return `  <svg class="diagram-defs" aria-hidden="true"><defs>
+${Array.from(symbols.values()).join('\n')}
+  </defs></svg>`;
+}
+
 function diagramUse(character: string): string {
   return `<svg aria-hidden="true"><use href="#${diagramId(character)}"/></svg>`;
+}
+
+// The title is the file name Save as PDF suggests, and a hundred characters of
+// it would be cut off mid-set by the file system anyway.
+function customTitle(sheets: readonly PreparedSheet[]): string {
+  const characters = sheets.map((sheet) => sheet.kanjiData.kanji);
+  if (characters.length === 1) return `${characters[0]} Practice Sheet`;
+  return characters.length <= 12
+    ? `${characters.join('')} Practice Sheets`
+    : `${characters.slice(0, 10).join('')}… ${characters.length} Kanji Practice Sheets`;
+}
+
+function strokesLabel(strokeCount: number | null): string | null {
+  return strokeCount ? `${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'}` : null;
+}
+
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+function chunk<T>(items: readonly T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
+/** A page box of the several-to-a-page documents, with its credit. */
+function pageBox(content: string): string {
+  return `  <div class="page-container rows-page">
+${content}    <p class="sheet-credit">
+      ${CUSTOM_CREDIT}
+    </p>
+  </div>
+`;
+}
+
+/**
+ * A genkōyōshi grid as one SVG: `columns` columns of `squares` squares, the
+ * first column at the right, each with its ruby strip on its right, and the
+ * faded model in the top square of every column. Every square and strip is its
+ * own rect so scripts/validate-sheets.ts can count them.
+ */
+function genkouGridSvg(
+  columns: number,
+  squares: number,
+  squarePx: number,
+  rubyPx: number,
+  modelId: string | null
+): string {
+  const pitch = squarePx + rubyPx;
+  const width = columns * pitch;
+  const height = squares * squarePx;
+  const parts: string[] = [];
+  for (let column = 0; column < columns; column++) {
+    const right = width - column * pitch;
+    const left = right - pitch;
+    parts.push(`<rect class="gk-ruby" x="${right - rubyPx}" y="0" width="${rubyPx}" height="${height}"/>`);
+    for (let square = 0; square < squares; square++) {
+      parts.push(`<rect class="gk-sq" x="${left}" y="${square * squarePx}" width="${squarePx}" height="${squarePx}"/>`);
+    }
+    if (modelId) {
+      parts.push(
+        `<use class="gk-model" href="#${modelId}" x="${left + 3}" y="3" width="${squarePx - 6}" height="${squarePx - 6}"/>`
+      );
+    }
+  }
+  // Inset by half its stroke, so the viewBox does not clip the frame.
+  parts.push(`<rect class="gk-frame" x="0.75" y="0.75" width="${width - 1.5}" height="${height - 1.5}"/>`);
+  return `<svg class="genkou-grid" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">${parts.join('')}</svg>`;
 }
 
 function renderRowsBlock(sheet: PreparedSheet, rows: number, hasDiagram: boolean): string {
   const { kanjiData, strokeCount } = sheet;
   const model = hasDiagram ? diagramUse(kanjiData.kanji) : '';
-  const facts = [`JLPT ${kanjiData.level}`, strokeCount ? `${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'}` : null]
-    .filter(Boolean)
-    .join(' &middot; ');
+  const facts = [`JLPT ${kanjiData.level}`, strokesLabel(strokeCount)].filter(Boolean).join(' &middot; ');
 
   return `    <section class="rows-block">
       <div class="rows-header">
@@ -605,37 +821,101 @@ function renderRowsBlock(sheet: PreparedSheet, rows: number, hasDiagram: boolean
  * are the squares people already print.
  */
 export function renderRowsDocument(sheets: readonly PreparedSheet[], rows: number): string {
-  const characters = sheets.map((sheet) => sheet.kanjiData.kanji);
-  // The title is the file name Save as PDF suggests, and a hundred characters
-  // of it would be cut off mid-set by the file system anyway.
-  const title =
-    characters.length <= 12
-      ? `${characters.join('')} Practice Sheets`
-      : `${characters.slice(0, 10).join('')}… ${characters.length} Kanji Practice Sheets`;
+  const symbols = diagramSymbols(sheets);
+  const pages = chunk(sheets, kanjiPerPage({ layout: 'rows', rows, grid: 'cross' }));
 
-  const symbols = new Map<string, string>();
-  for (const sheet of sheets) {
-    const symbol = sheet.strokeOrderSvg ? diagramSymbol(sheet.kanjiData.kanji, sheet.strokeOrderSvg) : null;
-    if (symbol) symbols.set(sheet.kanjiData.kanji, symbol);
-  }
+  return `${documentStart(customTitle(sheets), MULTI_SHEET_STYLES + PAGE_BOX_STYLES + rowsStyles(rows))}${distinctNotices(sheets)}
+  <p class="print-hint" lang="en">${plural(sheets.length, 'kanji', 'kanji')}, ${plural(rows, 'row', 'rows')} of practice each, on ${plural(pages.length, 'printed page', 'printed pages')}. ${PRINT_INSTRUCTIONS}</p>
+${diagramSprite(symbols)}
+${pages.map((page) => pageBox(page.map((sheet) => renderRowsBlock(sheet, rows, symbols.has(sheet.kanjiData.kanji))).join(''))).join('')}${DOCUMENT_END}`;
+}
 
-  const perPage = kanjiPerPage({ layout: 'rows', rows });
-  const pages: PreparedSheet[][] = [];
-  for (let i = 0; i < sheets.length; i += perPage) pages.push(sheets.slice(i, i + perPage));
+/** The one-page sheet's grid on genkōyōshi: ten columns of ten. */
+function genkouPracticeGrid(modelId: string | null): string {
+  const g = GENKOU_GEOMETRY;
+  const squares = g.pageColumns * g.pageSquares;
+  return `    <!-- Practice Grid -->
+    <div class="practice-grid">
+      <div class="grid-title">Practice Grid (${squares} squares, genk&#333;y&#333;shi: top to bottom, columns right to left)</div>
+      ${genkouGridSvg(g.pageColumns, g.pageSquares, g.pageSquarePx, g.pageRubyPx, modelId)}
+    </div>
 
-  const kanjiLabel = sheets.length === 1 ? '1 kanji' : `${sheets.length} kanji`;
-  const rowsLabel = rows === 1 ? '1 row' : `${rows} rows`;
-  const pagesLabel = pages.length === 1 ? '1 printed page' : `${pages.length} printed pages`;
+`;
+}
 
-  return `${documentStart(title, MULTI_SHEET_STYLES + rowsStyles(rows))}${distinctNotices(sheets)}
-  <p class="print-hint" lang="en">${kanjiLabel}, ${rowsLabel} of practice each, on ${pagesLabel}. Press Ctrl+P (&#8984;P on a Mac) to print, or choose Save as PDF in the print dialog to keep them all in one file.</p>
-  <svg class="diagram-defs" aria-hidden="true"><defs>
-${Array.from(symbols.values()).join('\n')}
-  </defs></svg>
-${pages.map((page) => `  <div class="page-container rows-page">
-${page.map((sheet) => renderRowsBlock(sheet, rows, symbols.has(sheet.kanjiData.kanji))).join('')}    <p class="sheet-credit">
-      ${ROWS_CREDIT}
-    </p>
-  </div>
-`).join('')}${DOCUMENT_END}`;
+/**
+ * One kanji per page, with genkōyōshi squares: the one-page sheet's header and
+ * large stroke-order reference unchanged, the grid swapped.
+ */
+export function renderGenkouPageDocument(sheets: readonly PreparedSheet[]): string {
+  const symbols = diagramSymbols(sheets);
+  return `${documentStart(customTitle(sheets), MULTI_SHEET_STYLES + PAGE_BOX_STYLES + GENKOU_STYLES)}${distinctNotices(sheets)}
+  <p class="print-hint" lang="en">${plural(sheets.length, 'practice sheet', 'practice sheets')} on genk&#333;y&#333;shi squares, one per printed page. ${PRINT_INSTRUCTIONS}</p>
+${diagramSprite(symbols)}
+${sheets
+  .map((sheet) =>
+    renderSheet(
+      sheet.kanjiData,
+      sheet.strokeOrderSvg,
+      sheet.strokeCount,
+      genkouPracticeGrid(symbols.has(sheet.kanjiData.kanji) ? diagramId(sheet.kanjiData.kanji) : null),
+      `      ${CUSTOM_CREDIT}\n`
+    )
+  )
+  .join('')}${DOCUMENT_END}`;
+}
+
+function renderGenkouStrip(sheet: PreparedSheet, rows: number, hasDiagram: boolean): string {
+  const g = GENKOU_GEOMETRY;
+  const { kanjiData, strokeCount } = sheet;
+  const facts = [`JLPT ${kanjiData.level}`, strokesLabel(strokeCount)].filter(Boolean).join('<br>');
+  return `      <section class="gk-strip">
+        <div class="gk-header">
+          <div class="gk-kanji">${kanjiData.kanji}</div>
+          <div class="gk-ref">${hasDiagram ? diagramUse(kanjiData.kanji) : ''}</div>
+          <div>${kanjiData.meaning}</div>
+          <div><span class="gk-label">On</span>${kanjiData.onyomi}</div>
+          <div><span class="gk-label">Kun</span>${kanjiData.kunyomi}</div>
+          <div>${facts}</div>
+        </div>
+        ${genkouGridSvg(rows, g.squaresPerColumn, g.squarePx, g.rubyPx, hasDiagram ? diagramId(kanjiData.kanji) : null)}
+      </section>
+`;
+}
+
+/**
+ * Several kanji to a page on genkōyōshi: each kanji `rows` columns of ten,
+ * strips filling bands right to left, two bands to a page.
+ */
+export function renderGenkouRowsDocument(sheets: readonly PreparedSheet[], rows: number): string {
+  const symbols = diagramSymbols(sheets);
+  const perBand = genkouStripsPerBand(rows);
+  const pages = chunk(sheets, perBand * genkouBandsPerPage());
+
+  return `${documentStart(customTitle(sheets), MULTI_SHEET_STYLES + PAGE_BOX_STYLES + GENKOU_STYLES + genkouRowsStyles())}${distinctNotices(sheets)}
+  <p class="print-hint" lang="en">${plural(sheets.length, 'kanji', 'kanji')}, ${plural(rows, 'column', 'columns')} of genk&#333;y&#333;shi each, on ${plural(pages.length, 'printed page', 'printed pages')}. ${PRINT_INSTRUCTIONS}</p>
+${diagramSprite(symbols)}
+${pages
+  .map((page) =>
+    pageBox(
+      chunk(page, perBand)
+        .map(
+          (band) => `    <div class="gk-band">
+${band.map((sheet) => renderGenkouStrip(sheet, rows, symbols.has(sheet.kanjiData.kanji))).join('')}    </div>
+`
+        )
+        .join('')
+    )
+  )
+  .join('')}${DOCUMENT_END}`;
+}
+
+/**
+ * The document for any non-default options: rows on either grid, or one page
+ * per kanji on genkōyōshi. The default options never come here; they take
+ * renderSheetDocument or renderMultiSheetDocument, unchanged.
+ */
+export function renderCustomDocument(sheets: readonly PreparedSheet[], options: SheetOptions): string {
+  if (options.layout === 'page') return renderGenkouPageDocument(sheets);
+  return options.grid === 'genkou' ? renderGenkouRowsDocument(sheets, options.rows) : renderRowsDocument(sheets, options.rows);
 }
