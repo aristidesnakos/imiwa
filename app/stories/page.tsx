@@ -112,10 +112,17 @@ export default function StoriesHubPage() {
 
         <section aria-label="Episodes">
           <ul className="grid gap-6 sm:grid-cols-2">
+            {/*
+              prefetch={false}: with the cards first, the top three sit in the
+              viewport, and each one prefetched its episode's payload (~11 kB
+              apiece) into this page's byte budget. One card renders per episode,
+              so this is the "links that render many times" case.
+            */}
             {episodes.map(episode => (
               <li key={episode.slug}>
                 <Link
                   href={`/stories/${episode.slug}`}
+                  prefetch={false}
                   className="group block overflow-hidden rounded-xl border border-border bg-card transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {/*
@@ -123,13 +130,18 @@ export default function StoriesHubPage() {
                     speech bubble StoryPanel composites in CSS, so a top-anchored
                     crop is sky and no character. Anchor at 70%: by construction
                     the subject of a panel sits in its lower half.
+
+                    `sizes` is the card's real width: main is min(100vw, 56rem)
+                    less 2rem of padding a side, split in two at sm with a 1.5rem
+                    gap. The old 45vw/92vw guess fetched 750w for a 348px card on
+                    a phone and up to the full 1091px master on a retina desktop.
                   */}
                   <div className="relative aspect-[2/1] w-full">
                     <Image
                       src={episode.panels[0].art}
                       alt=""
                       fill
-                      sizes="(min-width: 640px) 45vw, 92vw"
+                      sizes="(min-width: 896px) 404px, (min-width: 640px) calc(50vw - 44px), calc(100vw - 64px)"
                       className="object-cover [object-position:center_70%]"
                     />
                   </div>

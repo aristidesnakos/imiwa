@@ -242,7 +242,10 @@ module.exports = {
         // of this file uses, because TBT/LCP are the noisy pair under emulation.
         route({
           matchingUrlPattern: '^http://localhost:3000/stories$',
-          lcp: 3100, // ~2.20s baseline, ~1.4x
+          // ~2.20s baseline, ~1.4x. 2.84s measured 2026-10-10 (CI 2.81s): since
+          // the cards came first, the LCP element is the first card's art, and
+          // next/image lazy-loads it. Only ~9% headroom left.
+          lcp: 3100,
           fcp: 1800, // ~0.92s baseline — same FCP as `/`, same ceiling
           cls: 0.1, // 0.000 measured; hold Google's "good" boundary
           tbt: 600, // 34-42ms measured; CPU-noise room, not a real limit
@@ -252,7 +255,21 @@ module.exports = {
           // page with a header fell ~57 kB of script. Holding the old ceilings
           // would have left that much room for a regression nobody sees.
           scriptKb: 215, // 183 kB measured, +17%
-          totalKb: 325, // 283 kB measured, +15%
+          // RE-BASELINED 2026-10-10: 310 kB measured. The cards-first hub
+          // (a10ee0a) took the page to 361 kB (359 on CI, against 325). Two
+          // parts of that were waste and came out: the three cards in the
+          // viewport prefetched their episode pages (~35 kB with the route's
+          // script; the cards are now prefetch={false}), and `sizes` overstated
+          // the card, so a phone fetched 750w art for a 348px card (-12 kB at
+          // 640w). What stays is intended, because it is the hub's content: the
+          // card art. Lighthouse's lazy-load window reaches ~3,000px below the
+          // fold (probed: an image at 3,700px loads, one at 3,900px does not),
+          // which on this layout is the first 11 cards. So each new episode
+          // adds one card's art (~10 kB at 640w, 5-15 kB so far) until episode
+          // 11, then the total plateaus near 337 kB, because the newest card
+          // pushes the oldest out of the window. Holding 325 would have failed
+          // CI again at episode 10.
+          totalKb: 357, // 310 kB measured, +15%
           perfScore: 0.85, // 0.99 measured
         }),
         route({
