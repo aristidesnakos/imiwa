@@ -11,13 +11,26 @@
  * ---------------------------------------------------------------------------
  *
  * The one-sheet document is a contract with things this repo cannot see:
- * `scripts/download-kanji-sheets.ts` prints it to build the PDF packs, and the
+ * `scripts/download-kanji-sheets.ts` screenshots it, people print it, and the
  * CDN holds a day of cached copies. A change to it that nobody meant shows up
- * as a pack that looks subtly different, or not at all. So the default
+ * as a printout that looks subtly different, or not at all. So the default
  * documents, one sheet and several, are held BYTE FOR BYTE to golden fixtures
- * in scripts/fixtures/sheets/. They were recorded from the route's own
- * rendering code before it moved into lib/sheets/render.ts, fed the stub
- * diagrams in stub-kanjivg.ts.
+ * in scripts/fixtures/sheets/, rendered from the stub diagrams in
+ * stub-kanjivg.ts. They were first recorded from the route's own rendering
+ * code before it moved into lib/sheets/render.ts.
+ *
+ * They were re-recorded once, on purpose, on 2026-10-10. Printed from Chrome,
+ * every default sheet with its stroke diagram ran to two A4 pages: its
+ * practice rows were 66px, not 60, and its header lines were as tall as the
+ * font made them. The KanjiVG credit printed alone on the second page, so the
+ * sheet itself carried none.
+ * The stylesheet was changed so that a sheet fits one page, and the three
+ * fixtures were re-recorded from the new code in the same commit. A
+ * deliberate change does that; any other difference is a bug. Fitting the page
+ * is NOT checked here (that needs a browser): print ?character=日 and
+ * ?characters=日本人 with puppeteer's page.pdf({ preferCSSPageSize: true })
+ * after any change to the stylesheet, and expect one page per sheet, each
+ * ending with its credit.
  *
  * The rows layout (several kanji to a page) has no golden fixture: it is new,
  * and what matters about it is structural. For every `rows` from 1 to 8, with

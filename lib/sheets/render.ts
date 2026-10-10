@@ -8,8 +8,9 @@
  *
  * They live here, not in the route, because a route module may only export
  * its HTTP handlers, and `scripts/validate-sheets.ts` needs to render a sheet
- * without a server or a network: it holds these functions to golden fixtures
- * recorded from the route as it was before the move.
+ * without a server or a network: it holds these functions to golden fixtures,
+ * first recorded from the route as it was before the move, and re-recorded on
+ * 2026-10-10 when the default sheet was changed to fit one A4 page.
  *
  * Relative imports, because that validator imports this module under tsx.
  */
@@ -80,9 +81,20 @@ export interface PreparedSheet {
 
 // The document is assembled from three pieces — the head and stylesheet, one
 // body per sheet, the closing tags — so the one-sheet and several-sheet
-// documents share every line of the sheet itself. The one-sheet assembly is
-// byte-for-byte the single template this used to be; keep it that way, since
-// scripts/download-kanji-sheets.ts and every cached copy expect that document.
+// documents share every line of the sheet itself. Never change either one by
+// accident: scripts/download-kanji-sheets.ts screenshots the one-sheet
+// document, and the CDN serves a day of cached copies of both, so
+// pnpm validate:sheets holds them byte for byte to golden fixtures.
+//
+// They have changed once on purpose since this was a single template. Until
+// 2026-10-10, Chrome printed every sheet that has its stroke diagram (all
+// but the never-cached, degraded one) as two A4 pages: the practice rows
+// came to 66px, not 60 (see `.grid-cell.with-guide`), and the header's lines
+// were as tall as the font made them, so the 267mm (1009px) between the 15mm
+// margins overflowed and the KanjiVG credit printed alone on a second page,
+// leaving the sheet itself uncredited. Now a sheet is 946px for most kanji and
+// 988px for the tallest (監 and 貫, whose meanings wrap to three lines). A
+// deliberate change like that one re-records the fixtures in the same commit.
 
 export function renderSheetDocument(
   kanjiData: KanjiWithLevel,
@@ -194,7 +206,6 @@ function documentStart(title: string, extraStyles = ''): string {
       display: flex;
       align-items: center;
       gap: 20px;
-      margin-bottom: 15px;
     }
 
     .large-kanji {
@@ -207,8 +218,14 @@ function documentStart(title: string, extraStyles = ''): string {
       flex: 1;
     }
 
+    /* A fixed line, not the font's "normal" one: a long meaning wraps (監's
+       runs to three lines) and every line it adds has to fit on the page. */
     .info-row {
-      margin-bottom: 8px;
+      line-height: 20px;
+    }
+
+    .info-row + .info-row {
+      margin-top: 8px;
     }
 
     .info-label {
@@ -297,14 +314,19 @@ function documentStart(title: string, extraStyles = ''): string {
       transform: translateY(-50%);
     }
 
-    /* Stroke order in first column */
+    /* Stroke order in first column. The 3px inset is on the diagram, not the
+       cell: on the cell, Chrome added it to the row (66px, not 60), the eight
+       rows came to 528px, and a sheet printed as two A4 pages with the credit
+       alone on the second. As a block, the diagram is exactly 60px. */
     .grid-cell.with-guide {
-      padding: 3px;
+      padding: 0;
     }
 
     .grid-cell.with-guide svg {
+      display: block;
       width: 100%;
       height: 100%;
+      padding: 3px;
       opacity: 0.3;
     }
 
@@ -336,10 +358,10 @@ ${extraStyles}  </style>
 `;
 }
 
-// The one-page sheet's practice grid and its credit, as they have always
-// printed. renderSheet takes them as parameters so the genkōyōshi sheet can
-// swap the grid and say what it changed; at their defaults the output is
-// byte for byte what it was (pnpm validate:sheets).
+// The one-page sheet's practice grid and its credit. renderSheet takes them as
+// parameters so the genkōyōshi sheet can swap the grid and say what it
+// changed; at their defaults the output is the default document, byte for
+// byte (pnpm validate:sheets).
 function crossPracticeGrid(strokeOrderSvg: string | null): string {
   return `    <!-- Practice Grid -->
     <div class="practice-grid">
@@ -507,11 +529,11 @@ function rowsStyles(rows: number): string {
       margin-top: ${g.blockGapPx}px;
     }
 
-    /* The one-page sheet's cell, held to exactly its declared 60px. There the
-       first cell's 3px padding is added to the row (Chrome renders those rows
-       66px tall), which is harmless on a page with one grid and would push a
-       stack of them off the page. Here the padding moves onto the diagram, so
-       every row is 60px in every engine and the page arithmetic holds. */
+    /* The one-page sheet's cell, held to exactly its declared 60px. Since
+       2026-10-10 that sheet does the same itself: its first cell's 3px padding
+       used to be added to the row (66px in Chrome), which pushed its credit
+       onto a second page. Restated here because this layout's page arithmetic
+       depends on every row being 60px in every engine. */
     .rows-block .grid-cell,
     .rows-block .grid-cell.with-guide {
       height: ${g.rowHeightPx}px;
@@ -913,7 +935,7 @@ ${band.map((sheet) => renderGenkouStrip(sheet, rows, symbols.has(sheet.kanjiData
 /**
  * The document for any non-default options: rows on either grid, or one page
  * per kanji on genkōyōshi. The default options never come here; they take
- * renderSheetDocument or renderMultiSheetDocument, unchanged.
+ * renderSheetDocument or renderMultiSheetDocument, untouched by any of this.
  */
 export function renderCustomDocument(sheets: readonly PreparedSheet[], options: SheetOptions): string {
   if (options.layout === 'page') return renderGenkouPageDocument(sheets);

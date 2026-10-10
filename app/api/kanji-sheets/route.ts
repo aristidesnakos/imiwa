@@ -26,8 +26,8 @@ import {
  * /api/kanji-sheets — printable kanji practice sheets, as HTML documents the
  * browser prints or saves as a PDF.
  *
- *   ?character=日                   one sheet (the document the PDF packs are
- *                                   printed from: byte for byte unchanged)
+ *   ?character=日                   one sheet (the document
+ *                                   scripts/download-kanji-sheets.ts screenshots)
  *   ?characters=日本人              several sheets, one per page, max 20
  *   &layout=page                    the default: the two documents above
  *   &layout=rows&rows=1..8          several kanji per page, `rows` rows of ten
@@ -37,7 +37,9 @@ import {
  *
  * A request with none of the layout or grid parameters, or only their
  * defaults, takes the path it always took: same statuses, same messages, the
- * same bytes, which pnpm validate:sheets holds to golden fixtures. Everything malformed is
+ * same document, which pnpm validate:sheets holds byte for byte to golden
+ * fixtures (changed once on purpose, 2026-10-10, to fit one A4 page; see
+ * lib/sheets/render.ts). Everything malformed is
  * refused with a 400 naming the parameter (lib/sheets/request.ts); over a cap
  * is refused, never truncated.
  *
