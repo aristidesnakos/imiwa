@@ -118,7 +118,7 @@ export default function StoriesHubPage() {
               apiece) into this page's byte budget. One card renders per episode,
               so this is the "links that render many times" case.
             */}
-            {episodes.map(episode => (
+            {episodes.map((episode, index) => (
               <li key={episode.slug}>
                 <Link
                   href={`/stories/${episode.slug}`}
@@ -135,6 +135,9 @@ export default function StoriesHubPage() {
                     less 2rem of padding a side, split in two at sm with a 1.5rem
                     gap. The old 45vw/92vw guess fetched 750w for a 348px card on
                     a phone and up to the full 1091px master on a retina desktop.
+
+                    `priority` on the first card only: its art is the page's LCP
+                    element, and lazy-loading it held LCP back to ~2.8s.
                   */}
                   <div className="relative aspect-[2/1] w-full">
                     <Image
@@ -142,6 +145,7 @@ export default function StoriesHubPage() {
                       alt=""
                       fill
                       sizes="(min-width: 896px) 404px, (min-width: 640px) calc(50vw - 44px), calc(100vw - 64px)"
+                      priority={index === 0}
                       className="object-cover [object-position:center_70%]"
                     />
                   </div>

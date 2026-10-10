@@ -93,6 +93,28 @@
  * 3900/4300/3400) and TBT once its true variance is known. Leave the byte
  * budgets alone — they are already tight and provably stable.
  *
+ * CALIBRATED 2026-10-10, from the median LHRs of the last 10 runner runs
+ * (c90b7fb..4e959da, Oct 3-10). LCP and FCP ceilings are 1.4x the runner
+ * median, never under 1.25x the worst run, applied only where that LOWERED a
+ * ceiling (it would have raised LCP on `/`, `/kanji` and `/stories`, which
+ * kept theirs). Runner median (worst), ms:
+ *
+ *                     LCP           FCP
+ *   /                 2847 (3314)    917 (925)
+ *   /kanji            2953 (3030)   1373 (1415)
+ *   /kanji/日         2347 (2493)    957 (995)
+ *   /kanji/n5         2170 (2264)   1029 (1057)
+ *   /kanji/n5/quiz    2150 (2612)    916 (920)
+ *   /stories          2498 (2806)    919 (936)
+ *   /stories/<ep>     2380 (2960)    998 (1010)
+ *
+ * TBT stays generous: /kanji alone spread 72-402ms across those ten. The same
+ * day, every byte budget that had drifted looser than measured + ~17% was
+ * ratcheted to measured + ~15%. "Byte-identical on runner and laptop" no longer
+ * holds exactly: a lazy image right at the edge of Chrome's load-ahead window
+ * can load on one and not the other (see /kanji/<char>), so a byte budget is
+ * set from the larger of the two.
+ *
  * Some of these freeze known debt rather than endorse a healthy state:
  *   - /kanji TBT ~1.1s is bad, and unlike CLS it reproduces everywhere — the
  *     runner measured 2305ms, worse still. Confirmed debt. The gate stops it
@@ -100,7 +122,8 @@
  *     once the hub stopped prefetching /kanji/progress and /kanji/review, and
  *     its entry below is ratcheted to match.
  *   - /kanji/<char> LCP ~3s is "needs improvement" on the template that
- *     carries essentially all organic traffic.
+ *     carries essentially all organic traffic. No longer true by 2026-10: the
+ *     runner median was 2.35s, and its ceiling is ratcheted to match.
  *   NOT on that list: /kanji CLS. The 0.157 laptop figure did not reproduce on
  *   the runner (0.000), so it is environment- or timing-dependent and remains
  *   UNCONFIRMED — see the runner-baseline section above. Its 0.25 ceiling is a
@@ -208,18 +231,22 @@ module.exports = {
         route({
           matchingUrlPattern: '^http://localhost:3000/$',
           lcp: 3800, // ~2.7s baseline, ~1.4x
-          fcp: 1800, // ~0.92s baseline (one outlier run hit 1.97s)
+          fcp: 1300, // 0.92s runner median, 0.93s worst (was 1800)
           cls: 0.1, // <=0.058 baseline; hold Google's "good" boundary
           tbt: 600, // 47-110ms median, 190ms worst single run; CPU-noise room
-          scriptKb: 250, // 222 kB baseline, +13%
-          totalKb: 440, // 373 kB baseline, +18%
+          // RATCHETED 2026-10-10: 182 kB script / 237 kB total, on CI and
+          // locally. The search-first homepage (4e959da) took `/` from ~400 kB
+          // to 237, and the old 250/440 ceilings would have let it grow by
+          // 200 kB again without failing.
+          scriptKb: 210, // 182 kB measured, +15%
+          totalKb: 275, // 237 kB measured, +16%
           perfScore: 0.85,
         }),
         route({
           // Anchored so it does NOT also match /kanji/<char>.
           matchingUrlPattern: '^http://localhost:3000/kanji$',
           lcp: 4000, // ~2.88s baseline, ~1.4x (2.43s measured 2026-09-24)
-          fcp: 2200, // ~1.21s baseline
+          fcp: 2000, // 1.37s runner median, 1.42s worst (was 2200)
           // RATCHETED 2026-09-24, after the hub rework paid off the debt this
           // entry used to freeze. Script fell 394 → 239 kB (the hub stopped
           // prefetching /kanji/progress and /kanji/review, 112 kB of chart
@@ -242,11 +269,11 @@ module.exports = {
         // of this file uses, because TBT/LCP are the noisy pair under emulation.
         route({
           matchingUrlPattern: '^http://localhost:3000/stories$',
-          // ~2.20s baseline, ~1.4x. 2.84s measured 2026-10-10 (CI 2.81s): since
-          // the cards came first, the LCP element is the first card's art, and
-          // next/image lazy-loads it. Only ~9% headroom left.
+          // ~2.20s baseline, ~1.4x. Since the cards came first, the LCP element
+          // is the first card's art: lazy-loaded it measured 2.84s (CI 2.81s),
+          // so it is now `priority`, and measured 2.56s on 2026-10-10.
           lcp: 3100,
-          fcp: 1800, // ~0.92s baseline — same FCP as `/`, same ceiling
+          fcp: 1300, // 0.92s runner median, 0.94s worst (was 1800)
           cls: 0.1, // 0.000 measured; hold Google's "good" boundary
           tbt: 600, // 34-42ms measured; CPU-noise room, not a real limit
           // RATCHETED 2026-09-24: 183 kB script / 283 kB total measured. The
@@ -275,8 +302,8 @@ module.exports = {
         route({
           // Anchored so it does NOT also match /stories itself.
           matchingUrlPattern: '^http://localhost:3000/stories/.+',
-          lcp: 3900, // 2.38s median, 2.81s worst run
-          fcp: 2000, // 1.03s median, 1.22s worst run
+          lcp: 3800, // 2.38s runner median, 2.96s worst (was 3900)
+          fcp: 1400, // 1.00s runner median, 1.01s worst (was 2000)
           cls: 0.1, // 0.000 measured
           tbt: 600, // 47-53ms measured
           scriptKb: 215, // 183 kB measured 2026-09-24 (was 223), +17% — see /stories
@@ -301,11 +328,13 @@ module.exports = {
         // N1's list is ~12x N5's: budget it on its own when it gets a page.
         route({
           matchingUrlPattern: '^http://localhost:3000/kanji/n[1-5]$',
-          lcp: 4100, // 2.89s measured, ~1.4x
-          fcp: 1800, // 1.08s measured
+          lcp: 3100, // 2.17s runner median, 2.26s worst (was 4100)
+          fcp: 1500, // 1.03s runner median, 1.06s worst (was 1800)
           cls: 0.1, // 0.000 measured
           tbt: 600, // 59ms measured
-          scriptKb: 225, // 192 kB measured, +17%
+          // RATCHETED 2026-10-10: 186 kB measured, on CI and locally (was 225
+          // for 192 kB; the 6 kB it lost left the ceiling at +21%).
+          scriptKb: 215, // 186 kB measured, +15%
           totalKb: 310, // 270 kB measured, +15%
           perfScore: 0.85, // 0.94 measured
         }),
@@ -315,8 +344,8 @@ module.exports = {
         // server HTML is a setup form, not 82 entries.
         route({
           matchingUrlPattern: '^http://localhost:3000/kanji/n[1-5]/quiz$',
-          lcp: 3500, // 2.45s measured, ~1.4x
-          fcp: 1800, // 0.93s measured
+          lcp: 3300, // 2.15s runner median, 2.61s worst (was 3500)
+          fcp: 1300, // 0.92s runner median, 0.92s worst (was 1800)
           cls: 0.1, // 0.000 measured
           tbt: 600, // 38ms measured
           scriptKb: 235, // 199 kB measured, +17%
@@ -329,12 +358,19 @@ module.exports = {
           // it would also hold the level lists (/kanji/n5) to this template's
           // budget on top of their own.
           matchingUrlPattern: '^http://localhost:3000/kanji/%',
-          lcp: 4500, // 2.87-3.30s baseline (noisy, post-hydration LCP element)
-          fcp: 1800, // ~0.92s baseline
+          lcp: 3300, // 2.35s runner median, 2.49s worst (was 4500)
+          fcp: 1400, // 0.96s runner median, 1.00s worst (was 1800)
           cls: 0.1, // 0.026 baseline
           tbt: 600, // 9-51ms median, 116ms worst single run
-          scriptKb: 260, // 228 kB baseline, +14%
-          totalKb: 440, // 363 kB baseline, +21%
+          // RATCHETED 2026-10-10: 188 kB script / 269 kB total measured locally,
+          // down from 248 / 391. The "Kanji Dictionary" breadcrumb prefetched
+          // /kanji, so every character page pulled the dictionary's 61 kB
+          // payload and ~60 kB of its script; it is prefetch={false} now. The
+          // total is budgeted from 278 kB, CI's figure: the runner also loads
+          // the first example-sentence card's Tan sticker (~9 kB, right at the
+          // edge of the lazy-load window), which the laptop does not.
+          scriptKb: 215, // 188 kB measured, +15%
+          totalKb: 320, // 278 kB expected on CI (269 local + the sticker), +15%
           perfScore: 0.85,
         }),
       ],

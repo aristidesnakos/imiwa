@@ -412,7 +412,10 @@ export default async function KanjiDetailPage({ params }: Props) {
             </li>
             <li aria-hidden className="text-japan-sakura-waters">/</li>
             <li>
-              <Link href="/kanji" className={CRUMB_LINK}>
+              {/* prefetch={false}: /kanji carries the whole dictionary, and
+                  prefetching it from this crumb put ~67 kB (its 61 kB payload
+                  plus its page script) into every character page's transfer. */}
+              <Link href="/kanji" prefetch={false} className={CRUMB_LINK}>
                 Kanji Dictionary
               </Link>
             </li>
