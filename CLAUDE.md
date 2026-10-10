@@ -35,6 +35,7 @@ the closest thing to "running a single test":
 ```bash
 pnpm validate:schema         # structured data / JSON-LD across page types
 pnpm validate:kanji-data     # the level lists: no duplicates, one code point, readings present
+pnpm validate:sheets         # printable sheets: default documents byte-identical to golden fixtures
 pnpm validate:search         # /kanji search: romaji, both kana scripts, meanings; nothing old lost
 pnpm validate:romaji         # kana->Hepburn rules + a leakage sweep over every reading
 pnpm validate:sentences      # published example sentences against lib/sentences/types.ts

@@ -50,6 +50,12 @@ on:
       - 'lib/seo/kanji-optimization.ts'
       - 'scripts/validate-romaji.ts'
       - 'scripts/validate-kanji-data.ts'
+      # The printable sheets render this data; the default documents are held
+      # byte for byte to golden fixtures.
+      - 'lib/sheets/**'
+      - 'app/api/kanji-sheets/**'
+      - 'scripts/validate-sheets.ts'
+      - 'scripts/fixtures/sheets/**'
       - '.github/workflows/kanji-data-check.yml'
   # Catch anything reaching main through a route other than a PR.
   push:
@@ -68,6 +74,10 @@ on:
       - 'lib/seo/kanji-optimization.ts'
       - 'scripts/validate-romaji.ts'
       - 'scripts/validate-kanji-data.ts'
+      - 'lib/sheets/**'
+      - 'app/api/kanji-sheets/**'
+      - 'scripts/validate-sheets.ts'
+      - 'scripts/fixtures/sheets/**'
       - '.github/workflows/kanji-data-check.yml'
   workflow_dispatch:
 
@@ -123,3 +133,9 @@ jobs:
       # "No kanji found", which looks like a character the dictionary lacks.
       - name: Validate the /kanji search
         run: pnpm validate:search
+
+      # The printable sheets, offline: the default one-sheet and several-sheet
+      # documents byte for byte against golden fixtures (the PDF packs and the
+      # CDN's cached copies depend on them). No network, so no `--live` here.
+      - name: Validate the printable sheets
+        run: pnpm validate:sheets
