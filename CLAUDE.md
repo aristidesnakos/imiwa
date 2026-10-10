@@ -220,9 +220,10 @@ lookup, the KanjiVG fetch (through `fetchKanjiVgSource`, so the diagram routes s
 Cache) and the cache headers; the HTML is pure functions in `lib/sheets/render.ts`, the parameter
 rules in `lib/sheets/request.ts`, the page arithmetic in `lib/sheets/layout.ts`. Three rules:
 
-- **The default documents never change.** A request without `layout`/`rows`, for one character or
-  several, is byte-identical to what it always was: the PDF packs are printed from it and the CDN
-  caches it. `pnpm validate:sheets` holds both to golden fixtures; `--live[=<base>]` compares a
+- **The default documents change only on purpose.** A request without `layout`/`rows`/`grid`, for
+  one character or several, is held byte for byte to golden fixtures by `pnpm validate:sheets`:
+  the CDN caches it and people print it. Re-record the fixtures only for a deliberate change (the
+  last, b90d807 on 2026-10-10, fitted the sheet on one A4 page). `--live[=<base>]` compares a
   deployment against this code with the real KanjiVG files.
 - **The API is strict.** Malformed parameters are a 400 naming the parameter, an unknown character
   is refused with its code point, over a cap is refused, never truncated. Cleaning input is the
