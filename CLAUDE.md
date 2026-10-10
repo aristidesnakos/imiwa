@@ -124,7 +124,7 @@ different mechanisms implement that rule: the detail page concatenates N5→N1 a
 `.find` match, while `KANJI_MAP` in `app/api/kanji-sheets/route.ts` and `ReviewClient.tsx` inserts
 N1→N5 so N5 overwrites. Any new lookup must land on the same answer.
 
-Six call sites merge the five lists this way, three different ways, and `app/sitemap.xml/route.ts`
+Seven call sites merge the five lists this way, three different ways, and `app/sitemap.xml/route.ts`
 concatenates with no dedup at all. They agree only because the data is clean, so
 `pnpm validate:kanji-data` is what keeps them agreeing: it asserts no character appears twice within
 or across the lists, that every `kanji` field is exactly one code point, and that every entry has a
@@ -203,6 +203,14 @@ romaji, via each reading's `searchKeys`. Exact matches rank first. Until 2026-09
 the raw fields by substring, so "mizu" found nothing, すい missed every onyomi stored in katakana,
 and たべる missed 食 behind its `た（べる）` annotation. `validate:search` sweeps all three across every
 kanji and also asserts that nothing the old predicate found stopped matching.
+
+The homepage search (since 2026-10-10) ranks with the same code but runs it **on the server**:
+`components/home/KanjiLookup.tsx` asks `/api/kanji-lookup` as you type, and its plain GET form
+submits to `/search`, which redirects to the one kanji that outranks every other hit or to
+`/kanji?search=`. Both go through `lib/kanji-lookup.ts`, which imports all five lists, so **never
+import it from a client component**: that is the dictionary in the homepage bundle, the reason `/kanji`
+is heavy. Nothing else on `/` links to a character page or to `/kanji?search=`, so a pageview of
+either right after `/` is a search; there is deliberately no goal for it.
 
 ### No server-side user state
 

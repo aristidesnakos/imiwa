@@ -160,8 +160,18 @@ function rankOf(k: SearchableKanji, q: Query): number | null {
  * rank in `list`'s own order. A blank query returns `list` itself.
  */
 export function searchKanji<T extends SearchableKanji>(list: T[], query: string): T[] {
+  if (!parseQuery(query)) return list;
+  return rankKanji(list, query).map(hit => hit.item);
+}
+
+/**
+ * `searchKanji` with each hit's rank kept, for a caller that has to decide
+ * whether one kanji clearly won (the homepage search jumps straight to it).
+ * A blank query finds nothing.
+ */
+export function rankKanji<T extends SearchableKanji>(list: T[], query: string): { item: T; rank: number }[] {
   const q = parseQuery(query);
-  if (!q) return list;
+  if (!q) return [];
 
   const hits: { item: T; rank: number; order: number }[] = [];
   list.forEach((item, position) => {
@@ -173,5 +183,5 @@ export function searchKanji<T extends SearchableKanji>(list: T[], query: string)
   });
 
   hits.sort((a, b) => a.rank - b.rank || a.order - b.order);
-  return hits.map(hit => hit.item);
+  return hits.map(({ item, rank }) => ({ item, rank }));
 }

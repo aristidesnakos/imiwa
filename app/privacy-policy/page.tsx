@@ -52,6 +52,10 @@ export const metadata = getSEOTags({
  *    list. If the facade ever loads the player or the thumbnail earlier, or a
  *    second embed appears, this bullet and the Google entry under "Who handles
  *    data for us" are wrong.
+ *  - The homepage search asks /api/kanji-lookup as you type and submits to
+ *    /search, so the query is in the request URL and Vercel's logs; neither
+ *    route stores it (lib/kanji-lookup.ts). The /kanji search runs in the
+ *    browser and sends nothing.
  *  - There is no advertising form. /advertise and /api/advertise were removed
  *    on 2026-09-28, which is when the advertiser data this policy used to list
  *    (company, website, budget) stopped being collected.
@@ -60,7 +64,7 @@ export const metadata = getSEOTags({
  * same definition the email footer renders, so the two cannot disagree.
  */
 
-const LAST_UPDATED = "September 30, 2026";
+const LAST_UPDATED = "October 10, 2026";
 
 const H2 = "mb-3 text-xl font-semibold text-japan-deep-ocean";
 const H3 = "mb-2 mt-6 text-base font-semibold text-japan-deep-ocean";
@@ -140,7 +144,9 @@ export default function PrivacyPolicy() {
             </li>
             <li>
               <strong>Server logs (Vercel).</strong> Our host records requests, including IP address and
-              browser, to run and secure the site. Our sign-up and feedback forms also hold your
+              browser, to run and secure the site. The search box on our homepage sends what you type
+              to our server to find matching kanji, so a search appears in these logs too; we keep no
+              other record of it. Our sign-up and feedback forms also hold your
               IP address in memory for ten minutes, to limit repeated submissions. Legal basis: our
               legitimate interests.
             </li>

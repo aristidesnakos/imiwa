@@ -1,109 +1,31 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import Header from "@/components/sections/Header";
-import { Button } from '@/components/ui/button';
-import { N5_KANJI } from '@/lib/constants/n5-kanji';
-import { N4_KANJI } from '@/lib/constants/n4-kanji';
-import { N3_KANJI } from '@/lib/constants/n3-kanji';
-import { N2_KANJI } from '@/lib/constants/n2-kanji';
-import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { JLPT_LEVELS, LEVEL_LABELS, levelHref, type JlptLevel } from '@/lib/levels';
-import { ArrowRight, PenLine, Search, Sparkles } from 'lucide-react';
-import type { ConversionEvent } from '@/lib/analytics';
-import EmailCapture from '@/components/EmailCapture';
-import { TrackedLink } from '@/components/home/TrackedLink';
+import Header from '@/components/sections/Header';
+import { HomeHero } from '@/components/home/HomeHero';
+import { KanjiLookup } from '@/components/home/KanjiLookup';
+import { LevelPills } from '@/components/home/search-field';
+import { StartDoors } from '@/components/home/StartDoors';
+import { NewsletterBand } from '@/components/home/NewsletterBand';
+import { ALL_KANJI_COUNT, LEVEL_COUNTS } from '@/components/home/level-counts';
 
-// A server component, and keeping it one is the point. It used to be a client
-// component, which put all five level lists in the homepage's own bundle to
-// render five counts and ten cards: 194 kB of First Load JS, against 142 kB
-// now. The lists are read here, at build time, and only the numbers and those
-// ten entries reach the browser. The parts that need the browser are islands:
-// TrackedLink for the two goal-tracked links, EmailCapture for the form, and
-// the Header.
+// Search first, since 2026-10-10. The old page opened on a tagline and two
+// buttons, then feature cards, level cards, ten popular kanji and a closing
+// call to action. About two in three homepage visitors left without a second
+// page (65.8% bounce, Sep 10 - Oct 9, China excluded), half never scrolled past
+// the hero, and only 14% clicked through. Most of them arrive from Google
+// wanting one character ("michi kanji", "kanji stroke order"), so the hero is
+// now the search, with Tan pointing at it, and three doors below it for the
+// visitor who has nothing to type.
 //
-// The lists do still reach a phone one way, and it is not this file's doing:
-// the hero links to /kanji, Next prefetches it, and /kanji's client bundle
-// carries all five. Lighthouse counts that prefetch against this page's script
-// budget, so the saving shows up there only when /kanji stops shipping them.
-
-const LEVEL_COUNTS: Record<JlptLevel, number> = {
-  N5: N5_KANJI.length,
-  N4: N4_KANJI.length,
-  N3: N3_KANJI.length,
-  N2: N2_KANJI.length,
-  N1: N1_KANJI.length,
-};
-
-const ALL_KANJI_COUNT = JLPT_LEVELS.reduce((sum, level) => sum + LEVEL_COUNTS[level], 0);
-
-// 'en-US', not the default locale. This renders once, on whatever machine runs
-// the build, and the page is in English whatever that machine's locale is.
-const formatCount = (count: number) => count.toLocaleString('en-US');
-
-const POPULAR_KANJI = N5_KANJI.slice(0, 10);
-
-// Both "explore" links fire this one goal and are told apart by `source`. The
-// name and both sources predate the move to the server: renaming any of them
-// strands its history in DataFast.
-function exploreGoal(source: 'homepage_hero' | 'homepage_footer_cta'): ConversionEvent {
-  return {
-    name: 'explore_all_kanji_clicked',
-    properties: { kanji_count: ALL_KANJI_COUNT, source },
-  };
-}
-
-const FEATURES = [
-  {
-    icon: PenLine,
-    title: 'Animated stroke order',
-    body: 'Watch each character drawn stroke by stroke with KanjiVG diagrams, then practice the correct way to write it.',
-    accent: 'var(--coral-sunset)',
-  },
-  {
-    icon: Search,
-    title: 'Readings & instant search',
-    body: 'Find any kanji by character, meaning, or reading in kana or romaji — with all readings and meanings on every card.',
-    accent: 'var(--sakura-waters)',
-  },
-];
-
-// Each badge is 18px-bold text on a solid fill. 18px bold is 13.5pt, which
-// misses the 14pt-bold large-text threshold by 0.67pt, so every badge owes the
-// full 4.5:1 rather than 3:1 — an easy one to mis-assess. No one label colour
-// clears that on all five fills: cherry blossom and sakura waters are too light
-// to carry a light label (white was 1.88:1 and 2.27:1 on them), so they take
-// deep ocean, and the dark fills take temple stone.
+// Measured by pageviews, not goals: nothing else on this page links to a
+// character page or to /kanji?search=, so a visit from / to either one is a
+// search, and the doors' destinations are pages of their own.
 //
-//   N5  temple stone on coral-sunset ink    4.75:1
-//   N4  deep ocean on cherry blossom        6.46:1
-//   N3  deep ocean on sakura waters         5.33:1
-//   N2  temple stone on mountain mist       6.53:1
-//   N1  temple stone on deep ocean         11.44:1
-const LEVEL_BADGE: Record<JlptLevel, string> = {
-  N5: 'bg-japan-coral-sunset-ink text-japan-temple-stone',
-  N4: 'bg-japan-cherry-blossom text-japan-deep-ocean',
-  N3: 'bg-japan-sakura-waters text-japan-deep-ocean',
-  N2: 'bg-japan-mountain-mist text-japan-temple-stone',
-  N1: 'bg-japan-deep-ocean text-japan-temple-stone',
-};
-
-// The cards use lib/levels' labels, except where one cannot fit. At the
-// two-column phone width a card has about 120px for its 12px label line, and
-// "kanji · Upper-intermediate" wraps, breaking at its own hyphen. The short
-// form is for the eye only: a screen reader still hears the full label.
-const CARD_SHORT_LABELS: Partial<Record<JlptLevel, string>> = { N2: 'Upper-int.' };
-
-const LEVELS = JLPT_LEVELS.map((level) => ({
-  level,
-  count: LEVEL_COUNTS[level],
-  label: LEVEL_LABELS[level],
-  shortLabel: CARD_SHORT_LABELS[level],
-  badge: LEVEL_BADGE[level],
-  // The level's list page where it has one, otherwise /kanji filtered to it.
-  // Every card used to point at /kanji#level-N5 and so on: an anchor inside a
-  // closed <details>, which left the visitor mid-grid on the All tab.
-  href: levelHref(level),
-}));
+// A server component, and keeping it one is the point. The level lists are
+// read at build time and only the counts reach the browser. The parts that
+// need the browser are islands: the search, the signup form and the Header.
+// The search asks the server for matches (lib/kanji-lookup.ts), so the
+// dictionary never reaches this page. Every link here is `prefetch={false}`:
+// a prefetched /kanji would put the whole dictionary into this page's
+// Lighthouse byte budget.
 
 export default function LandingPage() {
   return (
@@ -111,317 +33,14 @@ export default function LandingPage() {
       <Header />
 
       <main id="main-content" tabIndex={-1} className="min-h-screen">
-        {/* Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-japan-soft-mist via-background to-background pt-14 pb-20 md:pt-20 md:pb-28">
-          {/* Soft mountain horizon. It was written as an opacity modifier
-              on the token, which compiles to nothing (see "Design tokens" in
-              CLAUDE.md), so until this color-mix it had never rendered. Mixed
-              toward transparent, not temple stone: it is a haze over the
-              hero's own gradient, not a surface. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[color-mix(in_srgb,var(--sakura-waters)_15%,transparent)] to-transparent" />
+        <HomeHero kanjiCount={ALL_KANJI_COUNT} search={<KanjiLookup />}>
+          <LevelPills counts={LEVEL_COUNTS} className="mt-6" />
+        </HomeHero>
 
-          <div className="relative z-10 container mx-auto px-4">
-            <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-              <Image
-                src="/assets/tan-wave.png"
-                alt="Tan the tanuki mascot waving hello"
-                width={220}
-                height={220}
-                className="w-28 md:w-40 drop-shadow-md"
-                priority
-              />
+        <StartDoors n5Count={LEVEL_COUNTS.N5} />
 
-              <span className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[color:color-mix(in_srgb,var(--sakura-waters)_40%,var(--temple-stone))] bg-background/70 px-3.5 py-1.5 text-xs font-medium text-japan-mountain-mist backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5 text-japan-coral-sunset" />
-                Free · No account needed · {formatCount(ALL_KANJI_COUNT)} kanji
-              </span>
-
-              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-japan-deep-ocean md:text-6xl">
-                Learn Japanese Kanji
-              </h1>
-              <p className="mt-4 max-w-2xl text-lg text-japan-mountain-mist md:text-xl">
-                From N5 to N1 — learn to read and write every character on the JLPT.
-              </p>
-
-              <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button asChild size="lg" className="w-full sm:w-auto">
-                  <TrackedLink href="/kanji" conversion={exploreGoal('homepage_hero')}>
-                    Explore all {formatCount(ALL_KANJI_COUNT)} kanji
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </TrackedLink>
-                </Button>
-                {/* `border-[color:...]` for the tint: the outline variant's own
-                    border-input is dropped by tailwind-merge in favour of it, so
-                    while this was an opacity modifier the button drew
-                    preflight's stock grey. */}
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="w-full border-[color:color-mix(in_srgb,var(--sakura-waters)_40%,var(--temple-stone))] text-japan-deep-ocean hover:bg-japan-soft-mist sm:w-auto"
-                >
-                  <Link href={levelHref('N5')}>Start with N5 basics</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="border-t border-japan-sakura-waters/10 bg-background py-16 md:py-20">
-          <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
-                Everything you need to read and write kanji
-              </h2>
-              <p className="mt-3 text-japan-mountain-mist">
-                A focused, distraction-free way to build real kanji fluency.
-              </p>
-            </div>
-
-            <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
-              {FEATURES.map((f) => (
-                <div
-                  key={f.title}
-                  className="rounded-2xl border border-japan-sakura-waters/20 bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-                >
-                  <div
-                    className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
-                    style={{ backgroundColor: `color-mix(in srgb, ${f.accent} 15%, transparent)`, color: f.accent }}
-                  >
-                    <f.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-japan-deep-ocean">{f.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-japan-mountain-mist">{f.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* JLPT Levels */}
-        <section className="bg-[color-mix(in_srgb,var(--soft-mist)_60%,var(--temple-stone))] py-16 md:py-20">
-          <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
-                Study by JLPT level
-              </h2>
-              <p className="mt-3 text-japan-mountain-mist">
-                Start at N5 and work your way up to N1 — one level at a time.
-              </p>
-            </div>
-
-            <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-5">
-              {LEVELS.map((lvl) => (
-                <Link
-                  key={lvl.level}
-                  href={lvl.href}
-                  className="group flex flex-col items-center rounded-2xl border border-[color:color-mix(in_srgb,var(--sakura-waters)_20%,var(--temple-stone))] bg-card p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-                >
-                  <span
-                    className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold ${lvl.badge}`}
-                  >
-                    {lvl.level}
-                  </span>
-                  <span className="mt-3 text-2xl font-bold text-japan-deep-ocean">
-                    {formatCount(lvl.count)}
-                  </span>
-                  <span className="text-xs text-japan-mountain-mist">
-                    kanji · {lvl.shortLabel ? (
-                      <>
-                        <span aria-hidden="true">{lvl.shortLabel}</span>
-                        <span className="sr-only">{lvl.label}</span>
-                      </>
-                    ) : (
-                      lvl.label
-                    )}
-                  </span>
-                  {/* Mountain mist, not sakura waters: this is 12px text, and
-                      sakura waters is 2.15:1 on the card. Mountain mist is
-                      6.53:1. */}
-                  <span className="mt-2 inline-flex items-center text-xs font-medium text-japan-mountain-mist opacity-0 transition-opacity group-hover:opacity-100">
-                    Browse <ArrowRight className="ml-1 h-3 w-3" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Popular Kanji */}
-        <section className="bg-background py-16 md:py-20">
-          <div className="container mx-auto px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <h2 className="text-2xl font-bold text-japan-deep-ocean md:text-3xl">
-                Popular JLPT kanji
-              </h2>
-              <p className="mt-3 text-japan-mountain-mist">
-                Start with these fundamental characters from the N5 level.
-              </p>
-            </div>
-
-            <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-              {POPULAR_KANJI.map((kanji) => (
-                <Link
-                  key={kanji.kanji}
-                  href={`/kanji/${encodeURIComponent(kanji.kanji)}`}
-                  className="group flex flex-col items-center rounded-2xl border border-[color:color-mix(in_srgb,var(--sakura-waters)_20%,var(--temple-stone))] bg-card p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-japan-sakura-waters hover:shadow-md"
-                >
-                  {/* lang="ja" on the character and its reading: the document
-                      is lang="en", so without it a screen reader hands them to
-                      an English voice. */}
-                  <span
-                    lang="ja"
-                    className="text-4xl text-japan-deep-ocean transition-transform duration-300 group-hover:scale-110 md:text-5xl"
-                  >
-                    {kanji.kanji}
-                  </span>
-                  <span className="mt-3 text-sm font-medium capitalize text-japan-deep-ocean">
-                    {kanji.meaning.split(',')[0]}
-                  </span>
-                  <span lang="ja" className="mt-1 truncate text-xs text-japan-mountain-mist" title={kanji.onyomi}>
-                    {kanji.onyomi}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Weekly story newsletter capture.
-            Homepage first, not /kanji: /kanji has ~9 kB of script headroom left
-            against an error-level budget and has already drifted ~32 kB past its
-            recorded baseline, so it is the assertion that trips first. `/` has
-            ~25 kB. See docs/prd/weekly-story-newsletter.md.
-
-            `title=""` and `description=""`, NOT `{undefined}`: the section's own
-            <h2> and line above already say what this is, and the card's default
-            heading ("Get new study material by email") and blurb only repeated
-            it in vaguer words. EmailCapture renders both only when truthy, but
-            its props have default values, and a default parameter applies to
-            `undefined` — so `{undefined}` rendered the defaults, which is what
-            this page showed until 2026-09-24. An empty string is falsy AND not
-            undefined, so it is the value that actually hides them.
-
-            The band is a real surface, not a wash. `bg-japan-soft-mist/60` drew
-            NOTHING: Tailwind cannot fold an opacity modifier into a colour that
-            is a bare `var(--x)` holding a hex, so it drops the whole utility
-            silently — the same class of failure as the dropped HSL triplets in
-            app/globals.css, and it is why the tints here are `color-mix` on the
-            token rather than `/25`. Verified against compiled CSS, not by
-            reading the class list.
-
-            The gradient ends on the accent so the page cools from warm
-            off-white through this band into the navy closing CTA. The hairline
-            is `border-t` only: the navy edge below is already a hard contrast
-            step, and a light rule on top of it reads as an artifact. */}
-        <section className="border-t border-border bg-gradient-to-b from-japan-soft-mist to-[color-mix(in_srgb,var(--sakura-waters)_25%,var(--temple-stone))] py-16 md:py-20">
-          <div className="container mx-auto px-4">
-            {/* The homepage's one DataFast scroll marker: "saw the signup
-                card", the denominator for this band's `email_signup`. The
-                scroll-depth markers on the features, levels, popular-kanji and
-                closing-CTA headings were removed on 2026-09-28. The question
-                they were built for is answered (1,053 → 575 → 415 → 270 → 158
-                → 15 visitors over 30 days), and they kept spending events
-                after it was.
-
-                The marker is on the HEADING BLOCK, never on the <section>. The
-                DataFast script registers its IntersectionObserver with
-                `threshold: [0, t]` and fires on `isIntersecting`, so it fires
-                the moment the FIRST PIXEL of the observed element enters the
-                viewport — not at the 50% the docs describe. On a full-height
-                section that measures "they left the section above", not "they
-                saw the card". A heading block is short enough that first-pixel
-                and saw-it are the same event.
-
-                The script clears its `fired` flag when the element leaves the
-                viewport, so scrolling back past the heading re-fires the goal.
-                Funnel steps count VISITORS, so read the funnel, not the raw
-                goal counter. */}
-            <div className="mx-auto mb-8 max-w-2xl text-center" data-fast-scroll="home_scroll_newsletter">
-              {/* coral-sunset-INK, never coral-sunset: the fill is 2.7:1 here and
-                  cannot legally carry a label. The ink is 4.70:1 against the top
-                  of the gradient, which this line sits on. See app/globals.css. */}
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-japan-coral-sunset-ink">
-                Free weekly newsletter
-              </p>
-              <h2 className="mt-3 text-balance text-2xl font-bold text-japan-deep-ocean md:text-3xl">
-                A weekly story you can actually read
-              </h2>
-              <p className="mt-3 text-pretty text-japan-mountain-mist">
-                One short story a week, written with beginner (N5) kanji and grammar only.
-              </p>
-            </div>
-
-            <div className="mx-auto max-w-xl">
-              {/* `border-[color:...]`, not `border-[...]`: without the type hint
-                  tailwind-merge reads the arbitrary value as a border-WIDTH and
-                  strips the card's own `border` class, and preflight sets
-                  border-width to 0 — so the card loses its border entirely. */}
-              <EmailCapture
-                source="homepage-weekly-story"
-                title=""
-                description=""
-                cta="Send me the stories"
-                className="border-[color:color-mix(in_srgb,var(--sakura-waters)_55%,var(--temple-stone))] shadow-md"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Closing CTA */}
-        <section className="bg-japan-deep-ocean py-16 md:py-20">
-          <div className="container mx-auto px-4">
-            <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-              <Image
-                src="/assets/tan-thumbsup.png"
-                alt="Tan the tanuki mascot giving a thumbs up"
-                width={160}
-                height={160}
-                className="w-24 md:w-28 drop-shadow-lg"
-              />
-              <h2 className="mt-5 text-2xl font-bold text-japan-temple-stone md:text-3xl">
-                Ready to start writing kanji?
-              </h2>
-              <p className="mt-3 max-w-xl text-japan-sakura-waters">
-                No sign-up, no cost. Start learning today.
-              </p>
-              {/* The label is temple stone, not pure white, which puts it at
-                  4.75:1 on the coral ink — and rules out the brightness-90
-                  hover this button used to have. A filter dims the label along
-                  with the fill, and temple stone under it comes to 4.49:1, just
-                  short of the 4.5:1 a 14px label owes. So the hover darkens the
-                  fill alone, with an opaque mix toward ink black: within a few
-                  points per channel of the fill the filter produced, with the
-                  label at 5.59:1. It is still not an alpha hover (`/90`): alpha
-                  composites against whatever is behind the button, so the same
-                  class darkened on this navy section but LIGHTENED on a
-                  light one.
-
-                  The focus ring is inverted here, and this is the only place on
-                  the site that needs it. The shared ring is deep ocean on a
-                  page-coloured offset, which on THIS navy section renders as an
-                  invisible ring inside a bright near-white halo — the indicator
-                  upside down. */}
-              <Button
-                asChild
-                size="lg"
-                className="mt-8 bg-japan-coral-sunset-ink text-japan-temple-stone hover:bg-[color-mix(in_srgb,var(--coral-sunset-ink)_88%,var(--ink-black))] focus-visible:ring-japan-temple-stone focus-visible:ring-offset-japan-deep-ocean"
-              >
-                <TrackedLink
-                  href="/kanji"
-                  data-fast-goal="home_final_cta_click"
-                  conversion={exploreGoal('homepage_footer_cta')}
-                >
-                  Start learning now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </TrackedLink>
-              </Button>
-            </div>
-          </div>
-        </section>
+        <NewsletterBand />
       </main>
-
     </>
   );
 }
