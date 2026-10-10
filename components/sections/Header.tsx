@@ -59,7 +59,10 @@ const Header = () => {
           <Link href="/" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
             Home
           </Link>
-          <Link href="/kanji" className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
+          {/* prefetch={false}: /kanji carries the whole dictionary (~120 kB with
+              its script), and this header is on every page. Lighthouse emulates
+              a phone, where this nav is hidden, so no budget would catch it. */}
+          <Link href="/kanji" prefetch={false} className="text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium">
             Kanji
           </Link>
           {/* Renders nothing until something has been learned, so it sits next to
@@ -120,7 +123,7 @@ const Header = () => {
                 </Link>
               </SheetClose>
               <SheetClose asChild>
-                <Link href="/kanji" className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]">
+                <Link href="/kanji" prefetch={false} className="py-3 text-japan-deep-ocean hover:text-japan-sakura-waters transition-colors font-medium border-b border-b-[color:color-mix(in_srgb,var(--sakura-waters)_15%,var(--temple-stone))]">
                   Kanji
                 </Link>
               </SheetClose>
