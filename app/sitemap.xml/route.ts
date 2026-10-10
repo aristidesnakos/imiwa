@@ -38,7 +38,10 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   { path: '/stories', lastmod: '2026-09-14', priority: '0.9' },
   { path: '/free-resources', lastmod: '2026-06-14', priority: '0.7' },
   { path: '/free-resources/kana-sheets', lastmod: '2026-01-10', priority: '0.7' },
-  { path: '/free-resources/kanji-sheets', lastmod: '2026-09-24', priority: '0.7' },
+  { path: '/free-resources/kanji-sheets', lastmod: '2026-10-10', priority: '0.7' },
+  // The builder: written for "kanji worksheet generator", a query the hub's
+  // copy deliberately no longer answers.
+  { path: '/free-resources/kanji-sheets/custom', lastmod: '2026-10-10', priority: '0.7' },
   { path: '/free-resources/kanji-sheets/n5-sheets', lastmod: '2026-09-24', priority: '0.7' },
   { path: '/free-resources/kanji-sheets/n4-sheets', lastmod: '2026-01-24', priority: '0.7' },
   { path: '/free-resources/kanji-sheets/n3-sheets', lastmod: '2026-01-24', priority: '0.7' },

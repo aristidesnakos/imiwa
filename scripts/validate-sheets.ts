@@ -19,6 +19,14 @@
  * rendering code before it moved into lib/sheets/render.ts, fed the stub
  * diagrams in stub-kanjivg.ts.
  *
+ * The rows layout (several kanji to a page) has no golden fixture: it is new,
+ * and what matters about it is structural. For every `rows` from 1 to 8, with
+ * 1, 7 and 82 kanji, this asserts that no page holds more than its capacity,
+ * no block splits across pages, every page carries exactly one credit line,
+ * and the page count is the one lib/sheets/layout.ts promises the builder.
+ * Every refusal the route makes is asserted by calling its own handler, and
+ * every split the builder makes is asserted to pass the route's own parser.
+ *
  * `--live` is the check the fixtures cannot make: that the code serving
  * production renders what this code renders. It fetches the sheets for 日 and
  * for 日本人 from a deployment, fetches the same three KanjiVG files from
@@ -30,12 +38,29 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { NextRequest } from 'next/server';
+import { GET } from '../app/api/kanji-sheets/route';
 import type { KanjiWithLevel } from '../lib/constants/kanji-types';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
+import { N4_KANJI } from '../lib/constants/n4-kanji';
+import {
+  DEFAULT_SHEET_OPTIONS,
+  MAX_ROWS,
+  MAX_ROWS_KANJI_PER_REQUEST,
+  MAX_SHEETS_PER_REQUEST,
+  MIN_ROWS,
+  customSheetsHref,
+  isDefaultSheetOptions,
+  kanjiSheetsHref,
+  type SheetOptions,
+} from '../lib/sheets/kanji-sheets';
+import { kanjiPerPage, printChunks, printedPageCount, totalPrintedPages } from '../lib/sheets/layout';
+import { parseCharacters, parseSheetOptions } from '../lib/sheets/request';
 import {
   extractStrokeCount,
   prepareStrokeOrder,
   renderMultiSheetDocument,
+  renderRowsDocument,
   renderSheetDocument,
   type PreparedSheet,
 } from '../lib/sheets/render';
@@ -120,6 +145,193 @@ function validateGoldenFixtures(): void {
   );
 }
 
+/** Count the non-overlapping occurrences of `needle` in `haystack`. */
+function count(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1;
+}
+
+/** Every N5 kanji with a stub diagram; the stroke count does not matter here. */
+const N5_STUB_SHEETS: PreparedSheet[] = N5_KANJI.map((k) =>
+  prepare({ ...k, level: 'N5' }, stubKanjiVgSource(k.kanji, 3))
+);
+
+function validateRowsLayout(): void {
+  section('Rows layout: pagination, blocks, credit lines (rows 1-8 × 1, 7 and 82 kanji)');
+
+  for (let rows = MIN_ROWS; rows <= MAX_ROWS; rows++) {
+    const options: SheetOptions = { layout: 'rows', rows };
+    const capacity = kanjiPerPage(options);
+
+    for (const n of [1, 7, 82]) {
+      const sheets = N5_STUB_SHEETS.slice(0, n);
+      const html = renderRowsDocument(sheets, rows);
+      const label = `rows=${rows}, ${n} kanji`;
+      const problems: string[] = [];
+
+      // Everything after the first page box, split at each page box.
+      const pages = html.split('<div class="page-container rows-page">').slice(1);
+      const expectedPages = printedPageCount(n, options);
+      if (pages.length !== expectedPages) problems.push(`${pages.length} pages, the formula says ${expectedPages}`);
+
+      const kanjiInOrder: string[] = [];
+      pages.forEach((page, i) => {
+        // A page's own markup ends at its closing </div> before the next box;
+        // the last also carries the document end, which holds no block.
+        const blocks = count(page, '<section class="rows-block">');
+        if (blocks > capacity) problems.push(`page ${i + 1} holds ${blocks} blocks, capacity ${capacity}`);
+        if (blocks === 0) problems.push(`page ${i + 1} holds no block`);
+        if (count(page, '</section>') !== blocks) problems.push(`page ${i + 1} opens ${blocks} blocks and closes ${count(page, '</section>')}`);
+        if (count(page, 'class="sheet-credit"') !== 1) problems.push(`page ${i + 1} has ${count(page, 'class="sheet-credit"')} credit lines`);
+        if (i < pages.length - 1 && blocks !== capacity) problems.push(`page ${i + 1} is not full but is not the last`);
+        for (const match of page.matchAll(/<div class="rows-kanji">([^<]*)<\/div>/g)) kanjiInOrder.push(match[1]);
+
+        for (const block of page.split('<section class="rows-block">').slice(1)) {
+          const rowsInBlock = count(block, '<tr>');
+          const squares = count(block, '<td class="grid-cell');
+          const models = count(block, '<td class="grid-cell with-guide"><svg');
+          if (rowsInBlock !== rows || squares !== rows * 10 || models !== rows) {
+            problems.push(`a block has ${rowsInBlock} rows, ${squares} squares, ${models} models`);
+          }
+        }
+      });
+
+      if (kanjiInOrder.join('') !== sheets.map((sh) => sh.kanjiData.kanji).join('')) {
+        problems.push('the kanji are not each printed once, in the order asked for');
+      }
+      if (count(html, '<symbol id="kvg-') !== n) problems.push(`${count(html, '<symbol id="kvg-')} diagram symbols for ${n} kanji`);
+
+      check(problems.length === 0, `${label}: ${pages.length} page${pages.length === 1 ? "" : "s"} of up to ${capacity}`, problems.slice(0, 3).join('; '));
+    }
+  }
+
+  // Credit on every page even when KanjiVG was unreachable for some kanji, and
+  // the block keeps its shape: no symbol, no model, same squares.
+  const degraded = renderRowsDocument(
+    [prepare(n5Entry('日'), null), ...N5_STUB_SHEETS.slice(1, 8)],
+    1
+  );
+  check(
+    count(degraded, '<symbol id="kvg-') === 7 &&
+      count(degraded, '<td class="grid-cell') === 80 &&
+      count(degraded, 'class="sheet-credit"') === printedPageCount(8, { layout: 'rows', rows: 1 }),
+    'a kanji whose diagram is missing keeps its block, without a model'
+  );
+
+  check(
+    renderRowsDocument(N5_STUB_SHEETS.slice(0, 1), 1).includes('stroke numbers enlarged'),
+    'the credit says the stroke numbers were enlarged'
+  );
+}
+
+/** The route's handler, called in-process. Only ever for requests it refuses before fetching. */
+async function routeStatus(query: string): Promise<{ status: number; body: string }> {
+  const response = await GET(new NextRequest(`http://localhost/api/kanji-sheets?${query}`));
+  return { status: response.status, body: await response.text() };
+}
+
+function enc(value: string): string {
+  return encodeURIComponent(value);
+}
+
+async function validateRequests(): Promise<void> {
+  section('Requests: every refusal names its parameter; caps refuse, never truncate');
+
+  const n5 = N5_KANJI.map((k) => k.kanji);
+  const n4 = N4_KANJI.map((k) => k.kanji);
+  const twentyOne = n5.slice(0, MAX_SHEETS_PER_REQUEST + 1).join('');
+  const overRowsCap = [...n5, ...n4].slice(0, MAX_ROWS_KANJI_PER_REQUEST + 1).join('');
+
+  const refusals: { query: string; status: number; message: string }[] = [
+    { query: `characters=${enc('日')}&layout=grid`, status: 400, message: 'Unknown layout "grid": use page or rows' },
+    { query: `characters=${enc('日')}&layout=`, status: 400, message: 'Unknown layout "": use page or rows' },
+    { query: `characters=${enc('日')}&rows=2`, status: 400, message: 'rows only applies with layout=rows' },
+    { query: `characters=${enc('日')}&layout=page&rows=2`, status: 400, message: 'rows only applies with layout=rows' },
+    { query: `character=${enc('日')}&rows=2`, status: 400, message: 'rows only applies with layout=rows' },
+    ...['0', '9', 'two', '2.5', '', ' 2', '02x'].map((rows) => ({
+      query: `characters=${enc('日')}&layout=rows&rows=${enc(rows)}`,
+      status: 400,
+      message: `rows must be a whole number from ${MIN_ROWS} to ${MAX_ROWS}`,
+    })),
+    { query: `characters=${enc(twentyOne)}`, status: 400, message: `Too many kanji: one request prints at most ${MAX_SHEETS_PER_REQUEST} sheets` },
+    { query: `characters=${enc(twentyOne)}&layout=page`, status: 400, message: `Too many kanji: one request prints at most ${MAX_SHEETS_PER_REQUEST} sheets` },
+    {
+      query: `characters=${enc(overRowsCap)}&layout=rows&rows=1`,
+      status: 400,
+      message: `Too many kanji: one request prints at most ${MAX_ROWS_KANJI_PER_REQUEST} kanji with layout=rows`,
+    },
+    { query: `characters=${enc('日住')}&layout=rows`, status: 400, message: '"住" (U+4F4F) is not a kanji in our JLPT N5-N1 dataset' },
+    { query: `characters=${enc('日 本')}&layout=rows`, status: 400, message: '" " (U+0020) is not a kanji in our JLPT N5-N1 dataset' },
+    { query: 'characters=&layout=rows', status: 400, message: 'Missing characters parameter' },
+    { query: `character=${enc('日')}&characters=${enc('本')}&layout=rows`, status: 400, message: 'Pass character or characters, not both' },
+    { query: `character=${enc('住')}&layout=rows`, status: 404, message: 'Kanji "住" is not in our JLPT N5-N1 dataset' },
+    // The default path's own refusals, unchanged.
+    { query: '', status: 400, message: 'Missing character parameter' },
+    { query: `character=${enc('住')}`, status: 404, message: 'Kanji "住" is not in our JLPT N5-N1 dataset' },
+    { query: `characters=${enc('日x')}`, status: 400, message: '"x" (U+0078) is not a kanji in our JLPT N5-N1 dataset' },
+  ];
+
+  for (const { query, status, message } of refusals) {
+    const response = await routeStatus(query);
+    check(
+      response.status === status && response.body === message,
+      `${status} for ?${decodeURIComponent(query).slice(0, 60)}`,
+      `got ${response.status} "${response.body}"`
+    );
+  }
+
+  const lookup = new Map([...N4_KANJI, ...N5_KANJI].map((k) => [k.kanji, k]));
+  const atRowsCap = [...n5, ...n4].slice(0, MAX_ROWS_KANJI_PER_REQUEST).join('');
+  const parsedAtCap = parseCharacters(atRowsCap, lookup, { layout: 'rows', rows: 1 });
+  check(
+    'kanji' in parsedAtCap && parsedAtCap.kanji.length === MAX_ROWS_KANJI_PER_REQUEST,
+    `exactly ${MAX_ROWS_KANJI_PER_REQUEST} kanji with layout=rows is accepted`
+  );
+  const allN5 = parseCharacters(n5.join(''), lookup, { layout: 'rows', rows: 1 });
+  check('kanji' in allN5 && allN5.kanji.length === n5.length, `all ${n5.length} N5 kanji fit one rows request`);
+
+  const explicitDefault = parseSheetOptions(new URLSearchParams('layout=page'));
+  check(
+    !('error' in explicitDefault) && isDefaultSheetOptions(explicitDefault) && isDefaultSheetOptions(DEFAULT_SHEET_OPTIONS),
+    'layout=page is the default document, not a new one'
+  );
+  const rowsDefault = parseSheetOptions(new URLSearchParams('layout=rows'));
+  check(!('error' in rowsDefault) && rowsDefault.rows === 2, 'layout=rows without rows means 2 rows');
+
+  section("The builder's links: never a refusal, never a lost kanji");
+
+  check(
+    customSheetsHref(['日', '本'], DEFAULT_SHEET_OPTIONS) === kanjiSheetsHref(['日', '本']),
+    'a one-page-per-kanji set links to the same URL as a group print (one CDN entry)'
+  );
+  check(
+    customSheetsHref(['日'], { layout: 'rows', rows: 2 }) === `/api/kanji-sheets?characters=${enc('日')}&layout=rows&rows=2`,
+    'a rows link names layout and rows'
+  );
+
+  // The largest sets the builder offers: every level, and the whole dataset.
+  const everything = [...n5, ...n4];
+  for (const options of [DEFAULT_SHEET_OPTIONS, ...Array.from({ length: MAX_ROWS }, (_, i) => ({ layout: 'rows' as const, rows: i + 1 }))]) {
+    const chunks = printChunks(everything, options);
+    const problems: string[] = [];
+    if (chunks.flat().join('') !== everything.join('')) problems.push('the parts do not add up to the set');
+    chunks.forEach((chunk, i) => {
+      const parsed = parseCharacters(chunk.join(''), lookup, options);
+      if ('error' in parsed) problems.push(`part ${i + 1}: ${parsed.error}`);
+      if (i < chunks.length - 1 && printedPageCount(chunk.length, options) * kanjiPerPage(options) !== chunk.length) {
+        problems.push(`part ${i + 1} ends on a part-filled page`);
+      }
+    });
+    if (totalPrintedPages(everything.length, options) !== chunks.reduce((p, c) => p + printedPageCount(c.length, options), 0)) {
+      problems.push('the page total disagrees with the parts');
+    }
+    check(
+      problems.length === 0,
+      `${everything.length} kanji, ${options.layout}${options.layout === 'rows' ? ` rows=${options.rows}` : ''}: ${chunks.length} links, each accepted`,
+      problems.slice(0, 3).join('; ')
+    );
+  }
+}
+
 async function fetchText(url: string): Promise<{ status: number; text: string }> {
   const response = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KanjiApp/1.0)' },
@@ -151,6 +363,8 @@ async function validateLive(base: string): Promise<void> {
 
 async function main(): Promise<void> {
   validateGoldenFixtures();
+  validateRowsLayout();
+  await validateRequests();
 
   const live = process.argv.find((arg) => arg === '--live' || arg.startsWith('--live='));
   if (live) {

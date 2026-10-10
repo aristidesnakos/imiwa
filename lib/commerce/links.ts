@@ -179,6 +179,12 @@ export const N5_LIST_PACK_GOAL = 'n5_list_pack_download';
  *     lookups, the line goes, and the N5 plan's "link it from the kanji pages"
  *     is answered *no*. This is the highest-value number on the list.
  *
+ *   · `custom_book_click` — the sheet builder, `/free-resources/kanji-sheets/custom`
+ *     (added 10 Oct 2026), under its print controls. Someone printing all 82 N5
+ *     kanji one per page is printing a book at home. High → people who build
+ *     their own set also buy a bound one: keep it, and consider the book on
+ *     every print surface. Low → remove it from the builder.
+ *
  *   · `n5_list_book_click` — the N5 list page, `/kanji/n5` (added 24 Sep 2026).
  *     Its visitors are studying the N5 set AS a set, which is exactly what the
  *     book is. High → the list page is the book's natural home, and the same
@@ -221,7 +227,8 @@ export type BookSurface =
   | 'n5List'
   | 'jlptFormat'
   | 'n5Quiz'
-  | 'storyEpisode';
+  | 'storyEpisode'
+  | 'customSheets';
 
 /** Partial, like BOOK_SCROLL_GOALS: a surface with no entry fires no click goal. */
 export const BOOK_CLICK_GOALS: Partial<Record<BookSurface, string>> = {
@@ -233,6 +240,7 @@ export const BOOK_CLICK_GOALS: Partial<Record<BookSurface, string>> = {
   // a click there is a question worth asking apart from the reference pages.
   n5Quiz: 'n5_quiz_book_click',
   storyEpisode: 'story_episode_book_click',
+  customSheets: 'custom_book_click',
 };
 
 /**
@@ -300,6 +308,7 @@ export const BOOK_ATTRIBUTION_TAGS: Record<BookSurface, string> = {
   jlptFormat: '',
   n5Quiz: '',
   storyEpisode: '',
+  customSheets: '',
 };
 
 /**

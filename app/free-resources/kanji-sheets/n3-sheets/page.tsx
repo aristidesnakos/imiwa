@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
+import { CUSTOM_SHEETS_PATH } from '@/lib/sheets/kanji-sheets';
 import Header from '@/components/sections/Header';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { KanjiN5WorkbookCTA } from '@/components/kanji/KanjiN5WorkbookCTA';
@@ -65,6 +67,16 @@ export default function N3KanjiSheetsPage() {
           </h1>
           <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
             Generate printable practice sheets for JLPT N3 kanji with stroke order diagrams and practice grids
+          </p>
+          <p className="mt-3 text-japan-mountain-mist">
+            Want several on one page, or a set of your own?{' '}
+            <Link
+              href={CUSTOM_SHEETS_PATH}
+              prefetch={false}
+              className="rounded-sm font-medium text-japan-deep-ocean underline underline-offset-4 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Make your own sheets
+            </Link>
           </p>
         </div>
 

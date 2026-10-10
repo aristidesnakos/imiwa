@@ -213,6 +213,29 @@ import it from a client component**: that is the dictionary in the homepage bund
 is heavy. Nothing else on `/` links to a character page or to `/kanji?search=`, so a pageview of
 either right after `/` is a search; there is deliberately no goal for it.
 
+### Printable sheets (`/api/kanji-sheets`) and the sheet builder
+
+`app/api/kanji-sheets/route.ts` serves the practice sheets as HTML the browser prints. It does the
+lookup, the KanjiVG fetch (through `fetchKanjiVgSource`, so the diagram routes share its Data
+Cache) and the cache headers; the HTML is pure functions in `lib/sheets/render.ts`, the parameter
+rules in `lib/sheets/request.ts`, the page arithmetic in `lib/sheets/layout.ts`. Three rules:
+
+- **The default documents never change.** A request without `layout`/`rows`, for one character or
+  several, is byte-identical to what it always was: the PDF packs are printed from it and the CDN
+  caches it. `pnpm validate:sheets` holds both to golden fixtures; `--live[=<base>]` compares a
+  deployment against this code with the real KanjiVG files.
+- **The API is strict.** Malformed parameters are a 400 naming the parameter, an unknown character
+  is refused with its code point, over a cap is refused, never truncated. Cleaning input is the
+  builder's job.
+- **The server paginates `layout=rows`.** Every block has a fixed height from `ROWS_GEOMETRY`, each
+  page is its own box with the KanjiVG credit at its foot, and `kanjiPerPage` is the one formula
+  the renderer and the builder's page count both use. Change a height there, never in the CSS.
+
+`/free-resources/kanji-sheets/custom` is the builder: a prerendered server page passing each
+level's characters as a string to `components/sheets/SheetBuilder.tsx`. Never import the kanji
+lists into that island. The URL is the set (no storage), and it splits a set over the cap into
+several print links so a visitor never meets a 400.
+
 ### No server-side user state
 
 Everything personal is in `localStorage`: `kanji-progress`, `kanji-srs`, `mk-announcements`,

@@ -210,6 +210,9 @@ const NEXT_STEP_OPENINGS: Partial<Record<BookSurface, { heading: string; lede: s
   },
   n5Quiz: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji in one workbook' },
   jlptFormat: { heading: 'Now learn to write them', lede: 'All 82 N5 kanji in one workbook' },
+  // The sheet builder has no pack above it, and its set may be any kanji at
+  // all, so it asks about the one set the book is.
+  customSheets: { heading: 'Printing all 82 N5 kanji?', lede: 'Get them in one bound workbook' },
 };
 const NEXT_STEP_DEFAULT = {
   heading: 'Rather not print 82 pages?',

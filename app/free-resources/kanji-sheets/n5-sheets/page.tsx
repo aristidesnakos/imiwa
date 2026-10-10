@@ -17,7 +17,7 @@ import { SheetsBreadcrumb, breadcrumbJsonLd, type Crumb } from '@/components/she
 import { sendDayName } from '@/lib/email/send-schedule';
 import { levelPagePath } from '@/lib/levels';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
-import { kanjiSheetHref } from '@/lib/sheets/kanji-sheets';
+import { CUSTOM_SHEETS_PATH, kanjiSheetHref } from '@/lib/sheets/kanji-sheets';
 import { cn } from '@/lib/utils';
 
 /**
@@ -132,6 +132,12 @@ export default function N5KanjiSheetsPage() {
               print a whole group
             </a>{' '}
             of them at once.
+          </p>
+          <p className="mt-3 text-japan-mountain-mist">
+            Want several on one page, or your own list?{' '}
+            <Link href={CUSTOM_SHEETS_PATH} prefetch={false} className={TEXT_LINK}>
+              Make your own sheets
+            </Link>
           </p>
           {listPath && (
             <p className="mt-4">

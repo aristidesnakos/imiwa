@@ -19,6 +19,7 @@ import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { JLPT_LEVELS, LEVEL_LABELS, levelHref, type JlptLevel } from '@/lib/levels';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
+import { CUSTOM_SHEETS_PATH, MAX_ROWS } from '@/lib/sheets/kanji-sheets';
 import { sendDayName } from '@/lib/email/send-schedule';
 import {
   PACK_DESTINATION,
@@ -273,6 +274,29 @@ export default function KanjiSheetsLandingPage() {
               );
             })}
           </ul>
+        </section>
+
+        {/* The builder, straight after the levels: it is for the visitor the
+            level pages do not serve, one with their own list, or who wants
+            several kanji to a page. A plain Link with prefetch off, like the
+            level cards: nothing here needs the builder's payload until clicked. */}
+        <section aria-labelledby="build-heading" className={SECTION_BAND}>
+          <h2 id="build-heading" className={cn(SECTION_HEADING, 'text-japan-deep-ocean')}>
+            Build your own set of practice sheets
+          </h2>
+          <p className="mt-2 max-w-3xl text-japan-mountain-mist">
+            Paste a word list or a lesson&rsquo;s kanji, or add a whole level, and print them as one
+            document: one kanji per page, or several to a page with 1 to {MAX_ROWS} rows of squares
+            each.
+          </p>
+          <Link
+            href={CUSTOM_SHEETS_PATH}
+            prefetch={false}
+            className={cn(buttonVariants({ variant: 'outline' }), 'mt-4')}
+          >
+            Make your own sheets
+            <ArrowRight aria-hidden />
+          </Link>
         </section>
 
         {/* The weekly-story signup, straight after the downloads rather than

@@ -5,15 +5,54 @@ import { N4_KANJI } from '@/lib/constants/n4-kanji';
 import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
-import { MAX_SHEETS_PER_REQUEST } from '@/lib/sheets/kanji-sheets';
+import { fetchKanjiVgSource, kanjiVgHex } from '@/lib/kanjivg';
+import {
+  DEFAULT_SHEET_OPTIONS,
+  isDefaultSheetOptions,
+  type SheetOptions,
+} from '@/lib/sheets/kanji-sheets';
+import { parseCharacters, parseSheetOptions } from '@/lib/sheets/request';
 import {
   extractStrokeCount,
   prepareStrokeOrder,
   renderMultiSheetDocument,
+  renderRowsDocument,
   renderSheetDocument,
   type PreparedSheet,
   type StrokeOrderAsset,
 } from '@/lib/sheets/render';
+
+/**
+ * /api/kanji-sheets — printable kanji practice sheets, as HTML documents the
+ * browser prints or saves as a PDF.
+ *
+ *   ?character=日                   one sheet (the document the PDF packs are
+ *                                   printed from: byte for byte unchanged)
+ *   ?characters=日本人              several sheets, one per page, max 20
+ *   &layout=page                    the default: the two documents above
+ *   &layout=rows&rows=1..8          several kanji per page, `rows` rows of ten
+ *                                   squares each (default 2), max 100 kanji
+ *
+ * A request with none of the layout parameters, or only their defaults, takes
+ * the path it always took: same statuses, same messages, the same bytes,
+ * which pnpm validate:sheets holds to golden fixtures. Everything malformed is
+ * refused with a 400 naming the parameter (lib/sheets/request.ts); over a cap
+ * is refused, never truncated.
+ *
+ * TIMINGS, measured 2026-10-10 against `pnpm build && pnpm start` on Ari's Mac
+ * (not a Vercel function: no cold start in these, and jsDelivr from Europe):
+ *
+ *   82 N5, layout=rows&rows=1        0.56 s with an empty Data Cache, 15 ms warm
+ *   100 N4, layout=rows&rows=1       1.76 s cold, 83 ms warm
+ *   100 N1, layout=rows&rows=8       2.0-2.5 s cold, 37 ms warm; 689 kB of HTML
+ *
+ * Far under the 8 s that would have called for `maxDuration` or a lower cap,
+ * so MAX_ROWS_KANJI_PER_REQUEST stays at 100 and there is no maxDuration. The
+ * largest document is a sixth of the 4.5 MB response limit because each
+ * diagram is written once and referenced (lib/sheets/render.ts). If a cold
+ * production request ever nears 8 s, add `export const maxDuration = 30` as
+ * the stroke-order.svg route does before touching the cap.
+ */
 
 // Built once at module scope: this route is hit on every sheet open, so a
 // ~2000-entry lookup should not be rebuilt per request.
@@ -48,6 +87,15 @@ export async function GET(request: NextRequest) {
   const character = searchParams.get('character');
   const characters = searchParams.get('characters');
 
+  // The layout parameters first, so a malformed one is named whatever else is
+  // wrong. A request naming none of them gets the defaults and no error, and
+  // every branch below then runs exactly as it did before they existed.
+  const options = parseSheetOptions(searchParams);
+  if ('error' in options) {
+    return new NextResponse(options.error, { status: 400 });
+  }
+  const custom = !isDefaultSheetOptions(options);
+
   // `characters` is the several-sheets form. It is branched on first so that a
   // request which does not name it takes exactly the path it always took —
   // same statuses, same messages, byte for byte the same sheet. Naming both is
@@ -56,7 +104,7 @@ export async function GET(request: NextRequest) {
     if (character !== null) {
       return new NextResponse('Pass character or characters, not both', { status: 400 });
     }
-    return multiSheetResponse(characters);
+    return custom ? customSheetsResponse(characters, options) : multiSheetResponse(characters);
   }
 
   if (!character) {
@@ -71,6 +119,11 @@ export async function GET(request: NextRequest) {
       `Kanji "${character}" is not in our JLPT N5-N1 dataset`,
       { status: 404 }
     );
+  }
+
+  // One character in a new layout is a set of one.
+  if (custom) {
+    return customSheetsResponse(character, options);
   }
 
   // Fetch stroke order SVG
@@ -106,15 +159,39 @@ export async function GET(request: NextRequest) {
  * say so.
  */
 async function multiSheetResponse(value: string): Promise<NextResponse> {
-  const parsed = parseCharacters(value);
+  const parsed = parseCharacters(value, KANJI_MAP, DEFAULT_SHEET_OPTIONS);
   if ('error' in parsed) {
     return new NextResponse(parsed.error, { status: 400 });
   }
 
-  // In parallel: at the cap that is twenty KanjiVG fetches, and in series the
-  // document could not start until the last of them had come back.
-  const sheets: PreparedSheet[] = await Promise.all(
-    parsed.kanji.map(async (kanjiData) => {
+  const sheets = await prepareSheets(parsed.kanji);
+  return documentResponse(renderMultiSheetDocument(sheets), sheets);
+}
+
+/**
+ * A set in a non-default layout: today, several kanji to a page. Every
+ * character passes the same lookup and the same refusals as the several-sheets
+ * form, against the cap for the layout asked for.
+ */
+async function customSheetsResponse(value: string, options: SheetOptions): Promise<NextResponse> {
+  const parsed = parseCharacters(value, KANJI_MAP, options);
+  if ('error' in parsed) {
+    return new NextResponse(parsed.error, { status: 400 });
+  }
+
+  const sheets = await prepareSheets(parsed.kanji);
+  return documentResponse(renderRowsDocument(sheets, options.rows), sheets);
+}
+
+/**
+ * Every character's diagram, fetched in parallel: in series the document could
+ * not start until the last of them had come back. At the rows cap that is a
+ * hundred fetches, most of them answered by the Data Cache the diagram routes
+ * share (see fetchKanjiStrokeOrder).
+ */
+function prepareSheets(kanji: readonly KanjiWithLevel[]): Promise<PreparedSheet[]> {
+  return Promise.all(
+    kanji.map(async (kanjiData) => {
       const strokeOrder = await fetchKanjiStrokeOrder(kanjiData.kanji);
       const strokeOrderSvg = strokeOrder?.svg ?? null;
       return {
@@ -125,10 +202,12 @@ async function multiSheetResponse(value: string): Promise<NextResponse> {
       };
     })
   );
+}
 
+/** Cached for a day only if every sheet in it got its diagram. */
+function documentResponse(html: string, sheets: readonly PreparedSheet[]): NextResponse {
   const complete = sheets.every((sheet) => sheet.strokeOrderSvg !== null);
-
-  return new NextResponse(renderMultiSheetDocument(sheets), {
+  return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': complete ? CACHE_COMPLETE_SHEET : CACHE_INCOMPLETE_SHEET,
@@ -137,75 +216,24 @@ async function multiSheetResponse(value: string): Promise<NextResponse> {
 }
 
 /**
- * The `characters` value as an ordered, de-duplicated list of entries — or why
- * it was refused.
+ * One character's diagram, ready for the sheet, or null if KanjiVG could not
+ * be reached (the sheet then prints without it, and is not cached).
  *
- * `for…of` walks a string by code point, never by UTF-16 unit, for the reason
- * `fetchKanjiStrokeOrder` uses codePointAt: split by unit, a character above
- * U+FFFF is two lone surrogates, neither of which is in the data, and a request
- * naming a real kanji would be refused.
- *
- * Nothing is trimmed or normalised. A space, a comma or a variation selector is
- * a code point the data does not contain, so it is refused like any other — the
- * one-character path accepts exactly what KANJI_MAP holds, and so does this.
+ * Through fetchKanjiVgSource, the fetch both diagram routes use, so a file is
+ * one Data Cache entry for a day whichever of them asked first. A 100-kanji
+ * set mostly reads that cache instead of making a hundred trips to jsDelivr.
+ * The hex comes from codePointAt, never charCodeAt (see kanjiVgHex).
  */
-function parseCharacters(value: string): { kanji: KanjiWithLevel[] } | { error: string } {
-  const kanji: KanjiWithLevel[] = [];
-  const seen = new Set<string>();
-
-  for (const char of value) {
-    if (seen.has(char)) continue;
-
-    const entry = KANJI_MAP.get(char);
-    if (!entry) {
-      // The code point as well as the character: the offender is often
-      // invisible (a space, a zero-width joiner) or renders as a box.
-      const codePoint = (char.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0');
-      return { error: `"${char}" (U+${codePoint}) is not a kanji in our JLPT N5-N1 dataset` };
-    }
-
-    seen.add(char);
-    kanji.push(entry);
-
-    if (kanji.length > MAX_SHEETS_PER_REQUEST) {
-      return {
-        error: `Too many kanji: one request prints at most ${MAX_SHEETS_PER_REQUEST} sheets`,
-      };
-    }
-  }
-
-  if (kanji.length === 0) {
-    return { error: 'Missing characters parameter' };
-  }
-
-  return { kanji };
-}
-
-
 async function fetchKanjiStrokeOrder(character: string): Promise<StrokeOrderAsset | null> {
   try {
-    // codePointAt, not charCodeAt: KanjiVG filenames are the full code point, and
-    // charCodeAt would hand back a lone surrogate for anything above U+FFFF —
-    // a filename that cannot exist, so the sheet would silently print without its
-    // stroke-order reference. Every kanji in the N5-N1 dataset is BMP today, so
-    // this is guarding the door before anyone walks through it, not fixing a
-    // sheet that is currently broken.
-    const unicode = character.codePointAt(0) ?? 0;
-    const hex = unicode.toString(16).padStart(5, '0');
-    const response = await fetch(`https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${hex}.svg`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; KanjiApp/1.0)',
-        'Accept': 'image/svg+xml,text/xml,application/xml,*/*',
-      },
-    });
-
-    if (!response.ok) {
+    const source = await fetchKanjiVgSource(kanjiVgHex(character));
+    if (source.svg === null) {
       return null;
     }
 
     // The notice is lifted and the diagram resized in lib/sheets/render.ts,
     // next to the document that has to carry them.
-    return prepareStrokeOrder(await response.text());
+    return prepareStrokeOrder(source.svg);
   } catch (error) {
     console.error(`Failed to fetch stroke order for ${character}:`, error);
     return null;

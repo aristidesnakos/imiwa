@@ -13,7 +13,7 @@ import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { withJapanese } from '@/components/ja-text';
-import { kanjiSheetsHref, MAX_SHEETS_PER_REQUEST } from '@/lib/sheets/kanji-sheets';
+import { CUSTOM_SHEETS_PATH, kanjiSheetsHref, MAX_SHEETS_PER_REQUEST } from '@/lib/sheets/kanji-sheets';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import type { KanjiData } from '@/lib/constants/kanji-types';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
@@ -249,6 +249,14 @@ export default function N5KanjiListPage() {
               </li>
             ))}
           </ol>
+          {/* Next to the group prints, which are one kanji per page: the
+              builder takes any mix of groups and fits several to a page. */}
+          <p className="mt-3 text-sm text-japan-mountain-mist">
+            Each group prints one kanji per page.{' '}
+            <Link href={CUSTOM_SHEETS_PATH} prefetch={false} className={GROUP_ACTION}>
+              Print several to a page, or mix groups
+            </Link>
+          </p>
         </nav>
 
         {GROUPS.map((group, index) => (

@@ -15,6 +15,7 @@
  */
 
 import type { KanjiWithLevel } from '../constants/kanji-types';
+import { ROWS_GEOMETRY, kanjiPerPage, rowsBlockHeightPx } from './layout';
 
 // KanjiVG's copyright notice is an XML comment sitting above the root element
 // of every source file. It is returned separately from the diagram rather than
@@ -126,17 +127,19 @@ export function renderMultiSheetDocument(sheets: PreparedSheet[]): string {
   // so it names the characters rather than just counting them.
   const title = `${sheets.map((sheet) => sheet.kanjiData.kanji).join('')} ${sheetsLabel}`;
 
-  // Every KanjiVG file carries the same notice, and the one-sheet document
-  // already keeps a single copy rather than one per inlined diagram. One copy
-  // of each DISTINCT notice keeps every source's notice intact without printing
-  // the same comment twenty times.
-  const notices = Array.from(
-    new Set(sheets.map((sheet) => sheet.licenceNotice).filter((notice): notice is string => notice !== null))
-  ).join('\n');
-
-  return `${documentStart(title, MULTI_SHEET_STYLES)}${notices}
+  return `${documentStart(title, MULTI_SHEET_STYLES)}${distinctNotices(sheets)}
   <p class="print-hint" lang="en">${sheets.length} ${sheetsLabel.toLowerCase()}, one per printed page. Press Ctrl+P (&#8984;P on a Mac) to print, or choose Save as PDF in the print dialog to keep them all in one file.</p>
 ${sheets.map((sheet) => renderSheet(sheet.kanjiData, sheet.strokeOrderSvg, sheet.strokeCount)).join('')}${DOCUMENT_END}`;
+}
+
+// Every KanjiVG file carries the same notice, and the one-sheet document
+// already keeps a single copy rather than one per inlined diagram. One copy
+// of each DISTINCT notice keeps every source's notice intact without printing
+// the same comment twenty times.
+function distinctNotices(sheets: readonly PreparedSheet[]): string {
+  return Array.from(
+    new Set(sheets.map((sheet) => sheet.licenceNotice).filter((notice): notice is string => notice !== null))
+  ).join('\n');
 }
 
 function documentStart(title: string, extraStyles = ''): string {
@@ -402,3 +405,237 @@ function renderSheet(
 
 const DOCUMENT_END = `</body>
 </html>`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THE ROWS LAYOUT: several kanji to a page
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Each kanji gets a block: a header line (the kanji, its meaning and readings,
+// its level and stroke count, and a small stroke-order diagram with KanjiVG's
+// stroke numbers), then `rows` rows of ten squares with the faded model in the
+// first square of each row. The squares are the one-page sheet's own cells,
+// 10% of the width by 60px, so a learner who knows that sheet knows these.
+//
+// Pages are cut here, not by the print engine: see lib/sheets/layout.ts. Every
+// block and every page box has a fixed height taken from ROWS_GEOMETRY, which
+// is what lets the builder's page count and this document agree.
+//
+// The diagram is written ONCE per kanji, as a <symbol>, and every place that
+// shows it references it with <use>. A 100-kanji document at eight rows would
+// otherwise inline 900 copies of a 2-7 kB file: megabytes of HTML, against a
+// 4.5 MB response limit, for the same drawing over and over.
+
+const ROWS_CREDIT = `Stroke order diagrams from the KanjiVG project (kanjivg.tagaini.net), copyright
+      &copy; 2009&ndash;2011 Ulrich Apel, released under the Creative Commons
+      Attribution-Share Alike 3.0 licence (creativecommons.org/licenses/by-sa/3.0/).
+      The diagrams have been rescaled, their stroke numbers enlarged and, in the
+      practice squares, lightened; those modified diagrams are shared under the
+      same licence.
+      Practice sheet from michikanji.com.`;
+
+function rowsStyles(rows: number): string {
+  const g = ROWS_GEOMETRY;
+  return `
+    /* The rows layout. Every height here comes from ROWS_GEOMETRY in
+       lib/sheets/layout.ts, which is also what decides how many blocks go on a
+       page: change one there, never here. */
+    .rows-block {
+      height: ${rowsBlockHeightPx(rows)}px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .rows-block + .rows-block {
+      margin-top: ${g.blockGapPx}px;
+    }
+
+    /* The one-page sheet's cell, held to exactly its declared 60px. There the
+       first cell's 3px padding is added to the row (Chrome renders those rows
+       66px tall), which is harmless on a page with one grid and would push a
+       stack of them off the page. Here the padding moves onto the diagram, so
+       every row is 60px in every engine and the page arithmetic holds. */
+    .rows-block .grid-cell,
+    .rows-block .grid-cell.with-guide {
+      height: ${g.rowHeightPx}px;
+      padding: 0;
+    }
+
+    .rows-block .grid-cell.with-guide svg {
+      display: block;
+      padding: 3px;
+    }
+
+    .rows-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: ${g.headerHeightPx}px;
+      margin-bottom: ${g.headerGapPx}px;
+      overflow: hidden;
+    }
+
+    .rows-kanji {
+      flex: none;
+      font-size: 52px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .rows-info {
+      flex: 1;
+      min-width: 0;
+      max-height: ${g.headerHeightPx}px;
+      overflow: hidden;
+      font-size: 12px;
+      line-height: 16px;
+      color: #333;
+    }
+
+    .rows-label {
+      font-weight: bold;
+      color: #666;
+      margin-right: 4px;
+    }
+
+    .rows-label + .rows-label,
+    .rows-value + .rows-label {
+      margin-left: 12px;
+    }
+
+    .rows-ref {
+      flex: none;
+      width: ${g.headerHeightPx}px;
+      height: ${g.headerHeightPx}px;
+      border: 1px solid #ccc;
+      padding: 2px;
+    }
+
+    .rows-ref svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .diagram-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    @media print {
+      /* The page box, with the credit pinned to its foot. Print only: on
+         screen the pages run on with the dashed rule between them. */
+      .rows-page {
+        display: flex;
+        flex-direction: column;
+        height: ${g.pageHeightPx}px;
+      }
+
+      .rows-page .sheet-credit {
+        margin-top: auto;
+      }
+    }
+`;
+}
+
+/** The symbol id for a kanji's diagram. One per kanji in the document. */
+function diagramId(character: string): string {
+  return `kvg-${(character.codePointAt(0) ?? 0).toString(16)}`;
+}
+
+/**
+ * KanjiVG's stroke numbers are `font-size:8` in a 109-unit drawing. On the
+ * one-page sheet the reference is 130px across and they read at 9.5px; in a
+ * header line's 70px box they would be 5px, which is not a number anyone can
+ * read off paper. 13 units puts them at about 8px there. The credit line says
+ * they were enlarged, as CC BY-SA 3.0 §3(b) asks of a change.
+ */
+const STROKE_NUMBER_SIZE = 13;
+
+/**
+ * A prepared diagram as a <symbol>: the root's viewBox, its contents, with
+ * the stroke numbers enlarged. Null for a diagram with no root to take apart,
+ * which then prints like a missing one.
+ */
+function diagramSymbol(character: string, svg: string): string | null {
+  const root = /<svg\b([^>]*)>([\s\S]*)<\/svg>\s*$/.exec(svg);
+  if (!root) return null;
+  const viewBox = /\sviewBox="([^"]*)"/.exec(root[1])?.[1] ?? '0 0 109 109';
+  const body = root[2].replace(
+    /(<g id="kvg:StrokeNumbers_[^"]*" style="[^"]*?)font-size:[\d.]+/,
+    `$1font-size:${STROKE_NUMBER_SIZE}`
+  );
+  return `<symbol id="${diagramId(character)}" viewBox="${viewBox}">${body}</symbol>`;
+}
+
+function diagramUse(character: string): string {
+  return `<svg aria-hidden="true"><use href="#${diagramId(character)}"/></svg>`;
+}
+
+function renderRowsBlock(sheet: PreparedSheet, rows: number, hasDiagram: boolean): string {
+  const { kanjiData, strokeCount } = sheet;
+  const model = hasDiagram ? diagramUse(kanjiData.kanji) : '';
+  const facts = [`JLPT ${kanjiData.level}`, strokeCount ? `${strokeCount} ${strokeCount === 1 ? 'stroke' : 'strokes'}` : null]
+    .filter(Boolean)
+    .join(' &middot; ');
+
+  return `    <section class="rows-block">
+      <div class="rows-header">
+        <div class="rows-kanji">${kanjiData.kanji}</div>
+        <div class="rows-info">
+          <div><span class="rows-label">Meaning</span><span class="rows-value">${kanjiData.meaning}</span></div>
+          <div><span class="rows-label">On</span><span class="rows-value">${kanjiData.onyomi}</span><span class="rows-label">Kun</span><span class="rows-value">${kanjiData.kunyomi}</span></div>
+          <div>${facts}</div>
+        </div>
+        <div class="rows-ref">${model}</div>
+      </div>
+      <table class="grid-table">
+        ${Array.from({ length: rows }, () => `<tr>${Array.from({ length: 10 }, (_, col) =>
+          col === 0 ? `<td class="grid-cell with-guide">${model}</td>` : '<td class="grid-cell"></td>'
+        ).join('')}</tr>`).join('\n        ')}
+      </table>
+    </section>
+`;
+}
+
+/**
+ * Several kanji to a printed page: `rows` rows of practice each, paginated by
+ * kanjiPerPage. Same head and stylesheet as every other sheet, so the squares
+ * are the squares people already print.
+ */
+export function renderRowsDocument(sheets: readonly PreparedSheet[], rows: number): string {
+  const characters = sheets.map((sheet) => sheet.kanjiData.kanji);
+  // The title is the file name Save as PDF suggests, and a hundred characters
+  // of it would be cut off mid-set by the file system anyway.
+  const title =
+    characters.length <= 12
+      ? `${characters.join('')} Practice Sheets`
+      : `${characters.slice(0, 10).join('')}… ${characters.length} Kanji Practice Sheets`;
+
+  const symbols = new Map<string, string>();
+  for (const sheet of sheets) {
+    const symbol = sheet.strokeOrderSvg ? diagramSymbol(sheet.kanjiData.kanji, sheet.strokeOrderSvg) : null;
+    if (symbol) symbols.set(sheet.kanjiData.kanji, symbol);
+  }
+
+  const perPage = kanjiPerPage({ layout: 'rows', rows });
+  const pages: PreparedSheet[][] = [];
+  for (let i = 0; i < sheets.length; i += perPage) pages.push(sheets.slice(i, i + perPage));
+
+  const kanjiLabel = sheets.length === 1 ? '1 kanji' : `${sheets.length} kanji`;
+  const rowsLabel = rows === 1 ? '1 row' : `${rows} rows`;
+  const pagesLabel = pages.length === 1 ? '1 printed page' : `${pages.length} printed pages`;
+
+  return `${documentStart(title, MULTI_SHEET_STYLES + rowsStyles(rows))}${distinctNotices(sheets)}
+  <p class="print-hint" lang="en">${kanjiLabel}, ${rowsLabel} of practice each, on ${pagesLabel}. Press Ctrl+P (&#8984;P on a Mac) to print, or choose Save as PDF in the print dialog to keep them all in one file.</p>
+  <svg class="diagram-defs" aria-hidden="true"><defs>
+${Array.from(symbols.values()).join('\n')}
+  </defs></svg>
+${pages.map((page) => `  <div class="page-container rows-page">
+${page.map((sheet) => renderRowsBlock(sheet, rows, symbols.has(sheet.kanjiData.kanji))).join('')}    <p class="sheet-credit">
+      ${ROWS_CREDIT}
+    </p>
+  </div>
+`).join('')}${DOCUMENT_END}`;
+}
