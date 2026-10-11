@@ -36,6 +36,10 @@ const DATA = buildPlayData();
 const KANJI_COUNT = DATA.kanji.length;
 const WORLD_COUNT = DATA.worlds.length;
 const EPISODE_WORLDS = episodeWorldCount(DATA);
+// Every run starts in world 1 (lib/play/engine.ts), so the last world's kanji
+// first appear after this many correct catches in one run. The copy says so
+// rather than implying a short run reaches every world.
+const LAST_WORLD_CATCHES = (WORLD_COUNT - 1) * CATCHES_PER_WORLD;
 const SIGN_WORD = new Map(DATA.kanji.map(k => [k.c, k.en]));
 
 const TITLE = `Tan Dash: Free Kanji Game for JLPT N5 Beginners (${KANJI_COUNT} Kanji)`;
@@ -187,8 +191,8 @@ export default function PlayPage() {
           </h2>
           <div className="mt-4 space-y-4 text-japan-ink-black">
             <p>
-              Tan the tanuki does the running. All you do is jump, so one thumb is enough, and a run
-              lasts a minute or two.
+              Tan the tanuki does the running. All you do is jump, so one thumb is enough. Every run
+              starts in world 1 and lasts until your hearts run out.
             </p>
             <ol className="list-decimal space-y-2 pl-5">
               <li>
@@ -252,15 +256,15 @@ export default function PlayPage() {
           </h2>
           <div className="mt-4 space-y-4 text-japan-ink-black">
             <p>
-              Tan Dash has {WORLD_COUNT} worlds. Each adds its kanji to the ones before it, and{' '}
-              {CATCHES_PER_WORLD} correct catches open the next. Worlds 1 to {EPISODE_WORLDS} are the{' '}
-              {EPISODE_WORLDS} episodes of{' '}
+              Tan Dash has {WORLD_COUNT} worlds. Every run starts in world 1, and every{' '}
+              {CATCHES_PER_WORLD} correct catches open the next, adding its kanji to the ones before it,
+              so world {WORLD_COUNT} opens after {LAST_WORLD_CATCHES} correct catches in one run. Worlds 1
+              to {EPISODE_WORLDS} are the {EPISODE_WORLDS} episodes of{' '}
               <Link prefetch={false} href="/stories" className={TEXT_LINK}>
                 The Travels of Tan
               </Link>
-              , our weekly comic written entirely in N5, with the same kanji, so you can read an episode
-              and then play it. The rest are game-only worlds for the N5 kanji the comic has not reached
-              yet.
+              , our weekly comic written entirely in N5, in order: each adds the kanji its episode
+              teaches. The rest are game-only worlds for the N5 kanji the comic has not reached yet.
             </p>
             <p>Every kanji below links to its page, with its stroke order and readings.</p>
           </div>

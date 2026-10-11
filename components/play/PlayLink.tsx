@@ -5,24 +5,35 @@
  * kanji the game asks for: every N5 character page, every episode page, and /kanji/n5.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * THREE VARIANTS, EVERY CLAIM COMPUTED
+ * THREE VARIANTS, EVERY CLAIM COMPUTED, NONE PROMISING SPEED
  * ─────────────────────────────────────────────────────────────────────────────
  *
- *   kanji    "Play Tan Dash: catch 山 and the other N5 kanji in a free one-thumb game."
- *            Only for a kanji the game asks for; any other character renders nothing.
- *   episode  "Play this episode's kanji in Tan Dash, world 3 of 14: a free one-thumb game."
+ *   kanji    "Tan Dash is a free one-thumb game that works through all 82 N5 kanji, world by
+ *            world. 山 is in world 1, where every run starts."
+ *            "... 刀 is in world 14 of 14."
+ *            The world is the one whose kanji include this one. Only for a kanji the game asks
+ *            for; any other character renders nothing.
+ *   episode  "This episode is world 1 of 14 in Tan Dash, a free one-thumb kanji game: every run
+ *            starts with its kanji."
+ *            "This episode is world 8 of 14 in Tan Dash, a free one-thumb kanji game: reach it
+ *            by catching the kanji of worlds 1 to 7."
  *            The world whose `episodeSlug` is this episode, and the number of worlds, both
  *            read from buildPlayData(), so a new episode (which becomes a world on its own,
  *            lib/play/build.ts) moves the total without anyone editing this file. An episode
  *            whose focus kanji were all taught earlier has no world, and renders nothing.
- *   level    "Play Tan Dash: catch all 82 N5 kanji in a free one-thumb game."
+ *   level    "Tan Dash is a free one-thumb game that works through all 82 N5 kanji, world by
+ *            world."
  *            The count is the game's own kanji list, which build.ts refuses to build unless
  *            it is the whole N5 list.
  *
- * The copy lives here once so it cannot drift between surfaces. "World 3 of 14" names the
- * world, it does not open it: the link goes to /play, where every run starts at world 1.
- * The game-only worlds are never named here, because they are not episodes
- * (lib/play/signs.ts, EXTRA_WORLDS).
+ * The copy lives here once so it cannot drift between pages. The email cannot render this
+ * component, so `playLine` in lib/email/quiz-email.ts words the episode line the same way:
+ * change the two together. Every run starts at world 1 and a world opens after
+ * CATCHES_PER_WORLD correct catches in that run (lib/play/rules.ts), so world 14's kanji
+ * first appear after 78 catches. The lines therefore name a world and never invite the
+ * reader to "catch" or "play" a kanji they cannot meet in a short run: only world 1 is
+ * described as somewhere a run reaches at once. The game-only worlds are never named as
+ * episodes, because they are not (lib/play/signs.ts, EXTRA_WORLDS).
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * WHAT IT COSTS
@@ -54,6 +65,17 @@ function playData(): PlayData {
   return cached;
 }
 
+/**
+ * The worlds a run passes through before world `n` (n >= 2): "world 1", "worlds 1 and 2",
+ * "worlds 1 to 7". lib/email/quiz-email.ts keeps a copy rather than importing this file,
+ * which would pull next/link into the broadcast scripts.
+ */
+function worldsBefore(n: number): string {
+  if (n === 2) return 'world 1';
+  if (n === 3) return 'worlds 1 and 2';
+  return `worlds 1 to ${n - 1}`;
+}
+
 type Props = { className?: string } & (
   | { /** The character this page is about. */ kanji: string }
   | { /** The episode this page is. */ episodeSlug: string }
@@ -63,15 +85,21 @@ type Props = { className?: string } & (
 export function PlayLink(props: Props) {
   const data = playData();
   const { className } = props;
+  const total = data.worlds.length;
 
   if ('kanji' in props) {
-    if (!data.kanji.some(k => k.c === props.kanji)) return null;
+    // Every game kanji is in exactly one world (lib/play/types.ts), so no world means
+    // a character the game does not ask for.
+    const world = data.worlds.find(w => w.kanji.includes(props.kanji));
+    if (!world) return null;
     return (
       <p className={className}>
         <Link href={PLAY_PATH} prefetch={false} className={LINK}>
-          Play Tan Dash
-        </Link>
-        : catch <span lang="ja">{props.kanji}</span> and the other N5 kanji in a free one-thumb game.
+          Tan Dash
+        </Link>{' '}
+        is a free one-thumb game that works through all {data.kanji.length} N5 kanji, world by world.{' '}
+        <span lang="ja">{props.kanji}</span> is in world {world.n}
+        {world.n === 1 ? ', where every run starts.' : ` of ${total}.`}
       </p>
     );
   }
@@ -81,10 +109,12 @@ export function PlayLink(props: Props) {
     if (!world) return null;
     return (
       <p className={className}>
+        This episode is world {world.n} of {total} in{' '}
         <Link href={PLAY_PATH} prefetch={false} className={LINK}>
-          Play this episode&rsquo;s kanji in Tan Dash
+          Tan Dash
         </Link>
-        , world {world.n} of {data.worlds.length}: a free one-thumb game.
+        , a free one-thumb kanji game:{' '}
+        {world.n === 1 ? 'every run starts with its kanji.' : `reach it by catching the kanji of ${worldsBefore(world.n)}.`}
       </p>
     );
   }
@@ -92,9 +122,9 @@ export function PlayLink(props: Props) {
   return (
     <p className={className}>
       <Link href={PLAY_PATH} prefetch={false} className={LINK}>
-        Play Tan Dash
-      </Link>
-      : catch all {data.kanji.length} N5 kanji in a free one-thumb game.
+        Tan Dash
+      </Link>{' '}
+      is a free one-thumb game that works through all {data.kanji.length} N5 kanji, world by world.
     </p>
   );
 }

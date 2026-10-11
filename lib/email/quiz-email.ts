@@ -36,13 +36,40 @@ export type { EpisodeEmailKind } from '@/lib/email/utm';
  * six-week test (lib/play/measure.ts) planned one line in each Saturday email,
  * and the welcome card carries it too, because `pnpm validate:subscribe` holds
  * the two sends identical apart from `utm_content`. Names the episode's world
- * when it is one, which every episode is today.
+ * when it is one, which every episode is today, worded as the episode page's
+ * line is (components/play/PlayLink.tsx, whose header says why): every run
+ * starts at world 1, so the line says where the episode is and how a run gets
+ * there, and never invites the reader to play its kanji straight away. The
+ * HTML links the first "Tan Dash" in it, so each wording carries it once.
  */
 function playLine(episode: Episode): string {
-  const world = episodeWorld(episode.slug);
-  return world
-    ? `Play this episode's kanji in Tan Dash, a free one-thumb game: it is world ${world.n} of ${world.total}.`
-    : 'Play the N5 kanji in Tan Dash, a free one-thumb game.';
+  // episodeWorld() builds the play data, and buildPlayData() throws when the N5
+  // list and lib/play/signs.ts disagree. That divergence belongs to the site
+  // build and `pnpm validate:play`, which fail on it. Here it would throw out of
+  // the weekly broadcast job (.github/workflows/weekly-broadcast.yml), which
+  // renders this email to book Saturday's send, and out of the confirm route's
+  // welcome card: one sentence about the game would stop the email. So a failure
+  // costs the world number, never the send.
+  let world: { n: number; total: number } | null = null;
+  try {
+    world = episodeWorld(episode.slug);
+  } catch (error) {
+    console.warn(
+      `quiz-email: no Tan Dash world for ${episode.slug}, sending the generic game line:`,
+      error instanceof Error ? error.message : error,
+    );
+  }
+  if (!world) return 'Tan Dash is a free one-thumb game that works through the N5 kanji, world by world.';
+  return world.n === 1
+    ? `This episode is world 1 of ${world.total} in Tan Dash, a free one-thumb kanji game: every run starts with its kanji.`
+    : `This episode is world ${world.n} of ${world.total} in Tan Dash, a free one-thumb kanji game: reach it by catching the kanji of ${worldsBefore(world.n)}.`;
+}
+
+/** As in components/play/PlayLink.tsx: "world 1", "worlds 1 and 2", "worlds 1 to 7". */
+function worldsBefore(n: number): string {
+  if (n === 2) return 'world 1';
+  if (n === 3) return 'worlds 1 and 2';
+  return `worlds 1 to ${n - 1}`;
 }
 
 /** The sender and postal address as one footer line, or null while none is set. */

@@ -34,9 +34,16 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // the template's date and the items' own stamp (scripts/jlpt/publish-items.ts).
   { path: '/kanji/n5/quiz', lastmod: later('2026-09-24', PUBLISHED_JLPT_UPDATED), priority: '0.7' },
   // Tan Dash, the kanji game: written for "kanji game", a query neither the
-  // quiz nor the list answers. Its date lives beside the page's other
-  // constants (lib/play/seo.ts) rather than here.
-  { path: PLAY_PATH, lastmod: PLAY_CONTENT_LAST_MODIFIED, priority: '0.7' },
+  // quiz nor the list answers. Its own date lives beside the page's other
+  // constants (lib/play/seo.ts). Registering an episode makes it a world
+  // (lib/play/build.ts), which changes the page's worlds section, so the page
+  // changes whenever one is registered: the later of that date and the newest
+  // registered episode's, as the quiz above does with its items.
+  {
+    path: PLAY_PATH,
+    lastmod: EPISODES.reduce((date, episode) => later(date, episode.publishedAt), PLAY_CONTENT_LAST_MODIFIED),
+    priority: '0.7',
+  },
   // The hub, not the episodes: those carry their own publication dates and are
   // emitted below. Priority matches /kanji because it does the same job for a
   // different query class — it is a category page written to rank, not an index.
@@ -57,7 +64,8 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // Who makes the site and where its data comes from. Low priority: it exists
   // to be found when someone asks "who is behind this", not to rank for a query.
   { path: '/about', lastmod: '2026-10-02', priority: '0.5' },
-  { path: '/privacy-policy', lastmod: '2026-09-28', priority: '0.7' },
+  // LAST_UPDATED in app/privacy-policy/page.tsx, as a date: keep the two in step.
+  { path: '/privacy-policy', lastmod: '2026-10-11', priority: '0.7' },
   { path: '/tos', lastmod: '2026-09-29', priority: '0.7' },
 ];
 

@@ -74,6 +74,7 @@ import {
 } from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
 import { PLAY_CONTENT_LAST_MODIFIED, PLAY_OG_IMAGE, PLAY_PATH, PLAY_URL } from '../lib/play/seo';
+import { EPISODES } from '../lib/stories';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -1627,6 +1628,14 @@ function validatePlayPage(kanjiCharSet: Set<string>): void {
   }
 
   // ─ Listed in the sitemap, with its own date ─
+  // Every registered episode is a world on the page (lib/play/build.ts), so the
+  // page changes when one is registered: its date is the later of the page's own
+  // and the newest episode's. Recomputed here rather than imported, so a sitemap
+  // that went back to the bare constant would fail the day an episode outdates it.
+  const expectedLastmod = EPISODES.reduce(
+    (date, episode) => (episode.publishedAt > date ? episode.publishedAt : date),
+    PLAY_CONTENT_LAST_MODIFIED,
+  );
   const sitemapPath = path.join(BUILD_APP_DIR, 'sitemap.xml.body');
   if (fs.existsSync(sitemapPath)) {
     const xml = fs.readFileSync(sitemapPath, 'utf8');
@@ -1634,14 +1643,14 @@ function validatePlayPage(kanjiCharSet: Set<string>): void {
       .map((m) => m[1])
       .find((block) => /<loc>([\s\S]*?)<\/loc>/.exec(block)?.[1].trim() === PLAY_URL);
     const lastmod = entry ? /<lastmod>([\s\S]*?)<\/lastmod>/.exec(entry)?.[1].trim() : undefined;
-    if (!entry || lastmod !== PLAY_CONTENT_LAST_MODIFIED) {
+    if (!entry || lastmod !== expectedLastmod) {
       fail({
         file: relative(sitemapPath),
         schemaType: '(sitemap)',
         field: `<url> for ${PLAY_PATH}`,
-        expected: `<loc>${PLAY_URL}</loc> with <lastmod>${PLAY_CONTENT_LAST_MODIFIED}</lastmod> (PLAY_CONTENT_LAST_MODIFIED)`,
+        expected: `<loc>${PLAY_URL}</loc> with <lastmod>${expectedLastmod}</lastmod> (the later of PLAY_CONTENT_LAST_MODIFIED and the newest episode's publishedAt)`,
         actual: entry ? `lastmod ${JSON.stringify(lastmod)}` : 'no entry',
-        hint: 'app/sitemap.xml/route.ts lists /play from lib/play/seo.ts.',
+        hint: 'app/sitemap.xml/route.ts lists /play from lib/play/seo.ts and lib/stories.',
       });
     }
   }

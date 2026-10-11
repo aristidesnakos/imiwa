@@ -15,9 +15,12 @@ export const PLAY_PATH = '/play';
 export const PLAY_URL = `${SITE_URL}${PLAY_PATH}`;
 
 /**
- * The sitemap `lastmod` for /play. A hand-kept date, like every other entry in
- * app/sitemap.xml/route.ts: bump it when the page's content changes (the copy,
- * the worlds it lists, the game itself), never on a deploy.
+ * When /play's own content last changed. A hand-kept date, like every other
+ * entry in app/sitemap.xml/route.ts: bump it when the page's copy or the game
+ * itself changes, never on a deploy. A newly registered episode moves the
+ * sitemap's date on its own, because it becomes a world on this page: the
+ * sitemap emits the later of this and the newest episode's `publishedAt`, and
+ * `pnpm validate:schema` asserts that.
  *
  * 2026-10-11: the page launched with Tan Dash.
  */
