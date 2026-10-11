@@ -22,6 +22,17 @@ import { EPISODE as EP08 } from '../../data/stories/ep-08';
 export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05, EP06, EP07, EP08];
 
 /**
+ * When the /stories hub's own template last changed. A hand-kept date, like
+ * every other entry in app/sitemap.xml/route.ts: bump it when the hub's copy or
+ * layout changes, never on a deploy. The hub lists every registered episode, so
+ * the sitemap emits the later of this and the newest episode's `publishedAt`,
+ * and `pnpm validate:schema` asserts that.
+ *
+ * 2026-10-09: the prose above the cards came out (app/stories/page.tsx).
+ */
+export const STORIES_HUB_LAST_MODIFIED = '2026-10-09';
+
+/**
  * Episodes written and validated against the N5 list upstream, but still
  * waiting on art. Empty whenever every written episode has been drawn, and the
  * hub then renders nothing for it.

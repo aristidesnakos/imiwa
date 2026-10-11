@@ -5,7 +5,7 @@ import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
 import { strokeOrderImagePath } from '@/lib/stroke-order-image';
-import { EPISODES } from '@/lib/stories';
+import { EPISODES, STORIES_HUB_LAST_MODIFIED } from '@/lib/stories';
 import { PUBLISHED_JLPT_UPDATED } from '@/lib/jlpt/published';
 import { PLAY_PATH, PLAY_CONTENT_LAST_MODIFIED } from '@/lib/play/seo';
 
@@ -47,7 +47,14 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // The hub, not the episodes: those carry their own publication dates and are
   // emitted below. Priority matches /kanji because it does the same job for a
   // different query class — it is a category page written to rank, not an index.
-  { path: '/stories', lastmod: '2026-09-14', priority: '0.9' },
+  // It lists every registered episode, so it changes whenever one is registered:
+  // the later of its template's date (lib/stories) and the newest episode's, as
+  // /play does above.
+  {
+    path: '/stories',
+    lastmod: EPISODES.reduce((date, episode) => later(date, episode.publishedAt), STORIES_HUB_LAST_MODIFIED),
+    priority: '0.9',
+  },
   { path: '/free-resources', lastmod: '2026-10-10', priority: '0.7' },
   // Blank manuscript paper, written for "genkouyoushi paper / pdf / template".
   { path: '/free-resources/genkouyoushi', lastmod: '2026-10-10', priority: '0.7' },

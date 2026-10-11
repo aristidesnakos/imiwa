@@ -74,7 +74,7 @@ import {
 } from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
 import { PLAY_CONTENT_LAST_MODIFIED, PLAY_OG_IMAGE, PLAY_PATH, PLAY_URL } from '../lib/play/seo';
-import { EPISODES } from '../lib/stories';
+import { EPISODES, STORIES_HUB_LAST_MODIFIED } from '../lib/stories';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -1629,32 +1629,45 @@ function validatePlayPage(kanjiCharSet: Set<string>): void {
 
   // ─ Listed in the sitemap, with its own date ─
   // Every registered episode is a world on the page (lib/play/build.ts), so the
-  // page changes when one is registered: its date is the later of the page's own
-  // and the newest episode's. Recomputed here rather than imported, so a sitemap
-  // that went back to the bare constant would fail the day an episode outdates it.
+  // page changes when one is registered.
+  requireEpisodeListingLastmod(
+    PLAY_URL,
+    PLAY_CONTENT_LAST_MODIFIED,
+    'PLAY_CONTENT_LAST_MODIFIED',
+    'app/sitemap.xml/route.ts lists /play from lib/play/seo.ts and lib/stories.',
+  );
+}
+
+/**
+ * A page that lists every registered episode changes whenever one is
+ * registered, so its sitemap <lastmod> must be the later of the page's own date
+ * and the newest episode's `publishedAt`. Recomputed here rather than imported,
+ * so a sitemap that went back to the bare constant would fail the day an
+ * episode outdates it.
+ */
+function requireEpisodeListingLastmod(pageUrl: string, pageDate: string, pageDateName: string, hint: string): void {
   const expectedLastmod = EPISODES.reduce(
     (date, episode) => (episode.publishedAt > date ? episode.publishedAt : date),
-    PLAY_CONTENT_LAST_MODIFIED,
+    pageDate,
   );
   const sitemapPath = path.join(BUILD_APP_DIR, 'sitemap.xml.body');
-  if (fs.existsSync(sitemapPath)) {
-    const xml = fs.readFileSync(sitemapPath, 'utf8');
-    const entry = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
-      .map((m) => m[1])
-      .find((block) => /<loc>([\s\S]*?)<\/loc>/.exec(block)?.[1].trim() === PLAY_URL);
-    const lastmod = entry ? /<lastmod>([\s\S]*?)<\/lastmod>/.exec(entry)?.[1].trim() : undefined;
-    if (!entry || lastmod !== expectedLastmod) {
-      fail({
-        file: relative(sitemapPath),
-        schemaType: '(sitemap)',
-        field: `<url> for ${PLAY_PATH}`,
-        expected: `<loc>${PLAY_URL}</loc> with <lastmod>${expectedLastmod}</lastmod> (the later of PLAY_CONTENT_LAST_MODIFIED and the newest episode's publishedAt)`,
-        actual: entry ? `lastmod ${JSON.stringify(lastmod)}` : 'no entry',
-        hint: 'app/sitemap.xml/route.ts lists /play from lib/play/seo.ts and lib/stories.',
-      });
-    }
-  }
   // (A missing sitemap is reported by validateSitemap.)
+  if (!fs.existsSync(sitemapPath)) return;
+  const xml = fs.readFileSync(sitemapPath, 'utf8');
+  const entry = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
+    .map((m) => m[1])
+    .find((block) => /<loc>([\s\S]*?)<\/loc>/.exec(block)?.[1].trim() === pageUrl);
+  const lastmod = entry ? /<lastmod>([\s\S]*?)<\/lastmod>/.exec(entry)?.[1].trim() : undefined;
+  if (!entry || lastmod !== expectedLastmod) {
+    fail({
+      file: relative(sitemapPath),
+      schemaType: '(sitemap)',
+      field: `<url> for ${pageUrl.slice(SITE_URL.length)}`,
+      expected: `<loc>${pageUrl}</loc> with <lastmod>${expectedLastmod}</lastmod> (the later of ${pageDateName} and the newest episode's publishedAt)`,
+      actual: entry ? `lastmod ${JSON.stringify(lastmod)}` : 'no entry',
+      hint,
+    });
+  }
 }
 
 // ─── Sitemap / robots ────────────────────────────────────────────────────────
@@ -2025,6 +2038,13 @@ function main(): void {
   validatePlayPage(kanjiCharSet);
 
   validateSitemap();
+  // The stories hub lists every registered episode (app/stories/page.tsx).
+  requireEpisodeListingLastmod(
+    `${SITE_URL}/stories`,
+    STORIES_HUB_LAST_MODIFIED,
+    'STORIES_HUB_LAST_MODIFIED',
+    'app/sitemap.xml/route.ts dates /stories from lib/stories.',
+  );
   validateRobots();
 
   const scanned = scanForApexHost(allFiles);
@@ -2045,6 +2065,7 @@ function main(): void {
   console.log('  - Every logo/image URL in JSON-LD resolves to a real file');
   console.log(`  - Every entity URL is on ${SITE_HOST}; apex ${APEX_HOST} absent from the build`);
   console.log('  - FAQPage and BreadcrumbList well-formed; sitemap + robots canonical');
+  console.log('  - /play and /stories sitemap dates move with the newest registered episode');
   console.log('  - Every kanji <url> in the sitemap lists exactly its own stroke-order image');
   console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page');
   console.log('  - Episode videos: a VideoObject and a click-to-load section exactly where data/stories/videos.ts maps one');
