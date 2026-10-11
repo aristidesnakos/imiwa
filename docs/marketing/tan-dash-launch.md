@@ -157,9 +157,9 @@ What you get as a learner:
 
 - A sign asks for a kanji by its English meaning ("mountain"), and from world 3 sometimes by its reading in kana (やま). Tan the tanuki runs; you tap to jump for the right tile and over the wrong ones.
 - The wrong tiles are often look-alikes: 人/入, 日/白, 千/十, 右/左. Matching shapes won't carry you; you have to read.
-- 14 worlds cover all 82 N5 kanji, with six correct catches to open each. Worlds 1-8 follow the episodes of my weekly N5 comic, so you can read an episode and then play its kanji.
+- 14 worlds cover all 82 N5 kanji, with six correct catches to open each. Worlds 1-8 follow the episodes of my weekly N5 comic, in order.
 - At the end, the results screen lists the pairs you mixed up, and every kanji you caught links to its stroke-order page.
-- A run takes a minute or two: one thumb on a phone, or Space on a keyboard. The Chill setting is slower, with five hearts. Your best score, a Kanji-dex of the 82 and a daily streak stay in your browser.
+- One thumb on a phone, or Space on a keyboard. The Chill setting is slower, with five hearts. Your best score, a Kanji-dex of the 82 and a daily streak stay in your browser.
 
 What I'd like feedback on: should the kana-reading signs come earlier than world 3? And did any decoy feel unfair rather than hard?
 
