@@ -68,14 +68,17 @@ async function waitForVisitorId(timeoutMs = 5000, intervalMs = 250): Promise<str
 
 // Query parameters a goal's page_url never carries, matched by name in any case.
 //
-// `token` is the signed signup token on /confirm?token=… (lib/email/subscribe-token.ts).
-// Its payload is base64url JSON, readable without the secret, and it holds the
-// subscriber's email address. Every goal carries page_url, and /api/datafast logs
-// request bodies, so any goal fired on that page (the site-wide announcement bar's, or a
-// return-visit report, which components/ReturnVisitTracker.tsx now skips there) would put
-// the address into DataFast and into the Vercel logs. Stripped here, in the one function
-// that sends goals, so no current or future goal on a tokened URL can leak it. Every
-// other parameter (the UTM tags above all) is kept exactly as it was.
+// `token` is the signup token on /confirm?token=… (lib/email/subscribe-token.ts).
+// Since 2026-10-11 it is sealed (lib/email/sealed-token.ts), so nobody without the
+// secret can read the address in it, but it still confirms that address for whoever
+// holds it. A confirm JWT minted before then is base64url JSON holding the address,
+// readable by anyone, and stays valid for 48h. Every goal carries page_url, and
+// /api/datafast logs request bodies, so any goal fired on that page (the site-wide
+// announcement bar's, or a return-visit report, which components/ReturnVisitTracker.tsx
+// now skips there) would put the token, and for a JWT the address, into DataFast and
+// into the Vercel logs. Stripped here, in the one function that sends goals, so no
+// current or future goal on a tokened URL can leak it. Every other parameter (the UTM
+// tags above all) is kept exactly as it was.
 const REDACTED_PAGE_PARAMS = new Set(['token']);
 
 function isRedactedParam(rawName: string): boolean {

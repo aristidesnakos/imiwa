@@ -3,9 +3,10 @@ import {
   isEmailSignupSource,
   type EmailSignupSource,
 } from '@/lib/analytics/email-signup-sources';
+import { isSealedToken, openSealedToken, sealToken } from '@/lib/email/sealed-token';
 
 /**
- * The signed token IS the pending-subscriber record.
+ * The sealed token IS the pending-subscriber record.
  *
  * ---------------------------------------------------------------------------
  * Why there is no table behind this
@@ -14,9 +15,12 @@ import {
  * A pending, unconfirmed subscriber is state, and CLAUDE.md's "no server-side
  * user state" rule means we do not deploy anywhere to put it. So we do not
  * store it: the address and the surface it came from are carried inside an
- * HMAC-signed token that expires, and a contact exists in Resend only after
- * that token comes back. The list therefore contains confirmed addresses by
- * construction rather than by policy.
+ * encrypted, authenticated token that expires (lib/email/sealed-token.ts), and
+ * a contact exists in Resend only after that token comes back. The list
+ * therefore contains confirmed addresses by construction rather than by policy.
+ * Encrypted, not just signed, because the token rides in the confirmation
+ * link, /confirm?token=…, and that URL reaches Vercel's request log and mail
+ * link scanners: only the server can read the address in it.
  *
  * Known and accepted: a token can be replayed inside its 48h window. Contact
  * creation is idempotent, so a replay is a no-op. Single-use enforcement needs
@@ -26,19 +30,36 @@ import {
  * Two things that must not be relaxed
  * ---------------------------------------------------------------------------
  *
- * 1. `algorithms` is pinned on verify. Without it, `jsonwebtoken` will honour
- *    whatever `alg` the token header claims — including `none`, which turns an
- *    attacker-authored payload into a valid confirmation for any address.
- *    Signing with HS256 and verifying "whatever it says" is the classic
- *    algorithm-confusion hole and it is one option away at all times.
- * 2. An EXPIRED token still has a verified signature, and we use that. The
+ * 1. An EXPIRED token is still authenticated, and we use that. The
  *    `/subscribed?state=expired` branch needs the original `source` to keep
- *    the re-subscribe form attributed, and reading it off a signature-checked
- *    payload is safe. Reading it off an unverified one would not be.
+ *    the re-subscribe form attributed, and reading it off a payload whose GCM
+ *    tag (or, for a legacy JWT, signature) checked out is safe. Reading it off
+ *    an unauthenticated one would not be.
+ * 2. While the legacy JWT branch exists, `algorithms` stays pinned on its
+ *    verify. Without it, `jsonwebtoken` will honour whatever `alg` the token
+ *    header claims — including `none`, which turns an attacker-authored
+ *    payload into a valid confirmation for any address.
+ *
+ * ---------------------------------------------------------------------------
+ * The legacy JWT branch: added 2026-10-11, to be deleted
+ * ---------------------------------------------------------------------------
+ *
+ * Until 2026-10-11 the token was an HS256 JWT, whose payload anyone can read.
+ * Confirmation emails sent before the sealed format reached production carry
+ * one, and each stays valid for CONFIRM_TOKEN_TTL_SECONDS after it was sent,
+ * so `verifyLegacyConfirmJwt` must outlive that deploy by 48 hours. It can go
+ * on or after LEGACY_CONFIRM_JWT_REMOVABLE_FROM (2026-10-20), as long as the
+ * sealed format reached production by 2026-10-18; check the deploy date
+ * first. `pnpm validate:subscribe` prints a NOTE from that day. Deleting it
+ * means deleting the function, the constant, the `jsonwebtoken` import here
+ * and the validator's legacy-confirm checks.
  */
 
 /** 48 hours, in seconds. Long enough for an inbox checked once a weekend. */
 export const CONFIRM_TOKEN_TTL_SECONDS = 48 * 60 * 60;
+
+/** The first day `verifyLegacyConfirmJwt` may be deleted. See the header. */
+export const LEGACY_CONFIRM_JWT_REMOVABLE_FROM = '2026-10-20';
 
 /**
  * A story slug, shape-checked. Deliberately NOT resolved against the episode
@@ -90,7 +111,8 @@ export function mintConfirmToken(
   payload: SubscribeTokenPayload,
   secret: string
 ): string {
-  return jwt.sign(
+  return sealToken(
+    'confirm',
     {
       email: payload.email,
       source: payload.source,
@@ -98,30 +120,22 @@ export function mintConfirmToken(
       // is absent cannot be misread, and `verifyConfirmToken` treats an absent
       // and an unusable value identically anyway.
       ...(payload.episode ? { episode: payload.episode } : {}),
+      // Seconds since the epoch, the same claim the JWTs carried.
+      exp: Math.floor(Date.now() / 1000) + CONFIRM_TOKEN_TTL_SECONDS,
     },
-    secret,
-    { algorithm: 'HS256', expiresIn: CONFIRM_TOKEN_TTL_SECONDS }
+    secret
   );
 }
 
 export function verifyConfirmToken(token: string, secret: string): VerifyResult {
-  // Verify the signature FIRST while ignoring expiry, so an expired-but-genuine
-  // token can be told apart from a forged one. `jsonwebtoken` throws
-  // TokenExpiredError before handing back a payload otherwise, which would
-  // leave the expired branch with nothing trustworthy to read.
-  let decoded: unknown;
-  try {
-    decoded = jwt.verify(token, secret, {
-      algorithms: ['HS256'],
-      ignoreExpiration: true,
-    });
-  } catch {
-    return { status: 'invalid' };
-  }
+  // Both branches authenticate and ignore expiry, so an expired-but-genuine
+  // token can be told apart from a forged one below.
+  const claims = isSealedToken(token)
+    ? openSealedToken('confirm', token, secret)
+    : verifyLegacyConfirmJwt(token, secret);
+  if (claims === null) return { status: 'invalid' };
 
-  if (typeof decoded !== 'object' || decoded === null) return { status: 'invalid' };
-
-  const { email, source, episode, exp } = decoded as Record<string, unknown>;
+  const { email, source, episode, exp } = claims;
 
   // Re-validate the payload rather than trusting our own past self. A source
   // retired from EMAIL_SIGNUP_SOURCES must not confirm just because a token
@@ -140,4 +154,24 @@ export function verifyConfirmToken(token: string, secret: string): VerifyResult 
   const expired = exp * 1000 <= Date.now();
 
   return expired ? { status: 'expired', payload } : { status: 'valid', payload };
+}
+
+/**
+ * LEGACY: the claims of a confirm JWT minted before 2026-10-11, or `null`.
+ * Delete on or after LEGACY_CONFIRM_JWT_REMOVABLE_FROM (see the header).
+ */
+function verifyLegacyConfirmJwt(token: string, secret: string): Record<string, unknown> | null {
+  // Verify the signature while ignoring expiry. `jsonwebtoken` throws
+  // TokenExpiredError before handing back a payload otherwise, which would
+  // leave the expired branch with nothing trustworthy to read.
+  let decoded: unknown;
+  try {
+    decoded = jwt.verify(token, secret, {
+      algorithms: ['HS256'],
+      ignoreExpiration: true,
+    });
+  } catch {
+    return null;
+  }
+  return typeof decoded === 'object' && decoded !== null ? (decoded as Record<string, unknown>) : null;
 }

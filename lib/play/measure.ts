@@ -104,8 +104,8 @@ export const PLAY_STORAGE_KEY = 'mk-play';
 // back whether or not the game did, is reported apart (`arrival`).
 //
 // /confirm never steps the model (shouldTrack below). Its URL carries the
-// signup token, whose payload holds the subscriber's email address, and every
-// goal carries its page's URL. Nothing is lost: the confirm button posts, and
+// signup token, a credential for the subscriber's address (sealed, or a legacy
+// JWT that holds the address itself), and every goal carries its page's URL. Nothing is lost: the confirm button posts, and
 // its 303 lands on /subscribed as a full page load, which counts the return.
 //
 // Stored under `mk-visit`. Shape-checked on read and never overwritten when

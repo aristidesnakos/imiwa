@@ -18,10 +18,11 @@
  * visit almost never is. The model is idempotent within a day (the stored state decides),
  * so React's development double-mount writes once and fires nothing extra.
  *
- * Never on /confirm (shouldTrack): its URL is the signup token, which holds the subscriber's
- * email address, and a goal carries its page's URL, so a return a day after signup would
- * fire from /confirm?token=… and send the token to DataFast and to the Vercel logs of
- * /api/datafast. The confirm button's 303 lands on /subscribed, a full load, so the
+ * Never on /confirm (shouldTrack): its URL carries the signup token, a credential for the
+ * subscriber's address (sealed since 2026-10-11, lib/email/sealed-token.ts; a legacy JWT
+ * holds the address itself), and a goal carries its page's URL, so a return a day after
+ * signup would fire from /confirm?token=… and send the token to DataFast and to the Vercel
+ * logs of /api/datafast. The confirm button's 303 lands on /subscribed, a full load, so the
  * return is still counted. lib/analytics/index.ts also strips `token` from every goal's
  * page_url, so a second goal on that page cannot reopen the leak.
  *

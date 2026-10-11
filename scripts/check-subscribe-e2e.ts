@@ -40,8 +40,9 @@
  * ---------------------------------------------------------------------------
  *
  * The sink cannot be read back, so this mints the confirm token locally with
- * the same `EMAIL_TOKEN_SECRET` the server signs with — byte-for-byte what
- * `POST /api/subscribe` just put in the email it sent.
+ * the same `EMAIL_TOKEN_SECRET` and the same `mintConfirmToken` the server
+ * uses. It is not byte-for-byte the token in the email (each sealed token has
+ * its own random IV), but it carries the same claims under the same key.
  *
  * Be honest about what that does and does not prove. It DOES prove the confirm
  * route accepts a genuine token, creates the contact, adds it to the segment
@@ -115,7 +116,7 @@ async function main(): Promise<void> {
   if (!apiKey || !secret) {
     throw new Error(
       'RESEND_API_KEY and EMAIL_TOKEN_SECRET must be set. EMAIL_TOKEN_SECRET must be the SAME\n' +
-        'value the target deployment signs with — the token is signed here and verified there —\n' +
+        'value the target deployment uses — the token is sealed here and opened there —\n' +
         'and RESEND_API_KEY a Full access key, because this reads the contact back and deletes it.\n' +
         'Locally: put both in .env.local by hand; `vercel env pull` reads the key back empty.\n' +
         'In CI: repository secrets.'

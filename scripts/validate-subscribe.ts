@@ -16,13 +16,21 @@
  * The promises being asserted here are the ones that matter legally, not just
  * functionally:
  *
- *   - a contact is NEVER created without a valid, unexpired, correctly-signed
+ *   - a contact is NEVER created without a valid, unexpired, authenticated
  *     token — the contact record is our only consent record;
+ *   - both tokens are sealed (AES-256-GCM, lib/email/sealed-token.ts): the
+ *     address inside is unreadable without the key, in the token, in the link
+ *     that carries it, or in any decoding of either, and a changed byte
+ *     anywhere in a sealed token makes it invalid;
  *   - a forged token cannot subscribe anyone, including via the `alg: none`
  *     algorithm-confusion hole that `jsonwebtoken` opens if `algorithms` is
- *     not pinned on verify;
- *   - an expired token still verifies its signature (so the re-subscribe form
- *     stays attributed) but is refused as consent;
+ *     not pinned on the legacy JWT verify;
+ *   - an expired token is still authenticated (so the re-subscribe form stays
+ *     attributed) but is refused as consent, in both formats;
+ *   - a confirm token never unsubscribes and an unsubscribe token never
+ *     confirms, sealed or legacy;
+ *   - links already in inboxes keep working: a legacy confirm JWT for the 48h
+ *     it promised, a legacy unsubscribe JWT forever;
  *   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
  *   - the episode email's campaign tags are identical for every recipient, and
  *     never reach the unsubscribe link or the pre-consent confirmation email.
@@ -34,10 +42,17 @@
 import jwt from 'jsonwebtoken';
 import {
   CONFIRM_TOKEN_TTL_SECONDS,
+  LEGACY_CONFIRM_JWT_REMOVABLE_FROM,
   mintConfirmToken,
   verifyConfirmToken,
 } from '../lib/email/subscribe-token';
 import { mintUnsubscribeToken, verifyUnsubscribeToken } from '../lib/email/unsubscribe-token';
+import {
+  SEALED_TOKEN_PREFIX,
+  isSealedToken,
+  openSealedToken,
+  sealToken,
+} from '../lib/email/sealed-token';
 import {
   EMAIL_SIGNUP_SOURCES,
   isEmailSignupSource,
@@ -74,6 +89,50 @@ function check(name: string, condition: boolean) {
   }
 }
 
+// --- Token helpers ----------------------------------------------------------
+
+/** Seconds since the epoch, `offsetSeconds` from now: the unit of a token's `exp` claim. */
+function epochIn(offsetSeconds: number): number {
+  return Math.floor(Date.now() / 1000) + offsetSeconds;
+}
+
+/**
+ * The same confirm claims as a sealed token and as a legacy JWT, each with an
+ * expiry `expiresIn` seconds from now. Every payload check is asserted on both:
+ * the sealed format every new link carries, and the legacy JWT that links
+ * already in inboxes carry, whose branch has its own verify and so must keep
+ * its own guarantees for as long as it exists.
+ */
+function inBothFormats(
+  claims: Record<string, unknown>,
+  { expiresIn = 3600, secret = SECRET }: { expiresIn?: number; secret?: string } = {}
+): [format: string, token: string][] {
+  return [
+    ['sealed', sealToken('confirm', { ...claims, exp: epochIn(expiresIn) }, secret)],
+    ['legacy JWT', jwt.sign(claims, secret, { algorithm: 'HS256', expiresIn })],
+  ];
+}
+
+// The documented layout of a sealed token: `s1.` + base64url(IV | ciphertext | tag).
+const IV_BYTES = 12;
+const TAG_BYTES = 16;
+
+/** IV | ciphertext | tag: the bytes after a sealed token's prefix. */
+function sealedBytes(token: string): Buffer {
+  return Buffer.from(token.slice(SEALED_TOKEN_PREFIX.length), 'base64url');
+}
+
+function asSealedToken(raw: Buffer): string {
+  return SEALED_TOKEN_PREFIX + raw.toString('base64url');
+}
+
+/** A token in the sealed shape that nobody encrypted: the claims in the clear between a zero IV and a zero tag. */
+function unencrypted(claims: Record<string, unknown>): string {
+  return asSealedToken(
+    Buffer.concat([Buffer.alloc(IV_BYTES), Buffer.from(JSON.stringify(claims)), Buffer.alloc(TAG_BYTES)])
+  );
+}
+
 // --- The happy path -------------------------------------------------------
 
 const good = mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET);
@@ -88,18 +147,61 @@ check(
   'the source survives the round trip',
   goodResult.status === 'valid' && goodResult.payload.source === SOURCE
 );
+check(
+  `a freshly minted confirm token is sealed (${SEALED_TOKEN_PREFIX}…), not a JWT`,
+  isSealedToken(good) && !good.startsWith('eyJ')
+);
+// The expiry used to be readable in the JWT. It is now a claim inside the
+// sealed payload, so it is read from the inside.
+const goodExp = openSealedToken('confirm', good, SECRET)?.exp;
+check(
+  'a minted confirm token expires CONFIRM_TOKEN_TTL_SECONDS after it was minted',
+  typeof goodExp === 'number' && Math.abs(goodExp - epochIn(CONFIRM_TOKEN_TTL_SECONDS)) <= 2
+);
+
+// --- Links already in inboxes: the legacy JWT format ------------------------
+//
+// Until 2026-10-11 both tokens were HS256 JWTs, and emails carrying them are
+// still in inboxes. A confirm JWT must keep confirming for the 48h it promised,
+// until its branch is deleted (the NOTE after the report says from when), and
+// an unsubscribe JWT for as long as anyone keeps the email (the unsubscribe
+// section below). These are minted exactly as the old code minted them.
+
+const legacyConfirm = jwt.sign({ email: EMAIL, source: SOURCE }, SECRET, {
+  algorithm: 'HS256',
+  expiresIn: CONFIRM_TOKEN_TTL_SECONDS,
+});
+const legacyConfirmResult = verifyConfirmToken(legacyConfirm, SECRET);
+check(
+  'a legacy confirm JWT minted the old way still confirms, so links already sent keep their 48h',
+  legacyConfirmResult.status === 'valid' &&
+    legacyConfirmResult.payload.email === EMAIL &&
+    legacyConfirmResult.payload.source === SOURCE
+);
+check(
+  'a legacy JWT is not mistaken for a sealed token, and the sealed opener refuses it',
+  !isSealedToken(legacyConfirm) && openSealedToken('confirm', legacyConfirm, SECRET) === null
+);
 
 // --- Forgery --------------------------------------------------------------
 
 check(
-  'a token signed with a different secret is rejected',
+  'a token sealed with a different secret is rejected',
   verifyConfirmToken(mintConfirmToken({ email: EMAIL, source: SOURCE }, OTHER_SECRET), SECRET)
     .status === 'invalid'
 );
+check(
+  'a legacy JWT signed with a different secret is rejected',
+  verifyConfirmToken(
+    jwt.sign({ email: EMAIL, source: SOURCE }, OTHER_SECRET, { algorithm: 'HS256', expiresIn: 3600 }),
+    SECRET
+  ).status === 'invalid'
+);
 
-// The algorithm-confusion hole. `jsonwebtoken` will honour whatever `alg` the
-// header claims unless `algorithms` is pinned on verify, which turns an
-// attacker-authored payload into a valid confirmation for any address.
+// The algorithm-confusion hole, which only the legacy format has. `jsonwebtoken`
+// will honour whatever `alg` the header claims unless `algorithms` is pinned on
+// verify, which turns an attacker-authored payload into a valid confirmation
+// for any address.
 const noneToken =
   Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url') +
   '.' +
@@ -112,65 +214,94 @@ const noneToken =
   ).toString('base64url') +
   '.';
 check(
-  'an alg:none token cannot subscribe anyone',
+  'an alg:none legacy JWT cannot subscribe anyone',
   verifyConfirmToken(noneToken, SECRET).status === 'invalid'
+);
+// The sealed format has no header to lie about its algorithm. Its nearest
+// equivalent is a token in the right shape that nobody encrypted, and the
+// sealed prefix must not smuggle the alg:none JWT anywhere either.
+check(
+  'a sealed-shaped token carrying its claims unencrypted cannot subscribe anyone',
+  verifyConfirmToken(
+    unencrypted({ email: 'attacker@example.com', source: SOURCE, exp: epochIn(3600) }),
+    SECRET
+  ).status === 'invalid'
+);
+check(
+  'an alg:none JWT behind the sealed prefix cannot subscribe anyone',
+  verifyConfirmToken(SEALED_TOKEN_PREFIX + noneToken, SECRET).status === 'invalid'
 );
 
 check('garbage is rejected', verifyConfirmToken('not-a-token', SECRET).status === 'invalid');
 check('an empty token is rejected', verifyConfirmToken('', SECRET).status === 'invalid');
 
-// A correctly-signed token carrying a source we do not recognise. This is the
-// case a bare type union could not catch, because a type is erased at runtime.
+// A correctly-authenticated token carrying a source we do not recognise. This
+// is the case a bare type union could not catch, because a type is erased at
+// runtime.
+for (const [format, token] of inBothFormats({ email: EMAIL, source: 'not-a-real-surface' })) {
+  check(
+    `a correctly-authenticated ${format} token with an unknown source is rejected`,
+    verifyConfirmToken(token, SECRET).status === 'invalid'
+  );
+}
+for (const [format, token] of inBothFormats({ source: SOURCE })) {
+  check(
+    `a correctly-authenticated ${format} token with no email is rejected`,
+    verifyConfirmToken(token, SECRET).status === 'invalid'
+  );
+}
+for (const [format, token] of inBothFormats({ email: '', source: SOURCE })) {
+  check(
+    `a correctly-authenticated ${format} token with an empty email is rejected`,
+    verifyConfirmToken(token, SECRET).status === 'invalid'
+  );
+}
+
+// A token with no usable expiry would be consent that never goes stale. The
+// sealed format has no library enforcing `exp`, so the verifier has to.
 check(
-  'a correctly-signed token with an unknown source is rejected',
+  'a correctly-sealed token with no exp claim is rejected',
+  verifyConfirmToken(sealToken('confirm', { email: EMAIL, source: SOURCE }, SECRET), SECRET)
+    .status === 'invalid'
+);
+check(
+  'a correctly-sealed token whose exp is not a number is rejected',
   verifyConfirmToken(
-    jwt.sign({ email: EMAIL, source: 'not-a-real-surface' }, SECRET, {
-      algorithm: 'HS256',
-      expiresIn: 3600,
-    }),
+    sealToken('confirm', { email: EMAIL, source: SOURCE, exp: String(epochIn(3600)) }, SECRET),
     SECRET
   ).status === 'invalid'
 );
-
 check(
-  'a correctly-signed token with no email is rejected',
-  verifyConfirmToken(
-    jwt.sign({ source: SOURCE }, SECRET, { algorithm: 'HS256', expiresIn: 3600 }),
-    SECRET
-  ).status === 'invalid'
+  'a correctly-signed legacy JWT with no exp claim is rejected',
+  verifyConfirmToken(jwt.sign({ email: EMAIL, source: SOURCE }, SECRET, { algorithm: 'HS256' }), SECRET)
+    .status === 'invalid'
 );
 
 // --- Expiry ---------------------------------------------------------------
 
-const expiredToken = jwt.sign(
-  { email: EMAIL, source: SOURCE },
-  SECRET,
-  { algorithm: 'HS256', expiresIn: -60 }
-);
-const expiredResult = verifyConfirmToken(expiredToken, SECRET);
+for (const [format, expiredToken] of inBothFormats({ email: EMAIL, source: SOURCE }, { expiresIn: -60 })) {
+  const expiredResult = verifyConfirmToken(expiredToken, SECRET);
 
-check('an expired token is reported as expired, not valid', expiredResult.status === 'expired');
-check(
-  'an expired token is NOT treated as consent',
-  expiredResult.status !== 'valid'
-);
-// This is what keeps the re-subscribe form attributed: the signature was still
-// checked, so the source is trustworthy even though the token is stale.
-check(
-  'an expired token still yields a signature-verified source',
-  expiredResult.status === 'expired' && expiredResult.payload.source === SOURCE
-);
+  check(`an expired ${format} token is reported as expired, not valid`, expiredResult.status === 'expired');
+  check(`an expired ${format} token is NOT treated as consent`, expiredResult.status !== 'valid');
+  // This is what keeps the re-subscribe form attributed: the GCM tag (or the
+  // signature) was still checked, so the source is trustworthy even though the
+  // token is stale.
+  check(
+    `an expired ${format} token still yields an authenticated source`,
+    expiredResult.status === 'expired' && expiredResult.payload.source === SOURCE
+  );
+}
 // ...but an expired token forged with the wrong secret must not.
-check(
-  'an expired token signed with the wrong secret is invalid, not expired',
-  verifyConfirmToken(
-    jwt.sign({ email: EMAIL, source: SOURCE }, OTHER_SECRET, {
-      algorithm: 'HS256',
-      expiresIn: -60,
-    }),
-    SECRET
-  ).status === 'invalid'
-);
+for (const [format, token] of inBothFormats(
+  { email: EMAIL, source: SOURCE },
+  { expiresIn: -60, secret: OTHER_SECRET }
+)) {
+  check(
+    `an expired ${format} token made with the wrong secret is invalid, not expired`,
+    verifyConfirmToken(token, SECRET).status === 'invalid'
+  );
+}
 
 check('the TTL is the documented 48 hours', CONFIRM_TOKEN_TTL_SECONDS === 48 * 60 * 60);
 
@@ -191,6 +322,17 @@ check(
   'an episode survives the round trip',
   withEpisode.status === 'valid' && withEpisode.payload.episode === EPISODE
 );
+const legacyWithEpisode = verifyConfirmToken(
+  jwt.sign({ email: EMAIL, source: SOURCE, episode: EPISODE }, SECRET, {
+    algorithm: 'HS256',
+    expiresIn: CONFIRM_TOKEN_TTL_SECONDS,
+  }),
+  SECRET
+);
+check(
+  'an episode in a legacy confirm JWT survives the round trip',
+  legacyWithEpisode.status === 'valid' && legacyWithEpisode.payload.episode === EPISODE
+);
 
 const withoutEpisode = verifyConfirmToken(
   mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET),
@@ -202,40 +344,30 @@ check(
 );
 
 // A malformed episode must DROP the field, not refuse the token. The address
-// and the source are both intact and signature-verified; refusing consent over
+// and the source are both intact and authenticated; refusing consent over
 // a cosmetic claim would lose a real subscriber to a typo, and the fallback
 // (the newest episode that has gone out) is already correct for every source that has none.
-for (const bad of ['../../etc/passwd', 'Tan Climbs', 'ep 01', '', 'UPPER-CASE']) {
-  const forged = verifyConfirmToken(
-    jwt.sign({ email: EMAIL, source: SOURCE, episode: bad }, SECRET, {
-      algorithm: 'HS256',
-      expiresIn: 3600,
-    }),
-    SECRET
-  );
-  check(
-    `a malformed episode (${JSON.stringify(bad)}) is dropped, and consent still stands`,
-    forged.status === 'valid' && forged.payload.episode === undefined
-  );
+for (const bad of ['../../etc/passwd', 'Tan Climbs', 'ep 01', '', 'UPPER-CASE', 42]) {
+  for (const [format, token] of inBothFormats({ email: EMAIL, source: SOURCE, episode: bad })) {
+    const forged = verifyConfirmToken(token, SECRET);
+    check(
+      typeof bad === 'string'
+        ? `a malformed episode (${JSON.stringify(bad)}) in a ${format} token is dropped, and consent still stands`
+        : `a non-string episode in a ${format} token is dropped, and consent still stands`,
+      forged.status === 'valid' && forged.payload.episode === undefined
+    );
+  }
 }
-
-const nonString = verifyConfirmToken(
-  jwt.sign({ email: EMAIL, source: SOURCE, episode: 42 }, SECRET, {
-    algorithm: 'HS256',
-    expiresIn: 3600,
-  }),
-  SECRET
-);
-check(
-  'a non-string episode is dropped, and consent still stands',
-  nonString.status === 'valid' && nonString.payload.episode === undefined
-);
 
 // --- The unsubscribe token --------------------------------------------------
 //
-// A separate token from the confirm one, signed with the same secret, so the
-// `typ` claim is the only thing standing between "this link confirms a signup"
-// and "this link removes someone from the list" — worth checking explicitly.
+// A separate token from the confirm one, from the same secret, authorizing the
+// opposite action on the same address. A sealed one is sealed under its own key
+// (the kind is in the HKDF label and in the AAD); a legacy JWT shares the
+// confirm JWT's HMAC key, so its `typ` claim is all that separates the two.
+// That separation is the only thing standing between "this link confirms a
+// signup" and "this link removes someone from the list", so it is checked in
+// all four directions.
 
 const unsubGood = mintUnsubscribeToken(EMAIL, SECRET);
 const unsubResult = verifyUnsubscribeToken(unsubGood, SECRET);
@@ -246,12 +378,46 @@ check(
   unsubResult.status === 'valid' && unsubResult.payload.email === EMAIL
 );
 check(
-  'an unsubscribe token signed with a different secret is rejected',
-  verifyUnsubscribeToken(mintUnsubscribeToken(EMAIL, OTHER_SECRET), SECRET).status === 'invalid'
+  `a freshly minted unsubscribe token is sealed (${SEALED_TOKEN_PREFIX}…), not a JWT`,
+  isSealedToken(unsubGood) && !unsubGood.startsWith('eyJ')
 );
 check(
+  'an unsubscribe token sealed with a different secret is rejected',
+  verifyUnsubscribeToken(mintUnsubscribeToken(EMAIL, OTHER_SECRET), SECRET).status === 'invalid'
+);
+// Read from inside the seal: `jwt.decode` cannot see into a sealed token.
+const unsubClaims = openSealedToken('unsubscribe', unsubGood, SECRET);
+check(
   'an unsubscribe token has no expiry claim',
-  (jwt.decode(unsubGood) as Record<string, unknown> | null)?.exp === undefined
+  unsubClaims !== null && unsubClaims.email === EMAIL && !('exp' in unsubClaims)
+);
+check(
+  'a correctly-sealed unsubscribe token with no email, or an empty one, is rejected',
+  verifyUnsubscribeToken(sealToken('unsubscribe', {}, SECRET), SECRET).status === 'invalid' &&
+    verifyUnsubscribeToken(sealToken('unsubscribe', { email: '' }, SECRET), SECRET).status === 'invalid'
+);
+
+// The forever promise. Welcome emails sent before 2026-10-11 carry a JWT, and
+// RFC 8058 and the bulk-sender rules assume the link in a kept email still works.
+const legacyUnsub = jwt.sign({ email: EMAIL, typ: 'unsub' }, SECRET, { algorithm: 'HS256' });
+const legacyUnsubResult = verifyUnsubscribeToken(legacyUnsub, SECRET);
+check(
+  'a legacy unsubscribe JWT minted the old way still unsubscribes, forever',
+  legacyUnsubResult.status === 'valid' && legacyUnsubResult.payload.email === EMAIL
+);
+check(
+  'a legacy unsubscribe JWT signed with a different secret is rejected',
+  verifyUnsubscribeToken(
+    jwt.sign({ email: EMAIL, typ: 'unsub' }, OTHER_SECRET, { algorithm: 'HS256' }),
+    SECRET
+  ).status === 'invalid'
+);
+check(
+  "a legacy JWT whose typ is not 'unsub' is rejected by the unsubscribe verifier",
+  [{ email: EMAIL }, { email: EMAIL, typ: 'confirm' }, { email: EMAIL, typ: 'UNSUB' }].every(
+    claims =>
+      verifyUnsubscribeToken(jwt.sign(claims, SECRET, { algorithm: 'HS256' }), SECRET).status === 'invalid'
+  )
 );
 
 const unsubNoneToken =
@@ -262,25 +428,319 @@ const unsubNoneToken =
   ) +
   '.';
 check(
-  'an alg:none unsubscribe token cannot unsubscribe anyone',
+  'an alg:none legacy unsubscribe JWT cannot unsubscribe anyone',
   verifyUnsubscribeToken(unsubNoneToken, SECRET).status === 'invalid'
+);
+check(
+  'a sealed-shaped unsubscribe token carrying its claims unencrypted cannot unsubscribe anyone',
+  verifyUnsubscribeToken(unencrypted({ email: 'attacker@example.com' }), SECRET).status === 'invalid' &&
+    verifyUnsubscribeToken(SEALED_TOKEN_PREFIX + unsubNoneToken, SECRET).status === 'invalid'
 );
 
 // A confirm token and an unsubscribe token both carry `email`. Without the
-// `typ` claim being checked on both sides, a leaked confirm link could double
-// as an unsubscribe link for the same address, or vice versa.
+// separation, a leaked confirm link could double as an unsubscribe link for the
+// same address, or vice versa.
 check(
-  'a confirm token cannot be replayed as an unsubscribe token',
+  'a sealed confirm token cannot be replayed as an unsubscribe token',
   verifyUnsubscribeToken(mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET), SECRET)
     .status === 'invalid'
 );
 check(
-  'an unsubscribe token cannot be replayed as a confirm token',
+  'a sealed unsubscribe token cannot be replayed as a confirm token',
   verifyConfirmToken(mintUnsubscribeToken(EMAIL, SECRET), SECRET).status === 'invalid'
+);
+check(
+  'a legacy confirm JWT cannot be replayed as an unsubscribe token',
+  verifyUnsubscribeToken(legacyConfirm, SECRET).status === 'invalid'
+);
+check(
+  'a legacy unsubscribe JWT cannot be replayed as a confirm token',
+  verifyConfirmToken(legacyUnsub, SECRET).status === 'invalid'
+);
+// For sealed tokens the separation is the key, not the payload: give each kind
+// every claim the other verifier asks for, and it still does not open there.
+check(
+  "a token sealed as 'unsubscribe' carrying source and exp still does not confirm",
+  verifyConfirmToken(
+    sealToken('unsubscribe', { email: EMAIL, source: SOURCE, exp: epochIn(3600) }, SECRET),
+    SECRET
+  ).status === 'invalid'
+);
+check(
+  "a token sealed as 'confirm' carrying only an address still does not unsubscribe",
+  verifyUnsubscribeToken(sealToken('confirm', { email: EMAIL }, SECRET), SECRET).status === 'invalid'
 );
 
 check('garbage is rejected by the unsubscribe verifier', verifyUnsubscribeToken('not-a-token', SECRET).status === 'invalid');
 check('an empty token is rejected by the unsubscribe verifier', verifyUnsubscribeToken('', SECRET).status === 'invalid');
+
+// --- The sealed format ------------------------------------------------------
+//
+// The GCM tag replaced the JWT signature, so it must cover every byte. Change
+// one anywhere, in the IV, the ciphertext or the tag, and the token is refused.
+// So is one cut short or lengthened, one whose body strays outside the
+// base64url alphabet (Node's decoder would skip the stray character and open
+// it), and one whose prefix changes. Tried at every byte position, both kinds.
+
+check(
+  'an unsubscribe token is a 12-byte IV, ciphertext as long as its JSON, and a 16-byte tag',
+  sealedBytes(unsubGood).length === IV_BYTES + Buffer.byteLength(JSON.stringify({ email: EMAIL })) + TAG_BYTES
+);
+
+const sealedCases = [
+  {
+    kind: 'confirm',
+    name: 'a confirm token',
+    token: mintConfirmToken({ email: EMAIL, source: SOURCE, episode: EPISODE }, SECRET),
+    opens: (token: string) => verifyConfirmToken(token, SECRET).status !== 'invalid',
+  },
+  {
+    kind: 'unsubscribe',
+    name: 'an unsubscribe token',
+    token: mintUnsubscribeToken(EMAIL, SECRET),
+    opens: (token: string) => verifyUnsubscribeToken(token, SECRET).status !== 'invalid',
+  },
+] as const;
+
+for (const { kind, name, token, opens } of sealedCases) {
+  const raw = sealedBytes(token);
+  const body = token.slice(SEALED_TOKEN_PREFIX.length);
+
+  check(
+    `the untouched ${kind} token opens, so every refusal below is the tampering's doing`,
+    opens(token) && asSealedToken(raw) === token
+  );
+
+  for (const [region, from, to] of [
+    ['IV', 0, IV_BYTES],
+    ['ciphertext', IV_BYTES, raw.length - TAG_BYTES],
+    ['tag', raw.length - TAG_BYTES, raw.length],
+  ] as const) {
+    const opened: string[] = [];
+    for (let i = from; i < to; i += 1) {
+      // One bit, and the whole byte.
+      for (const mask of [0x01, 0xff]) {
+        const changed = Buffer.from(raw);
+        changed[i] ^= mask;
+        if (opens(asSealedToken(changed))) opened.push(`byte ${i} ^ ${mask}`);
+      }
+    }
+    check(
+      `changing any one byte in the ${region} of ${name} makes it invalid` +
+        (opened.length > 0 ? ` (still opened: ${opened.join(', ')})` : ''),
+      to > from && opened.length === 0
+    );
+  }
+
+  check(
+    `a truncated ${kind} token is invalid`,
+    [
+      token.slice(0, -1),
+      token.slice(0, -4),
+      token.slice(0, SEALED_TOKEN_PREFIX.length + Math.floor(body.length / 2)),
+      asSealedToken(raw.subarray(0, raw.length - 1)),
+      asSealedToken(raw.subarray(0, IV_BYTES + TAG_BYTES)),
+    ].every(cut => !opens(cut))
+  );
+  check(
+    `${name} with a byte appended is invalid`,
+    !opens(asSealedToken(Buffer.concat([raw, Buffer.alloc(1)])))
+  );
+  check(`the ${SEALED_TOKEN_PREFIX} prefix alone is not ${name}`, !opens(SEALED_TOKEN_PREFIX));
+
+  const middle = Math.floor(body.length / 2);
+  check(
+    `${name} with a character outside base64url in its body is invalid`,
+    ['!', '=', '.', ' ', '%', '+', '/', '\n'].every(
+      stray =>
+        !opens(SEALED_TOKEN_PREFIX + body.slice(0, middle) + stray + body.slice(middle)) &&
+        !opens(token + stray)
+    )
+  );
+  check(
+    `${name} with its ${SEALED_TOKEN_PREFIX} prefix swapped or dropped is invalid`,
+    ['', 's2.', 'S1.', 's1', 's1-', 'eyJ', SEALED_TOKEN_PREFIX + SEALED_TOKEN_PREFIX].every(
+      prefix => !opens(prefix + body)
+    )
+  );
+  check(
+    `${name} does not open under another secret`,
+    openSealedToken(kind, token, OTHER_SECRET) === null
+  );
+}
+
+// A fresh random IV per token, so two mints of one payload share nothing a
+// reader could line up, and no key ever sees a GCM nonce twice.
+check(
+  'two mints of the identical payload differ, down to the IV',
+  [
+    [mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET), mintConfirmToken({ email: EMAIL, source: SOURCE }, SECRET)],
+    [mintUnsubscribeToken(EMAIL, SECRET), mintUnsubscribeToken(EMAIL, SECRET)],
+  ].every(
+    ([a, b]) =>
+      a !== b && !sealedBytes(a).subarray(0, IV_BYTES).equals(sealedBytes(b).subarray(0, IV_BYTES))
+  )
+);
+
+// --- The address is unreadable without the key ------------------------------
+//
+// The point of sealing. A confirm link lands in Vercel's request log and in
+// whatever a mail link scanner fetches; a mail host POSTs the unsubscribe link
+// and that request is logged the same way. Whoever reads those must not be able
+// to read the address back out. `recoverable` is every string a reader without
+// the key gets from a token with the obvious decoders: the token and both URLs
+// that carry it, percent-decoded; and the whole token and each '.'-separated
+// segment as base64url, standard base64 and hex, starting at each of the first
+// four characters so an address at any alignment is caught, read as UTF-8 and
+// as Latin-1.
+
+const OPAQUE_EMAIL = 'opaque.check+sealed@example.com';
+
+function unsubscribeUrl(token: string): string {
+  return `${SITE_URL}/api/unsubscribe?token=${encodeURIComponent(token)}`;
+}
+
+function recoverable(token: string): string[] {
+  const strings: string[] = [];
+  for (const text of [token, confirmUrl(token), unsubscribeUrl(token)]) {
+    strings.push(text);
+    try {
+      strings.push(decodeURIComponent(text));
+    } catch {
+      // Not percent-decodable, so there is nothing more to read from it this way.
+    }
+  }
+  for (const part of [token, ...token.split('.')]) {
+    for (let offset = 0; offset < 4; offset += 1) {
+      for (const encoding of ['base64url', 'base64', 'hex'] as const) {
+        const bytes = Buffer.from(part.slice(offset), encoding);
+        strings.push(bytes.toString('utf8'), bytes.toString('latin1'));
+      }
+    }
+  }
+  return strings;
+}
+
+/** Which recognisable forms of `address` (whole, local part, percent-encoded) a reader recovers from `token`. */
+function addressFormsIn(token: string, address: string): string[] {
+  const local = address.slice(0, address.indexOf('@'));
+  const forms = [address, local, encodeURIComponent(address), encodeURIComponent(local)].map(form =>
+    form.toLowerCase()
+  );
+  const found = new Set<string>();
+  for (const text of recoverable(token)) {
+    const lower = text.toLowerCase();
+    for (const form of forms) if (lower.includes(form)) found.add(form);
+  }
+  return [...found];
+}
+
+// The control: the reader must find the address where it IS readable, or the
+// opacity checks below pass because the reader is blind, and prove nothing.
+// First the format this replaced, then every decoder at every alignment.
+check(
+  'the reader finds the address in a legacy confirm JWT; if not, the opacity checks prove nothing',
+  addressFormsIn(
+    jwt.sign({ email: OPAQUE_EMAIL, source: SOURCE }, SECRET, {
+      algorithm: 'HS256',
+      expiresIn: CONFIRM_TOKEN_TTL_SECONDS,
+    }),
+    OPAQUE_EMAIL
+  ).includes(OPAQUE_EMAIL)
+);
+check(
+  'the reader finds the address in a legacy unsubscribe JWT; if not, the opacity checks prove nothing',
+  addressFormsIn(jwt.sign({ email: OPAQUE_EMAIL, typ: 'unsub' }, SECRET, { algorithm: 'HS256' }), OPAQUE_EMAIL).includes(
+    OPAQUE_EMAIL
+  )
+);
+const blindSpots: string[] = [];
+for (let lead = 0; lead < 4; lead += 1) {
+  for (const encoding of ['base64url', 'base64', 'hex'] as const) {
+    // 'a' is valid in all three alphabets, so the decoder only lines up from `lead`.
+    const planted = 'a'.repeat(lead) + Buffer.from(OPAQUE_EMAIL, 'utf8').toString(encoding);
+    if (!addressFormsIn(planted, OPAQUE_EMAIL).includes(OPAQUE_EMAIL)) blindSpots.push(`${encoding} after ${lead}`);
+  }
+}
+if (!addressFormsIn(unencrypted({ email: OPAQUE_EMAIL }), OPAQUE_EMAIL).includes(OPAQUE_EMAIL)) {
+  blindSpots.push('a sealed-shaped token left unencrypted');
+}
+if (!addressFormsIn(encodeURIComponent(OPAQUE_EMAIL), OPAQUE_EMAIL).includes(OPAQUE_EMAIL)) {
+  blindSpots.push('the address percent-encoded');
+}
+check(
+  'the reader finds the address through every decoder at every alignment; if not, the opacity checks prove nothing' +
+    (blindSpots.length > 0 ? ` (blind to: ${blindSpots.join('; ')})` : ''),
+  blindSpots.length === 0
+);
+
+const OPAQUE_MINTS = 8;
+const mintedTokens: string[] = [];
+for (const { what, mint, opensTo } of [
+  {
+    what: 'a confirm token',
+    mint: () => mintConfirmToken({ email: OPAQUE_EMAIL, source: SOURCE }, SECRET),
+    opensTo: (token: string) => {
+      const result = verifyConfirmToken(token, SECRET);
+      return result.status === 'valid' ? result.payload.email : null;
+    },
+  },
+  {
+    what: 'a confirm token with an episode',
+    mint: () => mintConfirmToken({ email: OPAQUE_EMAIL, source: SOURCE, episode: EPISODE }, SECRET),
+    opensTo: (token: string) => {
+      const result = verifyConfirmToken(token, SECRET);
+      return result.status === 'valid' && result.payload.episode === EPISODE ? result.payload.email : null;
+    },
+  },
+  {
+    what: 'an unsubscribe token',
+    mint: () => mintUnsubscribeToken(OPAQUE_EMAIL, SECRET),
+    opensTo: (token: string) => {
+      const result = verifyUnsubscribeToken(token, SECRET);
+      return result.status === 'valid' ? result.payload.email : null;
+    },
+  },
+]) {
+  const tokens = Array.from({ length: OPAQUE_MINTS }, mint);
+  mintedTokens.push(...tokens);
+  const leaked = [...new Set(tokens.flatMap(token => addressFormsIn(token, OPAQUE_EMAIL)))];
+  check(
+    `${what} shows the address in no form a reader without the key can decode, over ${OPAQUE_MINTS} mints` +
+      (leaked.length > 0 ? ` (found: ${leaked.join(', ')})` : ''),
+    leaked.length === 0
+  );
+  // The other half of the control: the address IS in there, for the key holder.
+  check(
+    `${what} still opens to the address with the key, so it is hidden, not missing`,
+    tokens.every(token => opensTo(token) === OPAQUE_EMAIL)
+  );
+}
+
+// --- Every token travels in a URL untouched ---------------------------------
+//
+// The confirm link and the unsubscribe link carry the token in a query string.
+// A token inside the URL-safe alphabet comes through encodeURIComponent
+// unchanged, so the server receives byte for byte what it minted, and a
+// percent-decoding proxy or log has nothing to rewrite.
+
+mintedTokens.push(good, unsubGood, ...sealedCases.map(({ token }) => token));
+const notUrlSafe = mintedTokens.filter(
+  token => !/^[A-Za-z0-9._-]+$/.test(token) || encodeURIComponent(token) !== token
+);
+check(
+  `every minted token is [A-Za-z0-9._-] only, so encodeURIComponent leaves it as it is (${mintedTokens.length} tokens)` +
+    (notUrlSafe.length > 0 ? ` (not: ${notUrlSafe.join(', ')})` : ''),
+  notUrlSafe.length === 0
+);
+check(
+  'the confirm URL and the unsubscribe URL carry each minted token verbatim',
+  mintedTokens.every(
+    token =>
+      confirmUrl(token) === `${SITE_URL}/confirm?token=${token}` &&
+      unsubscribeUrl(token) === `${SITE_URL}/api/unsubscribe?token=${token}`
+  )
+);
 
 // --- The source list ------------------------------------------------------
 
@@ -576,10 +1036,12 @@ check(
 
 // --- The confirm page keeps the token from DataFast ------------------------
 //
-// That link's token is the address in base64url, and DataFast's page-view
-// script reports the URL it finds. /confirm removes the token from the address
-// bar before that script runs (lib/email/confirm-token-scrub.ts, which explains
-// the ordering). This runs the exact string the page inlines.
+// That link's token is a bearer credential even sealed: whoever holds it can
+// confirm the address. A legacy one, valid for 48h after the switch, is the
+// address in base64url. DataFast's page-view script reports the URL it finds,
+// so /confirm removes the token from the address bar before that script runs
+// (lib/email/confirm-token-scrub.ts, which explains the ordering). This runs
+// the exact string the page inlines, on both formats.
 
 /** The address bar after the scrub script runs on `href`, and whether it rewrote it. */
 function afterScrub(href: string): { href: string; rewritten: boolean } {
@@ -592,7 +1054,7 @@ function afterScrub(href: string): { href: string; rewritten: boolean } {
       },
     },
     history: {
-      state: null,
+      state: null as unknown,
       replaceState(_state: unknown, _unused: string, url: string) {
         rewritten = true;
         current = new URL(url, current).toString();
@@ -607,6 +1069,11 @@ const emailedLink = afterScrub(confirmUrl(confirmToken));
 check(
   'the emailed confirm link leaves the address bar as bare /confirm, token gone',
   emailedLink.href === `${SITE_URL}/confirm` && !emailedLink.href.includes(confirmToken)
+);
+const legacyEmailedLink = afterScrub(confirmUrl(legacyConfirm));
+check(
+  'a legacy confirm link, the one with a readable address, leaves the address bar as bare /confirm too',
+  legacyEmailedLink.href === `${SITE_URL}/confirm` && !legacyEmailedLink.href.includes(legacyConfirm)
 );
 check(
   'the scrub removes only the token: other parameters and the fragment stay',
@@ -660,13 +1127,20 @@ function report() {
 
   console.log(`
 Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
-  · a contact is creatable only from a valid, unexpired, correctly-signed token
-  · forged, wrong-secret, malformed and alg:none tokens are all refused
+  · a contact is creatable only from a valid, unexpired, authenticated token
+  · both tokens are sealed: no decoding of a token or of the link carrying it
+    yields the address (the same reader does find it in a legacy JWT), a
+    changed, cut, extended or re-prefixed token is refused, every token is
+    URL-safe as minted, and two mints of one payload share nothing
+  · forged, wrong-secret, malformed, unencrypted and alg:none tokens are all
+    refused, in the sealed and the legacy JWT format alike
   · an expired token keeps a trustworthy source but is never treated as consent
   · a source outside EMAIL_SIGNUP_SOURCES cannot reach an email we send
   · a malformed episode claim is dropped rather than refusing a real consent
   · an unsubscribe token is a separate, non-expiring token that cannot be
-    replayed as a confirm token, and vice versa
+    replayed as a confirm token, and vice versa, sealed or legacy
+  · links already in inboxes keep working: a legacy confirm JWT for its 48h,
+    a legacy unsubscribe JWT forever
   · the published postal address is never a PO Box, and both the broadcast and
     the welcome card carry it, with an unsubscribe link, in HTML and plain text
   · the episode email's content links carry exact UTM tags, identical for every
@@ -682,6 +1156,16 @@ PASS — ${passed}/${total} checks passed
     console.log(
       'NOTE — config.business.postalAddress is not set, so `pnpm stories:create-broadcast` will refuse to\n' +
         'run and the welcome card goes out without a postal address. See docs/runbooks/newsletter.md.\n'
+    );
+  }
+
+  // ISO dates compare correctly as strings.
+  if (new Date().toISOString().slice(0, 10) >= LEGACY_CONFIRM_JWT_REMOVABLE_FROM) {
+    console.log(
+      `NOTE — it is ${LEGACY_CONFIRM_JWT_REMOVABLE_FROM} or later (UTC), so the legacy confirm-JWT fallback in\n` +
+        'lib/email/subscribe-token.ts (verifyLegacyConfirmJwt) can now be deleted, as long as the sealed format\n' +
+        'reached production at least 48h before; check the deploy date first. That file\'s header lists what goes\n' +
+        'with it, including the legacy-confirm checks here. The unsubscribe JWT fallback stays forever.\n'
     );
   }
 }

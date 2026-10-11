@@ -377,7 +377,7 @@ export default async function EpisodePage({ params }: Props) {
           engages" gets answered with behaviour rather than a guess.
 
           `episode` is passed so the confirmation flow can send THIS episode's
-          quiz rather than a generic welcome. It travels inside the signed token
+          quiz rather than a generic welcome. It travels inside the sealed token
           and is re-validated against the registry on the way back out; see
           lib/email/subscribe-token.ts.
         */}

@@ -25,8 +25,10 @@
  * catch", "a starter who caught nothing is not a visitor who didn't play",
  * "email arrivals are reported apart") decide the test on 7 Dec 2026 and are
  * asserted nowhere else. So is a privacy promise the model made necessary: a
- * goal never carries the signup token on /confirm, whose payload is the
- * subscriber's email address (section 7, "goal page_url").
+ * goal never carries the signup token on /confirm. A sealed token confirms the
+ * subscriber's address for whoever holds it, and a confirm JWT minted before
+ * 2026-10-11 still carries the address itself, readable, for its 48h (section
+ * 7, "goal page_url").
  *
  * Relative imports, not `@/`: scripts/ is outside tsconfig.json, and this runs
  * under tsx (lib/play/build.ts and lib/stories/index.ts import the same way).
@@ -34,6 +36,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import jwt from 'jsonwebtoken';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
 import { EPISODES } from '../lib/stories';
 import { buildPlayData, episodeWorldCount } from '../lib/play/build';
@@ -75,6 +78,7 @@ import type { PlayData, PlayKanji } from '../lib/play/types';
 import { redactPageUrl } from '../lib/analytics';
 import { confirmUrl } from '../lib/email/confirmation-email';
 import { mintConfirmToken } from '../lib/email/subscribe-token';
+import { isSealedToken } from '../lib/email/sealed-token';
 import { withNewsletterUtm } from '../lib/email/utm';
 import { SITE_URL } from '../lib/seo/site';
 
@@ -722,9 +726,10 @@ section('6. The return-visit model (mk-visit)');
   }
 
   {
-    // ReturnVisitTracker never steps the model on /confirm: its URL is the
-    // signup token, which holds the subscriber's address. The confirm button's
-    // 303 lands on /subscribed, a full load, so the return is still counted.
+    // ReturnVisitTracker never steps the model on /confirm: its URL carries the
+    // signup token, a credential for the subscriber's address (and, in a legacy
+    // JWT, the address itself). The confirm button's 303 lands on /subscribed,
+    // a full load, so the return is still counted.
     const problems: string[] = [];
     const UNTRACKED = ['/confirm', '/confirm/', '/confirm//', '/confirm/x'];
     const TRACKED = ['/', '/play', '/subscribed', '/confirmation', '/confirmed', '/kanji/confirm', '/stories', '/privacy-policy'];
@@ -1105,16 +1110,27 @@ section('7. Goal names, storage keys, the tracker, and what a goal carries');
   check('model wiring', wiring, 'the tracker leaves /confirm before touching storage, notes the arrival, and sends played and arrival; the game reports run starts and catches with the session\'s arrival');
 
   // Every goal carries page_url (lib/analytics/index.ts). On /confirm that is
-  // the signup token, whose payload is the subscriber's address in base64url.
+  // the signup token. A token minted today is sealed (lib/email/sealed-token.ts),
+  // so the address in it cannot be read, but it still confirms that one address
+  // for whoever holds it. A confirm JWT minted before 2026-10-11 is the worst
+  // case still in inboxes for 48h: its payload is the address in base64url.
+  // Both are replayed here.
   const leaks: string[] = [];
   const address = 'learner+play@example.com';
-  const token = mintConfirmToken({ email: address, source: 'play-results' }, 'validate-play-only-secret');
-  const page = `${confirmUrl(token)}&utm_source=newsletter&utm_medium=email`;
-  const payload = token.split('.')[1];
-  if (!Buffer.from(payload, 'base64url').toString('utf8').includes(address)) leaks.push('the minted token does not carry the address, so this check proves nothing');
-  const sent = redactPageUrl(page);
-  if (sent !== `${SITE_URL}/confirm?utm_source=newsletter&utm_medium=email`) leaks.push(`page_url for ${page} is ${sent}`);
-  if (sent.includes(payload) || sent.includes(encodeURIComponent(address)) || sent.includes(address)) leaks.push(`page_url still carries the token or the address: ${sent}`);
+  const secret = 'validate-play-only-secret';
+  const sealed = mintConfirmToken({ email: address, source: 'play-results' }, secret);
+  if (!isSealedToken(sealed)) leaks.push('mintConfirmToken no longer mints a sealed token, so the two cases below test the same format');
+  const legacy = jwt.sign({ email: address, source: 'play-results' }, secret, { algorithm: 'HS256', expiresIn: 3600 });
+  if (!Buffer.from(legacy.split('.')[1], 'base64url').toString('utf8').includes(address)) leaks.push('the legacy JWT does not carry the address, so its case proves nothing');
+  for (const [kind, token] of [['sealed', sealed], ['legacy JWT', legacy]] as const) {
+    const page = `${confirmUrl(token)}&utm_source=newsletter&utm_medium=email`;
+    const sent = redactPageUrl(page);
+    if (sent !== `${SITE_URL}/confirm?utm_source=newsletter&utm_medium=email`) leaks.push(`page_url for a ${kind} token, ${page}, is ${sent}`);
+    // Any long piece of the token (the sealed body, a JWT's payload or
+    // signature) or the address, plain or escaped.
+    const pieces = [...token.split('.').filter(part => part.length >= 8), address, encodeURIComponent(address)];
+    if (pieces.some(piece => sent.includes(piece))) leaks.push(`page_url still carries the ${kind} token or the address: ${sent}`);
+  }
   const REDACT: [string, string][] = [
     [`${SITE_URL}/confirm?token=abc.def.ghi`, `${SITE_URL}/confirm`],
     [`${SITE_URL}/confirm?utm_source=x&token=abc&utm_medium=email`, `${SITE_URL}/confirm?utm_source=x&utm_medium=email`],
@@ -1142,7 +1158,7 @@ section('7. Goal names, storage keys, the tracker, and what a goal carries');
   check(
     'goal page_url',
     leaks,
-    `a goal fired on /confirm?token=… sends page_url without the token (or the address in it); ${REDACT.length} more tokened URLs lose only the token and ${KEEP.length} others, UTMs included, pass byte for byte`,
+    `a goal fired on /confirm?token=… sends page_url without the token, sealed or legacy JWT (or the address in a JWT); ${REDACT.length} more tokened URLs lose only the token and ${KEEP.length} others, UTMs included, pass byte for byte`,
   );
 }
 

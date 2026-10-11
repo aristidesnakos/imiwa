@@ -51,7 +51,7 @@ interface EmailCaptureProps {
   source: EmailSignupSource;
   /**
    * The story slug this capture sits on, when it sits on one. It travels into
-   * the signed confirm token and decides which episode's quiz card the
+   * the sealed confirm token and decides which episode's quiz card the
    * confirmation flow sends — so a reader who finishes episode 2 is tested on
    * episode 2, not on whatever went up most recently.
    *

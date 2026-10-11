@@ -134,10 +134,12 @@ const nextConfig = {
           },
         ],
       },
-      // /confirm?token=… carries the subscriber's address in its token. Under the
-      // site-wide policy, every same-origin request the page makes would send that
-      // URL as its Referer: the confirm button's POST, and the /subscribed page it
-      // lands on, which would then report it to DataFast as document.referrer.
+      // /confirm?token=… carries a credential for the subscriber's address: a sealed
+      // token, or a legacy JWT (minted before 2026-10-11, valid 48h) whose payload is
+      // the address in readable form. Under the site-wide policy, every same-origin
+      // request the page makes would send that URL as its Referer: the confirm
+      // button's POST, and the /subscribed page it lands on, which would then report
+      // it to DataFast as document.referrer.
       // The page scrubs the token from the address bar first
       // (lib/email/confirm-token-scrub.ts). This covers the requests made before
       // that script runs, and a browser where it never runs. strict-origin, not

@@ -6,8 +6,11 @@
  * Why the address bar, and not the email link
  * ---------------------------------------------------------------------------
  *
- * The token's payload is base64url JSON holding the subscriber's address
- * (lib/email/subscribe-token.ts), and DataFast's page-view script
+ * The token is sealed (lib/email/sealed-token.ts), so the address in it cannot
+ * be read without the secret. It is still a bearer credential: whoever holds it
+ * can confirm that address. And a confirm JWT minted before 2026-10-11, valid
+ * for 48h, is base64url JSON holding the address in readable form
+ * (lib/email/subscribe-token.ts). DataFast's page-view script
  * (app/layout.tsx) reports `window.location.href` with every event it sends.
  * That is the whole URL, query AND fragment, so moving the token into a `#…`
  * would not hide it from DataFast. It would hide it from the server, but then
@@ -36,11 +39,13 @@
  * case this script never runs.
  *
  * What it does not reach: the server sees the GET URL, so the token is still in
- * Vercel's request log for that one request.
+ * Vercel's request log for that one request. For a sealed token that is
+ * ciphertext. For a legacy JWT it is the address, until the last of them
+ * expires.
  *
  * Accepted: a reload after the scrub shows the page's "missing its confirmation
  * code" state, while the link in the email still works. Surviving a reload would
- * mean storing the token, and so the address, in the browser.
+ * mean storing the token, a credential for the address, in the browser.
  *
  * Plain ES5 in a string, because it runs before any bundle and has to stay this
  * small. Only `token` is removed. Whatever else the URL carries stays, so a

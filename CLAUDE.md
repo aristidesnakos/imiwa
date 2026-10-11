@@ -105,6 +105,17 @@ delivery sink, so nothing bounces — confirms it, asserts the contact exists, a
 `finally`. It needs the real secrets: run by hand without them it fails and names them, while its
 CI job skips with a notice rather than failing.
 
+**Both email tokens are sealed, not signed** (`lib/email/sealed-token.ts`, since 2026-10-11):
+AES-256-GCM under a key per kind, HKDF-derived from `EMAIL_TOKEN_SECRET`, so no link we send carries
+a readable address. They were HS256 JWTs, whose payload is the address in base64url for anyone who
+holds the URL: Vercel's request log, a mail link scanner, a mail host's one-click unsubscribe POST.
+The confirm route still accepts a legacy JWT, a branch that can go on or after 2026-10-20
+(`LEGACY_CONFIRM_JWT_REMOVABLE_FROM` in `subscribe-token.ts`), and `/api/unsubscribe` accepts one
+forever, because every welcome email sent before then carries one. **Never touch
+`app/api/subscribe/**` or `app/api/unsubscribe/**` in the same push as a token-format change**: a
+push to those paths runs `subscribe-live-check.yml`'s end-to-end job at once, which mints a token in
+CI with the new code and posts it to production before Vercel has deployed the code that can read it.
+
 **Who sends it, and from where, is config.** `config.business` holds the legal operator (The
 Auspicious Company, a Massachusetts company, not an EU one, whatever older PRD text says) and the
 published postal address. CAN-SPAM needs that address in every commercial email, so the episode email
@@ -368,7 +379,7 @@ straddles the panel's top edge rather than sitting on the art, because 28 of 42 
 running to the right edge within 2-5% of the top; a geometry check over every panel at three widths
 found no overlap with the pill or its ~44px hit area. Keep it out of the art unless the bubbles move.
 
-Which episode gets sent travels inside the signed confirm token as an optional `episode` slug,
+Which episode gets sent travels inside the sealed confirm token as an optional `episode` slug,
 resolved against the registry on the way in and shape-checked on the way out. A malformed slug is
 **dropped, never fatal** — refusing consent over a cosmetic claim would lose a real subscriber, and
 the fallback is already correct for every surface that has no episode.
@@ -477,8 +488,8 @@ placements or promotion during the window: the read has to stay clean.
   `token` from every goal's `page_url` (`redactPageUrl`, `lib/analytics/index.ts`). The page view
   is covered separately: `/confirm` removes the token from the address bar before DataFast's
   deferred script reads it (`lib/email/confirm-token-scrub.ts`), so the token reaches only Vercel's
-  request log, in that one GET. The game's own
-  progress is `mk-play`. All three keys are in the privacy policy.
+  request log, in that one GET, and there as ciphertext: it is sealed (see "The newsletter"). The
+  game's own progress is `mk-play`. All three keys are in the privacy policy.
 - **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
   every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
   (`playLine` in `lib/email/quiz-email.ts`). `next.config.js` redirects kanjifun.com to `/play` once

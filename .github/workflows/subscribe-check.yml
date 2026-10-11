@@ -7,13 +7,16 @@ name: Subscribe Consent Check
 # promises `pnpm validate:subscribe` asserts are the ones that matter
 # legally, not just functionally:
 #
-#   - a contact is NEVER created without a valid, unexpired, correctly-signed
-#     token;
+#   - a contact is NEVER created without a valid, unexpired, authentic token
+#     (sealed since 2026-10-11, lib/email/sealed-token.ts, or a legacy JWT
+#     whose signature verifies);
 #   - a forged token cannot subscribe anyone, including via the `alg: none`
-#     algorithm-confusion hole `jsonwebtoken` opens if `algorithms` is not
-#     pinned on verify;
-#   - an expired token still verifies its signature (so the re-subscribe form
+#     algorithm-confusion hole `jsonwebtoken` opens on the legacy JWT branch
+#     if `algorithms` is not pinned on verify;
+#   - an expired token is still authenticated (so the re-subscribe form
 #     stays attributed) but is refused as consent;
+#   - no token we mint, confirm or unsubscribe, carries the address in any
+#     form readable without the secret;
 #   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
 #   - the episode email's campaign tags are identical for every recipient and
 #     never reach the unsubscribe link or the pre-consent confirmation email.
@@ -43,6 +46,8 @@ on:
       - 'app/subscribed/**'
       - 'app/confirm/**'
       - 'lib/email/unsubscribe-token.ts'
+      # The encryption both tokens are sealed with since 2026-10-11.
+      - 'lib/email/sealed-token.ts'
       # The commercial-email footer: CAN-SPAM's postal address and the
       # unsubscribe link, rendered for both the welcome card and the broadcast.
       - 'lib/email/quiz-email.ts'
@@ -79,6 +84,8 @@ on:
       - 'app/subscribed/**'
       - 'app/confirm/**'
       - 'lib/email/unsubscribe-token.ts'
+      # The encryption both tokens are sealed with since 2026-10-11.
+      - 'lib/email/sealed-token.ts'
       # The commercial-email footer: CAN-SPAM's postal address and the
       # unsubscribe link, rendered for both the welcome card and the broadcast.
       - 'lib/email/quiz-email.ts'

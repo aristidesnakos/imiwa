@@ -18,14 +18,15 @@ export const metadata: Metadata = {
  *
  * Two states, and the difference matters: arriving here plain means a contact
  * was actually created in Resend, because the route redirects here only after
- * that call succeeds. Arriving with `?state=expired` means the token's
- * signature verified but its 48h window had closed — nobody was subscribed, and
+ * that call succeeds. Arriving with `?state=expired` means the token was
+ * authenticated but its 48h window had closed — nobody was subscribed, and
  * the honest thing is to say so and offer the form again.
  *
  * `source` is carried on the expired redirect so the re-subscribe form stays
  * attributed to the surface the person originally signed up from. It is safe to
- * trust: it is read off a payload whose signature was verified, just past its
- * expiry (see lib/email/subscribe-token.ts). It is still re-validated here,
+ * trust: it is read off a payload that was authenticated (the sealed token's
+ * GCM tag, or a legacy JWT's signature), just past its expiry (see
+ * lib/email/subscribe-token.ts). It is still re-validated here,
  * because it arrives as a query string and query strings are typed by nobody.
  *
  * This page previously described Kit's post-confirmation redirect and told the

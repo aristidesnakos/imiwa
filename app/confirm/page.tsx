@@ -23,13 +23,15 @@ export const metadata: Metadata = {
  * in-app browsers of some mail clients effectively are.
  *
  * Nothing is validated here. The token is opaque to this page; the route
- * handler verifies the signature and decides everything.
+ * handler opens it (or, for a legacy JWT, verifies the signature) and decides
+ * everything.
  *
- * The token's payload is the subscriber's address, so it leaves the address
- * bar as soon as this HTML is parsed (CONFIRM_TOKEN_SCRUB_SCRIPT, which says
- * why that always happens before DataFast's script reads the URL). It stays in
- * the hidden field below, rendered on the server, so the button never needed
- * the URL.
+ * The token is sealed, so the address in it cannot be read, but it confirms
+ * that address for whoever holds it, and a legacy JWT still in an inbox
+ * carries the address readably. So it leaves the address bar as soon as this
+ * HTML is parsed (CONFIRM_TOKEN_SCRUB_SCRIPT, which says why that always
+ * happens before DataFast's script reads the URL). It stays in the hidden
+ * field below, rendered on the server, so the button never needed the URL.
  */
 export default async function ConfirmPage({
   searchParams,

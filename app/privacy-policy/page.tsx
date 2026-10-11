@@ -22,7 +22,7 @@ export const metadata = getSEOTags({
  *    loads only after analytics consent (lib/analytics/index.ts).
  *  - Progress lives in localStorage and never reaches a server (CLAUDE.md,
  *    "No server-side user state").
- *  - A pending signup is never added to the list: the signed token is the
+ *  - A pending signup is never added to the list: the sealed token is the
  *    record (lib/email/subscribe-token.ts). The Resend contact is created only
  *    by the confirm button, and it is the consent record. Resend's send log
  *    does keep the confirmation email itself (address, subject, time), so the
@@ -81,17 +81,28 @@ export const metadata = getSEOTags({
  *    from a link tagged utm_medium=email (lib/email/utm.ts), read only by the
  *    return-visit model, and gone when the tab closes. validate:play asserts it
  *    never reaches localStorage.
- *  - The signup `token` on /confirm?token=… never reaches DataFast, because its
- *    payload is the subscriber's address. The page takes it out of the address
- *    bar before DataFast's page-view script (app/layout.tsx) reads the URL
+ *  - The signup `token` on /confirm?token=… is sealed (lib/email/sealed-token.ts):
+ *    encrypted, so neither the GET that opens /confirm, which Vercel's request
+ *    log keeps, nor a mail scanner that fetches the link can read the address
+ *    in it. validate:subscribe asserts that. Confirm JWTs minted before
+ *    2026-10-11 still carry a readable address and stay valid until their 48h
+ *    runs out. The token itself, a credential for that one address, still never
+ *    reaches DataFast. The page takes it out of the address bar before
+ *    DataFast's page-view script (app/layout.tsx) reads the URL
  *    (lib/email/confirm-token-scrub.ts). /confirm sends `Referrer-Policy:
  *    strict-origin` (next.config.js), so the token does not go on as
  *    /subscribed's referrer either. Both are asserted by validate:subscribe.
  *    Every goal's page address has it removed as well (redactPageUrl in
- *    lib/analytics/index.ts; asserted by validate:play). It does still reach
- *    Vercel's request log as part of the GET URL that opens /confirm, and the
- *    "Server logs (Vercel)" item below does not say that the confirmation link
- *    puts the address there.
+ *    lib/analytics/index.ts; asserted by validate:play).
+ *  - The unsubscribe link, /api/unsubscribe?token=… (the welcome email only,
+ *    with List-Unsubscribe; the weekly broadcast uses Resend's own link), is
+ *    sealed too for links minted since 2026-10-11
+ *    (lib/email/unsubscribe-token.ts). Links in welcome emails sent before then
+ *    are JWTs that carry a readable address forever, and they must keep
+ *    working. When one is used (a click, or a mail host's one-click POST), the
+ *    address reaches Vercel's request log. The "Server logs (Vercel)" item
+ *    below does not say that. Whether to add a sentence there is a copy change
+ *    Ari must approve, and it has not been made.
  *
  * The controller identity and postal address come from `config.business`, the
  * same definition the email footer renders, so the two cannot disagree.

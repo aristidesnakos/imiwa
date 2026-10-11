@@ -45,10 +45,13 @@ module only computes: the weekly job passes `nextSendAt()` to Resend as `schedul
 does the sending.
 
 There is no database. The confirmed list lives in a Resend Segment; a *pending* signup is never added
-to it, because the signed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
+to it, because the sealed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
 That is what keeps CLAUDE.md's "no server-side user state" rule intact. It is not the same as
 "stored nowhere": Resend's send log keeps the confirmation email itself (address, subject, time),
-and the privacy policy says so. Unconfirmed addresses can be read straight out of that log.
+and the privacy policy says so. Unconfirmed addresses can be read straight out of that log. They
+cannot be read out of a link sent since 2026-10-11: sealed means encrypted as well as authenticated
+([`lib/email/sealed-token.ts`](../../lib/email/sealed-token.ts)). Before then the token was an HS256
+JWT, whose payload anyone holding the URL could read.
 
 ## The three email paths
 
@@ -63,7 +66,7 @@ on their own address, in the same request. Nothing in this repo sends to more th
 iterates contacts. One thing runs on a timer, the weekly job, and it does not send: it asks Resend to
 schedule one broadcast to the segment, and Resend sends it.
 
-Which episode the welcome card carries travels inside the signed confirm token as an optional
+Which episode the welcome card carries travels inside the sealed confirm token as an optional
 `episode` slug, resolved against the registry on the way in and again on the way out. An unknown slug
 is dropped, never fatal, and falls back to the newest episode that has gone out. **The welcome card
 never carries an episode before its weekly broadcast has gone out**, even to someone who signed up on
@@ -275,7 +278,7 @@ Set in every Vercel environment. Reference copy: [`.env.example`](../../.env.exa
 | Variable | Used by | What breaks without it |
 |---|---|---|
 | `RESEND_API_KEY` | `/api/subscribe`, `/api/subscribe/confirm`, `/api/unsubscribe`, `stories:create-broadcast`, `stories:schedule-broadcast` | `POST /api/subscribe` → `503 {"error":"Subscriptions are not configured."}`; confirm → the same 503; `POST /api/unsubscribe` → bare 503; the broadcast scripts exit with an error naming it. The guard matters because `sendEmail` returns a **mock success** when the key is unset ([`lib/resend.ts`](../../lib/resend.ts)) — without it a signup would answer 200 and send nothing. |
-| `EMAIL_TOKEN_SECRET` | Both subscribe routes, `/api/unsubscribe` | Same 503s. It HMACs both the 48h confirm token and the non-expiring unsubscribe token. Rotating it invalidates every confirmation link in flight **and every unsubscribe link ever sent** — rotate only in a send-free window. |
+| `EMAIL_TOKEN_SECRET` | Both subscribe routes, `/api/unsubscribe` | Same 503s. Both tokens are sealed with keys derived from it (AES-256-GCM, one HKDF-derived key per kind, [`lib/email/sealed-token.ts`](../../lib/email/sealed-token.ts)): the 48h confirm token and the non-expiring unsubscribe token. It is also the HMAC key that still verifies the JWTs minted before 2026-10-11: confirm JWTs until their 48h runs out, unsubscribe JWTs for good. Rotating it invalidates every confirmation link in flight **and every unsubscribe link ever sent**, sealed or legacy — rotate only in a send-free window. |
 | `RESEND_WEEKLY_STORIES_SEGMENT_ID` | `/api/subscribe/confirm`, `stories:create-broadcast`, `stories:schedule-broadcast` | **This is the one that was missing for three episodes.** `/api/subscribe` still answers 200 and the confirmation email still goes out — that route does not check this variable — so the break is invisible until the person presses the confirm button and gets `503 {"error":"Subscriptions are not configured."}`. No contact, no segment membership, no welcome card. The broadcast scripts also refuse to run. Set in Production and Development on 2026-09-16; **not yet in Preview**. |
 
 The weekly job does not read Vercel. It needs its own copies of `RESEND_API_KEY` (a **Full access**
@@ -337,9 +340,9 @@ our own domain would hard-bounce, and bounces wreck a young sending reputation f
 else. The sends do count against the monthly quota: two per run, against 50k.
 
 It mints the confirm token locally rather than reading the sink, so `EMAIL_TOKEN_SECRET` must be the
-**same value production signs with** or the confirm route answers 400. It needs `RESEND_API_KEY` too,
-a **Full access** key, because it reads the contact back and deletes it. Locally, put both in
-`.env.local` by hand: `vercel env pull` reads the key back empty, as
+**same value production uses** or the confirm route cannot open the token and answers 400. It
+needs `RESEND_API_KEY` too, a **Full access** key, because it reads the contact back and deletes it.
+Locally, put both in `.env.local` by hand: `vercel env pull` reads the key back empty, as
 [the Saturday ritual](#the-saturday-ritual) explains for the broadcast script. In CI, repository
 secrets.
 
@@ -578,8 +581,8 @@ the whole path works — each stage fails in a place the previous stage cannot s
    key is refused), found none on the account, and planned Episode 6 for Saturday 2026-10-03 13:00
    UTC with both guards passing. What a dry run cannot prove is the segment id: it is first used by
    the real create call, so a wrong one fails that run loudly with an issue, and Friday's run is the
-   retry. **Still open:** `EMAIL_TOKEN_SECRET`, which must be the **same value** production signs
-   with. Until it exists, `pnpm check-subscribe-e2e` and its Friday job stay skipped. Add it under
+   retry. **Still open:** `EMAIL_TOKEN_SECRET`, which must be the **same value** production uses.
+   Until it exists, `pnpm check-subscribe-e2e` and its Friday job stay skipped. Add it under
    Settings → Secrets and variables → Actions.
 3. **Kit: nothing to migrate.** The Kit trial ended without a charge, and the account holds 0
    subscribers (checked 2026-09-27). `KIT_API_KEY` and `KIT_FORM_ID` were deleted from Vercel on
