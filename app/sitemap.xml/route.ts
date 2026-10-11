@@ -7,6 +7,7 @@ import { SITE_URL, KANJI_CONTENT_LAST_MODIFIED } from '@/lib/seo/site';
 import { strokeOrderImagePath } from '@/lib/stroke-order-image';
 import { EPISODES } from '@/lib/stories';
 import { PUBLISHED_JLPT_UPDATED } from '@/lib/jlpt/published';
+import { PLAY_PATH, PLAY_CONTENT_LAST_MODIFIED } from '@/lib/play/seo';
 
 /** The later of two YYYY-MM-DD dates, ignoring a missing one. */
 const later = (a: string, b: string | null): string => (b && b > a ? b : a);
@@ -32,6 +33,10 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // there are published items, so the page changes whenever they do: the later of
   // the template's date and the items' own stamp (scripts/jlpt/publish-items.ts).
   { path: '/kanji/n5/quiz', lastmod: later('2026-09-24', PUBLISHED_JLPT_UPDATED), priority: '0.7' },
+  // Tan Dash, the kanji game: written for "kanji game", a query neither the
+  // quiz nor the list answers. Its date lives beside the page's other
+  // constants (lib/play/seo.ts) rather than here.
+  { path: PLAY_PATH, lastmod: PLAY_CONTENT_LAST_MODIFIED, priority: '0.7' },
   // The hub, not the episodes: those carry their own publication dates and are
   // emitted below. Priority matches /kanji because it does the same job for a
   // different query class — it is a category page written to rank, not an index.

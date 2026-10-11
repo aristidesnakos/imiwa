@@ -205,6 +205,9 @@ module.exports = {
       //                the kanji data into it
       //   /free-resources/genkouyoushi  blank manuscript paper: two inline
       //                SVG previews of ~500 rects each
+      //   /play        Tan Dash: a canvas game island handed the N5 play data
+      //                as a prop, over a server-rendered index of 82 kanji
+      //                links (all prefetch={false})
       url: [
         `${HOST}/`,
         `${HOST}/kanji`,
@@ -215,6 +218,7 @@ module.exports = {
         `${HOST}/stories/tan-climbs-the-mountain`,
         `${HOST}/free-resources/kanji-sheets/custom`,
         `${HOST}/free-resources/genkouyoushi`,
+        `${HOST}/play`,
       ],
       settings: {
         // --no-sandbox / --disable-dev-shm-usage are required for Chrome in a
@@ -390,6 +394,22 @@ module.exports = {
           scriptKb: 215, // 187 kB measured, +15%
           totalKb: 280, // 241 kB measured, +16%
           perfScore: 0.85, // 0.93 measured
+        }),
+        // Tan Dash. PROVISIONAL: these are not measurements. They were set
+        // before the page had ever been built, from its neighbours (the quiz,
+        // the closest client-heavy page, sits at 199 kB script / 247 kB total)
+        // plus room for the canvas engine and the ~8 kB of play data. Replace
+        // them with measured + ~15% (bytes) and ~1.4x (LCP/FCP), as the header
+        // describes, once a real `pnpm build && pnpm start` has been measured.
+        route({
+          matchingUrlPattern: '^http://localhost:3000/play$',
+          lcp: 3500, // provisional
+          fcp: 1600, // provisional
+          cls: 0.1, // Google's "good" boundary; the stage must reserve its box
+          tbt: 600, // the shared CPU-noise alarm
+          scriptKb: 240, // provisional
+          totalKb: 340, // provisional
+          perfScore: 0.85,
         }),
         route({
           // Percent-encoded segments only, i.e. a character. `/kanji/.+` used

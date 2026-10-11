@@ -73,6 +73,8 @@ import {
   youtubeWatchUrl,
 } from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
+import { PLAY_CONTENT_LAST_MODIFIED, PLAY_OG_IMAGE, PLAY_PATH, PLAY_URL } from '../lib/play/seo';
+import { N5_KANJI } from '../lib/constants/n5-kanji';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -1392,6 +1394,260 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
   for (const crumbs of crumbLists) validateBreadcrumbList(file, crumbs);
 }
 
+// ─── /play: Tan Dash ─────────────────────────────────────────────────────────
+
+/** Every `content` of the <meta> tags whose `attr` (property / name) is `key`, in order. */
+function metaContents(html: string, attr: 'property' | 'name', key: string): string[] {
+  const keyRe = new RegExp(`\\b${attr}=["']${key.replace(/[.:]/g, '\\$&')}["']`);
+  const out: string[] = [];
+  for (const tag of html.match(/<meta\b[^>]*>/g) ?? []) {
+    if (!keyRe.test(tag)) continue;
+    const content = /\bcontent=["']([^"']*)["']/.exec(tag);
+    if (content) out.push(content[1].replace(/&amp;/g, '&'));
+  }
+  return out;
+}
+
+/**
+ * /play describes the game as a VideoGame and shares as its own card
+ * (app/play/opengraph-image.tsx), not the site-wide one.
+ *
+ * The share card is asserted on the rendered tags, not on the page source,
+ * because the failure it guards is silent: getSEOTags always fills
+ * `openGraph.images`, Next then drops a route's file-convention image, and the
+ * page shares as the generic site card with nothing reporting it. Twitter is
+ * checked separately because it only inherits the image while getSEOTags
+ * leaves `twitter.images` empty.
+ *
+ * The offer is free and stays free in the markup: price 0, `isAccessibleForFree`.
+ * There are no ratings or reviews, so a VideoGame carrying either is a
+ * fabricated claim, which Google's guidelines treat as spam.
+ *
+ * The worlds section is the page's crawlable index of the game, so every N5
+ * kanji must be linked from it, each to a page that prerendered.
+ */
+function validatePlayPage(kanjiCharSet: Set<string>): void {
+  const abs = path.join(BUILD_APP_DIR, `${PLAY_PATH.replace(/^\//, '')}.html`);
+  const file = relative(abs);
+  if (!fs.existsSync(abs)) {
+    fail({
+      file,
+      schemaType: '(build artefact)',
+      field: `page ${PLAY_PATH}`,
+      expected: 'a prerendered HTML file',
+      actual: 'missing',
+      hint: 'app/play/page.tsx should prerender: it reads no request data. A dynamic API there moves it to the server and out of this check.',
+    });
+    return;
+  }
+  const html = fs.readFileSync(abs, 'utf8');
+  const { entities } = extractJsonLd(file, html);
+
+  // ─ VideoGame ─
+  const games = entitiesOfType(entities, 'VideoGame');
+  if (games.length !== 1) {
+    fail({
+      file,
+      schemaType: 'VideoGame',
+      field: '(block)',
+      expected: 'exactly one VideoGame entity',
+      actual: `${games.length} — page has ${entities.map(typeOf).join(', ') || 'no JSON-LD'}`,
+      hint: 'See the jsonLd array in app/play/page.tsx.',
+    });
+  }
+  for (const game of games) {
+    const T = 'VideoGame';
+    for (const field of ['name', 'url', 'description', 'image', 'offers', 'publisher']) {
+      requireField(file, T, game, field);
+    }
+    requireEquals(file, T, 'name', game.name, 'Tan Dash');
+    requireEquals(file, T, 'url', asString(game.url), PLAY_URL, 'The entity URL must be the page it describes, on the canonical www host.');
+    requireCanonicalHost(file, T, 'url', game.url);
+    requireEquals(file, T, 'image', asString(game.image), PLAY_OG_IMAGE.url, 'The game\'s own share card (PLAY_OG_IMAGE in lib/play/seo.ts).');
+    if (game.isAccessibleForFree !== true) {
+      fail({
+        file,
+        schemaType: T,
+        field: 'isAccessibleForFree',
+        expected: 'true (a boolean)',
+        actual: game.isAccessibleForFree === undefined ? 'missing' : JSON.stringify(game.isAccessibleForFree),
+      });
+    }
+    requireEquals(file, T, 'educationalLevel', asString(game.educationalLevel), 'JLPT N5', 'Keep the level in one spelling: "JLPT N5".');
+
+    const offers = Array.isArray(game.offers) ? game.offers.map(asObject) : [asObject(game.offers)];
+    offers.forEach((offer, i) => {
+      const O = `${T}.offers${Array.isArray(game.offers) ? `[${i}]` : ''}`;
+      if (!offer) {
+        fail({ file, schemaType: O, field: '(value)', expected: 'an Offer object', actual: JSON.stringify(game.offers).slice(0, 120) });
+        return;
+      }
+      requireEquals(file, O, '@type', offer['@type'], 'Offer');
+      const price = offer.price;
+      if (!((typeof price === 'number' || (typeof price === 'string' && price.trim() !== '')) && Number(price) === 0)) {
+        fail({
+          file,
+          schemaType: O,
+          field: 'price',
+          expected: '0 (the game is free)',
+          actual: price === undefined ? 'missing' : JSON.stringify(price),
+        });
+      }
+      requireEquals(file, O, 'priceCurrency', offer.priceCurrency, 'USD');
+    });
+
+    for (const field of ['aggregateRating', 'review']) {
+      if (game[field] !== undefined) {
+        fail({
+          file,
+          schemaType: T,
+          field,
+          expected: 'absent: Tan Dash has no ratings or reviews',
+          actual: JSON.stringify(game[field]).slice(0, 120),
+          hint: 'Marking up ratings that do not exist is a structured-data spam violation.',
+        });
+      }
+    }
+
+    const publisher = asObject(game.publisher);
+    if (publisher) {
+      requireBrandName(file, `${T}.publisher`, 'name', publisher.name);
+      requireEquals(file, `${T}.publisher`, 'url', publisher.url, SITE_URL);
+      requireEquals(file, `${T}.publisher`, 'logo.url', asObject(publisher.logo)?.url, SITE_LOGO.url);
+    }
+  }
+
+  const faqs = entitiesOfType(entities, 'FAQPage');
+  if (faqs.length > 0) {
+    fail({
+      file,
+      schemaType: 'FAQPage',
+      field: '(block)',
+      expected: 'absent: the questions on /play are prose, not FAQ markup',
+      actual: `${faqs.length} FAQPage entit${faqs.length === 1 ? 'y' : 'ies'}`,
+    });
+  }
+
+  // ─ BreadcrumbList: Home, then the page ─
+  const crumbs = entitiesOfType(entities, 'BreadcrumbList');
+  if (crumbs.length !== 1) {
+    fail({
+      file,
+      schemaType: 'BreadcrumbList',
+      field: '(block)',
+      expected: 'exactly one BreadcrumbList entity',
+      actual: `${crumbs.length} — page has ${entities.map(typeOf).join(', ') || 'no JSON-LD'}`,
+    });
+  }
+  for (const list of crumbs) {
+    validateBreadcrumbList(file, list);
+    const items = Array.isArray(list.itemListElement) ? list.itemListElement.map(asObject) : [];
+    requireEquals(file, 'BreadcrumbList (first item)', 'item', asString(items[0]?.item), SITE_URL, 'The trail starts at the home page.');
+    requireEquals(file, 'BreadcrumbList (last item)', 'item', asString(items[items.length - 1]?.item), PLAY_URL, 'The last crumb is the page itself.');
+  }
+
+  // ─ Canonical and share tags, as rendered ─
+  const canonical = [...html.matchAll(/<link\b[^>]*\brel=["']canonical["'][^>]*>/g)]
+    .map((m) => /\bhref=["']([^"']*)["']/.exec(m[0])?.[1] ?? '')
+    .filter(Boolean);
+  if (canonical.length !== 1 || canonical[0] !== PLAY_URL) {
+    fail({
+      file,
+      schemaType: '(head)',
+      field: 'link[rel=canonical]',
+      expected: `exactly one, ${PLAY_URL}`,
+      actual: canonical.length ? JSON.stringify(canonical) : 'missing',
+      hint: 'canonicalUrlRelative: PLAY_PATH in app/play/page.tsx.',
+    });
+  }
+  const ogUrl = metaContents(html, 'property', 'og:url');
+  requireEquals(file, '(head)', 'og:url', ogUrl[0], PLAY_URL);
+
+  for (const [attr, key] of [
+    ['property', 'og:image'],
+    ['name', 'twitter:image'],
+  ] as const) {
+    const images = metaContents(html, attr, key);
+    if (images[0] !== PLAY_OG_IMAGE.url) {
+      fail({
+        file,
+        schemaType: '(head)',
+        field: key,
+        expected: `${PLAY_OG_IMAGE.url} (app/play/opengraph-image.tsx) first`,
+        actual: images.length ? JSON.stringify(images) : 'missing',
+        hint: 'getSEOTags fills openGraph.images with the site card unless the page names its own; see the openGraph block in app/play/page.tsx.',
+      });
+      continue;
+    }
+    const res = resolveAsset(images[0]);
+    if (!res.ok) {
+      fail({
+        file,
+        schemaType: '(head)',
+        field: key,
+        expected: 'a URL that resolves to a built route or an app/ file convention',
+        actual: `${JSON.stringify(images[0])} — ${res.how}`,
+      });
+    }
+  }
+  requireEquals(file, '(head)', 'og:image:width', metaContents(html, 'property', 'og:image:width')[0], String(PLAY_OG_IMAGE.width));
+  requireEquals(file, '(head)', 'og:image:height', metaContents(html, 'property', 'og:image:height')[0], String(PLAY_OG_IMAGE.height));
+
+  // ─ The worlds index links every N5 kanji, each to a prerendered page ─
+  const linked = new Set<string>();
+  for (const m of html.matchAll(/\bhref=["']\/kanji\/([^"'/?#]+)["']/g)) {
+    let seg: string;
+    try {
+      seg = decodeURIComponent(m[1]).normalize('NFC');
+    } catch {
+      continue;
+    }
+    if (isSingleCharacter(seg)) linked.add(seg);
+  }
+  const unlinked = N5_KANJI.map((k) => k.kanji.normalize('NFC')).filter((c) => !linked.has(c));
+  if (unlinked.length > 0) {
+    fail({
+      file,
+      schemaType: '(page)',
+      field: 'worlds index',
+      expected: `a /kanji/<char> link for each of the ${N5_KANJI.length} N5 kanji`,
+      actual: `${unlinked.length} missing: ${unlinked.join(' ')}`,
+      hint: 'The worlds section of app/play/page.tsx renders every world\'s kanji from buildPlayData().',
+    });
+  }
+  const dead = Array.from(linked).filter((c) => !kanjiCharSet.has(c));
+  if (dead.length > 0) {
+    fail({
+      file,
+      schemaType: '(page)',
+      field: 'kanji links',
+      expected: 'every /kanji/<char> link to point at a prerendered kanji page',
+      actual: `no page for: ${dead.join(' ')}`,
+    });
+  }
+
+  // ─ Listed in the sitemap, with its own date ─
+  const sitemapPath = path.join(BUILD_APP_DIR, 'sitemap.xml.body');
+  if (fs.existsSync(sitemapPath)) {
+    const xml = fs.readFileSync(sitemapPath, 'utf8');
+    const entry = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
+      .map((m) => m[1])
+      .find((block) => /<loc>([\s\S]*?)<\/loc>/.exec(block)?.[1].trim() === PLAY_URL);
+    const lastmod = entry ? /<lastmod>([\s\S]*?)<\/lastmod>/.exec(entry)?.[1].trim() : undefined;
+    if (!entry || lastmod !== PLAY_CONTENT_LAST_MODIFIED) {
+      fail({
+        file: relative(sitemapPath),
+        schemaType: '(sitemap)',
+        field: `<url> for ${PLAY_PATH}`,
+        expected: `<loc>${PLAY_URL}</loc> with <lastmod>${PLAY_CONTENT_LAST_MODIFIED}</lastmod> (PLAY_CONTENT_LAST_MODIFIED)`,
+        actual: entry ? `lastmod ${JSON.stringify(lastmod)}` : 'no entry',
+        hint: 'app/sitemap.xml/route.ts lists /play from lib/play/seo.ts.',
+      });
+    }
+  }
+  // (A missing sitemap is reported by validateSitemap.)
+}
+
 // ─── Sitemap / robots ────────────────────────────────────────────────────────
 
 function validateSitemap(): void {
@@ -1756,6 +2012,9 @@ function main(): void {
     validateLevelPage(file, entities, pagePath, level, kanjiCharSet);
   }
 
+  // ─ /play ─
+  validatePlayPage(kanjiCharSet);
+
   validateSitemap();
   validateRobots();
 
@@ -1779,7 +2038,8 @@ function main(): void {
   console.log('  - FAQPage and BreadcrumbList well-formed; sitemap + robots canonical');
   console.log('  - Every kanji <url> in the sitemap lists exactly its own stroke-order image');
   console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page');
-  console.log('  - Episode videos: a VideoObject and a click-to-load section exactly where data/stories/videos.ts maps one\n');
+  console.log('  - Episode videos: a VideoObject and a click-to-load section exactly where data/stories/videos.ts maps one');
+  console.log('  - /play: a free VideoGame with no ratings, its own share card on og:image and twitter:image, every N5 kanji linked\n');
 }
 
 main();
