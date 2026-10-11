@@ -45,7 +45,7 @@ export function clashes(km: Map<string, PlayKanji>, c: string, order: Order): bo
   const t = km.get(order.c);
   if (!k || !t) return true;
   if (order.mode === 'kana') return k.readings.includes(order.text) || k.kana === order.text;
-  return k.en === order.text || k.meanings.includes(order.text) || k.meanings.includes(t.en);
+  return k.en === order.text || k.meanings.includes(order.text);
 }
 
 export interface OrderContext {

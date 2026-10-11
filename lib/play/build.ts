@@ -20,10 +20,19 @@ function playKanji(): PlayKanji[] {
     if (!sign) throw new Error(`lib/play/signs.ts has no sign for N5 kanji ${entry.kanji}`);
     const r = kanjiReadings(entry);
     const readings = [...new Set(r.all.flatMap(x => [x.kana, x.kanaFull]).filter(Boolean))];
-    const meanings = entry.meaning
-      .split(',')
-      .map(m => m.trim().toLowerCase())
-      .filter(Boolean);
+    // Senses are joined with `,` and sometimes `;` ("male; man"); a sense with
+    // a parenthesis ("hot (weather)") also counts bare, so an English sign
+    // reading "hot" is ruled out as a decoy. Digit fragments ("10, 000" in 万)
+    // are noise, not senses.
+    const meanings = [
+      ...new Set(
+        entry.meaning
+          .split(/[,;]/)
+          .map(m => m.trim().toLowerCase())
+          .flatMap(m => [m, m.replace(/\s*\(.*?\)\s*/g, ' ').trim()])
+          .filter(m => m && !/^\d+$/.test(m)),
+      ),
+    ];
     return { c: entry.kanji, en: sign.en, kana: sign.kana, meanings, readings };
   });
 }

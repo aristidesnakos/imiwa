@@ -3,7 +3,7 @@
  *
  * Built on the server by lib/play/build.ts and handed to the client island as
  * a prop, so the island never imports the kanji lists (CLAUDE.md, "Printable
- * sheets": the builder island takes the same approach). ~8 kB of JSON.
+ * sheets": the builder island takes the same approach). ~10 kB of JSON.
  */
 
 export interface PlayKanji {
