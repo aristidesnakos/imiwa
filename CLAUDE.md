@@ -492,8 +492,8 @@ placements or promotion during the window: the read has to stay clean.
   game's own progress is `mk-play`. All three keys are in the privacy policy.
 - **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
   every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
-  (`playLine` in `lib/email/quiz-email.ts`). `next.config.js` redirects kanjifun.com to `/play` once
-  that domain is attached to this Vercel project.
+  (`playLine` in `lib/email/quiz-email.ts`). kanjifun.com is deliberately **not** redirected here: it is
+  held for the bigger standalone KanjiFun game, built only if this test passes (decision 7 Dec 2026).
 - **The share card is `app/play/opengraph-image.tsx`, named explicitly in the page's metadata**,
   because `getSEOTags` always sets `openGraph.images` and Next then ignores a route's own image
   file. Its fonts are committed subsets in `app/play/_og/` (OFL; Press Start 2P is renamed
