@@ -74,6 +74,8 @@
  *     is a `/` -> `/play` page sequence. Its players are curious clickers, not
  *     readers who have just met the kanji, so reach is tilted up and
  *     engagement and returns could move either way. Say so next to the verdict.
+ *   - From 2026-10-11 /about also links /play in plain text (app/about/page.tsx),
+ *     untagged for the same reason; its players are in arrival=other too.
  */
 
 export const PLAY_GOALS = {

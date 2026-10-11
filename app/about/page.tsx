@@ -8,6 +8,7 @@ import { SITE_URL, SITE_NAME } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { levelPagePath } from '@/lib/levels';
+import { buildPlayData } from '@/lib/play/build';
 
 export const metadata: Metadata = getSEOTags({
   title: `About ${config.appName} | Who Makes It and Where the Data Comes From`,
@@ -38,8 +39,16 @@ export const metadata: Metadata = getSEOTags({
  *  - The story art is AI-generated and the Japanese is composited as text
  *    (components/stories/StoryPanel.tsx). If that ever changes, so does the
  *    "Where does the data come from?" bullet on it.
- *  - "N5 is furthest along" is true while only N5 has a list page, a quiz and
- *    published sentences (lib/levels). Revisit when N4 gets its list.
+ *  - "N5 is furthest along" is true while only N5 has a list page, a quiz, a
+ *    game and published sentences (lib/levels). Revisit when N4 gets its list.
+ *  - The Tan Dash claims describe lib/play: the signs are hand-curated
+ *    (signs.ts), and `pnpm validate:play` asserts both "the reading a sign
+ *    asks for is one of the kanji's own" and "exactly one tile answers each
+ *    sign". The kanji count is read from buildPlayData(), as on /play, so it
+ *    follows the game. The links to /play are plain and untagged (see
+ *    lib/play/measure.ts: the game is in a measured test, so a link here must
+ *    not add an attribution tag) and carry prefetch={false}, because /play is
+ *    a client-heavy route.
  *  - Operator and contact come from `config.business` and `config.resend`, the
  *    same definitions the privacy policy reads.
  */
@@ -51,10 +60,18 @@ const LIST = 'list-disc space-y-3 pl-6 leading-relaxed';
 const YOUTUBE_URL = 'https://www.youtube.com/@officialmichikanji';
 const OPERATOR_URL = 'https://theauspiciouscompany.com';
 
+// Server-only and built once at build time; never import this into a client component.
+const PLAY_KANJI_COUNT = buildPlayData().kanji.length;
+
 export default function AboutPage() {
   const { legalName, registration } = config.business;
   const email = config.resend.supportEmail;
   const n5ListPath = levelPagePath('N5');
+  const tanDash = (
+    <Link href="/play" prefetch={false} className={LINK}>
+      Tan Dash
+    </Link>
+  );
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -194,6 +211,12 @@ export default function AboutPage() {
               Japanese is real text laid over the art, so you can select it, search it and have it
               read aloud.
             </li>
+            <li>
+              <strong>The game</strong> ({tanDash}) is built from the same N5 kanji list and
+              readings as the rest of the site, so it covers all {PLAY_KANJI_COUNT} N5 kanji. The
+              English word on each sign is picked by hand, and a test checks that the reading a
+              sign asks for is one of that kanji&rsquo;s real readings.
+            </li>
           </ul>
         </section>
 
@@ -204,8 +227,8 @@ export default function AboutPage() {
           <div className="mt-4 space-y-4 leading-relaxed">
             <p>
               <strong>A program checks what a program can.</strong> Every kanji in a story has to be
-              on the N5 list. Every quiz question has to have exactly one right answer. Automated
-              checks enforce both before a change can go live.
+              on the N5 list. Every quiz question, and every sign in the game, has to have exactly
+              one right answer. Automated checks enforce all of this before a change can go live.
             </p>
             <p>
               <strong>A person checks the rest.</strong> Example sentences are picked from Tatoeba
@@ -238,10 +261,13 @@ export default function AboutPage() {
                 <Link href="/kanji/n5/quiz" className={LINK}>
                   quiz
                 </Link>
-                , reviewed example sentences and the weekly story.
+                , reviewed example sentences, the weekly story and a free game, {tanDash}.
               </>
             ) : (
-              <>It has a quiz, reviewed example sentences and the weekly story.</>
+              <>
+                It has a quiz, reviewed example sentences, the weekly story and a free game,{' '}
+                {tanDash}.
+              </>
             )}{' '}
             Every kanji from N4 to N1 has its own page with a stroke order diagram, meanings and
             readings, but those level lists are still being filled in and the example sentences

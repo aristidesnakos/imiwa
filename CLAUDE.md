@@ -520,7 +520,9 @@ is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) w
   tag would need either a query string (an internal UTM would reset DataFast's attribution for the
   visit) or a new `arrival` value in `lib/play/measure.ts`; neither was built. On 7 Dec, a `/` to
   `/play` page sequence is the only trace. The same door also moves the homepage's own bounce read
-  (judged after 10 Nov): a click on it is a second pageview. kanjifun.com is deliberately **not**
+  (judged after 10 Nov): a click on it is a second pageview. `/about` links it too, also since
+  2026-10-11 and also untagged (a text link in the status paragraph and the data list in
+  `app/about/page.tsx`; the page's header lists the claims behind it). kanjifun.com is deliberately **not**
   redirected here: it is held for the bigger standalone KanjiFun game, built only if this test
   passes (decision 7 Dec 2026).
 - **The fake door's form joins the app waitlist, not the weekly email.** "I'd play this as a phone
