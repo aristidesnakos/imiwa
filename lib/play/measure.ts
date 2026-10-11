@@ -9,7 +9,9 @@
  *   Engagement  >= 40% of starters catch at least 3 kanji    play_kanji_catch n=3 / play_run_start
  *   Retention   players who caught a kanji come back within  site_visit_return played=yes
  *   (decides)   7 days at >= 2x the rate of visitors who     vs played=no, each over its
- *               didn't play, and at >= 15% absolute           cohort's unique visitors
+ *               didn't play, and at >= 15% absolute;         cohort's unique visitors, both
+ *               players who arrived from the email are       arrival=other; arrival=email
+ *               reported separately                          is reported apart
  *
  * Every goal here is budgeted (DataFast bills goal events; the account ran out
  * in September): each fires at most once or twice per page view, except the
@@ -26,10 +28,38 @@
  *                            per page view. No app exists; the copy says so.
  *   site_visit_return        Once per browser per cohort, site-wide: the first
  *                            page view on a later calendar day, within 7 days
- *                            of the cohort's anchor. `played`: yes | no.
+ *                            of the cohort's anchor, never on /confirm.
+ *                            `played`: yes (caught a kanji) | started (started
+ *                            a run, caught nothing) | no (never started).
+ *                            `arrival`: email | other, how the anchor visit's
+ *                            tab session arrived (below), not the return's.
  *
  * Email signups from the results screen are `email_signup` with source
  * `play-results` (lib/analytics/email-signup-sources.ts), like every surface.
+ *
+ * Every goal also carries `page_url`, added by lib/analytics/index.ts, which
+ * strips the signup `token` from it first: see the comment there.
+ *
+ * READING IT ON 7 DEC
+ *   - Exclude China from every denominator, as every other DataFast read in
+ *     this project does: it is scraper traffic (1,251 of 5,681 visitors from
+ *     29 Aug to 27 Sep 2026, 98% bounce, 2 returned), so it would swell the
+ *     visitor cohort with browsers that never come back and flatter the 2x
+ *     ratio.
+ *   - Like with like. The deciding comparison is played=yes against
+ *     played=no, both arrival=other. played=started is neither cohort: a
+ *     starter who caught nothing is not a visitor "who didn't play". A
+ *     subscriber is reminded weekly by the email, so arrival=email returns
+ *     are reported next to the result, never folded into it.
+ *   - Give every cohort its whole window: take the denominators (unique
+ *     visitors; catchers from play_kanji_catch n=1; starters from
+ *     play_run_start) to 30 Nov and the returns to 7 Dec. The few returns in
+ *     that last week from anchors after 30 Nov fall on both cohorts alike.
+ *   - No goal but site_visit_return carries `arrival`, so the email cohorts'
+ *     denominators are the catchers and visitors DataFast attributes to
+ *     utm_medium=email. The plain-text email's /play link is deliberately
+ *     untagged (lib/email/quiz-email.ts), so a plain-text reader counts as
+ *     other.
  */
 
 export const PLAY_GOALS = {
@@ -59,13 +89,28 @@ export const PLAY_STORAGE_KEY = 'mk-play';
 // anchored on the day of that catch, and re-arms the report, because the
 // pass mark counts 7 days from the catch, not from the first visit.
 //
+// Starting a run without catching anything does not move a browser: it stays
+// a visitor, on the same anchor, flagged `started`, and reports
+// played=started. Without that flag a starter who caught nothing would report
+// played=no, inside the cohort the pass mark calls "didn't play".
+//
 // Each cohort reports at most once: the first page view on a LATER calendar
 // day within 7 days of the anchor fires `site_visit_return`; once 7 days have
 // passed with none, the cohort is closed with no event. So a browser costs at
 // most two events in its life, and a non-returner costs none.
 //
+// The anchor visit also records whether its tab session arrived from the
+// newsletter (`email`), so a subscriber, whom the next Saturday email brings
+// back whether or not the game did, is reported apart (`arrival`).
+//
+// /confirm never steps the model (shouldTrack below). Its URL carries the
+// signup token, whose payload holds the subscriber's email address, and every
+// goal carries its page's URL. Nothing is lost: the confirm button posts, and
+// its 303 lands on /subscribed as a full page load, which counts the return.
+//
 // Stored under `mk-visit`. Shape-checked on read and never overwritten when
-// unrecognised (CLAUDE.md, "No server-side user state").
+// unrecognised (CLAUDE.md, "No server-side user state"). A state written
+// before `started` and `email` existed reads as false for both.
 
 export const VISIT_STORAGE_KEY = 'mk-visit';
 export const RETURN_WINDOW_DAYS = 7;
@@ -74,7 +119,12 @@ export interface VisitState {
   v: 1;
   /** Local calendar day, YYYY-MM-DD: the first view, or the first catch for a player. */
   anchor: string;
+  /** Caught a kanji: the player cohort. */
   played: boolean;
+  /** Started a run, caught or not. Never moves the anchor. */
+  started: boolean;
+  /** The anchor visit's tab session arrived from the newsletter (utm_medium=email). */
+  email: boolean;
   /** True once this cohort has reported, or its window closed without a return. */
   done: boolean;
 }
@@ -82,6 +132,12 @@ export interface VisitState {
 export type VisitRead = { kind: 'none' } | { kind: 'ok'; state: VisitState } | { kind: 'unknown' };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** A flag added after the first shape: absent reads as false, anything but a boolean is unrecognised. */
+function laterFlag(x: unknown): boolean | null {
+  if (x === undefined) return false;
+  return typeof x === 'boolean' ? x : null;
+}
 
 export function parseVisitState(raw: string | null): VisitRead {
   if (raw === null) return { kind: 'none' };
@@ -95,7 +151,11 @@ export function parseVisitState(raw: string | null): VisitRead {
       typeof s.played === 'boolean' &&
       typeof s.done === 'boolean'
     ) {
-      return { kind: 'ok', state: { v: 1, anchor: s.anchor, played: s.played, done: s.done } };
+      const started = laterFlag(s.started);
+      const email = laterFlag(s.email);
+      if (started !== null && email !== null) {
+        return { kind: 'ok', state: { v: 1, anchor: s.anchor, played: s.played, started, email, done: s.done } };
+      }
     }
   } catch {
     // fall through
@@ -117,34 +177,100 @@ export function daysBetween(a: string, b: string): number {
   return Math.round((ms(b) - ms(a)) / 86_400_000);
 }
 
+export type ReturnPlayed = 'yes' | 'started' | 'no';
+export type ReturnArrival = 'email' | 'other';
+
 export interface VisitStep {
   /** The state to write, or null to write nothing. */
   write: VisitState | null;
-  /** The goal to fire, or null. */
-  fire: { played: 'yes' | 'no' } | null;
+  /** The goal's properties, or null to fire nothing. */
+  fire: { played: ReturnPlayed; arrival: ReturnArrival } | null;
 }
 
-/** Every page view, site-wide. */
-export function onPageView(read: VisitRead, today: string): VisitStep {
+/** Every tracked page view, site-wide. `fromEmail`: this tab session arrived from the newsletter. */
+export function onPageView(read: VisitRead, today: string, fromEmail: boolean): VisitStep {
   if (read.kind === 'unknown') return { write: null, fire: null };
   if (read.kind === 'none') {
-    return { write: { v: 1, anchor: today, played: false, done: false }, fire: null };
+    return { write: { v: 1, anchor: today, played: false, started: false, email: fromEmail, done: false }, fire: null };
   }
   const { state } = read;
   if (state.done) return { write: null, fire: null };
   const days = daysBetween(state.anchor, today);
   if (days <= 0) return { write: null, fire: null };
   if (days <= RETURN_WINDOW_DAYS) {
-    return { write: { ...state, done: true }, fire: { played: state.played ? 'yes' : 'no' } };
+    const played: ReturnPlayed = state.played ? 'yes' : state.started ? 'started' : 'no';
+    return { write: { ...state, done: true }, fire: { played, arrival: state.email ? 'email' : 'other' } };
   }
   return { write: { ...state, done: true }, fire: null };
 }
 
+/**
+ * The first run started on a page view. Flags a starter without moving its
+ * anchor or its cohort; nothing to write when already flagged, when nothing
+ * is stored yet, or when what is stored is unrecognised.
+ */
+export function onRunStart(read: VisitRead): VisitState | null {
+  if (read.kind !== 'ok' || read.state.started) return null;
+  return { ...read.state, started: true };
+}
+
 /** The first correct catch on a page view. Moves a visitor into the player cohort once. */
-export function onCatch(read: VisitRead, today: string): VisitState | null {
+export function onCatch(read: VisitRead, today: string, fromEmail: boolean): VisitState | null {
   if (read.kind === 'unknown') return null;
   if (read.kind === 'ok' && read.state.played) return null;
-  return { v: 1, anchor: today, played: true, done: false };
+  // A catch is always inside a run, so a player has started.
+  return { v: 1, anchor: today, played: true, started: true, email: fromEmail, done: false };
+}
+
+/**
+ * Whether the return-visit tracker steps the model on this path. /confirm
+ * never does (see the model above); nor does anything under it.
+ */
+const UNTRACKED_PATHS = ['/confirm'];
+
+export function shouldTrack(pathname: string): boolean {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  return !UNTRACKED_PATHS.some(p => path === p || path.startsWith(`${p}/`));
+}
+
+// ---------------------------------------------------------------------------
+// The arrival note
+// ---------------------------------------------------------------------------
+//
+// Whether this tab's session arrived from the newsletter. The episode email's
+// tagged links carry utm_medium=email (lib/email/utm.ts); the tracker notes it
+// on the landing page, so a click through to /play, or a catch an hour later
+// in the same tab, still knows. Session storage, so it ends with the tab, and
+// it holds only the word "email".
+
+export const ARRIVAL_SESSION_KEY = 'mk-arrival';
+
+/** True when a landing URL's query string marks a newsletter arrival. */
+export function isEmailArrival(search: string): boolean {
+  try {
+    return new URLSearchParams(search).get('utm_medium')?.toLowerCase() === 'email';
+  } catch {
+    return false;
+  }
+}
+
+/** Notes a newsletter arrival for this tab session. Never clears one; never throws. */
+export function noteArrival(search: string): void {
+  if (!isEmailArrival(search)) return;
+  try {
+    window.sessionStorage.setItem(ARRIVAL_SESSION_KEY, 'email');
+  } catch {
+    // Blocked storage: this session reads as "other", like an untagged arrival.
+  }
+}
+
+/** True when this tab session arrived from the newsletter. Never throws. */
+export function sessionArrivedFromEmail(): boolean {
+  try {
+    return window.sessionStorage.getItem(ARRIVAL_SESSION_KEY) === 'email';
+  } catch {
+    return false;
+  }
 }
 
 /** Browser glue: reads, steps and writes `mk-visit`. Never throws. */

@@ -68,11 +68,25 @@ export const metadata = getSEOTags({
  *    typed. The policy calls them "events about play" and lists the four acts.
  *    A new goal or property there is a change to this page.
  *  - `mk-visit` (lib/play/measure.ts) holds a day, whether this browser has
- *    played and whether it has reported: no identifier. components/
- *    ReturnVisitTracker.tsx, mounted site-wide in app/layout.tsx, sends DataFast
- *    `site_visit_return` with `played` (yes/no) as its only property, at most
- *    once per cohort, so at most twice per browser ever. The policy says "at
- *    most twice"; `pnpm validate:play` replays the model that keeps it true.
+ *    started a run, whether it has caught a kanji, whether the visit that set
+ *    the day arrived from the email, and whether it has reported: no
+ *    identifier. components/ReturnVisitTracker.tsx, mounted site-wide in
+ *    app/layout.tsx, sends DataFast `site_visit_return` with `played`
+ *    (yes/started/no) and `arrival` (email/other) as its only properties, at
+ *    most once per cohort, so at most twice per browser ever, and never on
+ *    /confirm. The policy says "at most twice"; `pnpm validate:play` replays
+ *    the model that keeps it true.
+ *  - `mk-arrival` (ARRIVAL_SESSION_KEY in lib/play/measure.ts) is session
+ *    storage, not local storage: the word "email", written when a page loads
+ *    from a link tagged utm_medium=email (lib/email/utm.ts), read only by the
+ *    return-visit model, and gone when the tab closes. validate:play asserts it
+ *    never reaches localStorage.
+ *  - Every goal's page address has the signup `token` removed before it leaves
+ *    the browser (redactPageUrl in lib/analytics/index.ts; asserted by
+ *    validate:play), because the token's payload is the subscriber's address.
+ *    The policy does not claim the token never reaches DataFast: DataFast's own
+ *    page-view script (app/layout.tsx) reports the page address, query
+ *    included, which is how it reads UTM tags.
  *
  * The controller identity and postal address come from `config.business`, the
  * same definition the email footer renders, so the two cannot disagree.
@@ -163,12 +177,16 @@ export default function PrivacyPolicy() {
             <li>
               <strong>Return visits (DataFast).</strong> To learn whether the game brings people back,
               your browser keeps a note of one day (your first visit since we added the game or, once you
-              play, the day you first caught a kanji) and of whether you have played. If you come back on
-              a later day within a week of it, your browser sends our visit analytics one event saying
-              that you came back and whether you had played. That happens at most twice per browser,
-              ever. Like the game events, it carries nothing that identifies you beyond DataFast’s own
-              visitor cookie, and the note itself never leaves your browser. Legal basis: our legitimate
-              interests.
+              play, the day you first caught a kanji), of whether you have started a game and caught a
+              kanji, and of whether the visit on that day began with a link in our story email. If you
+              come back on a later day within a week of it, your browser sends our visit analytics one
+              event saying that you came back, whether you had started a game or caught a kanji, and
+              whether that earlier visit came from the email. That happens at most twice per browser,
+              ever, and never on the page that confirms an email subscription. To tell whether a visit
+              came from the email, your browser also notes, for as long as the tab stays open, that you
+              arrived through a link in it. Like the game events, the event carries nothing that
+              identifies you beyond DataFast’s own visitor cookie, and the notes themselves never leave
+              your browser. Legal basis: our legitimate interests.
             </li>
             <li>
               <strong>Optional analytics (Ahrefs Web Analytics).</strong> Loaded only if you turn on
@@ -199,8 +217,9 @@ export default function PrivacyPolicy() {
             Your progress, review schedule, dismissed announcements and cookie choice are stored in your
             browser’s local storage, and so, if you play Tan Dash, are your best score, Kanji-dex, streak
             and game options. They never leave your device, and we cannot see them. The return-visit note
-            described above is kept there too; only the event it sends ever leaves your browser. Clearing
-            this site’s data in your browser deletes them all.
+            described above is kept there too, and the note that a visit came from our email is kept in
+            the browser’s session storage until you close the tab; only the event they lead to ever
+            leaves your browser. Clearing this site’s data in your browser deletes them all.
           </p>
 
           <h3 className={H3}>The weekly story email</h3>

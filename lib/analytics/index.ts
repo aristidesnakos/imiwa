@@ -66,8 +66,49 @@ async function waitForVisitorId(timeoutMs = 5000, intervalMs = 250): Promise<str
   return id;
 }
 
+// Query parameters a goal's page_url never carries, matched by name in any case.
+//
+// `token` is the signed signup token on /confirm?token=… (lib/email/subscribe-token.ts).
+// Its payload is base64url JSON, readable without the secret, and it holds the
+// subscriber's email address. Every goal carries page_url, and /api/datafast logs
+// request bodies, so any goal fired on that page (the site-wide announcement bar's, or a
+// return-visit report, which components/ReturnVisitTracker.tsx now skips there) would put
+// the address into DataFast and into the Vercel logs. Stripped here, in the one function
+// that sends goals, so no current or future goal on a tokened URL can leak it. Every
+// other parameter (the UTM tags above all) is kept exactly as it was.
+const REDACTED_PAGE_PARAMS = new Set(['token']);
+
+function isRedactedParam(rawName: string): boolean {
+  let name = rawName;
+  try {
+    name = decodeURIComponent(rawName.replace(/\+/g, ' '));
+  } catch {
+    // A malformed escape: compare the raw name.
+  }
+  return REDACTED_PAGE_PARAMS.has(name.toLowerCase());
+}
+
+/** `href` without the parameters in REDACTED_PAGE_PARAMS; anything else byte for byte. */
+export function redactPageUrl(href: string): string {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    // Not a URL we can take apart: send none of its query rather than all of it.
+    return href.split(/[?#]/)[0];
+  }
+  if (!url.search) return href;
+  const redacted = (pair: string) => isRedactedParam(pair.split('=')[0]);
+  const pairs = url.search.slice(1).split('&');
+  if (!pairs.some(redacted)) return href;
+  const kept = pairs.filter(pair => pair !== '' && !redacted(pair));
+  url.search = kept.length ? `?${kept.join('&')}` : '';
+  return url.toString();
+}
+
 // POST a goal to our DataFast proxy. Pulled out so both the fast (cookie ready)
-// and deferred (cookie pending) paths share one body.
+// and deferred (cookie pending) paths share one body. Every goal goes through here,
+// so this is where page_url is redacted (above).
 async function sendGoal(visitorId: string, event: ConversionEvent): Promise<void> {
   await fetch('/api/datafast', {
     method: 'POST',
@@ -80,7 +121,7 @@ async function sendGoal(visitorId: string, event: ConversionEvent): Promise<void
       name: event.name,
       metadata: {
         ...event.properties,
-        page_url: window.location.href,
+        page_url: redactPageUrl(window.location.href),
         page_title: document.title,
         user_agent: navigator.userAgent,
         timestamp: new Date().toISOString(),

@@ -22,7 +22,11 @@
  * The return-visit model is replayed the way scripts/announcements/validate.ts
  * replays the banner's: against synthetic browsers and dates. Its promises
  * ("at most two events per browser", "a player is counted from the day of the
- * catch") decide the test on 7 Dec 2026 and are asserted nowhere else.
+ * catch", "a starter who caught nothing is not a visitor who didn't play",
+ * "email arrivals are reported apart") decide the test on 7 Dec 2026 and are
+ * asserted nowhere else. So is a privacy promise the model made necessary: a
+ * goal never carries the signup token on /confirm, whose payload is the
+ * subscriber's email address (section 7, "goal page_url").
  *
  * Relative imports, not `@/`: scripts/ is outside tsconfig.json, and this runs
  * under tsx (lib/play/build.ts and lib/stories/index.ts import the same way).
@@ -46,6 +50,7 @@ import {
   type SignSetting,
 } from '../lib/play/rules';
 import {
+  ARRIVAL_SESSION_KEY,
   CATCH_MILESTONES,
   PLAY_GOALS,
   PLAY_STORAGE_KEY,
@@ -53,15 +58,25 @@ import {
   SITE_RETURN_GOAL,
   VISIT_STORAGE_KEY,
   daysBetween,
+  isEmailArrival,
   localDay,
+  noteArrival,
   onCatch,
   onPageView,
+  onRunStart,
   parseVisitState,
   readVisit,
+  sessionArrivedFromEmail,
+  shouldTrack,
   writeVisit,
   type VisitState,
 } from '../lib/play/measure';
 import type { PlayData, PlayKanji } from '../lib/play/types';
+import { redactPageUrl } from '../lib/analytics';
+import { confirmUrl } from '../lib/email/confirmation-email';
+import { mintConfirmToken } from '../lib/email/subscribe-token';
+import { withNewsletterUtm } from '../lib/email/utm';
+import { SITE_URL } from '../lib/seo/site';
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -485,9 +500,15 @@ section('6. The return-visit model (mk-visit)');
     return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
   };
 
-  /** One synthetic browser: its stored `mk-visit` string and the events it sent. */
+  type Fire = { day: string; played: 'yes' | 'started' | 'no'; arrival: 'email' | 'other' };
+
+  /**
+   * One synthetic browser: its stored `mk-visit` string and the events it sent.
+   * `email` on a view or a catch is whether that tab session arrived from the
+   * newsletter, which is what sessionArrivedFromEmail() hands the model.
+   */
   class Browser {
-    fires: { day: string; played: 'yes' | 'no' }[] = [];
+    fires: Fire[] = [];
     writes = 0;
     stored: string | null;
     private problems: string[];
@@ -495,24 +516,31 @@ section('6. The return-visit model (mk-visit)');
       this.stored = stored;
       this.problems = problems;
     }
-    view(day: string) {
-      const step = onPageView(parseVisitState(this.stored), day);
+    private put(state: VisitState) {
+      this.stored = JSON.stringify(state);
+      this.writes += 1;
+    }
+    view(day: string, email = false) {
+      const step = onPageView(parseVisitState(this.stored), day, email);
       if (step.fire && !(step.write && step.write.done)) {
         this.problems.push(`${day}: fired without closing its cohort, so the next view could fire again`);
       }
-      if (step.write) {
-        this.stored = JSON.stringify(step.write);
-        this.writes += 1;
-      }
-      if (step.fire) this.fires.push({ day, played: step.fire.played });
+      if (step.write) this.put(step.write);
+      if (step.fire) this.fires.push({ day, ...step.fire });
       return step;
     }
-    catch(day: string) {
-      const next = onCatch(parseVisitState(this.stored), day);
-      if (next) {
-        this.stored = JSON.stringify(next);
-        this.writes += 1;
-      }
+    /** A full page load of `pathname`, as components/ReturnVisitTracker.tsx steps it. */
+    load(pathname: string, day: string, email = false) {
+      return shouldTrack(pathname) ? this.view(day, email) : null;
+    }
+    start() {
+      const next = onRunStart(parseVisitState(this.stored));
+      if (next) this.put(next);
+      return next;
+    }
+    catch(day: string, email = false) {
+      const next = onCatch(parseVisitState(this.stored), day, email);
+      if (next) this.put(next);
       return next;
     }
     get state(): VisitState | null {
@@ -520,6 +548,18 @@ section('6. The return-visit model (mk-visit)');
       return read.kind === 'ok' ? read.state : null;
     }
   }
+
+  /** The canonical stored state, in the key order parseVisitState() builds. */
+  const visit = (anchor: string, over: Partial<Omit<VisitState, 'v' | 'anchor'>> = {}): VisitState => ({
+    v: 1,
+    anchor,
+    played: false,
+    started: false,
+    email: false,
+    done: false,
+    ...over,
+  });
+  const NOTHING: { write: null; fire: null } = { write: null, fire: null };
 
   // Month and year ends, a leap day, and both DST changes on both sides of the Atlantic.
   const ANCHORS = ['2026-10-11', '2026-10-25', '2026-11-01', '2026-12-28', '2027-02-25', '2027-03-14', '2027-03-28', '2028-02-26'];
@@ -530,11 +570,13 @@ section('6. The return-visit model (mk-visit)');
   {
     const problems: string[] = [];
     for (const a of ANCHORS) {
-      const b = new Browser(null, problems);
-      expect(problems, `${a} first view`, b.view(a), { write: { v: 1, anchor: a, played: false, done: false }, fire: null });
-      for (let i = 0; i < 3; i++) expect(problems, `${a} same-day view ${i + 2}`, b.view(a), { write: null, fire: null });
+      for (const email of [false, true]) {
+        const b = new Browser(null, problems);
+        expect(problems, `${a} first view (email ${email})`, b.view(a, email), { write: visit(a, { email }), fire: null });
+        for (let i = 0; i < 3; i++) expect(problems, `${a} same-day view ${i + 2}`, b.view(a, i % 2 === 0 ? !email : email), NOTHING);
+      }
     }
-    check('first view', problems, `the first view writes {anchor: today, played: false, done: false} and fires nothing; more views that day do nothing (${ANCHORS.length} anchors)`);
+    check('first view', problems, `the first view writes {anchor: today, played: false, started: false, email: its session's arrival, done: false} and fires nothing; more views that day do nothing (${ANCHORS.length} anchors × both arrivals)`);
   }
 
   {
@@ -544,7 +586,7 @@ section('6. The return-visit model (mk-visit)');
         const b = new Browser(null, problems);
         b.view(a);
         const back = addDays(a, k);
-        expect(problems, `${a} back after ${k} day(s)`, b.view(back), { write: { v: 1, anchor: a, played: false, done: true }, fire: { played: 'no' } });
+        expect(problems, `${a} back after ${k} day(s)`, b.view(back), { write: visit(a, { done: true }), fire: { played: 'no', arrival: 'other' } });
         b.view(back);
         for (let later = k + 1; later <= k + 40; later++) b.view(addDays(a, later));
         expect(problems, `${a} +${k}: events in the following 40 days`, b.fires.length, 1);
@@ -559,7 +601,7 @@ section('6. The return-visit model (mk-visit)');
       for (let k = RETURN_WINDOW_DAYS + 1; k <= 30; k++) {
         const b = new Browser(null, problems);
         b.view(a);
-        expect(problems, `${a} first back after ${k} days`, b.view(addDays(a, k)), { write: { v: 1, anchor: a, played: false, done: true }, fire: null });
+        expect(problems, `${a} first back after ${k} days`, b.view(addDays(a, k)), { write: visit(a, { done: true }), fire: null });
         for (let later = k; later <= k + 20; later++) b.view(addDays(a, later));
         expect(problems, `${a} +${k}: events`, b.fires.length, 0);
       }
@@ -570,23 +612,29 @@ section('6. The return-visit model (mk-visit)');
   {
     const problems: string[] = [];
     for (const a of ANCHORS) {
-      // From every visitor state: never seen, open, reported, timed out.
-      const paths: [string, number[]][] = [
-        ['never seen', []],
-        ['open visitor', [0]],
-        ['visitor that reported', [0, 1]],
-        ['visitor that timed out', [0, 9]],
+      // From every visitor state: never seen, open, started, reported, timed out.
+      const paths: [string, number[], boolean][] = [
+        ['never seen', [], false],
+        ['open visitor', [0], false],
+        ['visitor that started', [0], true],
+        ['visitor that reported', [0, 1], false],
+        ['visitor that timed out', [0, 9], false],
       ];
-      for (const [label, views] of paths) {
+      for (const [label, views, starts] of paths) {
         const b = new Browser(null, problems);
         for (const d of views) b.view(addDays(a, d));
+        if (starts) b.start();
         const before = b.fires.length;
         const catchDay = addDays(a, 10);
-        expect(problems, `${a} ${label}: first catch`, b.catch(catchDay), { v: 1, anchor: catchDay, played: true, done: false });
-        expect(problems, `${a} ${label}: a view on the catch day`, b.view(catchDay), { write: null, fire: null });
+        expect(problems, `${a} ${label}: first catch`, b.catch(catchDay), visit(catchDay, { played: true, started: true }));
+        expect(problems, `${a} ${label}: a view on the catch day`, b.view(catchDay), NOTHING);
         expect(problems, `${a} ${label}: a second catch`, b.catch(addDays(catchDay, 1)), null);
+        expect(problems, `${a} ${label}: a run start after the catch`, b.start(), null);
         const back = addDays(catchDay, 3);
-        expect(problems, `${a} ${label}: back 3 days after the catch`, b.view(back), { write: { v: 1, anchor: catchDay, played: true, done: true }, fire: { played: 'yes' } });
+        expect(problems, `${a} ${label}: back 3 days after the catch`, b.view(back), {
+          write: visit(catchDay, { played: true, started: true, done: true }),
+          fire: { played: 'yes', arrival: 'other' },
+        });
         for (let later = 4; later <= 40; later++) b.view(addDays(catchDay, later));
         expect(problems, `${a} ${label}: a catch after the player reported`, b.catch(addDays(catchDay, 41)), null);
         b.view(addDays(catchDay, 42));
@@ -602,7 +650,141 @@ section('6. The return-visit model (mk-visit)');
     check(
       'player cohort',
       problems,
-      'the first catch re-anchors any visitor, even a closed one, on the catch day as a player; a view 1-7 days later fires played=yes once; a second catch changes nothing',
+      'the first catch re-anchors any visitor, even a closed one, on the catch day as a player; a view 1-7 days later fires played=yes once; a second catch or a run start changes nothing',
+    );
+  }
+
+  {
+    // A starter who caught nothing is not a visitor "who didn't play": it
+    // reports played=started, and starting never moves the anchor.
+    const problems: string[] = [];
+    for (const a of ANCHORS) {
+      for (let k = 1; k <= RETURN_WINDOW_DAYS; k++) {
+        const b = new Browser(null, problems);
+        b.view(a);
+        expect(problems, `${a} first run start`, b.start(), visit(a, { started: true }));
+        expect(problems, `${a} second run start`, b.start(), null);
+        expect(problems, `${a} a view on the start day`, b.view(a), NOTHING);
+        const back = addDays(a, k);
+        expect(problems, `${a} starter back after ${k} day(s)`, b.view(back), {
+          write: visit(a, { started: true, done: true }),
+          fire: { played: 'started', arrival: 'other' },
+        });
+        for (let later = k + 1; later <= k + 20; later++) b.view(addDays(a, later));
+        expect(problems, `${a} +${k}: starter events`, b.fires.map(f => f.played), ['started']);
+      }
+      {
+        // A start the day after the first view, before any later-day full load
+        // (a client navigation past midnight): still the first view's anchor.
+        const b = new Browser(null, problems);
+        b.view(a);
+        expect(problems, `${a} a start the next day`, b.start(), visit(a, { started: true }));
+        expect(problems, `${a} back on day 2`, b.view(addDays(a, 2)), {
+          write: visit(a, { started: true, done: true }),
+          fire: { played: 'started', arrival: 'other' },
+        });
+      }
+      {
+        const b = new Browser(null, problems);
+        b.view(a);
+        b.start();
+        expect(problems, `${a} starter back after ${RETURN_WINDOW_DAYS + 1} days`, b.view(addDays(a, RETURN_WINDOW_DAYS + 1)), {
+          write: visit(a, { started: true, done: true }),
+          fire: null,
+        });
+      }
+      {
+        // Nothing stored yet (the tracker's write failed): nothing to flag.
+        const b = new Browser(null, problems);
+        expect(problems, `${a} a start with nothing stored`, b.start(), null);
+        expect(problems, `${a} writes with nothing stored`, b.writes, 0);
+      }
+      {
+        // After the visitor reported: flagged, but nothing re-arms.
+        const b = new Browser(null, problems);
+        b.view(a);
+        b.view(addDays(a, 1));
+        expect(problems, `${a} a start after reporting`, b.start(), visit(a, { started: true, done: true }));
+        for (let later = 2; later <= 20; later++) b.view(addDays(a, later));
+        expect(problems, `${a} events after a late start`, b.fires.map(f => f.played), ['no']);
+      }
+      {
+        // A player stored before `started` existed: flagged, still a player on the same anchor.
+        const b = new Browser(JSON.stringify({ v: 1, anchor: a, played: true, done: false }), problems);
+        expect(problems, `${a} a start on an older player`, b.start(), visit(a, { played: true, started: true }));
+      }
+    }
+    check(
+      'starters',
+      problems,
+      'the first run start flags a visitor as started on the same anchor, cohort and window, and its return fires played=started once; a second start, or one with nothing stored, writes nothing',
+    );
+  }
+
+  {
+    // ReturnVisitTracker never steps the model on /confirm: its URL is the
+    // signup token, which holds the subscriber's address. The confirm button's
+    // 303 lands on /subscribed, a full load, so the return is still counted.
+    const problems: string[] = [];
+    const UNTRACKED = ['/confirm', '/confirm/', '/confirm//', '/confirm/x'];
+    const TRACKED = ['/', '/play', '/subscribed', '/confirmation', '/confirmed', '/kanji/confirm', '/stories', '/privacy-policy'];
+    for (const p of UNTRACKED) if (shouldTrack(p)) problems.push(`shouldTrack(${JSON.stringify(p)}) is true`);
+    for (const p of TRACKED) if (!shouldTrack(p)) problems.push(`shouldTrack(${JSON.stringify(p)}) is false`);
+    for (const a of ANCHORS) {
+      for (let k = 1; k <= RETURN_WINDOW_DAYS; k++) {
+        const b = new Browser(null, problems);
+        b.load('/', a);
+        const stored = b.stored;
+        const back = addDays(a, k);
+        expect(problems, `${a} +${k}: /confirm`, b.load('/confirm', back), null);
+        if (b.stored !== stored || b.fires.length) problems.push(`${a} +${k}: /confirm wrote or fired`);
+        expect(problems, `${a} +${k}: /subscribed after the button`, b.load('/subscribed', back), {
+          write: visit(a, { done: true }),
+          fire: { played: 'no', arrival: 'other' },
+        });
+      }
+      const b = new Browser(null, problems);
+      for (let k = 0; k <= 10; k++) b.load('/confirm', addDays(a, k));
+      if (b.stored !== null || b.writes || b.fires.length) problems.push(`${a}: a browser seen only on /confirm was written to or fired`);
+    }
+    check(
+      '/confirm',
+      problems,
+      `shouldTrack() refuses /confirm and paths under it (${UNTRACKED.length}) and nothing else (${TRACKED.length}); a return a day after signup is never stepped on /confirm?token=…, and is counted on the /subscribed page its button lands on`,
+    );
+  }
+
+  {
+    // The anchor visit's session decides `arrival`: subscribers come back
+    // because Saturday's email brings them, and are reported apart.
+    const problems: string[] = [];
+    const tagged = withNewsletterUtm(`${SITE_URL}/stories/ep-01`, 'ep-01', 'weekly');
+    const EMAIL = [new URL(tagged).search, '?utm_source=newsletter&utm_medium=email&utm_campaign=ep-08&utm_content=welcome', 'utm_medium=email', '?utm_medium=Email'];
+    const OTHER = ['', '?', '?utm_medium=share', '?utm_source=email', '?utm_medium=emails', '?utm_medium=', new URL(`${SITE_URL}/play?utm_source=tan-dash&utm_medium=share&utm_campaign=tan-dash`).search];
+    for (const s of EMAIL) if (!isEmailArrival(s)) problems.push(`isEmailArrival(${JSON.stringify(s)}) is false`);
+    for (const s of OTHER) if (isEmailArrival(s)) problems.push(`isEmailArrival(${JSON.stringify(s)}) is true`);
+    for (const a of ANCHORS) {
+      const back = addDays(a, 2);
+      const cases = [
+        { label: 'visitor anchored from the email', played: 'no', arrival: 'email', setup: (b: Browser) => b.view(a, true) },
+        { label: 'visitor anchored elsewhere, back from the email', played: 'no', arrival: 'other', setup: (b: Browser) => b.view(a, false) },
+        { label: 'visitor anchored elsewhere, a later email view the same day', played: 'no', arrival: 'other', setup: (b: Browser) => [b.view(a, false), b.view(a, true)] },
+        { label: 'starter anchored from the email', played: 'started', arrival: 'email', setup: (b: Browser) => [b.view(a, true), b.start()] },
+        { label: 'player whose catch came from the email', played: 'yes', arrival: 'email', setup: (b: Browser) => [b.view(addDays(a, -3), false), b.catch(a, true)] },
+        { label: 'player whose first view came from the email, the catch not', played: 'yes', arrival: 'other', setup: (b: Browser) => [b.view(addDays(a, -3), true), b.catch(a, false)] },
+      ];
+      for (const { label, played, arrival, setup } of cases) {
+        const b = new Browser(null, problems);
+        setup(b);
+        const before = b.fires.length;
+        b.view(back, true);
+        expect(problems, `${a} ${label}`, b.fires.slice(before).map(f => [f.played, f.arrival]), [[played, arrival]]);
+      }
+    }
+    check(
+      'arrival',
+      problems,
+      `the newsletter's own tagged links count as an email arrival and the share link does not (${EMAIL.length + OTHER.length} queries); arrival is the anchor's session, set on the first view and again on the first catch, never by a later view`,
     );
   }
 
@@ -615,71 +797,125 @@ section('6. The return-visit model (mk-visit)');
       '{"v":1,"anchor":"11/10/2026","played":false,"done":false}',
       '{"v":1,"anchor":"2026-10-11","played":"no","done":false}',
       '{"v":1,"anchor":"2026-10-11","played":false}',
+      '{"v":1,"anchor":"2026-10-11","played":false,"started":"yes","done":false}',
+      '{"v":1,"anchor":"2026-10-11","played":false,"started":null,"done":false}',
+      '{"v":1,"anchor":"2026-10-11","played":false,"email":1,"done":false}',
+      '{"v":1,"anchor":"2026-10-11","played":false,"email":"email","done":false}',
+      '{"v":1,"anchor":"2026-10-11","played":false,"started":false,"email":null,"done":false}',
     ];
     for (const raw of UNKNOWN) {
       if (parseVisitState(raw).kind !== 'unknown') problems.push(`${JSON.stringify(raw)} parses as ${parseVisitState(raw).kind}`);
       const b = new Browser(raw, problems);
-      for (let k = 0; k <= 10; k++) b.view(addDays('2026-10-11', k));
-      b.catch('2026-10-13');
+      for (let k = 0; k <= 10; k++) b.view(addDays('2026-10-11', k), k % 2 === 0);
+      b.start();
+      b.catch('2026-10-13', true);
+      b.start();
       b.view('2026-10-15');
       if (b.stored !== raw || b.writes !== 0) problems.push(`${JSON.stringify(raw)} was overwritten`);
       if (b.fires.length) problems.push(`${JSON.stringify(raw)} fired ${b.fires.length} event(s)`);
     }
     if (parseVisitState(null).kind !== 'none') problems.push('a missing key does not parse as none');
-    const s: VisitState = { v: 1, anchor: '2026-10-11', played: true, done: false };
-    const round = parseVisitState(JSON.stringify(s));
-    if (round.kind !== 'ok' || !same(round.state, s)) problems.push(`a written state does not read back: ${JSON.stringify(round)}`);
-    check('unrecognised state', problems, `${UNKNOWN.length} unrecognised shapes are never overwritten and never fire; a written state reads back exactly`);
+    for (const s of [visit('2026-10-11', { played: true, started: true }), visit('2026-10-11', { started: true, email: true, done: true })]) {
+      const round = parseVisitState(JSON.stringify(s));
+      if (round.kind !== 'ok' || !same(round.state, s)) problems.push(`a written state does not read back: ${JSON.stringify(round)}`);
+    }
+    check('unrecognised state', problems, `${UNKNOWN.length} unrecognised shapes are never overwritten by a view, a run start or a catch, and never fire; a written state reads back exactly`);
+  }
+
+  {
+    // States written before `started` and `email` existed read as false for
+    // both, step like any other, and are rewritten in the full shape.
+    const problems: string[] = [];
+    const a = '2026-10-11';
+    const older = (over: Record<string, unknown>) => JSON.stringify({ v: 1, anchor: a, played: false, done: false, ...over });
+    const reads: [string, VisitState][] = [
+      [older({}), visit(a)],
+      [older({ played: true }), visit(a, { played: true })],
+      [older({ done: true }), visit(a, { done: true })],
+      [older({ started: true }), visit(a, { started: true })],
+      [older({ email: true }), visit(a, { email: true })],
+    ];
+    for (const [raw, want] of reads) expect(problems, `parse ${raw}`, parseVisitState(raw), { kind: 'ok', state: want });
+    {
+      const b = new Browser(older({}), problems);
+      expect(problems, 'an older visitor back on day 3', b.view(addDays(a, 3)), { write: visit(a, { done: true }), fire: { played: 'no', arrival: 'other' } });
+    }
+    {
+      const b = new Browser(older({ played: true }), problems);
+      expect(problems, 'an older player back on day 3', b.view(addDays(a, 3)), { write: visit(a, { played: true, done: true }), fire: { played: 'yes', arrival: 'other' } });
+    }
+    {
+      const b = new Browser(older({}), problems);
+      expect(problems, 'an older visitor starts a run', b.start(), visit(a, { started: true }));
+      expect(problems, 'and comes back on day 2', b.view(addDays(a, 2)), { write: visit(a, { started: true, done: true }), fire: { played: 'started', arrival: 'other' } });
+    }
+    check('older shapes', problems, `${reads.length} states without started or email read as false for the missing flags, report, start and close like any other, and are rewritten in the full shape`);
   }
 
   {
     // Synthetic browsers against the header's rules, restated here on day
-    // numbers: anchor on the first view, re-anchor on the first catch, report
-    // the first view 1-7 days after the anchor, close silently after 7.
+    // numbers: anchor on the first view (and its session's arrival), flag a
+    // run start, re-anchor on the first catch (and its session's arrival),
+    // report the first view 1-7 days after the anchor, close silently after 7.
     const problems: string[] = [];
     const BASE = '2026-10-12';
     let events = 0;
     let catchers = 0;
+    let starters = 0;
+    let fromEmail = 0;
     for (let i = 1; i <= WALKERS; i++) {
       const r = seeded(i * 2654435761);
       const b = new Browser(null, problems);
-      const model = { anchor: null as number | null, played: false, closed: false };
-      const expected: { day: string; played: 'yes' | 'no' }[] = [];
+      const model = { anchor: null as number | null, played: false, started: false, email: false, closed: false };
+      const expected: Fire[] = [];
       const visitRate = 0.05 + r() * 0.5;
+      const emailRate = r() < 0.2 ? 0.6 : 0.02;
       for (let d = 0; d < WALK_DAYS; d++) {
         if (r() >= visitRate) continue;
         const day = addDays(BASE, d);
+        const email = r() < emailRate;
         const views = 1 + Math.floor(r() * 3);
         for (let v = 0; v < views; v++) {
           if (model.anchor === null) {
             model.anchor = d;
+            model.email = email;
           } else if (!model.closed && d > model.anchor) {
-            if (d - model.anchor <= RETURN_WINDOW_DAYS) expected.push({ day, played: model.played ? 'yes' : 'no' });
+            if (d - model.anchor <= RETURN_WINDOW_DAYS) {
+              expected.push({ day, played: model.played ? 'yes' : model.started ? 'started' : 'no', arrival: model.email ? 'email' : 'other' });
+            }
             model.closed = true;
           }
-          b.view(day);
-          if (r() < 0.04) {
-            if (!model.played) {
-              model.played = true;
-              model.anchor = d;
-              model.closed = false;
-              catchers += 1;
+          b.view(day, email);
+          if (r() < 0.08) {
+            if (!model.started) starters += 1;
+            model.started = true;
+            b.start();
+            if (r() < 0.5) {
+              if (!model.played) {
+                model.played = true;
+                model.anchor = d;
+                model.email = email;
+                model.closed = false;
+                catchers += 1;
+              }
+              b.catch(day, email);
             }
-            b.catch(day);
           }
         }
       }
       events += b.fires.length;
+      fromEmail += b.fires.filter(f => f.arrival === 'email').length;
       if (!same(b.fires, expected)) problems.push(`browser ${i}: fired ${JSON.stringify(b.fires)}, the rules say ${JSON.stringify(expected)}`);
       if (b.fires.length > 2) problems.push(`browser ${i}: ${b.fires.length} events, the cap is two`);
-      if (b.fires.filter(f => f.played === 'no').length > 1 || b.fires.filter(f => f.played === 'yes').length > 1) {
+      if (b.fires.filter(f => f.played !== 'yes').length > 1 || b.fires.filter(f => f.played === 'yes').length > 1) {
         problems.push(`browser ${i}: a cohort reported twice (${JSON.stringify(b.fires)})`);
       }
     }
+    if (!fromEmail || fromEmail === events) problems.push(`the walk sent ${fromEmail} of ${events} events with arrival=email, so it did not exercise both arrivals`);
     check(
       'random walks',
       problems,
-      `${WALKERS} browsers over ${WALK_DAYS} days (${catchers} became players) sent exactly the events the rules predict: ${events} in all, never more than two per browser`,
+      `${WALKERS} browsers over ${WALK_DAYS} days (${starters} started, ${catchers} became players) sent exactly the events the rules predict: ${events} in all (${fromEmail} arrival=email), never more than two per browser`,
     );
   }
 
@@ -747,7 +983,8 @@ section('6. The return-visit model (mk-visit)');
 
   {
     // The browser glue never throws: no window (server), storage that throws
-    // on read (blocked) or on write (full), and a working store.
+    // on read (blocked) or on write (full), and a working store. The same for
+    // the session's arrival note.
     const problems: string[] = [];
     const g = global as unknown as Record<string, unknown>;
     const hadWindow = 'window' in g;
@@ -759,44 +996,64 @@ section('6. The return-visit model (mk-visit)');
         problems.push(`${label} threw: ${(error as Error).message}`);
       }
     };
-    const install = (localStorage: Pick<Storage, 'getItem' | 'setItem'>) => {
-      g.window = { localStorage };
+    type Store = Pick<Storage, 'getItem' | 'setItem'>;
+    const install = (localStorage: Store, sessionStorage: Store = localStorage) => {
+      g.window = { localStorage, sessionStorage };
+    };
+    const memory = (): [Map<string, string>, Store] => {
+      const mem = new Map<string, string>();
+      return [mem, { getItem: k => mem.get(k) ?? null, setItem: (k, v) => void mem.set(k, v) }];
     };
     const fail =
       (message: string) =>
       (): never => {
         throw new Error(message);
       };
+    const TAGGED = '?utm_source=newsletter&utm_medium=email&utm_campaign=ep-08&utm_content=weekly';
     try {
       delete g.window;
       attempt('readVisit() with no window', () => expect(problems, 'readVisit() with no window', readVisit().kind, 'unknown'));
-      attempt('writeVisit() with no window', () => writeVisit({ v: 1, anchor: '2026-10-11', played: false, done: false }));
+      attempt('writeVisit() with no window', () => writeVisit(visit('2026-10-11')));
+      attempt('noteArrival() with no window', () => noteArrival(TAGGED));
+      attempt('sessionArrivedFromEmail() with no window', () => expect(problems, 'sessionArrivedFromEmail() with no window', sessionArrivedFromEmail(), false));
 
-      const mem = new Map<string, string>();
-      install({ getItem: k => mem.get(k) ?? null, setItem: (k, v) => void mem.set(k, v) });
-      const s: VisitState = { v: 1, anchor: '2026-10-11', played: false, done: false };
+      const [mem, local] = memory();
+      const [session, sessionStore] = memory();
+      install(local, sessionStore);
+      const s = visit('2026-10-11', { started: true, email: true });
       attempt('a working store', () => {
         expect(problems, 'readVisit() on an empty store', readVisit().kind, 'none');
         writeVisit(s);
         expect(problems, 'what writeVisit() stored', mem.get(VISIT_STORAGE_KEY), JSON.stringify(s));
         expect(problems, 'readVisit() after writeVisit()', readVisit(), { kind: 'ok', state: s });
+        expect(problems, 'sessionArrivedFromEmail() on a fresh session', sessionArrivedFromEmail(), false);
+        noteArrival('?utm_source=tan-dash&utm_medium=share');
+        expect(problems, 'session after a share-link arrival', [...session.entries()], []);
+        noteArrival(TAGGED);
+        expect(problems, 'what noteArrival() stored', [...session.entries()], [[ARRIVAL_SESSION_KEY, 'email']]);
+        noteArrival('');
+        expect(problems, 'sessionArrivedFromEmail() after an untagged page', sessionArrivedFromEmail(), true);
+        if (mem.has(ARRIVAL_SESSION_KEY)) problems.push('noteArrival() wrote to localStorage, which outlives the session');
       });
 
       install({ getItem: fail('blocked'), setItem: fail('blocked') });
       attempt('readVisit() on blocked storage', () => expect(problems, 'readVisit() on blocked storage', readVisit().kind, 'unknown'));
       attempt('writeVisit() on blocked storage', () => writeVisit(s));
+      attempt('noteArrival() on blocked storage', () => noteArrival(TAGGED));
+      attempt('sessionArrivedFromEmail() on blocked storage', () => expect(problems, 'sessionArrivedFromEmail() on blocked storage', sessionArrivedFromEmail(), false));
 
       install({ getItem: () => null, setItem: fail('QuotaExceededError') });
       attempt('writeVisit() on full storage', () => writeVisit(s));
+      attempt('noteArrival() on full storage', () => noteArrival(TAGGED));
     } finally {
       if (hadWindow) g.window = savedWindow;
       else delete g.window;
     }
-    check('browser glue', problems, 'readVisit()/writeVisit() round-trip `mk-visit` and never throw: no window, blocked storage, full storage');
+    check('browser glue', problems, 'readVisit()/writeVisit() round-trip `mk-visit`, and noteArrival()/sessionArrivedFromEmail() `mk-arrival` in session storage only; none throws: no window, blocked storage, full storage');
   }
 }
 
-section('7. Goal names, storage keys, and the tracker mount');
+section('7. Goal names, storage keys, the tracker, and what a goal carries');
 {
   const problems: string[] = [];
   const goals = [...Object.values(PLAY_GOALS), SITE_RETURN_GOAL];
@@ -809,11 +1066,15 @@ section('7. Goal names, storage keys, and the tracker mount');
 
   const keys: string[] = [];
   const taken = ['kanji-progress', 'kanji-srs', 'mk-announcements', 'cookie-consent'];
-  if (PLAY_STORAGE_KEY !== 'mk-play' || VISIT_STORAGE_KEY !== 'mk-visit') {
-    keys.push(`storage keys are ${PLAY_STORAGE_KEY} and ${VISIT_STORAGE_KEY}; the privacy policy header names mk-play and mk-visit`);
+  const ours = [PLAY_STORAGE_KEY, VISIT_STORAGE_KEY, ARRIVAL_SESSION_KEY];
+  if (!same(ours, ['mk-play', 'mk-visit', 'mk-arrival'])) {
+    keys.push(`storage keys are ${ours.join(', ')}; the privacy policy names mk-play, mk-visit and mk-arrival`);
   }
-  for (const k of [PLAY_STORAGE_KEY, VISIT_STORAGE_KEY]) if (taken.includes(k)) keys.push(`${k} is already another feature's key`);
-  check('storage keys', keys, `${PLAY_STORAGE_KEY} and ${VISIT_STORAGE_KEY}, clear of ${taken.join(', ')}`);
+  if (new Set(ours).size !== ours.length) keys.push(`storage keys repeat: ${ours.join(', ')}`);
+  for (const k of ours) if (taken.includes(k)) keys.push(`${k} is already another feature's key`);
+  const policy = fs.readFileSync(path.join(ROOT, 'app/privacy-policy/page.tsx'), 'utf8');
+  for (const k of ours) if (!policy.includes(`\`${k}\``)) keys.push(`app/privacy-policy/page.tsx does not name \`${k}\` in its header`);
+  check('storage keys', keys, `${ours.join(', ')}, clear of ${taken.join(', ')}, each named in the privacy policy's header`);
 
   // Without the site-wide mount nothing fires site_visit_return, and the test
   // would read a 0% return rate for both cohorts with no error anywhere.
@@ -822,6 +1083,66 @@ section('7. Goal names, storage keys, and the tracker mount');
     'tracker mount',
     layout.includes('<ReturnVisitTracker') ? [] : ['app/layout.tsx does not render <ReturnVisitTracker />, so site_visit_return never fires'],
     'app/layout.tsx renders <ReturnVisitTracker /> on every page',
+  );
+
+  // The model above is only as good as its callers. The tracker must leave
+  // /confirm before it reads or writes anything, and the game must report
+  // run starts and each session's arrival.
+  const wiring: string[] = [];
+  const tracker = fs.readFileSync(path.join(ROOT, 'components/ReturnVisitTracker.tsx'), 'utf8');
+  const gate = tracker.indexOf('if (!shouldTrack(window.location.pathname)) return;');
+  if (gate === -1) wiring.push('components/ReturnVisitTracker.tsx does not return early when !shouldTrack(window.location.pathname)');
+  for (const call of ['noteArrival(window.location.search)', 'onPageView(readVisit(), localDay(), sessionArrivedFromEmail())']) {
+    const at = tracker.indexOf(call);
+    if (at === -1) wiring.push(`components/ReturnVisitTracker.tsx does not call ${call}`);
+    else if (gate !== -1 && at < gate) wiring.push(`components/ReturnVisitTracker.tsx calls ${call} before the /confirm gate`);
+  }
+  if (!tracker.includes('arrival: step.fire.arrival')) wiring.push('components/ReturnVisitTracker.tsx does not send `arrival`');
+  const game = fs.readFileSync(path.join(ROOT, 'components/play/TanDash.tsx'), 'utf8');
+  for (const call of ['visitOnRunStart(readVisit())', 'visitOnCatch(readVisit(), localDay(), sessionArrivedFromEmail())']) {
+    if (!game.includes(call)) wiring.push(`components/play/TanDash.tsx does not call ${call}`);
+  }
+  check('model wiring', wiring, 'the tracker leaves /confirm before touching storage, notes the arrival, and sends played and arrival; the game reports run starts and catches with the session\'s arrival');
+
+  // Every goal carries page_url (lib/analytics/index.ts). On /confirm that is
+  // the signup token, whose payload is the subscriber's address in base64url.
+  const leaks: string[] = [];
+  const address = 'learner+play@example.com';
+  const token = mintConfirmToken({ email: address, source: 'play-results' }, 'validate-play-only-secret');
+  const page = `${confirmUrl(token)}&utm_source=newsletter&utm_medium=email`;
+  const payload = token.split('.')[1];
+  if (!Buffer.from(payload, 'base64url').toString('utf8').includes(address)) leaks.push('the minted token does not carry the address, so this check proves nothing');
+  const sent = redactPageUrl(page);
+  if (sent !== `${SITE_URL}/confirm?utm_source=newsletter&utm_medium=email`) leaks.push(`page_url for ${page} is ${sent}`);
+  if (sent.includes(payload) || sent.includes(encodeURIComponent(address)) || sent.includes(address)) leaks.push(`page_url still carries the token or the address: ${sent}`);
+  const REDACT: [string, string][] = [
+    [`${SITE_URL}/confirm?token=abc.def.ghi`, `${SITE_URL}/confirm`],
+    [`${SITE_URL}/confirm?utm_source=x&token=abc&utm_medium=email`, `${SITE_URL}/confirm?utm_source=x&utm_medium=email`],
+    [`${SITE_URL}/confirm?token=abc#top`, `${SITE_URL}/confirm#top`],
+    [`${SITE_URL}/confirm?Token=a&TOKEN=b&%74oken=c&utm_source=x`, `${SITE_URL}/confirm?utm_source=x`],
+    [`${SITE_URL}/confirm?token&utm_source=x`, `${SITE_URL}/confirm?utm_source=x`],
+    [`${SITE_URL}/confirm?&token=a&&utm_source=x`, `${SITE_URL}/confirm?utm_source=x`],
+    [`${SITE_URL}/kanji?token=a&search=%E6%B0%B4+x&utm_campaign=ep-08`, `${SITE_URL}/kanji?search=%E6%B0%B4+x&utm_campaign=ep-08`],
+  ];
+  const KEEP = [
+    `${SITE_URL}/play?utm_source=tan-dash&utm_medium=share&utm_campaign=tan-dash`,
+    withNewsletterUtm(`${SITE_URL}/stories/ep-01`, 'ep-01', 'weekly'),
+    `${SITE_URL}/kanji?search=%E6%B0%B4+x&q=token`,
+    `${SITE_URL}/subscribed?state=expired&source=play-results`,
+    `${SITE_URL}/kanji?tokens=1&atoken=2`,
+    `${SITE_URL}/`,
+  ];
+  for (const [from, to] of REDACT) if (redactPageUrl(from) !== to) leaks.push(`redactPageUrl(${from}) is ${redactPageUrl(from)}, expected ${to}`);
+  for (const href of KEEP) if (redactPageUrl(href) !== href) leaks.push(`redactPageUrl(${href}) changed it to ${redactPageUrl(href)}`);
+  const analytics = fs.readFileSync(path.join(ROOT, 'lib/analytics/index.ts'), 'utf8');
+  const pageUrls = analytics.match(/page_url:[^,\n]*/g) ?? [];
+  if (!same(pageUrls, ['page_url: redactPageUrl(window.location.href)'])) {
+    leaks.push(`lib/analytics/index.ts sets page_url as ${JSON.stringify(pageUrls)}; every goal must go through redactPageUrl()`);
+  }
+  check(
+    'goal page_url',
+    leaks,
+    `a goal fired on /confirm?token=… sends page_url without the token (or the address in it); ${REDACT.length} more tokened URLs lose only the token and ${KEEP.length} others, UTMs included, pass byte for byte`,
   );
 }
 

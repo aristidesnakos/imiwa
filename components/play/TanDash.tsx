@@ -36,8 +36,10 @@ import {
   CATCH_MILESTONES,
   localDay,
   onCatch as visitOnCatch,
+  onRunStart as visitOnRunStart,
   PLAY_GOALS,
   readVisit,
+  sessionArrivedFromEmail,
   writeVisit,
 } from '@/lib/play/measure';
 import { PLAY_CSS_VARS } from '@/lib/play/palette';
@@ -110,7 +112,7 @@ export function TanDash({ data }: { data: PlayData }) {
       if (n === 1) {
         // The first catch of the page view moves this browser into the player
         // cohort of the return-visit test (lib/play/measure.ts).
-        const next = visitOnCatch(readVisit(), localDay());
+        const next = visitOnCatch(readVisit(), localDay(), sessionArrivedFromEmail());
         if (next) writeVisit(next);
       }
       if ((CATCH_MILESTONES as readonly number[]).includes(n)) {
@@ -216,6 +218,10 @@ export function TanDash({ data }: { data: PlayData }) {
       fired.current.runStart = true;
       const first = dexCount(saveRef.current, known) === 0 ? 'yes' : 'no';
       void trackGoal(PLAY_GOALS.runStart, { first }).catch(noop);
+      // Flags a starter for the return-visit test, so one who catches nothing
+      // reports played=started, not played=no (lib/play/measure.ts).
+      const started = visitOnRunStart(readVisit());
+      if (started) writeVisit(started);
     }
     setCopy('idle');
     setManualText(null);
