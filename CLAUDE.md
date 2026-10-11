@@ -467,11 +467,15 @@ placements or promotion during the window: the read has to stay clean.
 - **The island never imports kanji data.** `app/play/page.tsx` calls `buildPlayData()` and passes
   ~10 kB of JSON to `components/play/TanDash.tsx`, the same pattern as the sheet builder.
   `lib/play/engine.ts` is the framework-free canvas engine.
-- **Measurement is `lib/play/measure.ts`, and its header is the spec.** Five goals, each capped per
-  page view because DataFast bills events. `site_visit_return` comes from
-  `components/ReturnVisitTracker.tsx`, mounted site-wide in `app/layout.tsx`: it keeps `mk-visit`
-  (an anchor day and whether the browser has played) and fires at most twice per browser, ever.
-  The game's own progress is `mk-play`. Both are described in the privacy policy.
+- **Measurement is `lib/play/measure.ts`, and its header is the spec** (including how to read the
+  numbers on 7 Dec). Five goals, each capped per page view because DataFast bills events.
+  `site_visit_return` comes from `components/ReturnVisitTracker.tsx`, mounted site-wide in
+  `app/layout.tsx`: it keeps `mk-visit` (an anchor day; whether the browser started, caught, and
+  arrived from the email) and fires at most twice per browser, ever, with `played` =
+  yes/started/no and `arrival` = email/other. Arrival comes from `mk-arrival` in sessionStorage.
+  The tracker never runs on `/confirm`, whose URL carries the signup token, and `sendGoal` strips
+  `token` from every goal's `page_url` (`redactPageUrl`, `lib/analytics/index.ts`). The game's own
+  progress is `mk-play`. All three keys are in the privacy policy.
 - **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
   every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
   (`playLine` in `lib/email/quiz-email.ts`). `next.config.js` redirects kanjifun.com to `/play` once
