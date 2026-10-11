@@ -270,7 +270,9 @@ export function useKanjiProgress() {
     // Data
     learnedKanji: progressData.learnedKanji,
     totalLearned: progressData.learnedKanji.length,
-    
+    // When each was marked (epoch ms). Absent for entries stored before timestamps existed.
+    learnedAt: progressData.timestamps,
+
     // Functions
     toggleKanjiLearned,
     isKanjiLearned,

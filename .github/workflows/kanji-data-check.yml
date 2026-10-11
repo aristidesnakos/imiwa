@@ -64,6 +64,12 @@ on:
       - 'data/stories/ep-*.ts'
       - 'app/layout.tsx'
       - 'scripts/validate-play.ts'
+      # The countdown card on /kanji/n5 must agree with the paid book's schedule (its
+      # test date, and the day new kanji stop), which is generated in Python.
+      - 'lib/jlpt/countdown.ts'
+      - 'scripts/validate-jlpt-countdown.ts'
+      - 'scripts/n5-countdown/schedule.py'
+      - 'scripts/n5-countdown/schedule.json'
       - '.github/workflows/kanji-data-check.yml'
   # Catch anything reaching main through a route other than a PR.
   push:
@@ -91,6 +97,12 @@ on:
       - 'data/stories/ep-*.ts'
       - 'app/layout.tsx'
       - 'scripts/validate-play.ts'
+      # The countdown card on /kanji/n5 must agree with the paid book's schedule (its
+      # test date, and the day new kanji stop), which is generated in Python.
+      - 'lib/jlpt/countdown.ts'
+      - 'scripts/validate-jlpt-countdown.ts'
+      - 'scripts/n5-countdown/schedule.py'
+      - 'scripts/n5-countdown/schedule.json'
       - '.github/workflows/kanji-data-check.yml'
   workflow_dispatch:
 
@@ -146,6 +158,13 @@ jobs:
       # at most two events per browser, a player counted from the catch.
       - name: Validate Tan Dash
         run: pnpm validate:play
+
+      # The countdown card's promises are date arithmetic: days to go, kanji a day, the
+      # day new kanji stop. Replayed over every day of the learn phase and the edges
+      # (22/23 Nov, 5/6/7 Dec), and checked against the book's own test date and last
+      # teaching week, so the card and the book cannot quietly give two answers.
+      - name: Validate the JLPT countdown
+        run: pnpm validate:countdown
 
       # The search's promises, swept over every kanji: each romaji spelling, each
       # reading in either kana script and each meaning finds its kanji, and nothing

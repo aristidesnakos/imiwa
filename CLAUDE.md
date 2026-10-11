@@ -203,6 +203,36 @@ registered level page, and each ItemList entry must be a kanji page that prerend
 `scripts/validate-quiz.ts` asserts exactly one right answer among four for every kanji and question
 type, and runs in the kanji-data CI job.
 
+### The JLPT countdown card (`/kanji/n5`)
+
+A client island above the N5 list (`components/levels/N5Countdown.tsx`) counts down to the next
+JLPT sitting and turns it into a pace: days to go, kanji a day, today's kanji (each with a link and a
+tick), the week's sheets as one print link, and the quiz. `lib/jlpt/countdown.ts` is the pure logic and
+`pnpm validate:countdown` is the contract (runs in the kanji-data CI job).
+
+- **Dates are in `SITTINGS`, confirmed ones only.** Add the next sitting when jlpt.jp confirms it, not
+  from a third-party calendar (July 2027 is projected as the 4th, unconfirmed). After the last sitting
+  the island renders nothing, but the server HTML still carries its empty reserved box, so **redeploy
+  without the island, or with the next sitting, once 6 Dec 2026 has passed**.
+- **It agrees with the paid book, and the validator reads the book to prove it.** `REVIEW_DAYS` (14) is
+  the book's rule (last teaching week ends 22 Nov), and the first sitting must equal `TEST_DATE` in
+  `scripts/n5-countdown/schedule.py`. The book's week-by-week allocation is **deliberately not
+  reproduced**: its README says dated sequencing is what is paid for. The card paces through the page's
+  own order from the visitor's own progress.
+- **No new storage.** It reads `kanji-progress` (the dictionary's and the quiz's key) and writes it only
+  when someone ticks a kanji, through `toggleKanjiLearned`. "Today's" kanji are the ones marked since
+  local midnight plus the next unmarked ones, so a reload shows the same card and tomorrow it moves on
+  with nothing stored.
+- **Pattern A, with a reserved box.** The date is unknown to a prerendered page, so the card is absent
+  from the server HTML and a same-height box (`RESERVE`) stands in for it: this route gates on CLS 0.1.
+  Re-measure `RESERVE` if the copy or layout changes (the comment records how).
+- **It never links to the dark JLPT mode.** The page passes the quiz link: the JLPT-format hash only
+  while `jlptFormatSummary()` has published items, else the plain kanji quiz.
+- **Copy never says the list is what the exam asks** (the JLPT has published no kanji list since 2010;
+  see the page's own FAQ). Registration for December closed in August/September, so the heading is a
+  question and a line says so.
+- One goal, `n5_list_countdown_click`, with `data-fast-goal-action` = `learn` | `print` | `quiz` | `review`.
+
 ### Romaji
 
 `lib/romaji/` derives romaji from the kana readings at runtime. Nothing is stored: baking romaji

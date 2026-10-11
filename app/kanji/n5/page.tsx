@@ -8,6 +8,7 @@ import Header from '@/components/sections/Header';
 import EmailCapture from '@/components/EmailCapture';
 import { BookCTA } from '@/components/commerce/BookCTA';
 import { KanjiListCard } from '@/components/levels/KanjiListCard';
+import { N5Countdown } from '@/components/levels/N5Countdown';
 import { N5QuizLink } from '@/components/levels/N5QuizLink';
 import { PlayLink } from '@/components/play/PlayLink';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
@@ -19,6 +20,7 @@ import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import type { KanjiData } from '@/lib/constants/kanji-types';
 import { N5_SEQUENCE } from '@/lib/levels/n5-sequence';
 import { levelHref } from '@/lib/levels';
+import { jlptFormatSummary } from '@/lib/jlpt/published';
 import { episodesNewestFirst } from '@/lib/stories';
 import {
   N5_LIST_PACK_GOAL,
@@ -113,6 +115,17 @@ const GROUPS = (() => {
 const ORDERED: KanjiData[] = GROUPS.flatMap((g) => g.entries);
 
 const QUIZ_PATH = '/kanji/n5/quiz';
+
+/**
+ * What the countdown card gets: the list as [character, a few words of meaning] pairs
+ * (about 1.5 kB; the island imports no kanji data), and where its quiz button goes. The
+ * JLPT-format sets only while some are published, the same rule as N5QuizLink, so the
+ * card can never link to a mode that is still dark.
+ */
+const COUNTDOWN_LIST = ORDERED.map((k) => [k.kanji, k.meaning.split(/[,;]/)[0].trim()] as const);
+const COUNTDOWN_QUIZ = jlptFormatSummary()
+  ? { href: `${QUIZ_PATH}#jlpt-format`, label: 'Practise in JLPT format' }
+  : { href: QUIZ_PATH, label: 'Quiz yourself' };
 
 /** The two per-group actions: text links, so the list stays the loudest thing on the page. */
 const GROUP_ACTION =
@@ -230,6 +243,10 @@ export default function N5KanjiListPage() {
             </Link>
           </div>
         </header>
+
+        {/* The countdown to the December sitting: a client island, absent from the
+            server HTML (it needs today's date), with a same-height box in its place. */}
+        <N5Countdown list={COUNTDOWN_LIST} quiz={COUNTDOWN_QUIZ} />
 
         {/* The groups, as a table of contents. Plain same-page anchors: this is
             the one navigation on the page that must work before any script. */}
