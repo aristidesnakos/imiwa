@@ -53,7 +53,7 @@ import styles from './TanDash.module.css';
 // Loaded on the first click of the app door, so the form costs /play nothing until then.
 const EmailCapture = dynamic(() => import('@/components/EmailCapture'), { ssr: false });
 
-const SHARE_URL = `${SITE_URL}/play?utm_source=tan-dash&utm_medium=share`;
+const SHARE_URL = `${SITE_URL}/play?utm_source=tan-dash&utm_medium=share&utm_campaign=tan-dash`;
 const JUMP_KEYS = ['Space', 'ArrowUp', 'KeyW', 'KeyX', 'KeyZ'];
 const SIGN_ORDER: SignSetting[] = ['mix', 'en', 'kana'];
 const SIGN_LABEL: Record<SignSetting, { short: string; spoken: string }> = {
