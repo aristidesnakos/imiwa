@@ -4,6 +4,7 @@ import { postalAddressLine } from '@/lib/business/postal-address';
 import { withNewsletterUtm, type EpisodeEmailKind } from '@/lib/email/utm';
 import type { Episode } from '@/lib/stories/types';
 import { panelRomaji } from '@/lib/stories/romaji-lines';
+import { episodeWorld } from '@/lib/play/episode-world';
 
 export type { EpisodeEmailKind } from '@/lib/email/utm';
 
@@ -29,6 +30,20 @@ export type { EpisodeEmailKind } from '@/lib/email/utm';
  * welcome card. lib/email/broadcast.ts does, and `pnpm validate:broadcast`
  * asserts it.
  */
+
+/**
+ * The line that points a reader at Tan Dash (/play), in both sends. The game's
+ * six-week test (lib/play/measure.ts) planned one line in each Saturday email,
+ * and the welcome card carries it too, because `pnpm validate:subscribe` holds
+ * the two sends identical apart from `utm_content`. Names the episode's world
+ * when it is one, which every episode is today.
+ */
+function playLine(episode: Episode): string {
+  const world = episodeWorld(episode.slug);
+  return world
+    ? `Play this episode's kanji in Tan Dash, a free one-thumb game: it is world ${world.n} of ${world.total}.`
+    : 'Play the N5 kanji in Tan Dash, a free one-thumb game.';
+}
 
 /** The sender and postal address as one footer line, or null while none is set. */
 function senderLine(): string | null {
@@ -128,6 +143,10 @@ export function quizEmailText(
     'The words this episode teaches:',
     ...episode.targets.map(t => `  ${t.word} (${t.reading}) — ${t.en}`),
     '',
+    // Bare, like every secondary link in this part (see the primary link above).
+    playLine(episode),
+    `${SITE_URL}/play`,
+    '',
     'A new episode goes up every week. Reply to this email if you get stuck on',
     'anything — it reaches a person, not a robot.',
   );
@@ -195,6 +214,11 @@ export function quizEmailHtml(
     .join('');
   const url = contentHref(episodeUrl(episode));
   const hubUrl = contentHref(`${SITE_URL}/stories`);
+  const playUrl = contentHref(`${SITE_URL}/play`);
+  const playHtml = escapeHtml(playLine(episode)).replace(
+    'Tan Dash',
+    `<a href="${playUrl}" style="color:${DEEP_OCEAN};font-weight:600;">Tan Dash</a>`
+  );
   const sender = senderLine();
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="color-scheme" content="light only" /></head>
@@ -206,6 +230,7 @@ export function quizEmailHtml(
 ${story}<tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};padding:8px 0;border-top:1px solid ${SOFT_MIST};">Quiz</td></tr>${questions}
 <tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};padding:8px 0;border-top:1px solid ${SOFT_MIST};">Answers</td></tr><tr><td style="padding-bottom:20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${answers}</table></td></tr>
 <tr><td style="font-size:16px;font-weight:700;color:${DEEP_OCEAN};padding:8px 0;border-top:1px solid ${SOFT_MIST};">The words this episode teaches</td></tr><tr><td style="padding-bottom:24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${targets}</table></td></tr>
+<tr><td style="font-size:15px;line-height:1.6;color:${INK_BLACK};border-top:1px solid ${SOFT_MIST};padding:16px 0 24px;">${playHtml}</td></tr>
 <tr><td style="font-size:13px;line-height:1.6;color:${MOUNTAIN_MIST};border-top:1px solid ${SOFT_MIST};padding-top:16px;">A new episode goes up every week. Reply to this email if you get stuck on anything &mdash; it reaches a person, not a robot.</td></tr>
 <tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:12px;">${escapeHtml(config.appName)} &middot; <a href="${hubUrl}" style="color:${DEEP_OCEAN};">every episode</a>${unsubscribeUrl ? ` &middot; <a href="${unsubscribeUrl}" style="color:${DEEP_OCEAN};">unsubscribe</a>` : ''}</td></tr>
 ${sender ? `<tr><td style="font-size:12px;line-height:1.6;color:${MOUNTAIN_MIST};padding-top:4px;">${escapeHtml(sender)}</td></tr>\n` : ''}</table></td></tr></table></body></html>`;

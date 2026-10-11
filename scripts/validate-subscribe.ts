@@ -485,11 +485,16 @@ if (newestEpisode) {
   for (const { send, kind, unsubscribe } of sends) {
     const html = quizEmailHtml(newestEpisode, unsubscribe, kind);
     const text = quizEmailText(newestEpisode, unsubscribe, kind);
-    const contentLinks = [tagged(`/stories/${slug}`, slug, kind), tagged('/stories', slug, kind)];
+    const contentLinks = [
+      tagged(`/stories/${slug}`, slug, kind),
+      tagged('/stories', slug, kind),
+      // The Tan Dash line (lib/email/quiz-email.ts, playLine).
+      tagged('/play', slug, kind),
+    ];
     const links = hrefsIn(html);
 
     check(
-      `the ${send} HTML tags both content links, the episode and every episode`,
+      `the ${send} HTML tags every content link: the episode, every episode and Tan Dash`,
       contentLinks.every(link => links.includes(link))
     );
     check(
@@ -504,6 +509,10 @@ if (newestEpisode) {
     check(
       `the ${send} plain text tags its primary link and no other`,
       textUrls.includes(contentLinks[0]) && textUrls.filter(url => url.includes('utm_')).length === 1
+    );
+    check(
+      `the ${send} plain text links Tan Dash bare`,
+      text.split('\n').includes(`${SITE_URL}/play`)
     );
     check(
       `the ${send} plain text keeps its unsubscribe link bare`,
