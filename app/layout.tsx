@@ -11,6 +11,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
+import { ReturnVisitTracker } from "@/components/ReturnVisitTracker";
 import Footer from "@/components/sections/Footer";
 import "./globals.css";
 
@@ -117,6 +118,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* AnalyticsProvider handles consent-gated analytics (Ahrefs) */}
         <AppProviders>
           <AnalyticsProvider />
+          {/* The return-visit report for the /play six-week retention test (decided
+              Mon 7 Dec 2026): did a browser come back within 7 days, split by whether
+              it caught a kanji in Tan Dash. Site-wide because a return can land on any
+              page. Renders nothing; costs at most two goal events per browser, ever.
+              Model in lib/play/measure.ts, replayed by `pnpm validate:play`. */}
+          <ReturnVisitTracker />
           <ClientLayout>
             {/* Above {children} and in normal document flow, NOT fixed: every
                 page imports its own <Header />, which is sticky top-0 z-50, so

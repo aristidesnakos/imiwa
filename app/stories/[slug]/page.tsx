@@ -13,6 +13,7 @@ import { BookCTA } from '@/components/commerce/BookCTA';
 import { StoryPanel } from '@/components/stories/StoryPanel';
 import { panelRomaji } from '@/lib/stories/romaji-lines';
 import { EpisodeVideoSection } from '@/components/stories/EpisodeVideoSection';
+import { PlayLink } from '@/components/play/PlayLink';
 import { Quiz, type QuizQuestion } from '@/components/ui/quiz';
 import { optionLetter } from '@/lib/quiz';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
@@ -354,6 +355,15 @@ export default async function EpisodePage({ params }: Props) {
               ))}
             </ol>
           </noscript>
+          {/*
+            The game, under the quiz: the last thing on the page a reader does with
+            this episode's kanji before anything asks them for something. One line in
+            the quiz's own section rather than a section of its own, because it is the
+            same act (practise these kanji) in another form, not a new subject. Text
+            only, server-rendered, prefetch off: /stories/.+ is gated on total
+            transfer. Renders nothing for an episode that is not a world; see PlayLink.
+          */}
+          <PlayLink episodeSlug={episode.slug} className="mt-6 text-sm text-japan-mountain-mist" />
         </section>
 
         {/*

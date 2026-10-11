@@ -66,6 +66,18 @@ const nextConfig = {
       // so it goes rather than being hidden. Permanent, so the indexed URL
       // passes to the homepage instead of decaying into a 404.
       { source: '/advertise', destination: '/', permanent: true },
+      // kanjifun.com, the KanjiFun site, folds into Tan Dash at /play (the KanjiFun
+      // appraisal; lib/play/measure.ts). Every path on either host goes to the game,
+      // permanently, so whatever links and rankings the old domain has pass to it. This
+      // only takes effect once kanjifun.com and www.kanjifun.com are added as domains of
+      // THIS Vercel project: today the old site is a separate deployment, and requests
+      // for it never reach this config.
+      ...['kanjifun.com', 'www.kanjifun.com'].map((host) => ({
+        source: '/:path*',
+        has: [{ type: 'host', value: host }],
+        destination: 'https://www.michikanji.com/play',
+        permanent: true,
+      })),
     ];
   },
   async headers() {

@@ -9,6 +9,7 @@ import EmailCapture from '@/components/EmailCapture';
 import { BookCTA } from '@/components/commerce/BookCTA';
 import { KanjiListCard } from '@/components/levels/KanjiListCard';
 import { N5QuizLink } from '@/components/levels/N5QuizLink';
+import { PlayLink } from '@/components/play/PlayLink';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -400,6 +401,10 @@ export default function N5KanjiListPage() {
               renders nothing and the section is exactly the kanji quiz above: the
               buttons already link it. */}
           <N5QuizLink fallback="none" className="mt-5 max-w-3xl text-japan-ink-black" />
+          {/* The game: the same kanji, practised a third way. One line under the quiz
+              links, no heading, so the section stays about testing yourself. The count
+              is the game's own, and prefetch is off; see PlayLink. */}
+          <PlayLink level="N5" className="mt-5 max-w-3xl text-japan-ink-black" />
         </section>
 
         {/* The one thing on the page nobody else has. Text only, no panel art:

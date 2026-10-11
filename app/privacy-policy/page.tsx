@@ -59,12 +59,26 @@ export const metadata = getSEOTags({
  *  - There is no advertising form. /advertise and /api/advertise were removed
  *    on 2026-09-28, which is when the advertiser data this policy used to list
  *    (company, website, budget) stopped being collected.
+ *  - Tan Dash (/play) keeps its best score, Kanji-dex, streak and options in
+ *    localStorage under `mk-play` (PLAY_STORAGE_KEY in lib/play/measure.ts,
+ *    written by components/play/TanDash.tsx) and never sends them anywhere.
+ *  - The game's DataFast goals are the four PLAY_GOALS in lib/play/measure.ts,
+ *    fired from components/play/TanDash.tsx with no property but `first`
+ *    (yes/no), `n` (1/3) or `method` (share/copy): no score, no kanji, nothing
+ *    typed. The policy calls them "events about play" and lists the four acts.
+ *    A new goal or property there is a change to this page.
+ *  - `mk-visit` (lib/play/measure.ts) holds a day, whether this browser has
+ *    played and whether it has reported: no identifier. components/
+ *    ReturnVisitTracker.tsx, mounted site-wide in app/layout.tsx, sends DataFast
+ *    `site_visit_return` with `played` (yes/no) as its only property, at most
+ *    once per cohort, so at most twice per browser ever. The policy says "at
+ *    most twice"; `pnpm validate:play` replays the model that keeps it true.
  *
  * The controller identity and postal address come from `config.business`, the
  * same definition the email footer renders, so the two cannot disagree.
  */
 
-const LAST_UPDATED = "October 10, 2026";
+const LAST_UPDATED = "October 11, 2026";
 
 const H2 = "mb-3 text-xl font-semibold text-japan-deep-ocean";
 const H3 = "mb-2 mt-6 text-base font-semibold text-japan-deep-ocean";
@@ -138,6 +152,25 @@ export default function PrivacyPolicy() {
               learn which pages help learners. Legal basis: our legitimate interests.
             </li>
             <li>
+              <strong>Game events (DataFast).</strong> When you play Tan Dash, our free kanji game, our
+              visit analytics also counts a few events about play: that a game started, that you caught
+              your first and your third kanji, that you shared a score, and that you tapped the button
+              saying you would play it as a phone app. Each carries what the visit analytics above already
+              records, plus at most whether this browser had caught a kanji before or how the score was
+              shared. No score, no kanji and nothing you type is sent. Legal basis: our legitimate
+              interests.
+            </li>
+            <li>
+              <strong>Return visits (DataFast).</strong> To learn whether the game brings people back,
+              your browser keeps a note of one day (your first visit since we added the game or, once you
+              play, the day you first caught a kanji) and of whether you have played. If you come back on
+              a later day within a week of it, your browser sends our visit analytics one event saying
+              that you came back and whether you had played. That happens at most twice per browser,
+              ever. Like the game events, it carries nothing that identifies you beyond DataFast’s own
+              visitor cookie, and the note itself never leaves your browser. Legal basis: our legitimate
+              interests.
+            </li>
+            <li>
               <strong>Optional analytics (Ahrefs Web Analytics).</strong> Loaded only if you turn on
               analytics in the cookie banner. Legal basis: your consent. To withdraw it, clear this
               site’s data in your browser; the banner will ask again on your next visit.
@@ -164,8 +197,10 @@ export default function PrivacyPolicy() {
           <h3 className={H3}>Your learning progress</h3>
           <p className={P}>
             Your progress, review schedule, dismissed announcements and cookie choice are stored in your
-            browser’s local storage. They never leave your device, and we cannot see them. Clearing this
-            site’s data in your browser deletes them.
+            browser’s local storage, and so, if you play Tan Dash, are your best score, Kanji-dex, streak
+            and game options. They never leave your device, and we cannot see them. The return-visit note
+            described above is kept there too; only the event it sends ever leaves your browser. Clearing
+            this site’s data in your browser deletes them all.
           </p>
 
           <h3 className={H3}>The weekly story email</h3>

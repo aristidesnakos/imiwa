@@ -25,6 +25,7 @@ import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSect
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
 import { LevelNavigation, neighboursWithin, type LevelNeighbours } from '@/components/kanji/LevelNavigation';
 import { N5QuizLink } from '@/components/levels/N5QuizLink';
+import { PlayLink } from '@/components/play/PlayLink';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { sentencesForKanji } from '@/lib/sentences/published';
 import { levelHref, levelPagePath, type JlptLevel } from '@/lib/levels';
@@ -587,6 +588,16 @@ export default async function KanjiDetailPage({ params }: Props) {
             door, not a moment. Server-rendered with prefetch off; see N5QuizLink. */}
         {kanjiData.level === 'N5' && (
           <N5QuizLink className="mx-auto mt-3 max-w-xl text-balance text-center text-sm text-japan-mountain-mist" />
+        )}
+
+        {/* N5 only: the same level's third door, the game, directly under the quiz and in
+            its classes. One line, no heading, text only: /kanji/% is gated on total transfer.
+            Server-rendered with prefetch off; see PlayLink. */}
+        {kanjiData.level === 'N5' && (
+          <PlayLink
+            kanji={kanjiData.kanji}
+            className="mx-auto mt-3 max-w-xl text-balance text-center text-sm text-japan-mountain-mist"
+          />
         )}
 
         {/* Related Kanji — last content section, before the commercial blocks. */}
