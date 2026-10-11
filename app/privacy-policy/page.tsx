@@ -100,9 +100,11 @@ export const metadata = getSEOTags({
  *    (lib/email/unsubscribe-token.ts). Links in welcome emails sent before then
  *    are JWTs that carry a readable address forever, and they must keep
  *    working. When one is used (a click, or a mail host's one-click POST), the
- *    address reaches Vercel's request log. The "Server logs (Vercel)" item
- *    below does not say that. Whether to add a sentence there is a copy change
- *    Ari must approve, and it has not been made.
+ *    address reaches Vercel's request log. So does a legacy confirm JWT's GET,
+ *    even once expired. The "Server logs (Vercel)" item says so (approved by
+ *    Ari, 2026-10-11): links "in emails we sent before October 11, 2026". Links
+ *    minted since are sealed (validate:subscribe), so that sentence never
+ *    needs a later date.
  *  - The Tan Dash app waitlist (since 2026-10-11) is a second list, joined only
  *    from the fake door on /play (source `play-app-waitlist`). The list follows
  *    from the token's authenticated `source` (emailListForSource in
@@ -238,8 +240,9 @@ export default function PrivacyPolicy() {
               browser, to run and secure the site. The search box on our homepage sends what you type
               to our server to find matching kanji, so a search appears in these logs too; we keep no
               other record of it. Our sign-up and feedback forms also hold your
-              IP address in memory for ten minutes, to limit repeated submissions. Legal basis: our
-              legitimate interests.
+              IP address in memory for ten minutes, to limit repeated submissions. The confirmation and
+              unsubscribe links in emails we sent before October 11, 2026 contain your email address, so
+              opening one puts it in these logs too. Legal basis: our legitimate interests.
             </li>
             <li>
               <strong>Videos on story pages (YouTube).</strong> Some story episode pages show a video from
