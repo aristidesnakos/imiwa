@@ -108,36 +108,41 @@ section('Sittings');
 section('The book and the card agree');
 {
   const problems: string[] = [];
-  const dir = path.join(__dirname, 'n5-countdown');
-  const py = fs.readFileSync(path.join(dir, 'schedule.py'), 'utf8');
-  const m = /^TEST_DATE\s*=\s*date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})\)/m.exec(py);
-  if (!m) {
-    problems.push('schedule.py: cannot find TEST_DATE = date(Y, M, D)');
-  } else {
-    const bookDay = dayNumber(Number(m[1]), Number(m[2]), Number(m[3]));
+  // schedule.py only. Its output, schedule.json, is generated and gitignored, so it exists
+  // on a developer's machine and not in CI; the facts needed are constants in the source.
+  const py = fs.readFileSync(path.join(__dirname, 'n5-countdown', 'schedule.py'), 'utf8');
+
+  const testDate = /^TEST_DATE\s*=\s*date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})\)/m.exec(py);
+  const teachingWeeks = /^TEACHING_WEEKS\s*=\s*(\d+)/m.exec(py);
+  // The rule that places week 1: fourteen Monday-start weeks, the last containing test day.
+  // Restated below, so a change to it must fail here rather than silently diverge.
+  const weekRule = 'first_monday = TEST_DATE - timedelta(days=TEST_DATE.weekday()) - timedelta(days=7 * 13)';
+
+  if (!testDate) problems.push('schedule.py: cannot find TEST_DATE = date(Y, M, D)');
+  if (!teachingWeeks) problems.push('schedule.py: cannot find TEACHING_WEEKS = N');
+  if (!py.includes(weekRule)) problems.push(`schedule.py: week_starts() no longer says "${weekRule}"; re-derive the book's last teaching day here`);
+
+  if (testDate && teachingWeeks) {
+    const bookTestDay = dayNumber(Number(testDate[1]), Number(testDate[2]), Number(testDate[3]));
     const first = SITTINGS[0];
-    if (bookDay !== parseDay(first.date)) {
-      problems.push(`schedule.py TEST_DATE is ${formatDayWithYear(bookDay)}, the card's first sitting is ${first.date}`);
+    if (bookTestDay !== parseDay(first.date)) {
+      problems.push(`schedule.py TEST_DATE is ${formatDayWithYear(bookTestDay)}, the card's first sitting is ${first.date}`);
+    }
+
+    // Week 1 starts on the Monday 13 weeks before the Monday of test week (Python's
+    // weekday() is 0 on Monday; weekdayOf is 0 on Sunday). The book teaches new kanji
+    // for TEACHING_WEEKS weeks, then reviews: the card's REVIEW_DAYS must be what is left.
+    const mondayOfTestWeek = bookTestDay - ((weekdayOf(bookTestDay) + 6) % 7);
+    const firstMonday = mondayOfTestWeek - 7 * 13;
+    const lastTeachingDay = firstMonday + 7 * Number(teachingWeeks[1]) - 1;
+    const learnBy = bookTestDay - REVIEW_DAYS;
+    if (lastTeachingDay !== learnBy) {
+      problems.push(
+        `the book's last teaching day is ${formatDayWithYear(lastTeachingDay)} (${Number(teachingWeeks[1])} weeks from ${formatDayWithYear(firstMonday)}), the card stops new kanji after ${formatDayWithYear(learnBy)} (test day - ${REVIEW_DAYS})`,
+      );
     }
   }
-
-  // The book's last teaching week must end on the card's learn-by day.
-  const schedule = JSON.parse(fs.readFileSync(path.join(dir, 'schedule.json'), 'utf8')) as {
-    plan: { week: number; start: string; end: string; new: string[] }[];
-  };
-  const teaching = schedule.plan.filter(w => w.new.length > 0);
-  const last = teaching[teaching.length - 1];
-  const learnBy = parseDay(SITTINGS[0].date) - REVIEW_DAYS;
-  if (!last) {
-    problems.push('schedule.json has no teaching week');
-  } else if (parseDay(last.end) !== learnBy) {
-    problems.push(
-      `the book's last teaching week (week ${last.week}) ends ${last.end}, the card stops new kanji after ${formatDayWithYear(learnBy)} (test day - ${REVIEW_DAYS})`,
-    );
-  }
-  const taught = new Set(schedule.plan.flatMap(w => w.new));
-  if (taught.size !== TOTAL) problems.push(`the book teaches ${taught.size} kanji, the list has ${TOTAL}`);
-  check('book agreement', problems, `book TEST_DATE = first sitting; last teaching week ends on test day - ${REVIEW_DAYS}; ${TOTAL} kanji both sides`);
+  check('book agreement', problems, `book TEST_DATE = first sitting; its last teaching day is test day - ${REVIEW_DAYS}, read from schedule.py alone`);
 }
 
 // ---------------------------------------------------------------------------

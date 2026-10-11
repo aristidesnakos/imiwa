@@ -69,7 +69,6 @@ on:
       - 'lib/jlpt/countdown.ts'
       - 'scripts/validate-jlpt-countdown.ts'
       - 'scripts/n5-countdown/schedule.py'
-      - 'scripts/n5-countdown/schedule.json'
       - '.github/workflows/kanji-data-check.yml'
   # Catch anything reaching main through a route other than a PR.
   push:
@@ -102,7 +101,6 @@ on:
       - 'lib/jlpt/countdown.ts'
       - 'scripts/validate-jlpt-countdown.ts'
       - 'scripts/n5-countdown/schedule.py'
-      - 'scripts/n5-countdown/schedule.json'
       - '.github/workflows/kanji-data-check.yml'
   workflow_dispatch:
 
