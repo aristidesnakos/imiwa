@@ -99,13 +99,24 @@ export const EMAIL_SIGNUP_SOURCES = [
    */
   'jlpt-format-results',
   /**
-   * The results screen of Tan Dash (/play), under "I'd play it as a phone
-   * app". Someone here has just played a run and asked for more of the game,
-   * a different intent from finishing a quiz or a story. The form signs them
-   * up to the weekly story email, which is what the copy says it is; no app
-   * exists, and the copy says that too (lib/play/measure.ts).
+   * RETIRED from the form on 2026-10-11, replaced by `play-app-waitlist`. It was
+   * the Tan Dash results screen's form when that form joined the weekly story
+   * email. Kept so a confirmation link minted under it, valid for 48h, still
+   * lands on the list its copy promised (the weekly email): a source missing
+   * from this array refuses to confirm. Delete it on or after 2026-10-20.
    */
   'play-results',
+  /**
+   * The results screen of Tan Dash (/play), under "I'd play it as a phone
+   * app". Someone here has just played a run and asked for more of the game,
+   * which is a different audience from the story list's, so this is the one
+   * source that joins a different list: the app waitlist, which gets one
+   * email if a Tan Dash app ships and nothing else (lib/email/lists.ts). No
+   * app exists, and the copy says so (components/play/copy.ts). Its
+   * `email_signup` goals are waitlist signups, so leave it out of any count of
+   * story subscribers.
+   */
+  'play-app-waitlist',
 ] as const;
 
 /**

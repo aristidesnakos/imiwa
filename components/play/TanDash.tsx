@@ -601,7 +601,7 @@ export function TanDash({ data }: { data: PlayData }) {
             {PLAY_APP_WAITLIST_COPY.heading}
           </h2>
           <p className="text-japan-ink-black">{PLAY_APP_WAITLIST_COPY.body}</p>
-          <EmailCapture source="play-results" {...PLAY_APP_WAITLIST_COPY.signup} />
+          <EmailCapture source="play-app-waitlist" {...PLAY_APP_WAITLIST_COPY.signup} />
         </section>
       )}
     </div>

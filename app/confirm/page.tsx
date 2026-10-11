@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import { CheckCircle } from 'lucide-react';
 import Header from '@/components/sections/Header';
 import { CONFIRM_TOKEN_SCRUB_SCRIPT } from '@/lib/email/confirm-token-scrub';
+import { emailListForSource, type EmailList } from '@/lib/email/lists';
+import { getTokenSecret, verifyConfirmToken } from '@/lib/email/subscribe-token';
 
 export const metadata: Metadata = {
   title: 'Confirm your subscription | MichiKanji',
@@ -22,9 +24,12 @@ export const metadata: Metadata = {
  * with no `onSubmit`, so it also works with JavaScript disabled — which the
  * in-app browsers of some mail clients effectively are.
  *
- * Nothing is validated here. The token is opaque to this page; the route
- * handler opens it (or, for a legacy JWT, verifies the signature) and decides
- * everything.
+ * Nothing is decided here. The page opens the token only to pick its words:
+ * the button joins the weekly story list or the app waitlist, by the token's
+ * `source` (lib/email/lists.ts), and the sentence above it says which. An
+ * invalid token, or no secret, gets the weekly words, and the button renders
+ * whenever a token is present, valid or not: the route handler opens it again
+ * (or, for a legacy JWT, verifies the signature) and decides everything.
  *
  * The token is sealed, so the address in it cannot be read, but it confirms
  * that address for whoever holds it, and a legacy JWT still in an inbox
@@ -42,6 +47,7 @@ export default async function ConfirmPage({
 }) {
   const params = await searchParams;
   const token = typeof params?.token === 'string' ? params.token : '';
+  const list = listForWords(token);
 
   return (
     <>
@@ -68,8 +74,16 @@ export default async function ConfirmPage({
           {token ? (
             <>
               <p className="mb-8 leading-relaxed text-japan-mountain-mist">
-                Press the button and you&rsquo;re on the list for the weekly story.
-                That&rsquo;s the whole confirmation step.
+                {list === 'play-app-waitlist' ? (
+                  <>
+                    One email if Tan Dash becomes an app. Nothing else.
+                  </>
+                ) : (
+                  <>
+                    Press the button and you&rsquo;re on the list for the weekly story.
+                    That&rsquo;s the whole confirmation step.
+                  </>
+                )}
               </p>
 
               <form method="POST" action="/api/subscribe/confirm">
@@ -80,7 +94,7 @@ export default async function ConfirmPage({
                   // not come through buttonVariants here. See CLAUDE.md.
                   className="inline-flex items-center justify-center rounded bg-primary px-5 py-2 font-medium text-primary-foreground transition duration-200 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  Yes, subscribe
+                  {list === 'play-app-waitlist' ? 'Yes, add me' : 'Yes, subscribe'}
                 </button>
               </form>
             </>
@@ -94,4 +108,18 @@ export default async function ConfirmPage({
       </main>
     </>
   );
+}
+
+/**
+ * Which list the sentence above the button describes. Words only: an expired
+ * token still names its list (the route then says it expired), and anything
+ * this page cannot open, including a token with no secret configured to open
+ * it, reads as the weekly list, the words this page has always shown.
+ */
+function listForWords(token: string): EmailList {
+  if (!token) return 'weekly-stories';
+  const secret = getTokenSecret();
+  if (!secret) return 'weekly-stories';
+  const result = verifyConfirmToken(token, secret);
+  return result.status === 'invalid' ? 'weekly-stories' : emailListForSource(result.payload.source);
 }

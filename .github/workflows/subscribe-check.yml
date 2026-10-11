@@ -18,6 +18,8 @@ name: Subscribe Consent Check
 #   - no token we mint, confirm or unsubscribe, carries the address in any
 #     form readable without the secret;
 #   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
+#   - only the Tan Dash form joins the app waitlist, and its consent email
+#     never offers the weekly story;
 #   - the episode email's campaign tags are identical for every recipient and
 #     never reach the unsubscribe link or the pre-consent confirmation email.
 #
@@ -48,6 +50,8 @@ on:
       - 'lib/email/unsubscribe-token.ts'
       # The encryption both tokens are sealed with since 2026-10-11.
       - 'lib/email/sealed-token.ts'
+      # Which list a token's source joins: the weekly story or the app waitlist.
+      - 'lib/email/lists.ts'
       # The commercial-email footer: CAN-SPAM's postal address and the
       # unsubscribe link, rendered for both the welcome card and the broadcast.
       - 'lib/email/quiz-email.ts'
@@ -86,6 +90,8 @@ on:
       - 'lib/email/unsubscribe-token.ts'
       # The encryption both tokens are sealed with since 2026-10-11.
       - 'lib/email/sealed-token.ts'
+      # Which list a token's source joins: the weekly story or the app waitlist.
+      - 'lib/email/lists.ts'
       # The commercial-email footer: CAN-SPAM's postal address and the
       # unsubscribe link, rendered for both the welcome card and the broadcast.
       - 'lib/email/quiz-email.ts'

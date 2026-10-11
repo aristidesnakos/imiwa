@@ -14,8 +14,9 @@ name: Subscribe Live Check
 # The probe is one unauthenticated POST with an empty token, which the confirm
 # route answers from its config guard before it parses anything. No contact is
 # created and no email is sent, so this is safe to run on a schedule against
-# production. See the header of scripts/check-subscribe-live.ts for why that
-# endpoint, and why `/api/subscribe` deliberately is not probed.
+# production. A second POST, to /api/subscribe with the app waitlist's source
+# and no address, stops at that route's config guard the same way: nothing is
+# sent. See the header of scripts/check-subscribe-live.ts for both.
 #
 # That probe is a CONFIGURATION alarm: it cannot see an invalid Resend key or a
 # segment id pointing at nothing. The second job closes that gap by actually

@@ -3,32 +3,40 @@
  *
  * Not a client module, so a server page or a validator can import the real
  * object (a 'use client' module would hand a server importer a reference).
+ * app/subscribed/page.tsx imports `signup` for the waitlist's expired-link form.
  */
 
 /**
  * The phone-app fake door, reviewed as one block (as JLPT_RESULTS_SIGNUP_COPY
  * is in app/kanji/n5/quiz/page.tsx). Every line must stay true:
  *
- *  - There is no app, no date and no more game content promised.
- *  - The form joins the weekly story email, and it describes only what the
- *    app sends: the double opt-in confirmation, then the welcome email with an
- *    episode's quiz card, then the weekly Travels of Tan email.
+ *  - There is no app and no date for one, and no more game content is
+ *    promised.
+ *  - The form joins the app waitlist (source `play-app-waitlist`,
+ *    lib/email/lists.ts), not the story list, so nothing here mentions the
+ *    story email. The waitlist gets the double opt-in confirmation, then one
+ *    email if a Tan Dash app ships, and nothing else: no welcome email,
+ *    nothing regular, no game news.
+ *  - No unsubscribe link is promised: the waitlist is sent nothing that could
+ *    carry one until the launch email. The way off is a reply to the
+ *    confirmation email, whose reply-to is a person (app/api/subscribe).
+ *  - Every `signup` field is set. EmailCapture's defaults describe a general
+ *    list ("new study material", "unsubscribe anytime"), which this is not.
+ *
+ * pnpm validate:play checks the words this list depends on.
  */
 export const PLAY_APP_WAITLIST_COPY = {
   button: 'I’d play this as a phone app',
   /** Replaces the button on the results card once pressed. */
   ack: 'There is no app yet. More below.',
   heading: 'There is no Tan Dash app yet',
-  body: 'Thanks for asking. If enough players ask for one, the weekly Travels of Tan email will say so first.',
+  body: 'And no date. Want to hear if one ships?',
   signup: {
-    title: 'Get the weekly Travels of Tan email',
-    description:
-      'One short Japanese comic a week, written only in N5, with a quiz card on the words it teaches. It is a story email, not an app and not more of this game.',
-    cta: 'Send me the stories',
+    title: 'One email if an app ships',
+    description: 'We will email you once, if a Tan Dash app ships. Nothing else.',
+    cta: 'Email me if it ships',
     successTitle: 'Nearly there',
-    successMessage:
-      'Check your inbox for a confirmation link. Tap it to join, and we will send you the latest episode with its quiz card.',
-    footnote:
-      'We send one confirmation email first. Nothing else arrives until you tap it, and you can unsubscribe anytime.',
+    successMessage: 'Tap the link in our confirmation email. Then you get one email if an app ships.',
+    footnote: 'One confirmation email now, then nothing until an app ships. Reply to it to leave.',
   },
 } as const;

@@ -32,6 +32,8 @@
  *   - links already in inboxes keep working: a legacy confirm JWT for the 48h
  *     it promised, a legacy unsubscribe JWT forever;
  *   - a `source` outside EMAIL_SIGNUP_SOURCES never reaches an email we send;
+ *   - only the Tan Dash form's source joins the app waitlist, and that list's
+ *     consent email promises one email and never offers the weekly story;
  *   - the episode email's campaign tags are identical for every recipient, and
  *     never reach the unsubscribe link or the pre-consent confirmation email.
  *
@@ -65,8 +67,15 @@ import { withNewsletterUtm } from '../lib/email/utm';
 import {
   confirmUrl,
   confirmationEmailHtml,
+  confirmationEmailSubject,
   confirmationEmailText,
 } from '../lib/email/confirmation-email';
+import {
+  EMAIL_LISTS,
+  emailListForSource,
+  segmentIdForList,
+  type EmailList,
+} from '../lib/email/lists';
 import { EPISODES, episodesNewestFirst } from '../lib/stories';
 import { panelRomaji } from '../lib/stories/romaji-lines';
 import { SITE_URL } from '../lib/seo/site';
@@ -1108,6 +1117,113 @@ const confirmReferrerChecked = (nextConfig.headers() as Promise<HeaderRule[]>).t
   );
 });
 
+// --- Which list a signup joins ---------------------------------------------
+//
+// Two lists since 2026-10-11 (lib/email/lists.ts): the weekly story, and the
+// Tan Dash app waitlist, promised one email if an app ships and nothing else.
+// The list follows from the token's authenticated source, so the mapping is
+// the contract, along with what each list's consent email says: a waitlist
+// signup confirmed by an email offering the weekly story would be consent to
+// the wrong thing, and a player put on the weekly list would get a broadcast
+// they never asked for.
+
+const LIST_NAMES = Object.keys(EMAIL_LISTS) as EmailList[];
+const WAITLIST_SOURCE = 'play-app-waitlist';
+
+check(
+  'every signup source maps to a declared list',
+  EMAIL_SIGNUP_SOURCES.every(source => LIST_NAMES.includes(emailListForSource(source)))
+);
+check(
+  `${WAITLIST_SOURCE} joins the app waitlist`,
+  emailListForSource(WAITLIST_SOURCE) === 'play-app-waitlist'
+);
+// Retired sources included: a link minted under one confirms onto the list
+// its copy promised, and none of them promised the waitlist.
+for (const source of EMAIL_SIGNUP_SOURCES.filter(source => source !== WAITLIST_SOURCE)) {
+  check(`${source} joins the weekly story list`, emailListForSource(source) === 'weekly-stories');
+}
+check(
+  'the lists read distinct segment variables',
+  new Set(LIST_NAMES.map(list => EMAIL_LISTS[list].segmentEnv)).size === LIST_NAMES.length
+);
+// Read by name in the confirm route's top-level guard, the live probe and the
+// broadcast scripts, so a rename here would split the weekly list in two.
+check(
+  'the weekly list is still RESEND_WEEKLY_STORIES_SEGMENT_ID',
+  EMAIL_LISTS['weekly-stories'].segmentEnv === 'RESEND_WEEKLY_STORIES_SEGMENT_ID'
+);
+
+for (const list of LIST_NAMES) {
+  const name = EMAIL_LISTS[list].segmentEnv;
+  const saved = process.env[name];
+  try {
+    delete process.env[name];
+    const unset = segmentIdForList(list);
+    process.env[name] = '';
+    const empty = segmentIdForList(list);
+    process.env[name] = 'segment-under-test';
+    const set = segmentIdForList(list);
+    check(`${list}: no segment id when ${name} is unset`, unset === null);
+    check(`${list}: no segment id when ${name} is empty`, empty === null);
+    check(`${list}: the segment id is ${name}'s value when set`, set === 'segment-under-test');
+  } finally {
+    if (saved === undefined) delete process.env[name];
+    else process.env[name] = saved;
+  }
+}
+
+check(
+  'the weekly confirmation email is the default, byte for byte',
+  confirmationEmailSubject('weekly-stories') === confirmationEmailSubject() &&
+    confirmationEmailText(confirmToken, 'weekly-stories') === confirmationEmailText(confirmToken) &&
+    confirmationEmailHtml(confirmToken, 'weekly-stories') === confirmationEmailHtml(confirmToken)
+);
+
+{
+  const token = mintConfirmToken({ email: EMAIL, source: WAITLIST_SOURCE }, SECRET);
+  const url = confirmUrl(token);
+  const subject = confirmationEmailSubject('play-app-waitlist');
+  const text = confirmationEmailText(token, 'play-app-waitlist');
+  const html = confirmationEmailHtml(token, 'play-app-waitlist');
+  const textLinks = text.match(/https?:\/\/\S+/g) ?? [];
+  // The words are checked with the link cut out: a random sealed token can
+  // spell "quiz" by chance, and that would be a flaky failure, not a finding.
+  const words = [subject, text, html].map(part => part.split(url).join('')).join('\n');
+
+  check(
+    'the waitlist confirmation email is its own, not the weekly one',
+    subject !== confirmationEmailSubject() && text !== confirmationEmailText(token)
+  );
+  check(
+    'every link in the waitlist confirmation email is the bare confirm link',
+    hrefsIn(html).length > 0 &&
+      hrefsIn(html).every(link => link === url) &&
+      textLinks.length > 0 &&
+      textLinks.every(link => link === url)
+  );
+  check(
+    'the waitlist confirmation email carries no campaign tag, no unsubscribe link and no image',
+    !words.includes('utm_') && !/unsubscribe/i.test(words) && !/<img/i.test(html)
+  );
+  check(
+    'the waitlist confirmation email keeps the 48h line in both parts',
+    text.includes('The link works for 48 hours.') && html.includes('The link works for 48 hours.')
+  );
+  check(
+    'the waitlist confirmation email states its whole promise: one email, nothing else',
+    [subject, text, html].every(part => part.includes('one email')) &&
+      text.includes('nothing else') &&
+      html.includes('nothing else')
+  );
+  for (const word of ['weekly', 'story', 'stories', 'Travels', 'quiz']) {
+    check(
+      `the waitlist confirmation email never mentions "${word}"`,
+      !words.toLowerCase().includes(word.toLowerCase())
+    );
+  }
+}
+
 // --- Report ---------------------------------------------------------------
 
 confirmReferrerChecked.then(report, (error: unknown) => {
@@ -1136,6 +1252,11 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
     refused, in the sealed and the legacy JWT format alike
   · an expired token keeps a trustworthy source but is never treated as consent
   · a source outside EMAIL_SIGNUP_SOURCES cannot reach an email we send
+  · only ${WAITLIST_SOURCE} joins the app waitlist and every other source
+    (retired ones included) the weekly list, each list with its own segment
+    variable; the waitlist's consent email promises one email, links only to
+    the confirm link, carries no tag, unsubscribe link or image, and never
+    offers the weekly story, while the weekly one is unchanged
   · a malformed episode claim is dropped rather than refusing a real consent
   · an unsubscribe token is a separate, non-expiring token that cannot be
     replayed as a confirm token, and vice versa, sealed or legacy

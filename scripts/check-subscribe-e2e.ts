@@ -138,7 +138,10 @@ async function main(): Promise<void> {
       body: JSON.stringify({ email, source: TEST_SOURCE }),
     });
     if (subscribeRes.status === 503) {
-      fail('POST /api/subscribe -> 503. RESEND_API_KEY or EMAIL_TOKEN_SECRET is missing on the server.');
+      fail(
+        'POST /api/subscribe -> 503. RESEND_API_KEY, EMAIL_TOKEN_SECRET or RESEND_WEEKLY_STORIES_SEGMENT_ID\n' +
+          'is missing on the server.'
+      );
     }
     if (subscribeRes.status === 429) {
       fail('POST /api/subscribe -> 429. Rate limited (2 per 10 min per IP) — wait and re-run.');

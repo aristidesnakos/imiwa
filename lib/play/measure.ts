@@ -35,7 +35,12 @@
  *                            tab session arrived (below), not the return's.
  *
  * Email signups from the results screen are `email_signup` with source
- * `play-results` (lib/analytics/email-signup-sources.ts), like every surface.
+ * `play-app-waitlist` (lib/analytics/email-signup-sources.ts), like every
+ * surface. That form joins the app waitlist (one email if an app ships,
+ * lib/email/lists.ts), not the weekly story email; until 2026-10-11 it joined
+ * the weekly email as `play-results`. So from then on the game puts no player
+ * on the weekly email, and the arrival=email returns below stay subscribers
+ * who chose the story list.
  *
  * Every goal also carries `page_url`, added by lib/analytics/index.ts, which
  * strips the signup `token` from it first: see the comment there.
@@ -50,7 +55,8 @@
  *     played=no, both arrival=other. played=started is neither cohort: a
  *     starter who caught nothing is not a visitor "who didn't play". A
  *     subscriber is reminded weekly by the email, so arrival=email returns
- *     are reported next to the result, never folded into it.
+ *     are reported next to the result, never folded into it. The game's own
+ *     form adds nobody to that email (above), so it cannot swell that cohort.
  *   - Give every cohort its whole window: take the denominators (unique
  *     visitors; catchers from play_kanji_catch n=1; starters from
  *     play_run_start) to 30 Nov and the returns to 7 Dec. The few returns in

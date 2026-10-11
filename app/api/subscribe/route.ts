@@ -3,6 +3,7 @@ import rateLimit from '@/middlewares/rateLimiter';
 import { isEmailSignupSource } from '@/lib/analytics/email-signup-sources';
 import { episodeBySlug } from '@/lib/stories';
 import { getTokenSecret, mintConfirmToken } from '@/lib/email/subscribe-token';
+import { EMAIL_LISTS, emailListForSource, segmentIdForList } from '@/lib/email/lists';
 import {
   confirmationEmailHtml,
   confirmationEmailSubject,
@@ -39,6 +40,10 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * construction rather than by policy, and no pending signup is stored anywhere.
  * See docs/prd/story-delivery-resend.md §5 and lib/email/subscribe-token.ts.
  *
+ * Which list the signup joins follows from `source` (lib/email/lists.ts), and
+ * the consent email describes that list and no other: the weekly story, or one
+ * email if a Tan Dash app ships.
+ *
  * What used to be here: a thin proxy to Kit, plus a fallback that upserted a
  * `state: active` subscriber when a form-add failed. That fallback minted
  * subscribers who never saw a consent step (phase-0 risk #6). It existed only
@@ -55,10 +60,6 @@ export async function POST(request: NextRequest) {
     const source = typeof body?.source === 'string' ? body.source.trim() : '';
     const episodeSlug = typeof body?.episode === 'string' ? body.episode.trim() : '';
 
-    if (!email || !EMAIL_REGEX.test(email)) {
-      return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
-    }
-
     // Validated against the real list, not just "non-empty". This value travels
     // into a token we sign and, before this change, any string a caller sent
     // was accepted and forwarded to the ESP.
@@ -66,18 +67,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing source.' }, { status: 400 });
     }
 
+    const list = emailListForSource(source);
+
     // Keep this guard. It matters MORE here than it did with Kit, because
     // `sendEmail` returns a mock success when RESEND_API_KEY is unset
     // (lib/resend.ts:41-44). Without it a preview deployment or a key-rotation
     // window answers 200, tells the subscriber to check their inbox, sends
     // nothing, and logs one console.warn. The key being set in production is
     // exactly why that failure would go unnoticed.
+    //
+    // The list's segment is checked here too, although only the confirm route
+    // uses it. Without it this route sent a consent email for a list nobody
+    // could join, and the 503 surfaced only at the confirm button: the
+    // 2026-09-16 outage (docs/runbooks/newsletter.md). It runs BEFORE the
+    // address check on purpose, so `pnpm check-subscribe-live` can ask about a
+    // list's configuration with no address at all and never reach the send.
     const secret = getTokenSecret();
-    if (!process.env.RESEND_API_KEY || !secret) {
-      console.error(
-        '[api/subscribe] Not configured (RESEND_API_KEY / EMAIL_TOKEN_SECRET missing)'
-      );
+    const segmentId = segmentIdForList(list);
+    if (!process.env.RESEND_API_KEY || !secret || !segmentId) {
+      const missing = [
+        !process.env.RESEND_API_KEY && 'RESEND_API_KEY',
+        !secret && 'EMAIL_TOKEN_SECRET',
+        !segmentId && EMAIL_LISTS[list].segmentEnv,
+      ].filter(Boolean);
+      console.error(`[api/subscribe] Not configured (${missing.join(' / ')} missing)`);
       return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
+    }
+
+    // An absent address gets its own answer. `pnpm check-subscribe-live` posts
+    // the waitlist source with no address, and this string is how it knows the
+    // config guard above ran: a deployment from before 2026-10-11 checked the
+    // address first and answered the same probe "Invalid email address.".
+    if (!email) {
+      return NextResponse.json({ error: 'Missing email address.' }, { status: 400 });
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
     }
 
     // Resolved against the registry, not shape-checked and forwarded. This
@@ -85,16 +110,18 @@ export async function POST(request: NextRequest) {
     // not travel inside a token we sign — it is dropped here, and the confirm
     // flow falls back to the newest episode that has gone out (lib/email/
     // welcome-episode.ts). An absent episode is normal: every
-    // surface except an episode page has none.
-    const episode = episodeSlug && episodeBySlug(episodeSlug) ? episodeSlug : undefined;
+    // surface except an episode page has none. The app waitlist gets no quiz
+    // card at all, so an episode there would be a claim nothing reads.
+    const episode =
+      list === 'weekly-stories' && episodeSlug && episodeBySlug(episodeSlug) ? episodeSlug : undefined;
 
     const token = mintConfirmToken({ email, source, episode }, secret);
 
     await sendEmail({
       to: email,
-      subject: confirmationEmailSubject(),
-      text: confirmationEmailText(token),
-      html: confirmationEmailHtml(token),
+      subject: confirmationEmailSubject(list),
+      text: confirmationEmailText(token, list),
+      html: confirmationEmailHtml(token, list),
       // Replies to a consent email are real people asking real questions, and
       // they must reach a human. config.resend.supportEmail is a live inbox.
       replyTo: config.resend.supportEmail,

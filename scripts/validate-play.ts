@@ -28,7 +28,9 @@
  * goal never carries the signup token on /confirm. A sealed token confirms the
  * subscriber's address for whoever holds it, and a confirm JWT minted before
  * 2026-10-11 still carries the address itself, readable, for its 48h (section
- * 7, "goal page_url").
+ * 7, "goal page_url"). So is the app door's promise (section 8): its form
+ * joins the app waitlist, one email if an app ships, and its words say there
+ * is no app and never describe the story list.
  *
  * Relative imports, not `@/`: scripts/ is outside tsconfig.json, and this runs
  * under tsx (lib/play/build.ts and lib/stories/index.ts import the same way).
@@ -76,7 +78,9 @@ import {
 } from '../lib/play/measure';
 import type { PlayData, PlayKanji } from '../lib/play/types';
 import { redactPageUrl } from '../lib/analytics';
+import { PLAY_APP_WAITLIST_COPY } from '../components/play/copy';
 import { confirmUrl } from '../lib/email/confirmation-email';
+import { emailListForSource } from '../lib/email/lists';
 import { mintConfirmToken } from '../lib/email/subscribe-token';
 import { isSealedToken } from '../lib/email/sealed-token';
 import { withNewsletterUtm } from '../lib/email/utm';
@@ -1118,9 +1122,9 @@ section('7. Goal names, storage keys, the tracker, and what a goal carries');
   const leaks: string[] = [];
   const address = 'learner+play@example.com';
   const secret = 'validate-play-only-secret';
-  const sealed = mintConfirmToken({ email: address, source: 'play-results' }, secret);
+  const sealed = mintConfirmToken({ email: address, source: 'play-app-waitlist' }, secret);
   if (!isSealedToken(sealed)) leaks.push('mintConfirmToken no longer mints a sealed token, so the two cases below test the same format');
-  const legacy = jwt.sign({ email: address, source: 'play-results' }, secret, { algorithm: 'HS256', expiresIn: 3600 });
+  const legacy = jwt.sign({ email: address, source: 'play-app-waitlist' }, secret, { algorithm: 'HS256', expiresIn: 3600 });
   if (!Buffer.from(legacy.split('.')[1], 'base64url').toString('utf8').includes(address)) leaks.push('the legacy JWT does not carry the address, so its case proves nothing');
   for (const [kind, token] of [['sealed', sealed], ['legacy JWT', legacy]] as const) {
     const page = `${confirmUrl(token)}&utm_source=newsletter&utm_medium=email`;
@@ -1144,7 +1148,8 @@ section('7. Goal names, storage keys, the tracker, and what a goal carries');
     `${SITE_URL}/play?utm_source=tan-dash&utm_medium=share&utm_campaign=tan-dash`,
     withNewsletterUtm(`${SITE_URL}/stories/ep-01`, 'ep-01', 'weekly'),
     `${SITE_URL}/kanji?search=%E6%B0%B4+x&q=token`,
-    `${SITE_URL}/subscribed?state=expired&source=play-results`,
+    `${SITE_URL}/subscribed?state=expired&source=play-app-waitlist`,
+    `${SITE_URL}/subscribed?source=play-app-waitlist`,
     `${SITE_URL}/kanji?tokens=1&atoken=2`,
     `${SITE_URL}/`,
   ];
@@ -1159,6 +1164,60 @@ section('7. Goal names, storage keys, the tracker, and what a goal carries');
     'goal page_url',
     leaks,
     `a goal fired on /confirm?token=… sends page_url without the token, sealed or legacy JWT (or the address in a JWT); ${REDACT.length} more tokened URLs lose only the token and ${KEEP.length} others, UTMs included, pass byte for byte`,
+  );
+}
+
+section('8. The app door: which list its form joins, and what its words promise');
+{
+  // The form under "I'd play this as a phone app" joins the app waitlist, one
+  // email if an app ships (lib/email/lists.ts). Wired to any other source, a
+  // player would land on the story list under words that never mention it.
+  const wiring: string[] = [];
+  const game = fs.readFileSync(path.join(ROOT, 'components/play/TanDash.tsx'), 'utf8');
+  const captures = game.match(/<EmailCapture\b[^>]*\/>/g) ?? [];
+  if (captures.length !== 1) wiring.push(`components/play/TanDash.tsx renders ${captures.length} <EmailCapture /> elements; the app door has exactly one`);
+  for (const el of captures) {
+    if (!el.includes('source="play-app-waitlist"')) wiring.push(`components/play/TanDash.tsx renders ${el}, not source="play-app-waitlist"`);
+    if (!el.includes('{...PLAY_APP_WAITLIST_COPY.signup}')) wiring.push(`components/play/TanDash.tsx renders ${el} without {...PLAY_APP_WAITLIST_COPY.signup}`);
+  }
+  if (emailListForSource('play-app-waitlist') !== 'play-app-waitlist') {
+    wiring.push(`emailListForSource('play-app-waitlist') is ${emailListForSource('play-app-waitlist')}, not the app waitlist`);
+  }
+  check(
+    'app door form',
+    wiring,
+    'components/play/TanDash.tsx renders one <EmailCapture source="play-app-waitlist" {...PLAY_APP_WAITLIST_COPY.signup} />, and that source joins the app waitlist',
+  );
+
+  // The words (components/play/copy.ts) promise one email if an app ships and
+  // nothing else. They must not describe the story list, must not promise an
+  // unsubscribe link (nothing reaches the waitlist that could carry one before
+  // the launch email), and must leave no EmailCapture default showing.
+  const words: string[] = [];
+  const { signup, ...door } = PLAY_APP_WAITLIST_COPY;
+  const lines: [string, string][] = [
+    ...Object.entries(door),
+    ...Object.entries(signup).map(([k, v]): [string, string] => [`signup.${k}`, v]),
+  ];
+  const signupFields: Record<string, string> = signup;
+  for (const f of ['title', 'description', 'cta', 'successTitle', 'successMessage', 'footnote']) {
+    if (!signupFields[f]?.trim()) words.push(`signup.${f} is empty, so EmailCapture's default, written for another list, shows instead`);
+  }
+  for (const [k, v] of lines) {
+    const story = v.match(/\b(weekly|story|stories|travels)\b/i);
+    if (story) words.push(`${k} says "${story[0]}", but the form joins the app waitlist, not the story list: "${v}"`);
+    if (/unsubscribe/i.test(v)) words.push(`${k} promises an unsubscribe link the waitlist never gets: "${v}"`);
+  }
+  if (!/\bno\b[^.]*\bapp\b/i.test(door.heading)) words.push(`heading does not say there is no app: "${door.heading}"`);
+  if (!lines.some(([, v]) => /\bno\b[^.]*\bdate\b/i.test(v))) words.push('no line says there is no date for an app');
+  for (const k of ['description', 'successMessage'] as const) {
+    if (!/\b(once|one email)\b/i.test(signup[k])) words.push(`signup.${k} does not say one email ("once" or "one email"): "${signup[k]}"`);
+  }
+  if (!/confirm/i.test(signup.successMessage)) words.push(`signup.successMessage does not say a confirmation email comes first: "${signup.successMessage}"`);
+  check(
+    'app door words',
+    words,
+    `PLAY_APP_WAITLIST_COPY's ${lines.length} lines say there is no app and no date, and one email; none mentions weekly, story, stories or Travels, or promises an unsubscribe link; every signup field is set`,
   );
 }
 

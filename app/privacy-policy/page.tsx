@@ -103,6 +103,30 @@ export const metadata = getSEOTags({
  *    address reaches Vercel's request log. The "Server logs (Vercel)" item
  *    below does not say that. Whether to add a sentence there is a copy change
  *    Ari must approve, and it has not been made.
+ *  - The Tan Dash app waitlist (since 2026-10-11) is a second list, joined only
+ *    from the fake door on /play (source `play-app-waitlist`). The list follows
+ *    from the token's authenticated `source` (emailListForSource in
+ *    lib/email/lists.ts) and is its own Resend segment,
+ *    RESEND_PLAY_WAITLIST_SEGMENT_ID. Same double opt-in and 48h sealed token
+ *    as the story list. The confirm route (app/api/subscribe/confirm/route.ts)
+ *    adds a waitlist signup to that segment and sends it no welcome email; the
+ *    weekly job sends only to the story segment (lib/email/broadcast-queue.ts).
+ *    The form's copy (components/play/copy.ts) makes the same promise as the
+ *    policy: one email if an app ships, nothing else. Before it a waitlist
+ *    signup gets only the confirmation email, which must never carry an
+ *    unsubscribe link (lib/email/confirmation-email.ts), so the policy names a
+ *    reply to that email (its reply-to is config.resend.supportEmail,
+ *    app/api/subscribe/route.ts) or a message to us as the way off, and says
+ *    the one email will carry a link. "Unsubscribing from either stops both"
+ *    holds because Resend's `unsubscribed` flag is per contact, not per
+ *    segment (lib/email/lists.ts; app/api/unsubscribe/route.ts sets it on the
+ *    contact). Resend Topics would end that, and this sentence with it.
+ *    Retention says "while you are on it", which includes after the one email
+ *    is sent, because nothing deletes the waitlist after that email. "Changes
+ *    to this policy" promises an email only to weekly story subscribers, so a
+ *    policy change never breaks the waitlist's "nothing else". A second email
+ *    to the waitlist, a welcome email, or a deletion step makes this section
+ *    wrong.
  *
  * The controller identity and postal address come from `config.business`, the
  * same definition the email footer renders, so the two cannot disagree.
@@ -164,7 +188,7 @@ export default function PrivacyPolicy() {
           <h2 className={H2}>The short version</h2>
           <ul className={LIST}>
             <li>There are no accounts. Your study progress stays in your own browser and is never sent to us.</li>
-            <li>We only have your email address if you subscribe to the weekly story, and only after you confirm it.</li>
+            <li>We only have your email address if you subscribe to the weekly story or join the Tan Dash app waitlist, and only after you confirm it.</li>
             <li>We count visits with privacy-focused analytics. A second analytics tool runs only if you allow it.</li>
             <li>We don’t sell or rent personal information, and we don’t use advertising networks or advertising cookies.</li>
           </ul>
@@ -276,6 +300,27 @@ export default function PrivacyPolicy() {
             <li>Giving us your address is optional. Without it, we just can’t send you the story.</li>
           </ul>
 
+          <h3 className={H3}>The Tan Dash app waitlist</h3>
+          <ul className={LIST}>
+            <li>
+              <strong>What we hold:</strong> your email address, and whether you have unsubscribed.
+            </li>
+            <li>
+              <strong>How you join:</strong> the form under Tan Dash, then the button in our confirmation
+              email (the link lasts 48 hours). Pressing it is our record of your consent. Our analytics count
+              the sign-up, not your address.
+            </li>
+            <li>
+              <strong>Why:</strong> one email if a Tan Dash phone app ships, and nothing else. Legal basis:
+              your consent, which you can withdraw at any time.
+            </li>
+            <li>
+              <strong>Leaving:</strong> reply to the confirmation email or write to {emailLink}. The app email
+              will also carry an unsubscribe link. If you are on both lists, unsubscribing from either stops
+              both.
+            </li>
+          </ul>
+
           <h3 className={H3}>When you write to us</h3>
           <p className={P}>
             Replies to our emails and messages from the site’s feedback form reach our inbox with whatever
@@ -294,7 +339,7 @@ export default function PrivacyPolicy() {
           <h2 className={H2}>Who handles data for us</h2>
           <p className={P}>These service providers process data on our behalf and only on our instructions:</p>
           <ul className={`${LIST} mt-3`}>
-            <li><strong>Resend</strong>: sends our emails, keeps a log of what it sent, and stores the subscriber list</li>
+            <li><strong>Resend</strong>: sends our emails, keeps a log of what it sent, and stores the subscriber list and the app waitlist</li>
             <li><strong>Vercel</strong>: hosts the website</li>
             <li><strong>DataFast</strong>: visit analytics</li>
             <li><strong>Ahrefs</strong>: optional analytics, only with your consent</li>
@@ -323,7 +368,11 @@ export default function PrivacyPolicy() {
               do-not-email marker described above, until you ask us to delete it.
             </li>
             <li>
-              <strong>Unconfirmed sign-ups:</strong> nothing is added to our list, and the confirmation link
+              <strong>The app waitlist:</strong> while you are on it. After you unsubscribe, only as the
+              do-not-email marker described above, until you ask us to delete it.
+            </li>
+            <li>
+              <strong>Unconfirmed sign-ups:</strong> nothing is added to our lists, and the confirmation link
               expires after 48 hours. Resend&apos;s send log keeps a record of the confirmation email (your
               address, its subject and when it was sent) for the period Resend sets for our account.
             </li>
@@ -366,7 +415,8 @@ export default function PrivacyPolicy() {
           <h2 className={H2}>Changes to this policy</h2>
           <p className={P}>
             When we change this policy, we update the date at the top. If a change affects how we use your
-            information in a meaningful way, we will tell subscribers by email before it takes effect.
+            information in a meaningful way, we will tell weekly story subscribers by email before it takes
+            effect. If you are only on the app waitlist, you will see the change here.
           </p>
         </section>
 

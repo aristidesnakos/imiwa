@@ -3,10 +3,12 @@ import { Metadata } from 'next';
 import { CheckCircle, Clock } from 'lucide-react';
 import Header from '@/components/sections/Header';
 import { EmailCapture } from '@/components/EmailCapture';
+import { PLAY_APP_WAITLIST_COPY } from '@/components/play/copy';
 import {
   isEmailSignupSource,
   type EmailSignupSource,
 } from '@/lib/analytics/email-signup-sources';
+import { emailListForSource } from '@/lib/email/lists';
 
 export const metadata: Metadata = {
   title: 'Subscription | MichiKanji',
@@ -16,11 +18,19 @@ export const metadata: Metadata = {
 /**
  * Where `POST /api/subscribe/confirm` sends people, in both of its outcomes.
  *
- * Two states, and the difference matters: arriving here plain means a contact
- * was actually created in Resend, because the route redirects here only after
- * that call succeeds. Arriving with `?state=expired` means the token was
- * authenticated but its 48h window had closed — nobody was subscribed, and
- * the honest thing is to say so and offer the form again.
+ * Two states, and the difference matters: arriving here without `state` means
+ * a contact was actually created in Resend, because the route redirects here
+ * only after that call succeeds. Arriving with `?state=expired` means the
+ * token was authenticated but its 48h window had closed — nobody was
+ * subscribed, and the honest thing is to say so and offer the form again.
+ *
+ * Each state comes in two lists' words, because `source` decides the list
+ * (lib/email/lists.ts). The weekly story list lands here plain when confirmed,
+ * and a missing or unknown `source` reads as that list. The app waitlist is
+ * sent here as `?source=play-app-waitlist`, and its page must not promise a
+ * story: it gets one email if a Tan Dash app ships and nothing else. Its
+ * expired form reuses the words from /play (components/play/copy.ts), because
+ * EmailCapture's defaults promise an unsubscribe link the waitlist never gets.
  *
  * `source` is carried on the expired redirect so the re-subscribe form stays
  * attributed to the surface the person originally signed up from. It is safe to
@@ -46,6 +56,8 @@ export default async function SubscribedPage({
   const source: EmailSignupSource = isEmailSignupSource(params?.source)
     ? params.source
     : 'homepage-weekly-story';
+  // The default source above is a weekly one, so no source reads as weekly.
+  const waitlist = emailListForSource(source) === 'play-app-waitlist';
 
   return (
     <>
@@ -73,12 +85,36 @@ export default async function SubscribedPage({
               </p>
             </div>
 
-            <EmailCapture
-              source={source}
-              title="Try that again"
-              description="Same address is fine. The new link is good for another 48 hours."
-              cta="Send a new link"
-            />
+            {waitlist ? (
+              <EmailCapture source="play-app-waitlist" {...PLAY_APP_WAITLIST_COPY.signup} />
+            ) : (
+              <EmailCapture
+                source={source}
+                title="Try that again"
+                description="Same address is fine. The new link is good for another 48 hours."
+                cta="Send a new link"
+              />
+            )}
+          </div>
+        ) : waitlist ? (
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-8 text-center shadow-sm">
+            <div className="mb-5 flex justify-center">
+              <CheckCircle aria-hidden="true" className="h-12 w-12 text-japan-sakura-waters" />
+            </div>
+
+            <h1 className="mb-3 text-2xl font-bold text-japan-deep-ocean">
+              You&rsquo;re on the list
+            </h1>
+            <p className="mb-6 leading-relaxed text-japan-mountain-mist">
+              One email if a Tan Dash app ships, nothing else. No date yet.
+            </p>
+
+            <Link
+              href="/play"
+              className="rounded-sm font-medium text-japan-deep-ocean underline underline-offset-2 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Back to Tan Dash
+            </Link>
           </div>
         ) : (
           <div className="w-full max-w-md rounded-lg border border-border bg-card p-8 text-center shadow-sm">

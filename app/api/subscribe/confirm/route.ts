@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenSecret, verifyConfirmToken } from '@/lib/email/subscribe-token';
+import { EMAIL_LISTS, emailListForSource, segmentIdForList } from '@/lib/email/lists';
 import { mintUnsubscribeToken } from '@/lib/email/unsubscribe-token';
 import { EPISODES } from '@/lib/stories';
 import { summariseBroadcast } from '@/lib/email/broadcast-queue';
@@ -13,6 +14,10 @@ import config from '@/config';
 export const runtime = 'nodejs';
 
 const RESEND_API = 'https://api.resend.com';
+// The weekly list's segment, required by the top-level guard below for every
+// confirmation, the app waitlist's included. That guard is the contract
+// `pnpm check-subscribe-live` probes with an empty token, so it stays as it
+// is; each list's own segment is checked once the token says which list.
 const NEWSLETTER_SEGMENT_ID = process.env.RESEND_WEEKLY_STORIES_SEGMENT_ID;
 
 /**
@@ -90,9 +95,12 @@ async function listBroadcasts(apiKey: string | undefined): Promise<BroadcastSumm
  *   - Audiences were renamed Segments.
  *
  * `RESEND_AUDIENCE_ID` and `lib/email/audience.ts` are gone as of this change.
- * There is exactly one list; `source` still lives in DataFast
- * (`trackEmailSignup(source)` at capture time), not on the contact — see the
- * reopened M7 in `docs/prd/story-delivery-resend.md` before adding it there.
+ * Each list is a segment (lib/email/lists.ts): the weekly story, and since
+ * 2026-10-11 the Tan Dash app waitlist. The list follows from the token's
+ * authenticated `source`, so it is not stored on the contact either; `source`
+ * itself still lives in DataFast (`trackEmailSignup(source)` at capture time)
+ * — see the reopened M7 in `docs/prd/story-delivery-resend.md` before adding
+ * it there.
  *
  * The wire format is snake_case even though the SDK's options are camelCase.
  * Re-verify against the live docs before changing anything here — Resend's
@@ -143,6 +151,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Checked before the contact is created, so a missing segment never leaves a
+  // contact that belongs to no list.
+  const list = emailListForSource(result.payload.source);
+  const segmentId = segmentIdForList(list);
+  if (!segmentId) {
+    console.error(`[api/subscribe/confirm] Not configured (${EMAIL_LISTS[list].segmentEnv} missing)`);
+    return NextResponse.json({ error: 'Subscriptions are not configured.' }, { status: 503 });
+  }
+
   const res = await fetch(`${RESEND_API}/contacts`, {
     method: 'POST',
     headers: {
@@ -163,13 +180,23 @@ export async function POST(request: NextRequest) {
   }
 
   const segmentRes = await fetch(
-    `${RESEND_API}/contacts/${encodeURIComponent(result.payload.email)}/segments/${encodeURIComponent(NEWSLETTER_SEGMENT_ID)}`,
+    `${RESEND_API}/contacts/${encodeURIComponent(result.payload.email)}/segments/${encodeURIComponent(segmentId)}`,
     { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` } },
   );
   if (!segmentRes.ok) {
     const detail = await segmentRes.text();
     console.error('[api/subscribe/confirm] Resend segment add failed:', segmentRes.status, detail);
     return NextResponse.json({ error: 'Failed to confirm subscription.' }, { status: 502 });
+  }
+
+  // The app waitlist was promised one email if an app ships and nothing else,
+  // so it stops here: no welcome card, and no broadcast list to read for one.
+  // `source` tells /subscribed which list was joined, so the page can say so.
+  if (list === 'play-app-waitlist') {
+    return NextResponse.redirect(
+      new URL(`/subscribed?source=${encodeURIComponent(result.payload.source)}`, request.url),
+      { status: 303 }
+    );
   }
 
   // The welcome email: the story, quiz and answers for the episode they signed
@@ -191,7 +218,7 @@ export async function POST(request: NextRequest) {
     episodes: EPISODES,
     requested: result.payload.episode,
     broadcasts: await listBroadcasts(process.env.RESEND_API_KEY),
-    segmentId: NEWSLETTER_SEGMENT_ID,
+    segmentId,
     firstBroadcastEpisode: config.newsletter.firstBroadcastEpisode,
   });
   if (held.length > 0) {

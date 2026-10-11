@@ -98,12 +98,31 @@ welcome quiz card, both triggered by one person acting on their own address.
 `check-subscribe-live` exists because nothing else in this repo can see a missing environment
 variable in production. `validate:subscribe` proves the token model, the build proves compilation,
 a deploy proves shipping — and all three were green while `RESEND_WEEKLY_STORIES_SEGMENT_ID` was
-unset and every subscriber hit a 503 at the confirm button. It probes one endpoint with an empty
-token, creates nothing and needs no secrets, and runs every Friday before the send.
+unset and every subscriber hit a 503 at the confirm button. It probes the confirm route with an empty
+token and, for the app waitlist, `POST /api/subscribe` with the waitlist source and no address (that
+route checks its configuration before the address: 400 means configured, 503 missing). It creates
+nothing, needs no secrets, and runs every Friday before the send.
 `check-subscribe-e2e` is the other half: it subscribes `delivered+mk-e2e-<stamp>@resend.dev` — Resend's
 delivery sink, so nothing bounces — confirms it, asserts the contact exists, and deletes it in a
 `finally`. It needs the real secrets: run by hand without them it fails and names them, while its
 CI job skips with a notice rather than failing.
+
+**There are two lists, and `source` picks one** (`lib/email/lists.ts`, since 2026-10-11). Every form
+joins the weekly story list except Tan Dash's fake door, whose source `play-app-waitlist` joins the
+app waitlist: its own Resend segment, "Michikanji Tan Dash App Waitlist", in
+`RESEND_PLAY_WAITLIST_SEGMENT_ID` (set in Production and Development, not Preview). The list is not a
+token claim. It follows from the token's authenticated `source`, so a signup cannot join a list its
+form did not offer. The waitlist's promise is one email if a Tan Dash app ships and nothing else, so
+its confirmation email is in its own words, the confirm route sends it no welcome card and redirects
+to `/subscribed?source=play-app-waitlist`, and the weekly job counts and sends only to the story
+segment. That one email is not built (the runbook's "Sending the one app email"). One address can be
+on both lists, and Resend's `unsubscribed` flag is per contact, so leaving the weekly email also
+drops the app email. That is accepted: the weekly email will announce an app too. `/api/subscribe`
+now answers 503 at signup, before any email goes out, when the source's list has no segment
+variable, for both lists. Until 2026-10-11 it never checked `RESEND_WEEKLY_STORIES_SEGMENT_ID`,
+which is how the 2026-09-16 outage stayed hidden. `play-results`, the source the game's form used
+while it joined the weekly list, still confirms onto that list until 2026-10-20, for links already
+sent.
 
 **Both email tokens are sealed, not signed** (`lib/email/sealed-token.ts`, since 2026-10-11):
 AES-256-GCM under a key per kind, HKDF-derived from `EMAIL_TOKEN_SECRET`, so no link we send carries
@@ -494,6 +513,13 @@ placements or promotion during the window: the read has to stay clean.
   every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
   (`playLine` in `lib/email/quiz-email.ts`). kanjifun.com is deliberately **not** redirected here: it is
   held for the bigger standalone KanjiFun game, built only if this test passes (decision 7 Dec 2026).
+- **The fake door's form joins the app waitlist, not the weekly email.** "I'd play this as a phone
+  app" (`play_app_waitlist_click`) reveals a form with source `play-app-waitlist`: one email if an
+  app ships, nothing else (see "The newsletter"; the words are `components/play/copy.ts`, checked by
+  `validate:play`). Until 2026-10-11 it joined the weekly story email as `play-results`. The game's
+  own form now puts nobody on the weekly email, so it cannot add to the `arrival=email` cohort, and
+  the waitlist is sent no tagged link that could bring anyone back. Its `email_signup` goals are
+  waitlist signups: leave them out of any count of story subscribers.
 - **The share card is `app/play/opengraph-image.tsx`, named explicitly in the page's metadata**,
   because `getSEOTags` always sets `openGraph.images` and Next then ignores a route's own image
   file. Its fonts are committed subsets in `app/play/_og/` (OFL; Press Start 2P is renamed

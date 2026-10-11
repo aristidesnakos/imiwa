@@ -44,8 +44,8 @@ calendar again — which is how the Send column in
 module only computes: the weekly job passes `nextSendAt()` to Resend as `scheduled_at`, and Resend
 does the sending.
 
-There is no database. The confirmed list lives in a Resend Segment; a *pending* signup is never added
-to it, because the sealed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
+There is no database. Each confirmed list lives in a Resend Segment ([the two lists](#the-two-lists));
+a *pending* signup is never added to one, because the sealed token is the record ([`lib/email/subscribe-token.ts`](../../lib/email/subscribe-token.ts)).
 That is what keeps CLAUDE.md's "no server-side user state" rule intact. It is not the same as
 "stored nowhere": Resend's send log keeps the confirmation email itself (address, subject, time),
 and the privacy policy says so. Unconfirmed addresses can be read straight out of that log. They
@@ -53,13 +53,53 @@ cannot be read out of a link sent since 2026-10-11: sealed means encrypted as we
 ([`lib/email/sealed-token.ts`](../../lib/email/sealed-token.ts)). Before then the token was an HS256
 JWT, whose payload anyone holding the URL could read.
 
-## The three email paths
+## The two lists
+
+Since 2026-10-11 a confirmed signup joins one of two lists, each its own Resend segment
+([`lib/email/lists.ts`](../../lib/email/lists.ts)):
+
+| List | Joined from | Segment | What it is sent |
+|---|---|---|---|
+| Weekly story | Every capture form except Tan Dash's | `RESEND_WEEKLY_STORIES_SEGMENT_ID` | The welcome quiz card, then the weekly broadcast |
+| Tan Dash app waitlist | The fake door under Tan Dash's results screen, source `play-app-waitlist` | `RESEND_PLAY_WAITLIST_SEGMENT_ID` ("Michikanji Tan Dash App Waitlist", created 2026-10-11) | One email if a Tan Dash app ships, and nothing else. Not built: [Sending the one app email](#sending-the-one-app-email) |
+
+The owner decided on 2026-10-11 that players asking for an app are a different audience from the
+story list's, so the game's form stopped joining the weekly email. The list is not a claim in the
+token: it follows from the token's authenticated `source`, so a signup cannot join a list its form
+did not offer. Both lists use the same double opt-in. The confirmation email is in the list's own
+words ([`lib/email/confirmation-email.ts`](../../lib/email/confirmation-email.ts)), and the confirm
+route adds the contact to that list's segment. A waitlist confirmation then stops: no welcome card,
+and a redirect to `/subscribed?source=play-app-waitlist`. The weekly job counts and sends only to
+the story segment, so a waitlist contact never receives an episode.
+
+One address can be on both lists, because Resend contacts are global and belong to 0..n segments.
+Resend's `unsubscribed` flag is per contact, not per segment, so unsubscribing from the weekly email
+also drops the app email, and the app email's own unsubscribe link, once it exists, will drop the
+weekly email too. That is accepted, because the weekly email will announce an app anyway. Resend
+Topics are the fix if it ever matters ([PRD](../prd/story-delivery-resend.md) M7/M8).
+
+**Leaving the waitlist before the one email.** Nothing but the confirmation email is sent before
+then, and it must never carry an unsubscribe link, so there is none to use. The form tells people to
+reply to the confirmation email (reply-to `config.resend.supportEmail`), and the privacy policy adds
+writing to that address. In the Resend dashboard,
+open the contact. If the waitlist is its only segment, delete the contact: the privacy policy keeps
+waitlist data "while you are on it". If it is also in the story segment, take it out of the
+waitlist segment only, and do not mark it unsubscribed unless they asked to leave everything: the
+flag is per contact, so it would stop the weekly email too.
+
+**The retired source.** `play-results` was the game's form while it joined the weekly email. It
+stays in [`lib/analytics/email-signup-sources.ts`](../../lib/analytics/email-signup-sources.ts) until
+2026-10-20, so confirmation links already sent under it still join the weekly list their copy
+promised. Delete it on or after that date.
+
+## The email paths
 
 | Path | Trigger | Automatic? | Code |
 |---|---|---|---|
-| Double opt-in confirmation | A human types their address into a capture form | Yes | [`app/api/subscribe/route.ts`](../../app/api/subscribe/route.ts) → [`lib/email/confirmation-email.ts`](../../lib/email/confirmation-email.ts) |
-| Welcome quiz card | That same human presses the button on `/confirm` | Yes | [`app/api/subscribe/confirm/route.ts`](../../app/api/subscribe/confirm/route.ts) → [`lib/email/quiz-email.ts`](../../lib/email/quiz-email.ts) |
-| Weekly episode broadcast | The weekly job schedules it in Resend (Wednesday or Friday, for Saturday 13:00 UTC); Resend sends it unless a person cancels it | **Scheduled by a job**, since 2026-09-27 | [`scripts/stories/schedule-weekly-broadcast.ts`](../../scripts/stories/schedule-weekly-broadcast.ts), built by [`lib/email/broadcast.ts`](../../lib/email/broadcast.ts) |
+| Double opt-in confirmation, in the list's own words | A human types their address into a capture form | Yes | [`app/api/subscribe/route.ts`](../../app/api/subscribe/route.ts) → [`lib/email/confirmation-email.ts`](../../lib/email/confirmation-email.ts) |
+| Welcome quiz card (weekly story list only) | That same human presses the button on `/confirm` | Yes | [`app/api/subscribe/confirm/route.ts`](../../app/api/subscribe/confirm/route.ts) → [`lib/email/quiz-email.ts`](../../lib/email/quiz-email.ts) |
+| Weekly episode broadcast, to the story segment | The weekly job schedules it in Resend (Wednesday or Friday, for Saturday 13:00 UTC); Resend sends it unless a person cancels it | **Scheduled by a job**, since 2026-09-27 | [`scripts/stories/schedule-weekly-broadcast.ts`](../../scripts/stories/schedule-weekly-broadcast.ts), built by [`lib/email/broadcast.ts`](../../lib/email/broadcast.ts) |
+| The one app email, to the waitlist segment | Ari decides a Tan Dash app has shipped | **Not built** | [Sending the one app email](#sending-the-one-app-email) |
 
 The first two sends are one-per-person and reactive: each is triggered by a specific person acting
 on their own address, in the same request. Nothing in this repo sends to more than one recipient or
@@ -235,6 +275,29 @@ hand, with `RESEND_WEEKLY_STORIES_SEGMENT_ID` beside it. The scripts load `.env.
 via dotenv and never print a value. The weekly job reads the same two values from GitHub repository
 secrets instead ([Known gaps](#known-gaps) 2).
 
+## Sending the one app email
+
+Not built. Nothing in this repo sends to the waitlist, and nothing should until Ari decides a Tan
+Dash app has shipped. The waitlist was promised one email if that happens, and nothing else. When it
+does:
+
+- **A Resend broadcast to the waitlist segment** (`RESEND_PLAY_WAITLIST_SEGMENT_ID`). Never to the
+  story segment, and never a loop of single sends: Resend does the queueing and the unsubscribe
+  filtering, as it does for the weekly send. The weekly job counts only broadcasts addressed to the
+  story segment ([`lib/email/broadcast-queue.ts`](../../lib/email/broadcast-queue.ts)), so this one
+  neither holds nor takes a Saturday.
+- **The same footer as the weekly broadcast:** the postal address from `config.business`
+  (CAN-SPAM; refuse to build it while the address is unset or fails `postalAddressProblems`) and
+  Resend's `{{{RESEND_UNSUBSCRIBE_URL}}}` in the HTML and the plain text.
+  [`lib/email/broadcast.ts`](../../lib/email/broadcast.ts) is the pattern.
+- **A draft, never a send, until Ari approves it.** Create the draft, check a test send, and let
+  Ari send it from Resend.
+- **One email, about the app.** A second send to this segment, a game update or an episode breaks
+  the promise in the form ([`components/play/copy.ts`](../../components/play/copy.ts)) and in the
+  privacy policy. The weekly email announces the app to its own list separately.
+- **Its unsubscribe link sets the per-contact flag**, so a recipient who is also on the story list
+  and uses it stops getting the weekly email too ([the two lists](#the-two-lists)).
+
 ## The postal address
 
 Every commercial email must carry a valid physical postal address (CAN-SPAM), and the privacy
@@ -279,7 +342,8 @@ Set in every Vercel environment. Reference copy: [`.env.example`](../../.env.exa
 |---|---|---|
 | `RESEND_API_KEY` | `/api/subscribe`, `/api/subscribe/confirm`, `/api/unsubscribe`, `stories:create-broadcast`, `stories:schedule-broadcast` | `POST /api/subscribe` → `503 {"error":"Subscriptions are not configured."}`; confirm → the same 503; `POST /api/unsubscribe` → bare 503; the broadcast scripts exit with an error naming it. The guard matters because `sendEmail` returns a **mock success** when the key is unset ([`lib/resend.ts`](../../lib/resend.ts)) — without it a signup would answer 200 and send nothing. |
 | `EMAIL_TOKEN_SECRET` | Both subscribe routes, `/api/unsubscribe` | Same 503s. Both tokens are sealed with keys derived from it (AES-256-GCM, one HKDF-derived key per kind, [`lib/email/sealed-token.ts`](../../lib/email/sealed-token.ts)): the 48h confirm token and the non-expiring unsubscribe token. It is also the HMAC key that still verifies the JWTs minted before 2026-10-11: confirm JWTs until their 48h runs out, unsubscribe JWTs for good. Rotating it invalidates every confirmation link in flight **and every unsubscribe link ever sent**, sealed or legacy — rotate only in a send-free window. |
-| `RESEND_WEEKLY_STORIES_SEGMENT_ID` | `/api/subscribe/confirm`, `stories:create-broadcast`, `stories:schedule-broadcast` | **This is the one that was missing for three episodes.** `/api/subscribe` still answers 200 and the confirmation email still goes out — that route does not check this variable — so the break is invisible until the person presses the confirm button and gets `503 {"error":"Subscriptions are not configured."}`. No contact, no segment membership, no welcome card. The broadcast scripts also refuse to run. Set in Production and Development on 2026-09-16; **not yet in Preview**. |
+| `RESEND_WEEKLY_STORIES_SEGMENT_ID` | `/api/subscribe` (story sources), `/api/subscribe/confirm` (every confirmation, waitlist included), `stories:create-broadcast`, `stories:schedule-broadcast` | **This is the one that was missing for three episodes.** Then `/api/subscribe` did not check it: it answered 200 and sent the confirmation email, and the break stayed invisible until the person pressed the confirm button and got `503 {"error":"Subscriptions are not configured."}`. Since 2026-10-11 `/api/subscribe` checks it too, so the same failure now answers 503 at the form, before any email goes out, where the person sees it at once. Confirm still answers 503 without it: no contact, no segment membership, no welcome card. The broadcast scripts also refuse to run. Set in Production and Development on 2026-09-16; **not yet in Preview**. |
+| `RESEND_PLAY_WAITLIST_SEGMENT_ID` | `/api/subscribe` and `/api/subscribe/confirm`, for source `play-app-waitlist` | `/api/subscribe` answers 503 to the game's form and sends nothing; confirm answers 503 to a waitlist token and creates no contact. The story list is unaffected. Points at the "Michikanji Tan Dash App Waitlist" segment. Set 2026-10-11 in Production and Development; **not in Preview**. |
 
 The weekly job does not read Vercel. It needs its own copies of `RESEND_API_KEY` (a **Full access**
 key) and `RESEND_WEEKLY_STORIES_SEGMENT_ID` as GitHub repository secrets, and it fails, with an
@@ -312,8 +376,15 @@ configuration *before* it parses the token, so the answer separates the two stat
 contact or sending anyone an email: `400 Missing token.` means configured, `503` means one of the
 three variables is missing. It needs no secrets, which is the only reason it can run unattended.
 
-Because confirm requires all three variables and `/api/subscribe` requires two of them, a passing
-probe means the whole capture path's configuration is present.
+Since 2026-10-11 it also probes the app waitlist: a `POST /api/subscribe` with source
+`play-app-waitlist` and no email address. That route checks the list's configuration before it
+looks at the address, so `400` (the address check) means configured and `503` means
+`RESEND_PLAY_WAITLIST_SEGMENT_ID`, the key or the secret is missing. With no address there is
+nothing to send.
+
+Confirm requires the key, the secret and `RESEND_WEEKLY_STORIES_SEGMENT_ID` for every token, and
+`/api/subscribe` requires the key, the secret and the segment of the list it was asked about. So a
+passing pair of probes means both lists' capture paths are configured.
 [`.github/workflows/subscribe-live-check.yml`](../../.github/workflows/subscribe-live-check.yml) runs
 it every Friday at 06:00 UTC — the morning before the send — and on any push touching the subscribe
 routes, then runs the end-to-end walk below, and opens a GitHub Issue when either fails. The walk
@@ -514,7 +585,8 @@ the whole path works — each stage fails in a place the previous stage cannot s
 
 1. Open `https://www.michikanji.com/stories/<slug>` and subscribe through the quiz form at the foot of
    the episode. Expect the form's success state; a `400` means the address or the `source` was
-   rejected, a `503` means `RESEND_API_KEY` or `EMAIL_TOKEN_SECRET` is missing.
+   rejected, a `503` means `RESEND_API_KEY`, `EMAIL_TOKEN_SECRET` or
+   `RESEND_WEEKLY_STORIES_SEGMENT_ID` is missing.
 2. **Expect the confirmation email** within a minute, from `Ari at MichiKanji <ari@michikanji.com>`,
    subject `Confirm your MichiKanji subscription`. No images, one link. If it does not arrive, the
    send failed silently — check the function logs for `[api/subscribe]`.
@@ -534,6 +606,14 @@ the whole path works — each stage fails in a place the previous stage cannot s
    first broadcast.
 8. Re-subscribing the same address later is safe: contact creation is idempotent, and a replayed
    token inside its 48h window is a no-op.
+
+**The app waitlist, once after it ships.** Play a run on `/play`, press "I'd play this as a phone
+app" and sign up through the form under it. Expect the confirmation email with the subject
+`Confirm: one email if Tan Dash becomes an app`, and no mention of the weekly story. Press the
+button: expect a 303 to `/subscribed?source=play-app-waitlist`, a page that promises one email if an
+app ships, **no welcome email**, and the contact in the "Michikanji Tan Dash App Waitlist" segment,
+not added to the Weekly Stories one. Then take your address off the waitlist, as for a request to
+leave ([the two lists](#the-two-lists)).
 
 ## Deliberately not automated
 
@@ -559,8 +639,8 @@ the whole path works — each stage fails in a place the previous stage cannot s
   parses `formData` for inbound forwarding; Resend's event webhooks post signed JSON and need a
   separate route. Confirm Resend already auto-suppresses hard bounces before building one —
   otherwise it is monitoring, not safety.
-- **The Friday probe is monitoring, not sending.** `check-subscribe-live` reads one endpoint's
-  configuration state and opens an Issue. It creates nothing, sends nothing, and has no credentials
+- **The Friday probe is monitoring, not sending.** `check-subscribe-live` reads two endpoints'
+  configuration state, never with an address, and opens an Issue. It creates nothing, sends nothing, and has no credentials
   with which to do either — deliberately, so that adding a monitor did not quietly add a send path.
   The weekly job, unlike the probe, holds a key able to send. It uses it only to read broadcasts
   and to ask Resend to schedule one.
@@ -569,9 +649,10 @@ the whole path works — each stage fails in a place the previous stage cannot s
 
 ## Known gaps
 
-1. **`RESEND_WEEKLY_STORIES_SEGMENT_ID` is not set for Preview.** Production and Development have it
-   as of 2026-09-16; Preview does not, so a preview deployment 503s at the confirm button exactly as
-   production used to. It is not urgent — no real subscriber meets a preview URL — but it makes
+1. **`RESEND_WEEKLY_STORIES_SEGMENT_ID` and `RESEND_PLAY_WAITLIST_SEGMENT_ID` are not set for
+   Preview.** Production and Development have them (since 2026-09-16 and 2026-10-11); Preview does
+   not, so a preview deployment answers 503 at the signup form for both lists (at the confirm
+   button, before 2026-10-11). It is not urgent — no real subscriber meets a preview URL — but it makes
    Preview useless for testing this path, which is the one place you would want to test it. The CLI
    in this repo is old enough that `vercel env add … preview` needs the interactive prompt; add it
    from the Vercel dashboard, or upgrade the CLI first.
