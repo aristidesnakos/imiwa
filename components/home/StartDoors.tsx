@@ -16,8 +16,15 @@ function More({ children }: { children: string }) {
 }
 
 /**
- * Variant D: three ways in for the visitor who has no word to search for.
+ * Four ways in for the visitor who has no word to search for.
  * Each door is a page that already exists; none of them is prefetched.
+ *
+ * The fourth, Tan Dash, was added 2026-10-11 (it was three doors for a day), and it is why the
+ * heading no longer says "look up": playing is not looking something up. The game's copy is
+ * PlayLink's own sentence ("works through all N N5 kanji, world by world"), not a promise
+ * that a run reaches them all; see components/play/PlayLink.tsx. Its tile is a 128px crop of
+ * the /play share card (public/assets/tan-dash-tile.png, 4 kB). Do not point an <Image> at
+ * /play/opengraph-image instead: that is a 35 kB PNG, and `/` has ~38 kB of transfer headroom.
  */
 export function StartDoors({ n5Count }: { n5Count: number }) {
   const latest = episodesNewestFirst()[0];
@@ -26,9 +33,9 @@ export function StartDoors({ n5Count }: { n5Count: number }) {
     <section className="bg-background pb-14 pt-2 md:pb-20">
       <div className="container mx-auto px-4">
         <h2 className="mb-5 text-center text-lg font-semibold text-japan-mountain-mist">
-          Not sure what to look up?
+          Not sure where to start?
         </h2>
-        <ul className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
+        <ul className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 lg:grid-cols-4">
           <li>
             <Link href="/kanji/n5" prefetch={false} className={CARD}>
               <span lang="ja" aria-hidden="true" className="text-4xl tracking-widest text-japan-deep-ocean">
@@ -76,6 +83,22 @@ export function StartDoors({ n5Count }: { n5Count: number }) {
                 A free N5 kanji quiz: meanings and readings, four choices, no sign-up.
               </span>
               <More>Take the quiz</More>
+            </Link>
+          </li>
+          <li>
+            <Link href="/play" prefetch={false} className={CARD}>
+              <Image
+                src="/assets/tan-dash-tile.png"
+                alt=""
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-lg border border-border object-cover"
+              />
+              <span className="mt-3 text-lg font-bold text-japan-deep-ocean">Play Tan Dash</span>
+              <span className="mt-1 text-sm text-japan-mountain-mist">
+                A free one-thumb game that works through all {n5Count} N5 kanji, world by world.
+              </span>
+              <More>Play free</More>
             </Link>
           </li>
         </ul>

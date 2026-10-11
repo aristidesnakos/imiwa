@@ -66,6 +66,14 @@
  *     utm_medium=email. The plain-text email's /play link is deliberately
  *     untagged (lib/email/quiz-email.ts), so a plain-text reader counts as
  *     other.
+ *   - From 2026-10-11 (day 1) the homepage has a fourth door to /play
+ *     (components/home/StartDoors.tsx). It is untagged, deliberately: an
+ *     internal UTM would reset DataFast's attribution for the visit, and a new
+ *     `arrival` value is a change to this model that nobody asked for. Its
+ *     players are therefore in the arrival=other cohorts, and the only trace
+ *     is a `/` -> `/play` page sequence. Its players are curious clickers, not
+ *     readers who have just met the kanji, so reach is tilted up and
+ *     engagement and returns could move either way. Say so next to the verdict.
  */
 
 export const PLAY_GOALS = {

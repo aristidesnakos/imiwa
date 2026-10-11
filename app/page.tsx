@@ -12,8 +12,12 @@ import { ALL_KANJI_COUNT, LEVEL_COUNTS } from '@/components/home/level-counts';
 // page (65.8% bounce, Sep 10 - Oct 9, China excluded), half never scrolled past
 // the hero, and only 14% clicked through. Most of them arrive from Google
 // wanting one character ("michi kanji", "kanji stroke order"), so the hero is
-// now the search, with Tan pointing at it, and three doors below it for the
-// visitor who has nothing to type.
+// now the search, with Tan pointing at it, and doors below it for the
+// visitor who has nothing to type. There were three until 2026-10-11, when
+// Ari added Tan Dash (/play) as a fourth, one day into this read and on day 1
+// of the game's own six-week test. Both reads now include it: a visit from /
+// to /play is a door click, and it makes the bounce comparison easier to win
+// (see "Tan Dash" in CLAUDE.md before judging either on their dates).
 //
 // Measured by pageviews, not goals: nothing else on this page links to a
 // character page or to /kanji?search=, so a visit from / to either one is a

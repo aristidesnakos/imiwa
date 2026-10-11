@@ -485,7 +485,9 @@ player jumps for the matching kanji tile. Ported on 2026-10-11 from an approved 
 as a **six-week retention test**, pre-registered in the KanjiFun appraisal doc with a decision on
 **Mon 7 Dec 2026**: >= 300 starters, >= 40% of them catching 3 kanji, and players who caught one
 returning within 7 days at >= 2x the rate of visitors who did not (and >= 15%). Do not add goals,
-placements or promotion during the window: the read has to stay clean.
+placements or promotion during the window: the read has to stay clean. One exception, Ari's own
+decision on 2026-10-11, the first day: a fourth door on the homepage (see "Where it is linked"). It
+is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) with it in mind.
 
 - **Content comes from the contract in `lib/play/`, never from the island.** `signs.ts` holds the
   82 hand-curated signs (one English word, one kana reading each) and the six game-only worlds;
@@ -511,8 +513,16 @@ placements or promotion during the window: the read has to stay clean.
   game's own progress is `mk-play`. All three keys are in the privacy policy.
 - **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
   every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
-  (`playLine` in `lib/email/quiz-email.ts`). kanjifun.com is deliberately **not** redirected here: it is
-  held for the bigger standalone KanjiFun game, built only if this test passes (decision 7 Dec 2026).
+  (`playLine` in `lib/email/quiz-email.ts`); and, since 2026-10-11, the homepage's fourth door
+  (`components/home/StartDoors.tsx`, a card with a 4 kB tile, `public/assets/tan-dash-tile.png`, cut
+  from the share card). **The door is untagged**: its link is plain `/play`, so players who came
+  through it are inside the same cohorts as everyone else and cannot be told apart in the goals. A
+  tag would need either a query string (an internal UTM would reset DataFast's attribution for the
+  visit) or a new `arrival` value in `lib/play/measure.ts`; neither was built. On 7 Dec, a `/` to
+  `/play` page sequence is the only trace. The same door also moves the homepage's own bounce read
+  (judged after 10 Nov): a click on it is a second pageview. kanjifun.com is deliberately **not**
+  redirected here: it is held for the bigger standalone KanjiFun game, built only if this test
+  passes (decision 7 Dec 2026).
 - **The fake door's form joins the app waitlist, not the weekly email.** "I'd play this as a phone
   app" (`play_app_waitlist_click`) reveals a form with source `play-app-waitlist`: one email if an
   app ships, nothing else (see "The newsletter"; the words are `components/play/copy.ts`, checked by
