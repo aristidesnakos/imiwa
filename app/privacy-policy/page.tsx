@@ -81,12 +81,17 @@ export const metadata = getSEOTags({
  *    from a link tagged utm_medium=email (lib/email/utm.ts), read only by the
  *    return-visit model, and gone when the tab closes. validate:play asserts it
  *    never reaches localStorage.
- *  - Every goal's page address has the signup `token` removed before it leaves
- *    the browser (redactPageUrl in lib/analytics/index.ts; asserted by
- *    validate:play), because the token's payload is the subscriber's address.
- *    The policy does not claim the token never reaches DataFast: DataFast's own
- *    page-view script (app/layout.tsx) reports the page address, query
- *    included, which is how it reads UTM tags.
+ *  - The signup `token` on /confirm?token=… never reaches DataFast, because its
+ *    payload is the subscriber's address. The page takes it out of the address
+ *    bar before DataFast's page-view script (app/layout.tsx) reads the URL
+ *    (lib/email/confirm-token-scrub.ts). /confirm sends `Referrer-Policy:
+ *    strict-origin` (next.config.js), so the token does not go on as
+ *    /subscribed's referrer either. Both are asserted by validate:subscribe.
+ *    Every goal's page address has it removed as well (redactPageUrl in
+ *    lib/analytics/index.ts; asserted by validate:play). It does still reach
+ *    Vercel's request log as part of the GET URL that opens /confirm, and the
+ *    "Server logs (Vercel)" item below does not say that the confirmation link
+ *    puts the address there.
  *
  * The controller identity and postal address come from `config.business`, the
  * same definition the email footer renders, so the two cannot disagree.

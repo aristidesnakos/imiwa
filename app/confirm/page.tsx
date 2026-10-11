@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { CheckCircle } from 'lucide-react';
 import Header from '@/components/sections/Header';
+import { CONFIRM_TOKEN_SCRUB_SCRIPT } from '@/lib/email/confirm-token-scrub';
 
 export const metadata: Metadata = {
   title: 'Confirm your subscription | MichiKanji',
@@ -23,6 +24,12 @@ export const metadata: Metadata = {
  *
  * Nothing is validated here. The token is opaque to this page; the route
  * handler verifies the signature and decides everything.
+ *
+ * The token's payload is the subscriber's address, so it leaves the address
+ * bar as soon as this HTML is parsed (CONFIRM_TOKEN_SCRUB_SCRIPT, which says
+ * why that always happens before DataFast's script reads the URL). It stays in
+ * the hidden field below, rendered on the server, so the button never needed
+ * the URL.
  */
 export default async function ConfirmPage({
   searchParams,
@@ -36,6 +43,10 @@ export default async function ConfirmPage({
 
   return (
     <>
+      {/* First in the page's HTML: an inline script, so it runs before the
+          deferred DataFast tag and before Next's router reads the URL. Always
+          rendered: a `?token=` this page cannot use must not reach DataFast either. */}
+      <script dangerouslySetInnerHTML={{ __html: CONFIRM_TOKEN_SCRUB_SCRIPT }} />
       <Header />
 
       <main

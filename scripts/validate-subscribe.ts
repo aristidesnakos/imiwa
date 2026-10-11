@@ -55,6 +55,8 @@ import {
 import { EPISODES, episodesNewestFirst } from '../lib/stories';
 import { panelRomaji } from '../lib/stories/romaji-lines';
 import { SITE_URL } from '../lib/seo/site';
+import { CONFIRM_TOKEN_SCRUB_SCRIPT } from '../lib/email/confirm-token-scrub';
+import nextConfig from '../next.config.js';
 
 const SECRET = 'test-secret-not-used-anywhere-real';
 const OTHER_SECRET = 'a-different-secret-entirely';
@@ -572,18 +574,91 @@ check(
     hrefsIn(confirmationHtml).every(link => link === confirmUrl(confirmToken))
 );
 
-// --- Report ---------------------------------------------------------------
+// --- The confirm page keeps the token from DataFast ------------------------
+//
+// That link's token is the address in base64url, and DataFast's page-view
+// script reports the URL it finds. /confirm removes the token from the address
+// bar before that script runs (lib/email/confirm-token-scrub.ts, which explains
+// the ordering). This runs the exact string the page inlines.
 
-const total = passed + failures.length;
-
-if (failures.length > 0) {
-  console.error(`\nFAIL — ${failures.length}/${total} checks failed:\n`);
-  for (const f of failures) console.error(`  ✗ ${f}`);
-  console.error('');
-  process.exit(1);
+/** The address bar after the scrub script runs on `href`, and whether it rewrote it. */
+function afterScrub(href: string): { href: string; rewritten: boolean } {
+  let current = href;
+  let rewritten = false;
+  const fakeWindow = {
+    location: {
+      get href() {
+        return current;
+      },
+    },
+    history: {
+      state: null,
+      replaceState(_state: unknown, _unused: string, url: string) {
+        rewritten = true;
+        current = new URL(url, current).toString();
+      },
+    },
+  };
+  new Function('window', CONFIRM_TOKEN_SCRUB_SCRIPT)(fakeWindow);
+  return { href: current, rewritten };
 }
 
-console.log(`
+const emailedLink = afterScrub(confirmUrl(confirmToken));
+check(
+  'the emailed confirm link leaves the address bar as bare /confirm, token gone',
+  emailedLink.href === `${SITE_URL}/confirm` && !emailedLink.href.includes(confirmToken)
+);
+check(
+  'the scrub removes only the token: other parameters and the fragment stay',
+  afterScrub(`${SITE_URL}/confirm?utm_source=newsletter&token=abc#top`).href ===
+    `${SITE_URL}/confirm?utm_source=newsletter#top`
+);
+check(
+  'a percent-encoded name the page would still read as `token` is scrubbed too',
+  afterScrub(`${SITE_URL}/confirm?%74oken=abc`).href === `${SITE_URL}/confirm`
+);
+check(
+  'a confirm URL with no token is left alone',
+  !afterScrub(`${SITE_URL}/confirm`).rewritten
+);
+
+// The same page's Referer. Next applies every header rule that matches a path,
+// and the last one setting a key wins, so the site-wide strict-origin-when-
+// cross-origin must be overridden by a later /confirm rule that sends no path.
+interface HeaderRule {
+  source: string;
+  headers: { key: string; value: string }[];
+}
+const confirmReferrerChecked = (nextConfig.headers() as Promise<HeaderRule[]>).then(rules => {
+  const policy = rules
+    .filter(rule => rule.source === '/:path*' || rule.source === '/confirm')
+    .flatMap(rule => rule.headers)
+    .filter(header => header.key.toLowerCase() === 'referrer-policy')
+    .at(-1)?.value;
+  check(
+    `/confirm's Referrer-Policy sends no path (got ${policy ?? 'none'})`,
+    policy === 'strict-origin' || policy === 'origin'
+  );
+});
+
+// --- Report ---------------------------------------------------------------
+
+confirmReferrerChecked.then(report, (error: unknown) => {
+  failures.push(`next.config.js headers() could not be read: ${String(error)}`);
+  report();
+});
+
+function report() {
+  const total = passed + failures.length;
+
+  if (failures.length > 0) {
+    console.error(`\nFAIL — ${failures.length}/${total} checks failed:\n`);
+    for (const f of failures) console.error(`  ✗ ${f}`);
+    console.error('');
+    process.exit(1);
+  }
+
+  console.log(`
 Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · a contact is creatable only from a valid, unexpired, correctly-signed token
   · forged, wrong-secret, malformed and alg:none tokens are all refused
@@ -597,13 +672,16 @@ Consent model verified against ${EMAIL_SIGNUP_SOURCES.length} signup source(s).
   · the episode email's content links carry exact UTM tags, identical for every
     recipient; the unsubscribe link, the Resend placeholder, mailto: links,
     images and the confirmation email never carry one
+  · /confirm drops the token from the address bar, and only the token, before
+    DataFast's script can read it, and sends its Referer without the path
 
 PASS — ${passed}/${total} checks passed
 `);
 
-if (!configuredAddress) {
-  console.log(
-    'NOTE — config.business.postalAddress is not set, so `pnpm stories:create-broadcast` will refuse to\n' +
-      'run and the welcome card goes out without a postal address. See docs/runbooks/newsletter.md.\n'
-  );
+  if (!configuredAddress) {
+    console.log(
+      'NOTE — config.business.postalAddress is not set, so `pnpm stories:create-broadcast` will refuse to\n' +
+        'run and the welcome card goes out without a postal address. See docs/runbooks/newsletter.md.\n'
+    );
+  }
 }

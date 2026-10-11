@@ -134,6 +134,20 @@ const nextConfig = {
           },
         ],
       },
+      // /confirm?token=… carries the subscriber's address in its token. Under the
+      // site-wide policy, every same-origin request the page makes would send that
+      // URL as its Referer: the confirm button's POST, and the /subscribed page it
+      // lands on, which would then report it to DataFast as document.referrer.
+      // The page scrubs the token from the address bar first
+      // (lib/email/confirm-token-scrub.ts). This covers the requests made before
+      // that script runs, and a browser where it never runs. strict-origin, not
+      // no-referrer: no-referrer would send the POST with `Origin: null`.
+      // After the rule above, because Next lets the last matching rule win.
+      // validate:subscribe asserts both.
+      {
+        source: '/confirm',
+        headers: [{ key: 'Referrer-Policy', value: 'strict-origin' }],
+      },
     ];
   },
 };

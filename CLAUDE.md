@@ -474,7 +474,10 @@ placements or promotion during the window: the read has to stay clean.
   arrived from the email) and fires at most twice per browser, ever, with `played` =
   yes/started/no and `arrival` = email/other. Arrival comes from `mk-arrival` in sessionStorage.
   The tracker never runs on `/confirm`, whose URL carries the signup token, and `sendGoal` strips
-  `token` from every goal's `page_url` (`redactPageUrl`, `lib/analytics/index.ts`). The game's own
+  `token` from every goal's `page_url` (`redactPageUrl`, `lib/analytics/index.ts`). The page view
+  is covered separately: `/confirm` removes the token from the address bar before DataFast's
+  deferred script reads it (`lib/email/confirm-token-scrub.ts`), so the token reaches only Vercel's
+  request log, in that one GET. The game's own
   progress is `mk-play`. All three keys are in the privacy policy.
 - **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
   every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
