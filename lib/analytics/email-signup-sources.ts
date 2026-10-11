@@ -98,6 +98,14 @@ export const EMAIL_SIGNUP_SOURCES = [
    * questions will join a weekly story list at all.
    */
   'jlpt-format-results',
+  /**
+   * The results screen of Tan Dash (/play), under "I'd play it as a phone
+   * app". Someone here has just played a run and asked for more of the game,
+   * a different intent from finishing a quiz or a story. The form signs them
+   * up to the weekly story email, which is what the copy says it is; no app
+   * exists, and the copy says that too (lib/play/measure.ts).
+   */
+  'play-results',
 ] as const;
 
 /**

@@ -213,6 +213,8 @@ const NEXT_STEP_OPENINGS: Partial<Record<BookSurface, { heading: string; lede: s
   // The sheet builder has no pack above it, and its set may be any kanji at
   // all, so it asks about the one set the book is.
   customSheets: { heading: 'Printing all 82 N5 kanji?', lede: 'Get them in one bound workbook' },
+  // Under the game: the player has been reading the kanji, not writing them.
+  play: { heading: 'Now learn to write them', lede: 'All 82 kanji in the game are in one workbook' },
 };
 const NEXT_STEP_DEFAULT = {
   heading: 'Rather not print 82 pages?',

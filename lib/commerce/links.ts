@@ -256,7 +256,8 @@ export type BookSurface =
   | 'jlptFormat'
   | 'n5Quiz'
   | 'storyEpisode'
-  | 'customSheets';
+  | 'customSheets'
+  | 'play';
 
 /** Partial, like BOOK_SCROLL_GOALS: a surface with no entry fires no click goal. */
 export const BOOK_CLICK_GOALS: Partial<Record<BookSurface, string>> = {
@@ -269,6 +270,9 @@ export const BOOK_CLICK_GOALS: Partial<Record<BookSurface, string>> = {
   n5Quiz: 'n5_quiz_book_click',
   storyEpisode: 'story_episode_book_click',
   customSheets: 'custom_book_click',
+  // Tan Dash's page (/play), from its launch: the first surface reached by
+  // playing rather than reading, so its click rate is its own question.
+  play: 'play_book_click',
 };
 
 /**
@@ -337,6 +341,7 @@ export const BOOK_ATTRIBUTION_TAGS: Record<BookSurface, string> = {
   n5Quiz: '',
   storyEpisode: '',
   customSheets: '',
+  play: '',
 };
 
 /**
