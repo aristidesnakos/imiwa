@@ -395,21 +395,24 @@ module.exports = {
           totalKb: 280, // 241 kB measured, +16%
           perfScore: 0.85, // 0.93 measured
         }),
-        // Tan Dash. PROVISIONAL: these are not measurements. They were set
-        // before the page had ever been built, from its neighbours (the quiz,
-        // the closest client-heavy page, sits at 199 kB script / 247 kB total)
-        // plus room for the canvas engine and the ~8 kB of play data. Replace
-        // them with measured + ~15% (bytes) and ~1.4x (LCP/FCP), as the header
-        // describes, once a real `pnpm build && pnpm start` has been measured.
+        // Tan Dash. Measured 2026-10-11 on Ari's Mac against `pnpm build &&
+        // pnpm start`, 3 runs, same emulation: perf 0.89-0.92, 201 kB script /
+        // 378 kB total, LCP 3.26-3.37s, FCP 1.52-1.69s, CLS 0, TBT 28-165ms.
+        // Heavier on total than the quiz (247 kB) by design, and the gap is the
+        // game's look, not waste: 81 kB of fonts (Press Start 2P, and the
+        // DotGothic16 unicode-range slices the title screen's kana pull in),
+        // 18 kB of the island's CSS, and a 28 kB document carrying the 82-kanji
+        // worlds index. The island itself is ~18 kB of route script. Bytes
+        // +15%, LCP/FCP ~1.35x; laptop numbers only, so recalibrate from CI.
         route({
           matchingUrlPattern: '^http://localhost:3000/play$',
-          lcp: 3500, // provisional
-          fcp: 1600, // provisional
-          cls: 0.1, // Google's "good" boundary; the stage must reserve its box
+          lcp: 4500, // 3.37s measured, ~1.35x
+          fcp: 2200, // 1.52s measured, ~1.4x
+          cls: 0.1, // 0.000 measured; the stage reserves its box before JS
           tbt: 600, // the shared CPU-noise alarm
-          scriptKb: 240, // provisional
-          totalKb: 340, // provisional
-          perfScore: 0.85,
+          scriptKb: 230, // 201 kB measured, +15%
+          totalKb: 435, // 378 kB measured, +15%
+          perfScore: 0.85, // 0.89-0.92 measured
         }),
         route({
           // Percent-encoded segments only, i.e. a character. `/kanji/.+` used

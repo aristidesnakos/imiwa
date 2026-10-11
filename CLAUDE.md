@@ -44,6 +44,7 @@ pnpm announcements:status    # human-readable state of the announcement queue
 pnpm validate:palette        # brand-palette alignment in app/ and components/
 pnpm validate:stories        # episode data: strict N5, bubble geometry, targets, quiz, assets
 pnpm validate:video-sync     # the YouTube-title -> episode matching rule and the videos.ts rewrite
+pnpm validate:play           # Tan Dash: signs, worlds, one right answer per wave, the return-visit model
 npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts   # N5 quiz: one right answer per question
 ```
 
@@ -447,6 +448,39 @@ The `/stories` Lighthouse budgets in `lighthouserc.js` were re-baselined on meas
 size, never the 1092px master. The paper budgets they replaced were 2-2.5x too loose to gate
 anything.
 
+### Tan Dash (`/play`) — the game, and the test it is running
+
+A one-thumb retro runner: Tan runs, a sign asks for a meaning (or, from world 3, a reading), and the
+player jumps for the matching kanji tile. Ported on 2026-10-11 from an approved claude.ai prototype
+as a **six-week retention test**, pre-registered in the KanjiFun appraisal doc with a decision on
+**Mon 7 Dec 2026**: >= 300 starters, >= 40% of them catching 3 kanji, and players who caught one
+returning within 7 days at >= 2x the rate of visitors who did not (and >= 15%). Do not add goals,
+placements or promotion during the window: the read has to stay clean.
+
+- **Content comes from the contract in `lib/play/`, never from the island.** `signs.ts` holds the
+  82 hand-curated signs (one English word, one kana reading each) and the six game-only worlds;
+  `build.ts` (server only) derives everything else from the N5 list and the readings layer and
+  builds the worlds: **worlds 1-N are the registered episodes in `number` order**, so registering an
+  episode makes it a world and removes its kanji from the game-only worlds. `rules.ts` is the pure
+  wave logic. `pnpm validate:play` replays it over every world, kanji and sign mode and asserts
+  exactly one tile in a wave answers the sign; that is the game's promise to a learner.
+- **The island never imports kanji data.** `app/play/page.tsx` calls `buildPlayData()` and passes
+  ~10 kB of JSON to `components/play/TanDash.tsx`, the same pattern as the sheet builder.
+  `lib/play/engine.ts` is the framework-free canvas engine.
+- **Measurement is `lib/play/measure.ts`, and its header is the spec.** Five goals, each capped per
+  page view because DataFast bills events. `site_visit_return` comes from
+  `components/ReturnVisitTracker.tsx`, mounted site-wide in `app/layout.tsx`: it keeps `mk-visit`
+  (an anchor day and whether the browser has played) and fires at most twice per browser, ever.
+  The game's own progress is `mk-play`. Both are described in the privacy policy.
+- **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
+  every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
+  (`playLine` in `lib/email/quiz-email.ts`). `next.config.js` redirects kanjifun.com to `/play` once
+  that domain is attached to this Vercel project.
+- **The share card is `app/play/opengraph-image.tsx`, named explicitly in the page's metadata**,
+  because `getSEOTags` always sets `openGraph.images` and Next then ignores a route's own image
+  file. Its fonts are committed subsets in `app/play/_og/` (OFL; Press Start 2P is renamed
+  "Tan Dash Pixel" there because its licence reserves the name for modified copies).
+
 ### Design tokens — read this before touching colour
 
 `app/globals.css` defines the palette as **hex values**, and `tailwind.config.js` maps colours to
@@ -538,7 +572,7 @@ send you to completely different consoles.
 ### Performance budgets
 
 `lighthouserc.js` gates pushes and PRs across `/`, `/kanji`, `/kanji/日`, `/kanji/n5`,
-`/kanji/n5/quiz`, `/stories` and one episode. Every URL must match exactly one `assertMatrix`
+`/kanji/n5/quiz`, `/stories`, one episode, the sheet builder, genkouyoushi and `/play`. Every URL must match exactly one `assertMatrix`
 entry, because LHCI applies each entry whose pattern matches, which is why the character-page
 pattern is `/kanji/%`. Read the header comment before changing a threshold: it records how each
 number was derived and which ones freeze known debt. The **byte budgets are the gate to trust**:
