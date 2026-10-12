@@ -332,10 +332,12 @@ export function TanDash({ data }: { data: PlayData }) {
   const onShare = async () => {
     if (!result) return;
     const text = `TAN DASH 🦝 ${fmt(result.score)} pts · ${result.catches} kanji · combo ×${result.bestCombo} · world ${result.world} · ${saveRef.current.streak.n}-day streak`;
+    // The link rides inside the text: a share target may keep only `url` or only `text`, and the OS "Copy" takes just `url`.
+    const full = `${text}\n${SHARE_URL}`;
     if (canShare && typeof navigator.share === 'function') {
       void trackGoal(PLAY_GOALS.scoreShare, { method: 'share' }).catch(noop);
       try {
-        await navigator.share({ title: 'Tan Dash', text, url: SHARE_URL });
+        await navigator.share({ title: 'Tan Dash', text: full });
         return;
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -344,7 +346,6 @@ export function TanDash({ data }: { data: PlayData }) {
     } else {
       void trackGoal(PLAY_GOALS.scoreShare, { method: 'copy' }).catch(noop);
     }
-    const full = `${text}\n${SHARE_URL}`;
     try {
       await navigator.clipboard.writeText(full);
       setCopy('copied');
