@@ -81,6 +81,11 @@ export interface EngineHooks {
   onAnnounce?(text: string): void;
   /** The Kanji-dex, read whenever a sign is chosen (kana signs wait for a known kanji). */
   getDex?(): Readonly<Record<string, number>>;
+  /**
+   * Every sound cue by name as it plays, whether or not sound is on. The iOS
+   * app (tan-dash) turns these into haptics; the island does not listen.
+   */
+  onSfx?(name: SfxName): void;
 }
 
 export interface TanDashEngine {
@@ -227,7 +232,7 @@ function makeSprites() {
 // a user gesture (start, jump, resume, the sound toggle), never from the loop.
 // ---------------------------------------------------------------------------
 
-type SfxName = 'jump' | 'dbl' | 'good' | 'wrong' | 'hit' | 'miss' | 'power' | 'smash' | 'level' | 'over';
+export type SfxName = 'jump' | 'dbl' | 'good' | 'wrong' | 'hit' | 'miss' | 'power' | 'smash' | 'level' | 'over';
 
 function createAudio(isOn: () => boolean) {
   let ac: AudioContext | null = null;
@@ -478,7 +483,10 @@ export function createTanDash(
   const FONT_PIX = config.fonts.pix;
   const SPR = makeSprites();
   const audio = createAudio(() => opts.sound);
-  const sfx = (name: SfxName) => audio.play(name);
+  const sfx = (name: SfxName) => {
+    audio.play(name);
+    hooks.onSfx?.(name);
+  };
   const motion = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   const reduced = () => !!motion?.matches;
 
