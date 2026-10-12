@@ -408,7 +408,7 @@ export default async function Image() {
               paddingTop: 2,
             }}
           >
-            GRAB: MEANS
+            MEANS
           </div>
           <div
             style={{

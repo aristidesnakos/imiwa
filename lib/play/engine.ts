@@ -962,7 +962,7 @@ export function createTanDash(
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillStyle = COL.cream;
-      ctx.fillText(G.order.mode === 'en' ? 'GRAB: MEANS' : 'GRAB: READS', W / 2, by + 2);
+      ctx.fillText(G.order.mode === 'en' ? 'MEANS' : 'READS', W / 2, by + 2);
       ctx.fillStyle = COL.ink;
       ctx.font = `16px ${FONT_DOT}`;
       ctx.textBaseline = 'middle';
