@@ -76,6 +76,12 @@
  *     engagement and returns could move either way. Say so next to the verdict.
  *   - From 2026-10-11 /about also links /play in plain text (app/about/page.tsx),
  *     untagged for the same reason; its players are in arrival=other too.
+ *   - From 2026-10-12 (day 2) the results card shows what was mixed up and the Kanji-dex, and
+ *     little else (components/play/TanDash.tsx, CLAUDE.md "Tan Dash"). Its mix-up tiles link to
+ *     /kanji/<c> in a new tab (the old card linked its caught chips the same way), so a
+ *     `/play` -> `/kanji/<c>` page sequence on the same visit is now a player studying a mix-up.
+ *     No goal was added. It can move engagement and returns either way;
+ *     day 1 ran on the old card, so say so next to the verdict.
  */
 
 export const PLAY_GOALS = {

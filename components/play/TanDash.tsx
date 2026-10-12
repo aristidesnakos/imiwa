@@ -44,7 +44,7 @@ import {
 } from '@/lib/play/measure';
 import { PLAY_CSS_VARS } from '@/lib/play/palette';
 import type { SignSetting } from '@/lib/play/rules';
-import type { PlayData } from '@/lib/play/types';
+import type { PlayData, PlayKanji } from '@/lib/play/types';
 import { SITE_URL } from '@/lib/seo/site';
 import { dotFont, pixelFont } from './fonts';
 import { PLAY_APP_WAITLIST_COPY } from './copy';
@@ -76,7 +76,35 @@ function isTypingTarget(el: Element): boolean {
   return !!el.closest('input, textarea, select');
 }
 
-type Result = RunResult & { isBest: boolean };
+/** A finished run, plus what only the island knows: whether it beat the best, and where the Kanji-dex stands. */
+type Result = RunResult & { isBest: boolean; dex: number; gained: number };
+
+/**
+ * One kanji of a mix-up, as a link to its page. A new tab, because the results
+ * card is component state: coming back in the same tab would remount /play and
+ * lose the very list the player went to study.
+ */
+function MixTile({ c, kind, byChar }: { c: string; kind: 'want' | 'got'; byChar: ReadonlyMap<string, PlayKanji> }) {
+  const k = byChar.get(c);
+  const role = kind === 'want' ? 'Asked for' : 'You took';
+  return (
+    <Link
+      href={`/kanji/${encodeURIComponent(c)}`}
+      target="_blank"
+      rel="noopener"
+      prefetch={false}
+      className={styles.item}
+      aria-label={`${role}: ${c}, ${k?.en ?? ''}, ${k?.kana ?? ''}. How to write it, opens in a new tab`}
+    >
+      <span className={`${styles.tile} ${kind === 'want' ? styles.want : styles.got}`} lang="ja">
+        {c}
+      </span>
+      <span className={styles.cap}>
+        {k?.en ?? ''} · <span lang="ja">{k?.kana ?? ''}</span>
+      </span>
+    </Link>
+  );
+}
 
 export function TanDash({ data }: { data: PlayData }) {
   const { save, saveRef, update } = usePlaySave();
@@ -94,6 +122,8 @@ export function TanDash({ data }: { data: PlayData }) {
   const engineRef = useRef<TanDashEngine | null>(null);
   /** Per page view: a remount of /play is a new page view. */
   const fired = useRef({ runStart: false, appDoor: false, catches: 0 });
+  /** The Kanji-dex count when the run began, so the results card can say how many kanji the run added. */
+  const dexAtRunStart = useRef(0);
 
   const [phase, setPhase] = useState<PlayState>('title');
   const [result, setResult] = useState<Result | null>(null);
@@ -124,11 +154,13 @@ export function TanDash({ data }: { data: PlayData }) {
 
   const handleRunEnd = useCallback(
     (r: RunResult) => {
-      const isBest = r.score > saveRef.current.best;
+      // The first run of a browser always beats a best of 0, which says nothing.
+      const isBest = saveRef.current.games > 0 && r.score > saveRef.current.best;
+      const dex = dexCount(saveRef.current, known);
       update(s => ({ ...s, best: Math.max(s.best, r.score), games: s.games + 1, streak: streakAfterRun(s) }));
-      setResult({ ...r, isBest });
+      setResult({ ...r, isBest, dex, gained: Math.max(0, dex - dexAtRunStart.current) });
     },
-    [saveRef, update],
+    [known, saveRef, update],
   );
 
   // ----- the engine, its size, and when it runs -----
@@ -225,6 +257,7 @@ export function TanDash({ data }: { data: PlayData }) {
     }
     setCopy('idle');
     setManualText(null);
+    dexAtRunStart.current = dexCount(saveRef.current, known);
     engine.start();
     const stage = stageRef.current;
     stage?.focus({ preventScroll: true });
@@ -323,11 +356,17 @@ export function TanDash({ data }: { data: PlayData }) {
   useEffect(() => {
     if (phase !== 'over' || !result) return;
     againRef.current?.focus({ preventScroll: true });
+    const say = (c: string) => `${c} ${byChar.get(c)?.en ?? ''}`.trim();
     setAnnouncement(
-      `Game over. ${fmt(result.score)} points, ${result.catches} kanji, best combo ${result.bestCombo}, world ${result.world}.` +
-        (result.isBest ? ' New best!' : ''),
+      `Game over. ${fmt(result.score)} points.` +
+        (result.isBest ? ' New best!' : '') +
+        (result.mix.length > 0
+          ? ` You mixed up ${result.mix.map(m => `${say(m.want)} with ${say(m.got)}`).join(', ')}.`
+          : ' No mix-ups.') +
+        ` Kanji-dex ${result.dex} of ${total}` +
+        (result.gained > 0 ? `, ${result.gained} new.` : '.'),
     );
-  }, [phase, result]);
+  }, [phase, result, byChar, total]);
 
   const onShare = async () => {
     if (!result) return;
@@ -387,7 +426,6 @@ export function TanDash({ data }: { data: PlayData }) {
 
   const dex = dexCount(save, known);
   const streak = streakNow(save);
-  const enOf = (c: string) => byChar.get(c)?.en ?? '';
   const signLabel = SIGN_LABEL[save.opt.sign];
   const shareLabel = copy === 'copied' ? 'COPIED!' : canShare ? 'SHARE' : 'COPY SCORE';
 
@@ -503,59 +541,60 @@ export function TanDash({ data }: { data: PlayData }) {
           {phase === 'over' && result && (
             <div className={`${styles.ov} ${styles.over}`}>
               <div className={styles.panel}>
-                <p className={styles.h}>GAME OVER</p>
-                <p className={styles.score}>{fmt(result.score)}</p>
-                {result.isBest && <p className={styles.newbest}>NEW BEST!</p>}
-                <dl className={styles.stats}>
-                  <div>
-                    <dt>KANJI</dt>
-                    <dd>{result.catches}</dd>
+                <div className={styles.body}>
+                  <div className={styles.head}>
+                    <p className={styles.h}>GAME OVER</p>
+                    <p className={styles.score}>{fmt(result.score)}</p>
+                    {result.isBest && <p className={styles.newbest}>NEW BEST!</p>}
                   </div>
-                  <div>
-                    <dt>COMBO</dt>
-                    <dd>×{result.bestCombo}</dd>
-                  </div>
-                  <div>
-                    <dt>WORLD</dt>
-                    <dd>{result.world}</dd>
-                  </div>
-                </dl>
-                {result.mix.length > 0 && (
-                  <div className={styles.group}>
-                    <p className={styles.lbl}>Mix-ups</p>
-                    <ul className={styles.mix}>
-                      {result.mix.map(m => (
-                        <li key={m.got + m.want}>
-                          You grabbed <b lang="ja">{m.got}</b> {enOf(m.got)}, wanted <b lang="ja">{m.want}</b>{' '}
-                          {enOf(m.want)}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {result.caught.length > 0 && (
-                  <div className={styles.group}>
-                    <p className={styles.lbl}>Caught · tap one to see how it’s written</p>
-                    <div className={styles.chips}>
-                      {result.caught.map(c => (
-                        <Link
-                          key={c}
-                          href={`/kanji/${encodeURIComponent(c)}`}
-                          prefetch={false}
-                          className={styles.chip}
-                          title={`${c} · ${byChar.get(c)?.kana ?? ''} · ${enOf(c)}`}
-                          aria-label={`${c}, ${enOf(c)}: how to write it`}
-                        >
-                          {c}
-                        </Link>
-                      ))}
+
+                  {result.mix.length > 0 ? (
+                    <section className={styles.group}>
+                      <p className={`${styles.lbl} ${styles.mid}`}>You mixed these up</p>
+                      <div className={`${styles.pair} ${styles.cols}`} aria-hidden="true">
+                        <span>Asked for</span>
+                        <span />
+                        <span>You took</span>
+                      </div>
+                      <ul className={styles.pairs}>
+                        {result.mix.map(m => (
+                          <li key={m.got + m.want} className={styles.pair}>
+                            <MixTile c={m.want} kind="want" byChar={byChar} />
+                            <span className={styles.neq} aria-hidden="true">
+                              ≠
+                            </span>
+                            <MixTile c={m.got} kind="got" byChar={byChar} />
+                          </li>
+                        ))}
+                      </ul>
+                      <p className={`${styles.small} ${styles.mid}`}>Tap a kanji to see it written</p>
+                    </section>
+                  ) : (
+                    <section className={styles.group}>
+                      <p className={`${styles.lbl} ${styles.mid}`}>No mix-ups</p>
+                      <p className={`${styles.none} ${styles.mid}`}>Every kanji you grabbed was right.</p>
+                    </section>
+                  )}
+
+                  <section className={styles.dex} aria-label="Kanji-dex">
+                    <div className={styles.dexTop}>
+                      <span className={styles.lbl}>Kanji-dex</span>
+                      {result.gained > 0 && <span className={styles.gain}>+{result.gained}</span>}
                     </div>
-                  </div>
-                )}
-                <p className={styles.small}>
-                  Kanji-dex {dex}/{total} · {save.streak.n}-day streak · best {fmt(save.best)}
-                </p>
-                <div className={styles.row}>
+                    <p className={styles.dexNum}>
+                      {result.dex}
+                      <span>/{total}</span>
+                    </p>
+                    <div className={styles.bar} aria-hidden="true">
+                      <div
+                        className={styles.fill}
+                        style={{ width: result.dex > 0 ? `max(${(result.dex / total) * 100}%, calc(var(--s) * 2))` : 0 }}
+                      />
+                    </div>
+                  </section>
+                </div>
+
+                <div className={styles.actions}>
                   <button
                     ref={againRef}
                     type="button"
@@ -567,19 +606,19 @@ export function TanDash({ data }: { data: PlayData }) {
                   <button type="button" className={styles.btn} onClick={onShare}>
                     {shareLabel}
                   </button>
+                  {manualText && (
+                    <p ref={noteRef} className={`${styles.small} ${styles.note}`}>
+                      {manualText}
+                    </p>
+                  )}
+                  {appDoorOpen ? (
+                    <p className={`${styles.small} ${styles.mid}`}>{PLAY_APP_WAITLIST_COPY.ack}</p>
+                  ) : (
+                    <button type="button" className={`${styles.btn} ${styles.door}`} onClick={onAppDoor}>
+                      {PLAY_APP_WAITLIST_COPY.button}
+                    </button>
+                  )}
                 </div>
-                {manualText && (
-                  <p ref={noteRef} className={`${styles.small} ${styles.note}`}>
-                    {manualText}
-                  </p>
-                )}
-                {appDoorOpen ? (
-                  <p className={styles.small}>{PLAY_APP_WAITLIST_COPY.ack}</p>
-                ) : (
-                  <button type="button" className={`${styles.btn} ${styles.door}`} onClick={onAppDoor}>
-                    {PLAY_APP_WAITLIST_COPY.button}
-                  </button>
-                )}
               </div>
             </div>
           )}

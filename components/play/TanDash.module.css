@@ -344,7 +344,7 @@
 }
 
 .btn:focus-visible,
-.chip:focus-visible {
+.item:focus-visible {
   outline: max(2px, var(--s)) dashed var(--td-terra-deep);
   outline-offset: calc(var(--s) * 2);
 }
@@ -402,38 +402,63 @@
   cursor: default;
 }
 
+/* The card is a scrolling body over a footer that never scrolls, so PLAY AGAIN is
+   on screen however many mix-ups there are. The panel's own padding moves into
+   the two halves. */
 .over .panel {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--s) * 5);
+  padding: 0;
   text-align: left;
   max-height: 100%;
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--s) * 5);
+  min-height: 0;
   overflow: auto;
-  /* The stage is touch-action: none; the card itself scrolls when it overflows. */
+  padding: calc(var(--s) * 5) calc(var(--s) * 6) calc(var(--s) * 3);
+  /* The stage is touch-action: none; the body itself scrolls when it overflows. */
   touch-action: pan-y;
   overscroll-behavior: contain;
 }
 
-.h {
-  font-family: var(--td-font-pixel);
-  font-size: calc(var(--s) * 9);
-  color: var(--td-terra-deep);
-  text-align: center;
+.actions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: calc(var(--s) * 4);
+  padding: calc(var(--s) * 4) calc(var(--s) * 6) calc(var(--s) * 5);
+  border-top: var(--s) solid var(--td-cream-chip);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--s) * 3);
+}
+
+.over .h {
+  font-size: calc(var(--s) * 6);
 }
 
 .score {
   font-family: var(--td-font-pixel);
-  font-size: calc(var(--s) * 16);
+  font-size: calc(var(--s) * 12);
+  line-height: 1;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
 .newbest {
   font-family: var(--td-font-pixel);
-  font-size: calc(var(--s) * 6);
+  font-size: calc(var(--s) * 5);
   color: var(--td-cream);
   background: var(--td-terra-deep);
-  align-self: center;
   padding: calc(var(--s) * 2) calc(var(--s) * 4);
 }
 
@@ -445,63 +470,148 @@
   text-transform: uppercase;
 }
 
+.mid {
+  text-align: center;
+}
+
 /* A label and what it labels. Margins are zero throughout (Tailwind's preflight). */
 .group {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--s) * 2);
+  gap: calc(var(--s) * 3);
 }
 
-.mix {
+.none {
+  font-size: calc(var(--s) * 8);
+  line-height: 1.35;
+}
+
+/* What was mixed up: the asked-for kanji, then the one that was taken. */
+.pairs {
   list-style: none;
   padding: 0;
   display: grid;
-  gap: calc(var(--s) * 2);
-  font-size: calc(var(--s) * 7.5);
+  gap: calc(var(--s) * 3);
 }
 
-.mix b {
-  font-weight: normal;
-  font-size: calc(var(--s) * 11);
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(var(--s) * 2);
-}
-
-.chip {
-  position: relative;
+.pair {
   display: grid;
-  place-items: center;
-  width: calc(var(--s) * 20);
-  height: calc(var(--s) * 20);
-  font-size: calc(var(--s) * 14);
+  grid-template-columns: 1fr calc(var(--s) * 10) 1fr;
+  align-items: start;
+}
+
+.cols span {
+  font-family: var(--td-font-pixel);
+  font-size: calc(var(--s) * 4.5);
+  color: var(--td-ink-soft);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.neq {
+  text-align: center;
+  font-size: calc(var(--s) * 10);
   line-height: 1;
+  color: var(--td-terra-deep);
+  padding-top: calc(var(--s) * 8);
+}
+
+.item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--s) * 2);
   color: var(--td-ink);
   text-decoration: none;
-  background: var(--td-cream-chip);
-  border: var(--s) solid var(--td-ink);
 }
 
-/* Grows the hit area into half of each gap, so neighbours never overlap. */
-.chip::after {
+/* Grows the hit area into the gap around the tile, so a thumb lands on it. */
+.item::after {
   content: '';
   position: absolute;
   inset: calc(var(--s) * -1);
 }
 
-.small {
+.tile {
+  display: grid;
+  place-items: center;
+  width: calc(var(--s) * 24);
+  height: calc(var(--s) * 24);
+  font-size: calc(var(--s) * 15);
+  line-height: 1;
+  background: var(--td-cream-chip);
+  border: var(--s) solid var(--td-ink);
+}
+
+/* Asked for: ringed in gold. Taken: dashed in the heart's red. Not colour alone. */
+.want {
+  box-shadow: inset 0 0 0 calc(var(--s) * 1.5) var(--td-gold);
+}
+
+.got {
+  border-color: var(--td-terra-deep);
+  border-style: dashed;
+}
+
+.cap {
   font-size: calc(var(--s) * 7);
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* The Kanji-dex: the card's second-loudest thing, after the mix-ups. */
+.dex {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--s) * 3);
+  padding: calc(var(--s) * 5) calc(var(--s) * 6);
+  background: var(--td-cream-chip);
+  border: var(--s) solid var(--td-ink);
+}
+
+.dexTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gain {
+  font-family: var(--td-font-pixel);
+  font-size: calc(var(--s) * 5.5);
+  background: var(--td-gold);
+  border: var(--s) solid var(--td-ink);
+  padding: calc(var(--s) * 1.5) calc(var(--s) * 2);
+}
+
+.dexNum {
+  font-family: var(--td-font-pixel);
+  font-size: calc(var(--s) * 15);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dexNum span {
+  font-size: calc(var(--s) * 7.5);
   color: var(--td-ink-soft);
 }
 
-.row {
-  display: flex;
-  gap: calc(var(--s) * 4);
-  justify-content: center;
-  flex-wrap: wrap;
+.bar {
+  position: relative;
+  height: calc(var(--s) * 5);
+  background: var(--td-cream);
+  border: var(--s) solid var(--td-ink);
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--td-gold);
+}
+
+.small {
+  font-size: calc(var(--s) * 7);
+  color: var(--td-ink-soft);
 }
 
 /* The manual-copy fallback: the share text, selected for the player. */

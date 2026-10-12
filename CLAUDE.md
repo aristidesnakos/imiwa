@@ -566,6 +566,17 @@ is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) w
   own form now puts nobody on the weekly email, so it cannot add to the `arrival=email` cohort, and
   the waitlist is sent no tagged link that could bring anyone back. Its `email_signup` goals are
   waitlist signups: leave them out of any count of story subscribers.
+- **The results card is about what was mixed up** (since 2026-10-12, day 2 of the test: a change to the
+  treatment, so the 7 Dec read can split on it). Top to bottom: a small score, the mix-ups as
+  asked-for / you-took pairs (`result.mix`, the last three distinct), the Kanji-dex with the run's
+  `+N`, then PLAY AGAIN and SHARE pinned under a scrolling body, the app door last. Each tile opens
+  `/kanji/<c>` in a **new tab**, because the card is component state and a same-tab visit would
+  remount `/play` and lose the list. A run with no wrong grabs says "No mix-ups". Combo, world, the
+  caught chips, best and streak are off the card (best and streak are on the title screen); the share
+  text still carries combo and world. NEW BEST never fires on a browser's first run. **The iOS app
+  (the `tan-dash` repo) hand-rolls this card against this stylesheet's class names**
+  (`game/src/main.ts`, `renderOver`): rebuilding it against this commit without rewriting that
+  function breaks its card, because `.chip`, `.chips`, `.mix` and `.row` are gone.
 - **The share card is `app/play/opengraph-image.tsx`, named explicitly in the page's metadata**,
   because `getSEOTags` always sets `openGraph.images` and Next then ignores a route's own image
   file. Its fonts are committed subsets in `app/play/_og/` (OFL; Press Start 2P is renamed

@@ -24,7 +24,7 @@ export const PLAY_PALETTE = {
   ink: '#2B211B',
   bezel: '#3A2E26',
   cream: '#FAF6EE',
-  /** The caught-kanji chips on the results card. */
+  /** The mix-up tiles and the Kanji-dex block on the results card. */
   creamChip: '#EFE6D4',
   terra: '#CC543C',
   terraDeep: '#9B3A26',
