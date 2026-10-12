@@ -32,6 +32,11 @@
  * joins the app waitlist, one email if an app ships, and its words say there
  * is no app and never describe the story list.
  *
+ * Two more promises are about fairness rather than content. No kanji is asked
+ * a second time while one the player has not caught is still unasked (section
+ * 5), and no tile is ever placed on a stump or without room to jump one
+ * (section 5b); both were broken until 2026-10-12 and nothing noticed.
+ *
  * Relative imports, not `@/`: scripts/ is outside tsconfig.json, and this runs
  * under tsx (lib/play/build.ts and lib/stories/index.ts import the same way).
  */
@@ -43,12 +48,20 @@ import { N5_KANJI } from '../lib/constants/n5-kanji';
 import { EPISODES } from '../lib/stories';
 import { buildPlayData, episodeWorldCount } from '../lib/play/build';
 import { EXTRA_WORLDS, LOOK_ALIKES, MYSTERY_POWER, PLAY_SIGNS, POWERS } from '../lib/play/signs';
+import { GAME_W } from '../lib/play/engine';
 import {
+  CATCHES_PER_WORLD,
+  LANE_PAD,
   chooseDecoys,
   chooseOrder,
   clashes,
   kanjiMap,
+  placeWave,
   pool,
+  runUp,
+  stumpBlocksTile,
+  stumpFits,
+  type LaneRow,
   type Order,
   type OrderContext,
   type SignMode,
@@ -439,6 +452,11 @@ section('5. Which kanji the sign asks for, and in which script');
       return;
     }
     if (ctx.last !== null && p.length > 1 && o.c === ctx.last) problems.push(`${where}: asked ${o.c} twice in a row`);
+    // Everything is caught once before anything is asked again: no other kanji (bar the previous
+    // target) may have been caught fewer times than the one asked.
+    const caught = (c: string) => ctx.seen.get(c) ?? 0;
+    const fewer = p.find(c => c !== ctx.last && c !== o.c && caught(c) < caught(o.c));
+    if (fewer) problems.push(`${where}: asked ${o.c} (caught ${caught(o.c)}x) while ${fewer} had been caught ${caught(fewer)}x`);
     if (ctx.setting === 'en' && o.mode !== 'en') problems.push(`${where}: a kana sign under the English setting`);
     if (ctx.setting === 'kana' && o.mode !== 'kana') problems.push(`${where}: an English sign under the kana setting`);
     if (ctx.setting === 'mix' && o.mode === 'kana') {
@@ -492,12 +510,170 @@ section('5. Which kanji the sign asks for, and in which script');
     }
   }
 
+  // A player who catches everything: the first world's five kanji come once each, in some order,
+  // before the sixth catch has to repeat one (5 kanji, CATCHES_PER_WORLD catches).
+  for (let seed = 1; seed <= RUN_SEEDS; seed++) {
+    const r = seeded(seed * 2654435761);
+    const seen = new Map<string, number>();
+    let last: string | null = null;
+    const asked: string[] = [];
+    for (let i = 0; i < CATCHES_PER_WORLD; i++) {
+      const o = chooseOrder(data, km, { world: 1, setting: 'mix', seen, dex: {}, last }, r);
+      asked.push(o.c);
+      seen.set(o.c, (seen.get(o.c) ?? 0) + 1);
+      last = o.c;
+    }
+    const first = asked.slice(0, data.worlds[0].kanji.length);
+    if (new Set(first).size !== first.length || first.some(c => !data.worlds[0].kanji.includes(c))) {
+      problems.push(`world 1 seed ${seed}: the first ${first.length} signs were ${first.join('')}, not each of ${data.worlds[0].kanji.join('')} once`);
+    }
+  }
+
   if (mixKana === 0) problems.push('the mix setting never asked in kana, even for kanji already caught from world 3');
   if (mixEn === 0) problems.push('the mix setting never asked in English from world 3');
   check(
     'chooseOrder()',
     problems,
-    `${asked} targets: always unlocked, never twice in a row, English/kana settings obeyed, mix kana only from world 3 for a kanji already caught (${Math.round((mixKana / Math.max(1, mixKana + mixEn)) * 100)}% kana there)`,
+    `${asked} targets: always unlocked, never twice in a row, nothing asked again before every other kanji has been caught as often, English/kana settings obeyed, mix kana only from world 3 for a kanji already caught (${Math.round((mixKana / Math.max(1, mixKana + mixEn)) * 100)}% kana there)`,
+  );
+}
+
+section('5b. The lane: no tile on a stump, and room to jump one');
+{
+  const problems: string[] = [];
+  const W = GAME_W;
+  const ROWS: LaneRow[] = ['g', 'm', 'h'];
+
+  // The rule itself, case by case. Positions are x of the left edge; the stump is at 100.
+  const cases: { stump: number; tile: number; row: LaneRow; speed: number; blocked: boolean; why: string }[] = [
+    { stump: 100, tile: 100, row: 'g', speed: 72, blocked: true, why: 'a ground tile on the stump' },
+    { stump: 100, tile: 100, row: 'm', speed: 72, blocked: true, why: 'a mid-air tile drawn over the stump' },
+    { stump: 100, tile: 120, row: 'g', speed: 72, blocked: true, why: 'a ground tile 20px past the stump' },
+    { stump: 100, tile: 140, row: 'g', speed: 72, blocked: true, why: 'a ground tile 40px past the stump at 72 px/s (needs 48)' },
+    { stump: 100, tile: 150, row: 'g', speed: 72, blocked: false, why: 'a ground tile 50px past the stump at 72 px/s' },
+    { stump: 100, tile: 150, row: 'g', speed: 158, blocked: true, why: 'a ground tile 50px past the stump at 158 px/s (needs 63)' },
+    { stump: 100, tile: 170, row: 'g', speed: 158, blocked: false, why: 'a ground tile 70px past the stump at 158 px/s' },
+    { stump: 100, tile: 140, row: 'm', speed: 158, blocked: false, why: 'a mid-air tile 40px past: Tan is airborne for it' },
+    { stump: 100, tile: 70, row: 'g', speed: 158, blocked: true, why: 'a ground tile 30px before the stump, drawn over it' },
+    { stump: 100, tile: 60, row: 'g', speed: 158, blocked: false, why: 'a ground tile 40px before the stump: catch, then jump' },
+    { stump: 100, tile: 80, row: 'g', speed: 158, blocked: true, why: 'a ground tile 20px before the stump, overlapping it' },
+  ];
+  for (const c of cases) {
+    if (stumpBlocksTile(c.stump, c.tile, c.row, c.speed) !== c.blocked) {
+      problems.push(`${c.why}: expected ${c.blocked ? 'blocked' : 'allowed'}`);
+    }
+  }
+  for (const speed of [72, 100, 130, 158]) {
+    if (runUp(speed) < 48) problems.push(`runUp(${speed}) = ${runUp(speed)}, under the 48px floor`);
+  }
+
+  // placeWave: any wave, any stumps and gold boxes ahead of it, any speed.
+  let placed = 0;
+  let moved = 0;
+  let farthest = 0;
+  for (let seed = 1; seed <= 3000; seed++) {
+    const r = seeded(seed * 97 + 5);
+    const speed = 72 + Math.floor(r() * 87);
+    const n = 2 + Math.floor(r() * 3);
+    const spacing = Math.max(62, speed * 0.82);
+    const slots = Array.from({ length: n }, (_, i) => ({ dx: i * spacing, row: ROWS[Math.floor(r() * 3)] }));
+    const stumps = Array.from({ length: Math.floor(r() * 4) }, () => -20 + r() * (W + 14 + 20));
+    const powers = r() < 0.4 ? [-20 + r() * (W + 14 + 20)] : [];
+    const from = W + 12;
+    const x0 = placeWave(slots, stumps, powers, speed, from);
+    placed += 1;
+    if (x0 > from) moved += 1;
+    farthest = Math.max(farthest, x0 - from);
+    const where = `seed ${seed} (${n} tiles at ${speed} px/s)`;
+    if (x0 < from) problems.push(`${where}: the wave starts at ${x0}, left of ${from}`);
+    for (const sl of slots) {
+      for (const sx of stumps) {
+        if (stumpBlocksTile(sx, x0 + sl.dx, sl.row, speed)) {
+          problems.push(`${where}: a ${sl.row} tile at ${x0 + sl.dx} against a stump at ${sx}`);
+        }
+      }
+      for (const px of powers) {
+        if (Math.abs(x0 + sl.dx - px) < LANE_PAD) problems.push(`${where}: a tile at ${x0 + sl.dx} on a gold box at ${px}`);
+      }
+    }
+    if (x0 > from && slots.every(sl => !stumps.some(sx => stumpBlocksTile(sx, x0 - 1 + sl.dx, sl.row, speed))) && powers.length === 0) {
+      problems.push(`${where}: moved to ${x0} although ${x0 - 1} was clear`);
+    }
+    if (x0 - from > W + 14 + runUp(158) + LANE_PAD) problems.push(`${where}: moved ${x0 - from}px, further than any stump can reach`);
+  }
+
+  // A pair sitting exactly on the limit (48px) drifts by 1e-13 as both x's are scrolled every
+  // frame, so a violation counts only if it holds with a micro-pixel of room either way.
+  const broken = (sx: number, tx: number, row: LaneRow, speed: number): boolean =>
+    stumpBlocksTile(sx, tx, row, speed) &&
+    stumpBlocksTile(sx, tx + 1e-6, row, speed) &&
+    stumpBlocksTile(sx, tx - 1e-6, row, speed);
+
+  // The lane as the engine runs it: stumps and waves scroll together at one speed, a stump
+  // spawns at the right edge when it is due and fits, a wave when none is out and it is due
+  // (placeWave), and a wave ends when its target passes Tan. At every frame no pair of tile
+  // and stump may break the rule, and the lane must not starve either: stumps keep coming.
+  let spawnedStumps = 0;
+  let metres = 0;
+  let waves = 0;
+  let stalled = 0;
+  for (const speed of [72, 110, 158]) {
+    for (let seed = 1; seed <= 40; seed++) {
+      const r = seeded(seed * 7919 + speed);
+      let dist = 0;
+      let nextStumpAt = 420;
+      let nextWaveAt = 70;
+      let wave: { x: number; row: LaneRow }[] | null = null;
+      let stumps: number[] = [];
+      let sinceStump = 0;
+      for (let frame = 0; frame < 60 * 120; frame++) {
+        const dx = speed / 60;
+        dist += dx;
+        metres += dx;
+        sinceStump += dx;
+        stumps = stumps.map(x => x - dx).filter(x => x > -20);
+        if (wave) wave = wave.map(t => ({ ...t, x: t.x - dx }));
+        if (!wave && dist >= nextWaveAt) {
+          const n = 2 + Math.floor(r() * 3);
+          const spacing = Math.max(62, speed * 0.82);
+          const slots = Array.from({ length: n }, (_, i) => ({ dx: i * spacing, row: ROWS[Math.floor(r() * 3)] }));
+          const x0 = placeWave(slots, stumps, [], speed, W + 12);
+          wave = slots.map(sl => ({ x: x0 + sl.dx, row: sl.row }));
+          waves += 1;
+        }
+        if (dist >= nextStumpAt && stumpFits(W + 14, wave ?? [], [], speed)) {
+          stumps.push(W + 14);
+          spawnedStumps += 1;
+          sinceStump = 0;
+          nextStumpAt = dist + Math.max(110, 170 + r() * 130 - 8);
+        }
+        if (sinceStump > 1200) stalled += 1;
+        if (wave && wave[0].x + 20 < 34) {
+          wave = null;
+          nextWaveAt = dist + 46 + r() * 44;
+        }
+        if (wave) {
+          for (const t of wave) {
+            for (const sx of stumps) {
+              if (broken(sx, t.x, t.row, speed)) {
+                problems.push(`lane replay ${speed} px/s seed ${seed} frame ${frame}: a ${t.row} tile at ${t.x.toFixed(1)} against a stump at ${sx.toFixed(1)}`);
+                frame = Infinity;
+                break;
+              }
+            }
+            if (frame === Infinity) break;
+          }
+        }
+      }
+    }
+  }
+  if (stalled > 0) problems.push(`stumps starved: ${stalled} frames more than 1200px since the last stump`);
+  if (spawnedStumps < metres / 600) problems.push(`only ${spawnedStumps} stumps in ${Math.round(metres)}px of lane (fewer than one per 600px)`);
+
+  check(
+    'the lane',
+    problems,
+    `${cases.length} rule cases; ${placed} waves placed (${Math.round((moved / placed) * 100)}% slid right, at most ${Math.round(farthest)}px), none on a stump or gold box; ${waves} waves and ${spawnedStumps} stumps replayed with no tile on a stump (one stump per ${Math.round(metres / Math.max(1, spawnedStumps))}px)`,
   );
 }
 

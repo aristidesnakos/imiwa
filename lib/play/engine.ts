@@ -22,6 +22,8 @@ import {
   CATCHES_PER_WORLD,
   chooseDecoys,
   chooseOrder,
+  placeWave,
+  stumpFits,
   kanjiMap,
   waveSize,
   type Order,
@@ -309,6 +311,7 @@ interface Wave {
 interface Item {
   c: string;
   role: 'target' | 'decoy';
+  row: RowKey;
   x: number;
   y: number;
   w: number;
@@ -563,16 +566,27 @@ export function createTanDash(
     const ti = Math.floor(Math.random() * n);
     const spacing = Math.max(62, G.speed * 0.82);
     const wave: Wave = { target: null, done: false, items: [] };
+    const rows = Array.from(
+      { length: n },
+      (): RowKey => pick(G.world === 1 ? ['g', 'm'] : Math.random() < 0.22 ? ['h'] : ['g', 'm']),
+    );
+    // Slide the whole wave right of any stump or gold box it would land on.
+    const x0 = placeWave(
+      rows.map((row, i) => ({ dx: i * spacing, row })),
+      G.stumps.filter(s => !s.dead).map(s => s.x),
+      G.powers.filter(p => !p.dead).map(p => p.x),
+      G.speed,
+      W + 12,
+    );
     let di = 0;
     for (let i = 0; i < n; i++) {
-      const heights: RowKey[] = G.world === 1 ? ['g', 'm'] : Math.random() < 0.22 ? ['h'] : ['g', 'm'];
-      const h = pick(heights);
       const isTarget = i === ti;
       const it: Item = {
         c: isTarget ? order.c : decoys[di++],
         role: isTarget ? 'target' : 'decoy',
-        x: W + 12 + i * spacing,
-        y: ROW[h],
+        row: rows[i],
+        x: x0 + i * spacing,
+        y: ROW[rows[i]],
         w: 20,
         h: 20,
         ph: Math.random() * 6,
@@ -590,9 +604,13 @@ export function createTanDash(
   function clearAhead(x: number, pad: number) {
     return !G.items.some(it => !it.fade && Math.abs(it.x - x) < pad) && !G.powers.some(p => Math.abs(p.x - x) < pad);
   }
-  function spawnStump() {
+  /** False (and no stump) while a tile or a gold box sits where this one would be unfair or drawn over. */
+  function spawnStump(): boolean {
     const x = W + 14;
-    if (clearAhead(x, 34)) G.stumps.push({ x, y: GY - 12, w: 12, h: 12, dead: false });
+    const tiles = G.items.filter(it => !it.fade);
+    if (!stumpFits(x, tiles, G.powers.map(p => p.x), G.speed)) return false;
+    G.stumps.push({ x, y: GY - 12, w: 12, h: 12, dead: false });
+    return true;
   }
   function spawnPower() {
     const c = pick<string>([...POWER_KEYS, MYSTERY_POWER]);
@@ -768,8 +786,7 @@ export function createTanDash(
     // Spawns
     const calm = G.t < G.pauseUntil;
     if (!calm && !G.wave && G.dist >= G.nextWaveAt) spawnWave();
-    if (!calm && G.dist >= G.nextStumpAt && G.t > 5) {
-      spawnStump();
+    if (!calm && G.dist >= G.nextStumpAt && G.t > 5 && spawnStump()) {
       G.nextStumpAt = G.dist + Math.max(110, rand(170, 300) - G.world * 8);
     }
     if (!calm && G.t >= G.nextPowerAt && !G.powers.length) {

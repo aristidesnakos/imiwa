@@ -525,7 +525,11 @@ is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) w
   builds the worlds: **worlds 1-N are the registered episodes in `number` order**, so registering an
   episode makes it a world and removes its kanji from the game-only worlds. `rules.ts` is the pure
   wave logic. `pnpm validate:play` replays it over every world, kanji and sign mode and asserts
-  exactly one tile in a wave answers the sign; that is the game's promise to a learner.
+  exactly one tile in a wave answers the sign; that is the game's promise to a learner. It also
+  holds two fairness rules the validator replays: a kanji is never asked again while an unmet one
+  remains (world 1, five kanji against six catches, repeats exactly one), and a tile is never placed on
+  a stump or gold box (`placeWave`, `stumpFits`), a ground tile also getting a speed-scaled run-up
+  behind a stump (`runUp`, derived from the jump physics in its comment).
 - **The island never imports kanji data.** `app/play/page.tsx` calls `buildPlayData()` and passes
   ~10 kB of JSON to `components/play/TanDash.tsx`, the same pattern as the sheet builder.
   `lib/play/engine.ts` is the framework-free canvas engine.

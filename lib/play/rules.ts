@@ -60,24 +60,33 @@ export interface OrderContext {
 }
 
 /**
- * Picks the next target: weighted towards kanji caught less this run and
- * doubled for the current world's new kanji. Kana signs only from world 3, and
- * in `mix` only for a kanji the player has already caught, so a reading is
- * never the first thing they meet.
+ * Picks the next target. Every unlocked kanji is asked once before any is asked
+ * a second time, then twice, and so on: the candidates are the ones caught
+ * fewest times this run (a kanji the player missed has been caught zero times,
+ * so it comes round again before a repeat), never the previous target, and the
+ * current world's new kanji count double. Until 2026-10-12 a catch only
+ * halved a kanji's weight, so a kanji just caught came back about as often as
+ * one the player had not met, and 77% of first-world runs asked a caught kanji
+ * again while others were still unmet. The one repeat that cannot be avoided
+ * is world 1, which has 5 kanji and opens the next world after 6 catches.
+ *
+ * Kana signs only from world 3, and in `mix` only for a kanji the player has
+ * already caught, so a reading is never the first thing they meet.
  */
 export function chooseOrder(data: PlayData, km: Map<string, PlayKanji>, ctx: OrderContext, rng: Rng): Order {
   const p = pool(data, ctx.world);
   const fresh = new Set(data.worlds[ctx.world - 1]?.kanji ?? []);
-  const weights = p.map(
-    c => (c === ctx.last && p.length > 1 ? 0 : 1) * (1 / (1 + (ctx.seen.get(c) ?? 0))) * (fresh.has(c) ? 2 : 1),
-  );
-  const sum = weights.reduce((a, b) => a + b, 0);
-  let r = rng() * sum;
-  let c = p[0];
-  for (let i = 0; i < p.length; i++) {
+  const caught = (c: string) => ctx.seen.get(c) ?? 0;
+  const eligible = p.length > 1 ? p.filter(c => c !== ctx.last) : p;
+  const fewest = Math.min(...eligible.map(caught));
+  const bag = eligible.filter(c => caught(c) === fewest);
+  const weights = bag.map(c => (fresh.has(c) ? 2 : 1));
+  let r = rng() * weights.reduce((a, b) => a + b, 0);
+  let c = bag[bag.length - 1];
+  for (let i = 0; i < bag.length; i++) {
     r -= weights[i];
-    if (r <= 0 && weights[i] > 0) {
-      c = p[i];
+    if (r <= 0) {
+      c = bag[i];
       break;
     }
   }
@@ -128,3 +137,87 @@ export function waveSize(world: number, rng: Rng): number {
 
 /** Correct catches that open the next world. */
 export const CATCHES_PER_WORLD = 6;
+
+// ---------------------------------------------------------------------------
+// The lane: where tiles may sit relative to stumps and gold boxes
+// ---------------------------------------------------------------------------
+
+/** The rows a tile can sit on: the ground, mid-air, high (a double jump). */
+export type LaneRow = 'g' | 'm' | 'h';
+
+/** Game pixels two things in the lane keep between their left edges, so neither is drawn over the other. */
+export const LANE_PAD = 34;
+
+/**
+ * The run-up a ground tile needs behind a stump: room to clear it and land on
+ * the tile. A jump lasts 0.73 s, and a tile sitting on the ground is touched
+ * (and caught) the moment Tan is within 15px of the floor, which a jump over
+ * a stump only is again as it lands. Replaying the engine's jump against a
+ * stump and then a ground tile, the window of jump timings that catches the
+ * tile without touching the stump is
+ *
+ *   gap (px)     0     20     34     48     63     80
+ *   at 72 px/s   0.13s 0.34s  0.40s  0.40s  0.40s  0.40s
+ *   at 158 px/s  0.07s 0.17s  0.25s  0.34s  0.43s  0.54s
+ *
+ * so the old 34px was a coin flip at full speed, and 0 (a tile on the stump)
+ * was a lost heart. 40% of the speed keeps at least 0.42 s at every speed.
+ */
+export function runUp(speed: number): number {
+  return Math.max(48, Math.round(speed * 0.4));
+}
+
+/**
+ * True when a stump at `stumpX` and a tile at `tileX` in `row` cannot both be
+ * played: the tile is drawn over the stump, or it is a ground tile with no room
+ * to clear the stump first. A stump just after a tile is fine (catch, then jump).
+ * `speed` is the run's current speed in game px/s.
+ */
+export function stumpBlocksTile(stumpX: number, tileX: number, row: LaneRow, speed: number): boolean {
+  const ahead = tileX - stumpX; // > 0: the stump reaches Tan first
+  if (Math.abs(ahead) < LANE_PAD) return true;
+  return row === 'g' && ahead > 0 && ahead < runUp(speed);
+}
+
+/** True when a stump at `stumpX` leaves every tile and gold box in the lane playable and undrawn-over. */
+export function stumpFits(
+  stumpX: number,
+  tiles: readonly { x: number; row: LaneRow }[],
+  powers: readonly number[],
+  speed: number,
+): boolean {
+  return (
+    !tiles.some(t => stumpBlocksTile(stumpX, t.x, t.row, speed)) && !powers.some(px => Math.abs(px - stumpX) < LANE_PAD)
+  );
+}
+
+/** A tile's place in a wave: its offset from the first tile and its row. */
+export interface LaneSlot {
+  dx: number;
+  row: LaneRow;
+}
+
+/**
+ * Where a wave's first tile goes: `from` if no tile of the wave would sit on a
+ * stump or a gold box, otherwise the first x to the right of `from` where none
+ * does. Moving the whole wave keeps its spacing, and only ever delays it by
+ * the width of the obstacle. Both lists hold x positions in the lane, which
+ * are all at or left of the spawn point, so the search ends.
+ */
+export function placeWave(
+  slots: readonly LaneSlot[],
+  stumps: readonly number[],
+  powers: readonly number[],
+  speed: number,
+  from: number,
+): number {
+  const blocked = (x0: number) =>
+    slots.some(
+      s =>
+        stumps.some(sx => stumpBlocksTile(sx, x0 + s.dx, s.row, speed)) ||
+        powers.some(px => Math.abs(x0 + s.dx - px) < LANE_PAD),
+    );
+  let x = from;
+  while (blocked(x)) x++;
+  return x;
+}
