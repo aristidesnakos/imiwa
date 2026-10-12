@@ -442,6 +442,13 @@
   gap: calc(var(--s) * 3);
 }
 
+.h {
+  font-family: var(--td-font-pixel);
+  font-size: calc(var(--s) * 9);
+  color: var(--td-terra-deep);
+  text-align: center;
+}
+
 .over .h {
   font-size: calc(var(--s) * 6);
 }
