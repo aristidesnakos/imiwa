@@ -34,9 +34,16 @@ WHAT IT EMITS
   data/stories/ep-NN.ts          the typed episode, generated
   public/stories/<slug>/pN.webp  the raw panel art for the website
   public/stories/<slug>/pN.jpg   the email-compatible panel derivative
-  public/stories/<slug>/og.jpg   the composited square, for OpenGraph only
 
 Normally run through `pnpm stories:ship <ep-number>`, which also does the steps below.
+
+It does NOT write public/stories/<slug>/og.jpg, though the data file names it
+as `ogImage`. That is the episode's 1200x630 link card, drawn by `pnpm
+og:render episode:<slug>` (scripts/render-share-cards.ts) from the email
+panels below, and `pnpm stories:ship` runs it after them. Until 2026-10-13
+this script thumbnailed the strip's 1080x1080 square into og.jpg, which would
+have overwritten the card while the page declared 1200x630; `pnpm
+validate:stories` now fails on any other size.
 
 It does NOT make the email's panels. The weekly email shows
 public/stories/<slug>/e1.jpg..e6.jpg: the art with its speech bubbles baked in,
@@ -71,7 +78,6 @@ an asset sitting at a guessable public URL is not an offer.
 import argparse
 import json
 import re
-import sys
 from datetime import date
 from pathlib import Path
 
@@ -85,8 +91,6 @@ REPO = Path(__file__).resolve().parents[2]
 PANEL_MAX_PX = 1092
 PANEL_QUALITY = 82
 EMAIL_PANEL_QUALITY = 82
-OG_PX = 1200
-OG_QUALITY = 86
 
 # The first CJK ideograph in a target word is the character whose page it links.
 KANJI_RE = re.compile(r'[\u4e00-\u9fff]')
@@ -133,20 +137,6 @@ def encode_panels(ep_dir: Path, script: dict) -> None:
         email_dest = out_dir / f"{panel['id'].lower()}.jpg"
         im.save(email_dest, 'JPEG', quality=EMAIL_PANEL_QUALITY, optimize=True, progressive=True)
         print(f'  email {email_dest.relative_to(REPO)}  {email_dest.stat().st_size // 1024} kB')
-
-    # OpenGraph wants a single flat image, and it wants it in a format every
-    # scraper has handled for a decade. JPEG, not WebP: X/Twitter's card
-    # renderer has been unreliable with WebP and an OG image that fails to
-    # render is the whole point of the file lost.
-    square = ep_dir / 'out' / f'{slug}-square.png'
-    if square.exists():
-        im = Image.open(square).convert('RGB')
-        im.thumbnail((OG_PX, OG_PX), Image.LANCZOS)
-        dest = out_dir / 'og.jpg'
-        im.save(dest, 'JPEG', quality=OG_QUALITY, optimize=True, progressive=True)
-        print(f'  og   {dest.relative_to(REPO)}  {dest.stat().st_size // 1024} kB')
-    else:
-        print(f'  og   SKIPPED — {square.name} not built yet', file=sys.stderr)
 
 
 def emit_episode(script: dict, published: str, ep_dir: Path) -> str:
@@ -294,9 +284,9 @@ def main() -> None:
     print(f'  data {dest.relative_to(REPO)}')
     print(
         '\nThis was step 1. `pnpm stories:ship <ep-number>` does all of it in order: this import, the'
-        '\nlib/stories/index.ts registration, the email panels and the validators, and it stops where a'
-        '\nperson is needed: data/stories/readings/ep-NN.ts (drafted, then checked by the Japanese reviewer;'
-        '\nconventions in the header of lib/stories/readings.ts).'
+        '\nlib/stories/index.ts registration, the email panels, the link card (og.jpg) and the validators,'
+        '\nand it stops where a person is needed: data/stories/readings/ep-NN.ts (drafted, then checked by'
+        '\nthe Japanese reviewer; conventions in the header of lib/stories/readings.ts).'
     )
 
 

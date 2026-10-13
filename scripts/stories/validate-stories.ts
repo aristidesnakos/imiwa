@@ -18,9 +18,10 @@
  * what the reader sees.
  */
 
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { SHARE_CARD_SIZE } from '../../lib/seo/share-cards';
 import { EPISODES, UPCOMING } from '../../lib/stories';
 import type { Episode, EpisodeReadings } from '../../lib/stories/types';
 import { EPISODE_VIDEOS } from '../../data/stories/videos';
@@ -56,6 +57,38 @@ const issues: string[] = [];
 
 function fail(episode: Episode, message: string): void {
   issues.push(`ep-${String(episode.number).padStart(2, '0')} (${episode.slug}): ${message}`);
+}
+
+/**
+ * A JPEG's pixel size, from its frame header: the first SOF0..SOF15 marker,
+ * less C4, C8 and CC, which share the range but are not frames (DHT, JPG,
+ * DAC). Height is at +5 and width at +7 from the marker, big-endian. Null if
+ * the file is not a JPEG or has no frame before its scan. Read by hand so the
+ * validator needs no image library.
+ */
+function jpegSize(path: string): { width: number; height: number } | null {
+  const b = readFileSync(path);
+  if (b[0] !== 0xff || b[1] !== 0xd8) return null;
+  let i = 2;
+  while (i + 3 < b.length) {
+    if (b[i] !== 0xff) return null;
+    const marker = b[i + 1];
+    if (marker === 0xff) {
+      i += 1; // fill byte before a marker
+      continue;
+    }
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd8)) {
+      i += 2; // TEM, RSTn, SOI: no length
+      continue;
+    }
+    if (marker === 0xd9 || marker === 0xda) return null; // EOI or SOS before any frame header
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      if (i + 9 > b.length) return null;
+      return { height: b.readUInt16BE(i + 5), width: b.readUInt16BE(i + 7) };
+    }
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return null;
 }
 
 function validate(episode: Episode): void {
@@ -192,8 +225,26 @@ function validate(episode: Episode): void {
       fail(episode, `${panel.id} email art ${emailArt} is not in public/`);
     }
   }
-  if (!existsSync(join(PUBLIC_DIR, episode.ogImage))) {
-    fail(episode, `ogImage ${episode.ogImage} is not in public/`);
+  // 7b. The link card is the size the page declares. The episode page tells
+  //     Facebook and X its og:image is SHARE_CARD_SIZE (episodeShareCardImage),
+  //     and a scraper crops or letterboxes a file that disagrees. The importer
+  //     wrote the strip's 1080x1080 square here until 2026-10-13, and nothing
+  //     else would notice it coming back.
+  const ogPath = join(PUBLIC_DIR, episode.ogImage);
+  if (!existsSync(ogPath)) {
+    fail(episode, `ogImage ${episode.ogImage} is not in public/; run pnpm og:render episode:${episode.slug}`);
+  } else {
+    const size = jpegSize(ogPath);
+    if (!size) {
+      fail(episode, `ogImage ${episode.ogImage} is not a readable JPEG; run pnpm og:render episode:${episode.slug}`);
+    } else if (size.width !== SHARE_CARD_SIZE.width || size.height !== SHARE_CARD_SIZE.height) {
+      fail(
+        episode,
+        `ogImage ${episode.ogImage} is ${size.width}x${size.height}, not the ` +
+          `${SHARE_CARD_SIZE.width}x${SHARE_CARD_SIZE.height} link card the page declares; ` +
+          `run pnpm og:render episode:${episode.slug}`,
+      );
+    }
   }
 
   // 8. The email's bubbled panels. The weekly email shows e1..eN.jpg, the art

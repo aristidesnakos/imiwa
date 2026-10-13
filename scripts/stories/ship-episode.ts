@@ -14,7 +14,11 @@
  *                  registered. A program cannot pick a reading for 十, so a
  *                  person drafts it and the Japanese reviewer checks it.
  *   4. email art   pnpm stories:render-email-panels <slug>
- *   5. validators  validate:stories, validate:subscribe, validate:broadcast
+ *   5. link card   pnpm og:render episode:<slug>: public/stories/<slug>/og.jpg,
+ *                  the 1200x630 card the page declares. Drawn from e1..e6.jpg,
+ *                  so it runs after them. (Until 2026-10-13 the importer wrote
+ *                  the strip's 1080 square there, over the card.)
+ *   6. validators  validate:stories, validate:subscribe, validate:broadcast
  *
  * then prints what to commit and by when. It never commits, never pushes and
  * never calls Resend: the weekly job books the send (docs/runbooks/newsletter.md).
@@ -148,7 +152,7 @@ if (!readingsRegistered) {
 }
 say(`done   readings: ${rel(readingsFile)} exists and is registered (review status is the Japanese reviewer's call)`);
 
-// --- 4 and 5. email panels, then the validators ---------------------------
+// --- 4 to 6. email panels, the link card, then the validators -------------
 const results: [string, boolean | null][] = [];
 const step = (label: string, pnpmScript: string, more: string[] = []) => {
   if (DRY) {
@@ -157,6 +161,7 @@ const step = (label: string, pnpmScript: string, more: string[] = []) => {
   } else results.push([label, run(label, 'pnpm', [pnpmScript, ...more])]);
 };
 step('render email panels', 'stories:render-email-panels', [slug]);
+step('draw the link card', 'og:render', [`episode:${slug}`]);
 step('validate:stories', 'validate:stories');
 step('validate:subscribe', 'validate:subscribe');
 step('validate:broadcast', 'validate:broadcast');
@@ -179,12 +184,15 @@ for (const [label, ok] of results) say(`${ok === null ? 'skipped' : ok ? 'ok    
 const failed = results.some(([, ok]) => ok === false);
 say(`
 Next, by hand:
-  1. Commit and push to main: data/stories/ep-${nn}.ts, data/stories/readings/ep-${nn}.ts, lib/stories/index.ts,
-     lib/stories/readings.ts, public/stories/${slug}/ (webp, jpg, og.jpg and e1..e6.jpg).
-  2. Push by ${formatUtcInstant(at(writeBy, JOB_TIME_UTC))} (write-by) or ${formatUtcInstant(at(friday, JOB_TIME_UTC))} (the last
+  1. Look at the link card, public/stories/${slug}/og.jpg. With no EPISODE_CARDS entry in scripts/render-share-cards.ts
+     it shows panels 1-3: if a face is covered or a better three exist, add an entry and re-run pnpm og:render episode:${slug}.
+  2. Commit and push to main: data/stories/ep-${nn}.ts, data/stories/readings/ep-${nn}.ts, lib/stories/index.ts,
+     lib/stories/readings.ts, public/stories/${slug}/ (webp, jpg, e1..e6.jpg and the og.jpg card), and
+     scripts/render-share-cards.ts if you added an entry.
+  3. Push by ${formatUtcInstant(at(writeBy, JOB_TIME_UTC))} (write-by) or ${formatUtcInstant(at(friday, JOB_TIME_UTC))} (the last
      scheduled run) to be booked for ${sendDay} 13:00 UTC. ${tail}
-  3. The job books an episode only once /stories/${slug} answers 200 in production, so wait for the deploy.
-  4. Look at the email first: pnpm email:preview ${slug} --local
+  4. The job books an episode only once /stories/${slug} answers 200 in production, so wait for the deploy.
+  5. Look at the email first: pnpm email:preview ${slug} --local
 If another episode is already booked, this one waits for the Saturday after.
 ${DRY ? 'Dry run: nothing above has been done.' : 'Nothing was committed, pushed or sent.'}`);
 process.exit(failed ? 1 : 0);
