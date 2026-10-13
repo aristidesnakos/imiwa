@@ -74,6 +74,7 @@ import {
 } from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
 import { PLAY_CONTENT_LAST_MODIFIED, PLAY_OG_IMAGE, PLAY_PATH, PLAY_URL } from '../lib/play/seo';
+import { SHARE_CARDS, SHARE_CARD_SIZE, episodeShareCardImage, type ShareCardId } from '../lib/seo/share-cards';
 import { EPISODES, STORIES_HUB_LAST_MODIFIED } from '../lib/stories';
 import { N5_KANJI } from '../lib/constants/n5-kanji';
 
@@ -1670,6 +1671,148 @@ function requireEpisodeListingLastmod(pageUrl: string, pageDate: string, pageDat
   }
 }
 
+// ─── Share cards ─────────────────────────────────────────────────────────────
+
+/**
+ * The pixel size a JPEG's frame header declares, or null when the bytes are not
+ * a JPEG or no frame header comes before the scan. A frame header is any SOF
+ * marker, 0xFFC0..0xFFCF except C4 (DHT), C8 (reserved) and CC (DAC); its
+ * height and width are big-endian at +5 and +7 from the marker.
+ */
+function jpegSize(buf: Buffer): { width: number; height: number } | null {
+  if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8) return null;
+  let i = 2;
+  while (i + 9 <= buf.length) {
+    if (buf[i] !== 0xff) return null;
+    const marker = buf[i + 1];
+    if (marker === 0xff) {
+      i += 1; // a fill byte before the marker
+      continue;
+    }
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+    }
+    if (marker === 0xda || marker === 0xd9) return null; // scan or end of image first
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      i += 2; // a standalone marker, no length
+      continue;
+    }
+    i += 2 + buf.readUInt16BE(i + 2);
+  }
+  return null;
+}
+
+/**
+ * Every page in SHARE_CARDS, and every registered episode, shares as its own
+ * 1200x630 card (lib/seo/share-cards.ts), not the site-wide one.
+ *
+ * Asserted on the rendered tags for the reason /play's card is: getSEOTags
+ * fills `openGraph.images` with the site-wide /opengraph-image whenever a page
+ * leaves it out, and nothing reports it. /stories shipped that way, and
+ * Facebook showed its card with no image at all. The four page cards are
+ * static JPEGs, so their real pixel size is read too; `pnpm validate:stories`
+ * reads the episodes'.
+ */
+function validateShareCards(): number {
+  const targets = [
+    ...(Object.keys(SHARE_CARDS) as ShareCardId[]).map((id) => ({
+      page: SHARE_CARDS[id].page,
+      card: `${SITE_URL}${SHARE_CARDS[id].file}`,
+      ogType: 'website',
+      source: `app${SHARE_CARDS[id].page}/page.tsx`,
+      call: `shareCardImage('${id}')`,
+      render: 'pnpm og:render',
+      readPixels: true,
+    })),
+    ...EPISODES.map((episode) => ({
+      page: `/stories/${episode.slug}`,
+      card: episodeShareCardImage(episode).url,
+      ogType: 'article',
+      source: 'app/stories/[slug]/page.tsx',
+      call: 'episodeShareCardImage(episode)',
+      render: `pnpm og:render episode:${episode.slug}`,
+      readPixels: false,
+    })),
+  ];
+
+  for (const t of targets) {
+    const abs = path.join(BUILD_APP_DIR, `${t.page.replace(/^\//, '')}.html`);
+    const file = relative(abs);
+    if (!fs.existsSync(abs)) {
+      fail({
+        file,
+        schemaType: '(build artefact)',
+        field: `page ${t.page}`,
+        expected: 'a prerendered HTML file',
+        actual: 'missing',
+        hint: `${t.source} should prerender; a page rendered per request is out of this check.`,
+      });
+      continue;
+    }
+    const html = fs.readFileSync(abs, 'utf8');
+
+    for (const [attr, key] of [
+      ['property', 'og:image'],
+      ['name', 'twitter:image'],
+    ] as const) {
+      const images = metaContents(html, attr, key);
+      if (images.length !== 1 || images[0] !== t.card) {
+        fail({
+          file,
+          schemaType: '(head)',
+          field: key,
+          expected: `exactly one, ${t.card}`,
+          actual: images.length ? JSON.stringify(images) : 'missing',
+          hint: `Name the card: images: [${t.call}] in the openGraph block of ${t.source}. Left out, getSEOTags falls back to the site-wide /opengraph-image.`,
+        });
+      }
+    }
+    const sizeHint = `${t.call} spreads SHARE_CARD_SIZE (lib/seo/share-cards.ts) into the image.`;
+    requireEquals(file, '(head)', 'og:image:width', metaContents(html, 'property', 'og:image:width')[0], String(SHARE_CARD_SIZE.width), sizeHint);
+    requireEquals(file, '(head)', 'og:image:height', metaContents(html, 'property', 'og:image:height')[0], String(SHARE_CARD_SIZE.height), sizeHint);
+    const alt = metaContents(html, 'property', 'og:image:alt');
+    if (!alt[0]?.trim()) {
+      fail({
+        file,
+        schemaType: '(head)',
+        field: 'og:image:alt',
+        expected: 'present and non-empty',
+        actual: alt.length ? JSON.stringify(alt[0]) : 'missing',
+        hint: `${t.call} carries the card's alt text.`,
+      });
+    }
+    requireEquals(file, '(head)', 'og:type', metaContents(html, 'property', 'og:type')[0], t.ogType, `type: '${t.ogType}' in the openGraph block of ${t.source}.`);
+
+    // The card itself: a committed file in public/, and for the four page
+    // cards, the size the tags above claim.
+    const res = resolveAsset(t.card);
+    if (!res.ok || !res.how.startsWith('public/')) {
+      fail({
+        file,
+        schemaType: '(head)',
+        field: 'og:image',
+        expected: 'a URL that resolves to a file in public/',
+        actual: `${JSON.stringify(t.card)} — ${res.how}`,
+        hint: `Draw it with \`${t.render}\` and commit it.`,
+      });
+      continue;
+    }
+    if (!t.readPixels) continue;
+    const size = jpegSize(fs.readFileSync(path.join(REPO_ROOT, res.how)));
+    if (!size || size.width !== SHARE_CARD_SIZE.width || size.height !== SHARE_CARD_SIZE.height) {
+      fail({
+        file: res.how,
+        schemaType: '(share card)',
+        field: 'pixel size',
+        expected: `${SHARE_CARD_SIZE.width}x${SHARE_CARD_SIZE.height} (SHARE_CARD_SIZE), the size og:image:width and og:image:height claim`,
+        actual: size ? `${size.width}x${size.height}` : 'not a JPEG with a frame header',
+        hint: `Redraw it with \`${t.render}\`.`,
+      });
+    }
+  }
+  return targets.length;
+}
+
 // ─── Sitemap / robots ────────────────────────────────────────────────────────
 
 function validateSitemap(): void {
@@ -2037,6 +2180,10 @@ function main(): void {
   // ─ /play ─
   validatePlayPage(kanjiCharSet);
 
+  // ─ share cards: the SHARE_CARDS pages and every episode ─
+  const sharePages = validateShareCards();
+  console.log(`Share cards: ${sharePages} page(s) (${Object.keys(SHARE_CARDS).length} from SHARE_CARDS + ${EPISODES.length} episodes)`);
+
   validateSitemap();
   // The stories hub lists every registered episode (app/stories/page.tsx).
   requireEpisodeListingLastmod(
@@ -2069,6 +2216,7 @@ function main(): void {
   console.log('  - Every kanji <url> in the sitemap lists exactly its own stroke-order image');
   console.log('  - Level list pages: CollectionPage + ItemList, every entry a prerendered kanji page');
   console.log('  - Episode videos: a VideoObject and a click-to-load section exactly where data/stories/videos.ts maps one');
+  console.log('  - Share cards: the SHARE_CARDS pages and every episode name their own 1200x630 card on og:image and twitter:image, a file in public/');
   console.log('  - /play: a free VideoGame with no ratings, its own share card on og:image and twitter:image, every N5 kanji linked\n');
 }
 
