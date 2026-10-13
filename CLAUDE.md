@@ -359,7 +359,8 @@ Pinterest end up saying different things with nothing reporting it.
 **Commissioning an episode is `pnpm stories:ship <ep-number>`** (`scripts/stories/ship-episode.ts`; add
 `--published YYYY-MM-DD`, or `--dry-run` to see the plan). It runs the importer, adds the import and
 `EPISODES` entry to `lib/stories/index.ts` (dropping a matching `UPCOMING` entry), renders the email
-panels and runs `validate:stories`, `validate:subscribe` and `validate:broadcast`. It is idempotent: a
+panels, draws the link card from them (`og.jpg`, see "Link cards" under SEO), and runs
+`validate:stories`, `validate:subscribe` and `validate:broadcast`. It is idempotent: a
 re-import keeps the existing `publishedAt`. It **stops** if `data/stories/readings/ep-NN.ts` is missing or
 unregistered, because the readings are drafted and reviewed by people. It never commits, pushes or calls
 Resend; it prints what to commit and the Wednesday / Friday 12:07 UTC deadlines.
@@ -650,6 +651,18 @@ the apex splits the brand entity across two hostnames. `schema-check` CI gates t
 `KANJI_CONTENT_LAST_MODIFIED` (`lib/seo/site.ts`) sets every kanji URL's `lastmod` and every
 Article's `dateModified`. Bump it when the main content of every character page changes, whether
 through the data or the template. Never bump it for chrome such as the header or footer.
+
+**Link cards (og:image), since 2026-10-13.** `getSEOTags` falls back to the site-wide
+`/opengraph-image` for any page that does not name its own image, silently: `/stories` shared that
+way and Facebook showed it with no image. A page we post gets its own card. `lib/seo/share-cards.ts`
+lists them (`/stories`, `/kanji/n5/quiz`, the two sheets pages, and every episode's `og.jpg`), and
+`pnpm og:render [card…]` draws them as static 1200x630 JPEGs under ~300 kB
+(`scripts/render-share-cards.ts`; its header holds the rules: type in HTML in Noto Serif/Sans JP,
+real Tan cutouts never mirrored, the strip's palette, and every kanji set on a card checked against
+the N5 list). They are JPEGs because `next/og` writes only PNG, too heavy for painted art; `/play`
+keeps its PNG route. An episode card shows three panels picked by eye in `EPISODE_CARDS` (none may
+put a bubble over a face). `stories:ship` draws it, and `validate:stories` checks its size.
+Facebook caches cards, so after a deploy that changes one, re-scrape the URL in the Sharing Debugger.
 
 Two weekly Search Console monitors exist and they answer different questions — do not merge them:
 
