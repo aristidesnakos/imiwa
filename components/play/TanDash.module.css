@@ -1,5 +1,5 @@
 /*
- * Tan Dash: one 9:16 arcade screen in a dark cabinet, ported from the
+ * Tan Dash: one 9:16 arcade screen, framed by its own bezel, ported from the
  * prototype's stylesheet.
  *
  * COLOURS: only --td-* (lib/play/palette.ts, set inline on .root by
@@ -64,25 +64,25 @@
   }
 }
 
+/*
+ * The stage's box-shadow bezel is the game's one frame, so the cabinet draws
+ * nothing: it is the size container and a margin wide enough for the bezel
+ * ring (3 game pixels, at most ~11px), so the whole ring shows when the stage
+ * fills the viewport. Until 2026-10-13 it was a second dark box around the
+ * bezel, a frame inside a frame. The iOS app (tan-dash) keeps the class and
+ * paints its own dark background on body.
+ */
 .cabinet {
   --td-pad: 8px;
   container-type: inline-size;
   padding: var(--td-pad);
-  border-radius: 12px;
-  color: var(--td-cream);
-  background-color: var(--td-cab);
-  background-image: repeating-linear-gradient(
-    0deg,
-    color-mix(in srgb, var(--td-cream) 2.5%, transparent) 0 1px,
-    transparent 1px 3px
-  );
   /* scrollIntoView lands the cabinet just under the sticky header. */
   scroll-margin-top: var(--td-header);
 }
 
 @media (min-width: 768px) {
   .cabinet {
-    --td-pad: 24px;
+    --td-pad: 12px;
   }
 }
 

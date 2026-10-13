@@ -1,5 +1,5 @@
 /**
- * Tan Dash's own colours: the arcade cabinet, the cream panels and every pixel
+ * Tan Dash's own colours: the bezel, the cream panels and every pixel
  * the canvas draws. Ported from the prototype's `COL` and `:root` blocks.
  *
  * Why the game has a palette of its own and is not built on app/globals.css:
@@ -19,7 +19,7 @@
  */
 
 export const PLAY_PALETTE = {
-  // The cabinet and the HTML overlays
+  // The bezel and the HTML overlays
   cab: '#1E1814',
   ink: '#2B211B',
   bezel: '#3A2E26',
@@ -32,7 +32,7 @@ export const PLAY_PALETTE = {
   goldDeep: '#B9862A',
   /** Small print on a cream panel: 6.1:1 on cream. */
   inkSoft: '#6B5A50',
-  /** The cabinet's outer ring and drop shadow. */
+  /** The bezel's outer ring and the stage's drop shadow. */
   void: '#000000',
 
   // The canvas
