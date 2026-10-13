@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowDown, ArrowRight, Download } from 'lucide-react';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { SITE_NAME, SITE_URL } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
 import { EmailCapture } from '@/components/EmailCapture';
@@ -109,9 +110,10 @@ export const metadata: Metadata = getSEOTags({
     'Japanese handwriting practice',
   ],
   openGraph: {
-    title: TITLE,
-    description: `One printable sheet per kanji — stroke order, readings and an 80-square practice grid — for ${TOTAL_KANJI} kanji from JLPT N5 to N1. Free, no signup.`,
+    title: 'Free kanji practice sheets, ready to print',
+    description: `One printable sheet per kanji, with stroke order, readings and 80 practice squares. ${TOTAL_KANJI} kanji from JLPT N5 to N1, all free, no sign-up.`,
     type: 'website',
+    images: [shareCardImage('kanji-sheets')],
   },
   canonicalUrlRelative: '/free-resources/kanji-sheets',
 });

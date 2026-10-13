@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import Header from '@/components/sections/Header';
 import { FileText, Download, Package } from 'lucide-react';
 import { PopularKanjiLinks } from '@/components/kanji/PopularKanjiLinks';
@@ -28,9 +29,10 @@ export const metadata: Metadata = getSEOTags({
     'Japanese handwriting practice'
   ],
   openGraph: {
-    title: 'Free Japanese Learning Resources | Printable Study Materials',
-    description: 'Download free printable Japanese learning materials including kana and kanji practice sheets and study guides.',
+    title: 'Free printable Japanese practice sheets',
+    description: 'Hiragana, katakana and kanji practice sheets with stroke order and practice squares. Download a free PDF, print it and start writing today.',
     type: 'website',
+    images: [shareCardImage('free-resources')],
   },
   canonicalUrlRelative: '/free-resources',
 });
