@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen } from 'lucide-react';
 
 import { getSEOTags } from '@/lib/seo';
 import { SITE_URL, SITE_NAME, SITE_LOGO } from '@/lib/seo/site';
+import { episodeShareCardImage } from '@/lib/seo/share-cards';
 import Header from '@/components/sections/Header';
 import { Badge } from '@/components/ui/badge';
 import EmailCapture from '@/components/EmailCapture';
@@ -68,9 +69,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ],
     openGraph: {
       title: `${episode.titleEn} — ${episode.titleJa}`,
-      description: `Episode ${episode.number} of The Travels of Tan. Six panels, all JLPT ${episode.level}, with translations.`,
+      description: `Episode ${episode.number} of The Travels of Tan, a free six-panel comic in easy Japanese. Every word is JLPT ${episode.level}, with English translations and romaji.`,
       type: 'article',
-      images: [{ url: `${SITE_URL}${episode.ogImage}`, width: 1080, height: 1080 }],
+      images: [episodeShareCardImage(episode)],
     },
     canonicalUrlRelative: `/stories/${episode.slug}`,
   });
