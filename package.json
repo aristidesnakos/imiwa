@@ -29,6 +29,7 @@
     "stories:render-email-panels": "tsx --tsconfig tsconfig.json scripts/stories/render-email-panels.ts",
     "stories:sync-videos": "tsx --tsconfig tsconfig.json scripts/stories/sync-videos.ts",
     "validate:video-sync": "tsx --tsconfig tsconfig.json scripts/stories/validate-video-sync.ts",
+    "og:render": "tsx --tsconfig tsconfig.json scripts/render-share-cards.ts",
     "stories:ship":"tsx --tsconfig tsconfig.json scripts/stories/ship-episode.ts",
     "stories:episode-issue": "tsx --tsconfig tsconfig.json scripts/stories/episode-issue.ts create",
     "stories:episode-status": "tsx --tsconfig tsconfig.json scripts/stories/episode-issue.ts status",

@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import { getSEOTags } from '@/lib/seo';
 import { SITE_URL, SITE_NAME } from '@/lib/seo/site';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import Header from '@/components/sections/Header';
 import EmailCapture from '@/components/EmailCapture';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
@@ -38,10 +39,13 @@ export const metadata: Metadata = getSEOTags({
     'simple Japanese stories with English translation',
   ],
   openGraph: {
-    title: 'Easy Japanese Stories for Beginners — Free N5 Graded Reader',
+    title: "Tan's Stories: easy Japanese comics for beginners",
     description:
-      'A weekly six-panel Japanese comic, written entirely in JLPT N5, with translations and linked kanji.',
+      'Follow Tan the tanuki in a free six-panel comic written entirely in JLPT N5 Japanese, with English translations. A new episode every week.',
     type: 'website',
+    // The page's own card (lib/seo/share-cards.ts). Left out, getSEOTags
+    // falls back to the site-wide card.
+    images: [shareCardImage('stories')],
   },
   canonicalUrlRelative: '/stories',
 });
