@@ -35,10 +35,6 @@
  *
  * `--square` takes the panels from the strip pipeline's composited square
  * instead (strips/ep-NN/out/<slug>-square.png, 3x2 panels at fixed positions).
- * Episode 1 needs it: its P5 bubble was moved off Tan's face in the square
- * only (2026-10-13), and data/stories/ep-01.ts, so e5.jpg, still has it over
- * the face. Re-render episode 1 from e-panels only after the bubble is fixed in
- * script.json and re-imported.
  *
  * Output is a JPEG under ~300 kB: quality starts at 88 and steps down until it
  * fits. Commit the files; nothing renders at request time.
@@ -346,9 +342,6 @@ async function main(): Promise<void> {
       if (!EPISODE_CARDS[slug] && !arg('--panels')) console.log(`  note: ${slug} has no EPISODE_CARDS entry; using panels 1-3. Look at the card.`);
       const square = wanted.length === 1 ? arg('--square') : undefined;
       if (square && !existsSync(square)) throw new Error(`--square ${square} does not exist`);
-      if (slug === 'tan-climbs-the-mountain' && !square && panels.includes(5)) {
-        throw new Error('Episode 1 panel 5 still has the bubble over Tan\'s face in e5.jpg: pass --square <the P5-fixed square>, or other panels.');
-      }
       cards.push(episodeCard(episode, panels, square));
     } else if (pageIds.includes(target as ShareCardId)) {
       const id = target as ShareCardId;

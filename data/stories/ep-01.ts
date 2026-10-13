@@ -64,7 +64,7 @@ export const EPISODE: Episode = {
     art: "/stories/tan-climbs-the-mountain/p5.webp",
     lines: [
       { speaker: "chun", ja: "山の 上に 行きませんか。", en: "Shall we go to the top of the mountain?", bubble: { x: 28, y: 3, w: 62, tail: "bl" } },
-      { speaker: "tan", ja: "行きましょう。", en: "Let's go.", bubble: { x: 6, y: 58, w: 46, tail: "br" } },
+      { speaker: "tan", ja: "行きましょう。", en: "Let's go.", bubble: { x: 0, y: 58, w: 45, tail: "br" } },
     ],
   },
   {

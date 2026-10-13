@@ -40,8 +40,8 @@ export const EPISODE: Episode = {
     beat: "The owl teacher at the door",
     art: "/stories/tan-goes-to-school/p2.webp",
     lines: [
-      { speaker: "sensei", ja: "わたしは 先生です。", en: "I am the teacher.", bubble: { x: 22, y: 5, w: 56, tail: "bl" } },
-      { speaker: "tan", ja: "はじめまして。 タンです。", en: "Nice to meet you. I am Tan.", bubble: { x: 48, y: 18, w: 48, tail: "br" } },
+      { speaker: "sensei", ja: "わたしは 先生です。", en: "I am the teacher.", bubble: { x: 19, y: 5, w: 62, tail: "bl" } },
+      { speaker: "tan", ja: "はじめまして。 タンです。", en: "Nice to meet you. I am Tan.", bubble: { x: 48, y: 22, w: 48, tail: "br" } },
     ],
   },
   {
