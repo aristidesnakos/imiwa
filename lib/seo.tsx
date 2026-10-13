@@ -41,6 +41,9 @@ export const getSEOTags = ({
     ),
 
     openGraph: {
+      // og:type is always emitted: Facebook's debugger flags a page without
+      // one, and until 2026-10-13 this dropped the `type` every page passed.
+      type: (openGraph && 'type' in openGraph && openGraph.type) || 'website',
       title: openGraph?.title || pageTitle,
       description: openGraph?.description || pageDescription,
       url: openGraph?.url || `https://${config.domainName}${canonicalUrlRelative || ''}`,
