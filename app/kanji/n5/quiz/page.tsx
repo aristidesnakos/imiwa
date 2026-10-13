@@ -5,6 +5,7 @@ import Header from '@/components/sections/Header';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { getSEOTags } from '@/lib/seo';
 import { SITE_URL } from '@/lib/seo/site';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { levelHref } from '@/lib/levels';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { BookCTA } from '@/components/commerce/BookCTA';
@@ -96,9 +97,10 @@ export const metadata: Metadata = getSEOTags({
     'kanji quiz with romaji',
   ],
   openGraph: {
-    title: TITLE,
-    description: DESCRIPTION,
+    title: 'Can you read this kanji? A free JLPT N5 quiz',
+    description: `How many of the ${N5_COUNT} JLPT N5 kanji can you read? Meanings, readings with romaji, four friendly choices and instant answers. Free, no sign-up.`,
     type: 'website',
+    images: [shareCardImage('kanji-n5-quiz')],
   },
   canonicalUrlRelative: PATH,
 });
