@@ -49,7 +49,7 @@ export const EPISODE: Episode = {
     beat: "Rice from mother",
     art: "/stories/tans-family-and-friends/p3.webp",
     lines: [
-      { speaker: "haha", ja: "ごはんを たべませんか。", en: "Won't you eat some rice?", bubble: { x: 2, y: 4, w: 52, tail: "bl", tailX: 44 } },
+      { speaker: "haha", ja: "ごはんを たべませんか。", en: "Won't you eat some rice?", bubble: { x: 2, y: 4, w: 46, tail: "bl", tailX: 49 } },
       { speaker: "tan", ja: "はい、 いただきます。", en: "Yes, thank you!", bubble: { x: 50, y: 19, w: 48, tail: "bl", tailX: 54 } },
     ],
   },
