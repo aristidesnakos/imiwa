@@ -24,6 +24,12 @@
           "value": "michikanji.com"
         }
       ],
+      "missing": [
+        {
+          "type": "header",
+          "key": "svix-id"
+        }
+      ],
       "destination": "https://www.michikanji.com/$1",
       "permanent": true
     }
