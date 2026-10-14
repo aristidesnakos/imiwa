@@ -92,8 +92,9 @@ still no send route and no contact loop: Resend owns queueing, throttling, unsub
 the send. Resend is also the ledger, with no repo state file. An episode's broadcast is the one named
 exactly `Episode N: <title>`, and the queue runs by `number` from
 `config.newsletter.firstBroadcastEpisode`. `pnpm validate:broadcast` asserts the job's rules against
-fake Resend state. The only emails the app itself sends are the double opt-in confirmation and the
-welcome quiz card, both triggered by one person acting on their own address.
+fake Resend state. The emails the app itself sends are the double opt-in confirmation and the welcome
+quiz card, both triggered by one person acting on their own address, and the forward of mail to
+`ari@michikanji.com` (below), triggered by a sender writing to that address.
 
 `check-subscribe-live` exists because nothing else in this repo can see a missing environment
 variable in production. `validate:subscribe` proves the token model, the build proves compilation,
@@ -305,6 +306,19 @@ sources (JIS S 5508, KOKUYO's sheets: ruby strip on the RIGHT of each column, no
 `/free-resources/genkouyoushi` page, the static `/api/genkouyoushi/<format>` print documents, and
 the PDFs in `public/downloads/`, which `pnpm sheets:genkouyoushi-pdfs` regenerates from the same
 drawing. Rerun it after changing the drawing; `validate:sheets` fails on a missing PDF.
+
+### Inbound mail forwarding
+
+`app/api/webhooks/resend/route.ts` receives Resend's `email.received` webhook (registered at
+`https://michikanji.com/api/webhooks/resend`; the apex 301s every request to www in `vercel.json`
+except those carrying Resend's `svix-id` header, so deliveries reach the route) and forwards mail
+addressed to exactly `FORWARD_ADDRESSES` (`ari@michikanji.com`) to `FORWARD_TO`, sent from
+`FORWARD_FROM`. The logic is in `lib/email/inbound-forward.ts`: the webhook's signature is checked
+(Standard Webhooks, the scheme Resend uses), the message is fetched through Resend's receiving API,
+and it goes on as a raw `.eml` attachment, so nothing is parsed or stored. The loop guard skips mail
+from or to `FORWARD_FROM`. Env vars live in Vercel only: `RESEND_API_KEY` must be Full access
+(receiving is refused to a Sending key), plus `RESEND_WEBHOOK_SECRET`. Not the same route as the
+unregistered `app/api/webhook/resend` ShipFast leftover.
 
 ### No server-side user state
 
