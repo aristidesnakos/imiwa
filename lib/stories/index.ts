@@ -18,8 +18,9 @@ import { EPISODE as EP05 } from '../../data/stories/ep-05';
 import { EPISODE as EP06 } from '../../data/stories/ep-06';
 import { EPISODE as EP07 } from '../../data/stories/ep-07';
 import { EPISODE as EP08 } from '../../data/stories/ep-08';
+import { EPISODE as EP09 } from '../../data/stories/ep-09';
 
-export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05, EP06, EP07, EP08];
+export const EPISODES: readonly Episode[] = [EP01, EP02, EP03, EP04, EP05, EP06, EP07, EP08, EP09];
 
 /**
  * When the /stories hub's own template last changed. A hand-kept date, like

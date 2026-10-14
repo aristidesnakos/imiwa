@@ -43,8 +43,9 @@ import { READINGS as R05 } from '../../data/stories/readings/ep-05';
 import { READINGS as R06 } from '../../data/stories/readings/ep-06';
 import { READINGS as R07 } from '../../data/stories/readings/ep-07';
 import { READINGS as R08 } from '../../data/stories/readings/ep-08';
+import { READINGS as R09 } from '../../data/stories/readings/ep-09';
 
-export const READINGS: readonly EpisodeReadings[] = [R01, R02, R03, R04, R05, R06, R07, R08];
+export const READINGS: readonly EpisodeReadings[] = [R01, R02, R03, R04, R05, R06, R07, R08, R09];
 
 export function readingsForSlug(slug: string): EpisodeReadings | undefined {
   return READINGS.find(r => r.slug === slug);
