@@ -566,7 +566,8 @@ pace and the music changed on 2026-10-15 (day 5): see "The pace and the music" b
   to a WAV through the game's own synth (peak and RMS printed: a hot peak is a click, which the first
   renders caught); `validate:play`
   section 9 checks the notation, the shipped tune and the scheduler. The iOS app (`tan-dash` repo)
-  has its own engine and neither change.
+  does not fork the engine: it imports `lib/play/` from an export of a commit, so it picks up both
+  changes on its next `game:build` (a new build, as it has no expo-updates).
 - **The island never imports kanji data.** `app/play/page.tsx` calls `buildPlayData()` and passes
   ~10 kB of JSON to `components/play/TanDash.tsx`, the same pattern as the sheet builder.
   `lib/play/engine.ts` is the framework-free canvas engine.
