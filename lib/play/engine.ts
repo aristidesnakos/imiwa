@@ -2,7 +2,8 @@
  * Tan Dash's canvas engine: the loop, the physics, the sprites, the scene, the
  * HUD and the chiptune. Ported from the playtested prototype (claude.ai
  * artifact, 2026-10-11) with its numbers unchanged: gravity 900, jumps
- * -330/-290 (super -430/-370), the speed curves, the spawn spacing.
+ * -330/-290 (super -430/-370), the spawn spacing. The speed ramp is the one
+ * number since changed on purpose (SPEED_RAMP).
  *
  * Framework-free, and it owns nothing outside its canvas. The island
  * (components/play/TanDash.tsx) owns the DOM overlays, the input, storage and
@@ -17,6 +18,7 @@
  * Browser-only: call createTanDash from an effect, never during render.
  */
 
+import { createMusic } from './music';
 import { PLAY_PALETTE as COL } from './palette';
 import {
   CATCHES_PER_WORLD,
@@ -30,6 +32,8 @@ import {
   type SignSetting,
 } from './rules';
 import { MYSTERY_POWER, POWERS, type PowerKanji } from './signs';
+import { THEME } from './theme';
+import { parseTune, tempoScale, type Tune, type TuneSource } from './tune';
 import type { PlayData, PlayKanji, PlayWorld } from './types';
 
 export type PlayState = 'title' | 'play' | 'paused' | 'dying' | 'over';
@@ -100,6 +104,8 @@ export interface TanDashEngine {
   /** Call from a user gesture. */
   resume(): void;
   setOptions(options: Partial<GameOptions>): void;
+  /** Swaps the music mid-run and restarts it from bar 1; an unparseable tune is ignored. For auditioning tunes (the local-dev switcher). */
+  setTune(source: TuneSource): void;
   /** The stage's CSS size and the device pixel ratio; sizes the backing store. */
   resize(cssWidth: number, cssHeight: number, dpr: number): void;
   /** False while the stage is off screen or the tab is hidden: stops the loop. */
@@ -117,7 +123,7 @@ export interface TanDashEngine {
 /* eslint-enable no-unused-vars */
 
 // ---------------------------------------------------------------------------
-// The game's own numbers (the prototype's, unchanged)
+// The game's own numbers (the prototype's, except the speed ramp)
 // ---------------------------------------------------------------------------
 
 /** The screen, in game pixels. */
@@ -139,8 +145,25 @@ const DEATH_TO_RESULTS_MS = 900;
 const ROW = { g: GY - 20, m: 220, h: 176 } as const;
 type RowKey = keyof typeof ROW;
 
-function speedAt(t: number, speed: Speed): number {
-  return speed === 'chill' ? Math.min(112, 58 + t * 0.8) : Math.min(158, 72 + t * 1.5);
+/**
+ * How fast the run goes, in game px/s, as a straight line over run time `t`
+ * (seconds) that stops at `cap`. It is the only thing that makes a run harder
+ * over time: worlds change what is asked, never how fast the lane moves.
+ *
+ * `start` and `cap` are what `pnpm validate:play` fairness-replays (stump
+ * run-up, wave spacing, tile placement at 72..158 px/s), so a change to the
+ * pace is a change to `perSec` alone. Until 2026-10-15 (day 5 of the
+ * retention test) it was 1.5 / 0.8 and the cap came at 57 s / 68 s; at 1.15 /
+ * 0.6 it comes at 75 s / 90 s, the same top speed reached about a quarter later.
+ */
+export const SPEED_RAMP = {
+  normal: { start: 72, perSec: 1.15, cap: 158 },
+  chill: { start: 58, perSec: 0.6, cap: 112 },
+} as const satisfies Record<Speed, { start: number; perSec: number; cap: number }>;
+
+export function speedAt(t: number, speed: Speed): number {
+  const r = SPEED_RAMP[speed];
+  return Math.min(r.cap, r.start + t * r.perSec);
 }
 
 /** The combo multiplier: x2 from the 4th catch in a row, up to x5. */
@@ -232,6 +255,7 @@ function makeSprites() {
 // ---------------------------------------------------------------------------
 // Sound: tiny square/triangle/saw tones. The AudioContext is created only from
 // a user gesture (start, jump, resume, the sound toggle), never from the loop.
+// The music is lib/play/music.ts, and plays through this same context.
 // ---------------------------------------------------------------------------
 
 export type SfxName = 'jump' | 'dbl' | 'good' | 'wrong' | 'hit' | 'miss' | 'power' | 'smash' | 'level' | 'over';
@@ -292,6 +316,7 @@ function createAudio(isOn: () => boolean) {
       context(true);
     },
     play: (name: SfxName) => sfx[name](),
+    current: (): AudioContext | null => ac,
     close: () => {
       if (ac) void ac.close().catch(noop);
       ac = null;
@@ -486,6 +511,13 @@ export function createTanDash(
   const FONT_PIX = config.fonts.pix;
   const SPR = makeSprites();
   const audio = createAudio(() => opts.sound);
+  let theme: Tune | null = null;
+  try {
+    theme = parseTune(THEME);
+  } catch {
+    // A bad theme must never take the game down; validate:play is the gate.
+  }
+  const music = theme ? createMusic(() => audio.current(), theme) : null;
   const sfx = (name: SfxName) => {
     audio.play(name);
     hooks.onSfx?.(name);
@@ -507,7 +539,12 @@ export function createTanDash(
   const setState = (s: PlayState) => {
     state = s;
     hooks.onState?.(s);
+    syncMusic();
   };
+  function syncMusic() {
+    const r = SPEED_RAMP[opts.speed];
+    music?.sync(state === 'play' && opts.sound, tempoScale((G.speed - r.start) / (r.cap - r.start)));
+  }
   const announce = (text: string) => hooks.onAnnounce?.(text);
   const tanH = () => (tan.giant > 0 ? 32 : 16);
 
@@ -760,6 +797,7 @@ export function createTanDash(
 
     G.t += dt;
     G.speed = speedAt(G.t, opts.speed);
+    syncMusic();
     const dx = G.speed * dt;
     G.dist += dx;
     scroll += dx;
@@ -1130,6 +1168,7 @@ export function createTanDash(
       if (state !== 'title' && state !== 'over') return;
       audio.unlock();
       reset();
+      music?.rewind();
       setState('play');
       const w = worlds[0];
       G.toast = { t: 0, life: 3.2, world: w };
@@ -1164,8 +1203,16 @@ export function createTanDash(
       setState('play');
       kick();
     },
+    setTune(source) {
+      try {
+        music?.setTune(parseTune(source));
+      } catch {
+        // Not a tune; keep the one playing.
+      }
+    },
     setOptions(next) {
       Object.assign(opts, next);
+      syncMusic();
     },
     resize(cssWidth, cssHeight, dpr) {
       const ratio = Math.min(3, dpr || 1);
@@ -1194,6 +1241,7 @@ export function createTanDash(
       halt();
       if (overTimer) clearTimeout(overTimer);
       overTimer = null;
+      music?.close();
       audio.close();
     },
   };

@@ -82,6 +82,17 @@
  *     `/play` -> `/kanji/<c>` page sequence on the same visit is now a player studying a mix-up.
  *     No goal was added. It can move engagement and returns either way;
  *     day 1 ran on the old card, so say so next to the verdict.
+ *   - From 2026-10-15 (day 5) the run gets harder more slowly, and music plays during a run.
+ *     Speed is the only thing that rises with run time (lib/play/engine.ts SPEED_RAMP): normal
+ *     was 72 + 1.5/s, top speed (158) at 57 s, and is now 72 + 1.15/s, top speed at 75 s; chill
+ *     was 58 + 0.8/s, top (112) at 68 s, and is now 58 + 0.6/s, top at 90 s. Start and cap are
+ *     unchanged. The music (lib/play/music.ts, lib/play/theme.ts) follows the existing sound
+ *     toggle, which is on by default, so it plays for everyone who has not turned sound off;
+ *     it is one tap (or the M key) off. The slower ramp should make early runs easier and so
+ *     could raise engagement and catches. The music could pull either way: it can hold a player
+ *     in or put one off, and it is on before anyone has chosen it. Both can move engagement
+ *     and returns either way. Days 1-4 ran on the old pace and in silence, so say so next to the
+ *     verdict, and the cohorts may be split on this date. No goal was added.
  */
 
 export const PLAY_GOALS = {

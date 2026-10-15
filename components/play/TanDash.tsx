@@ -32,6 +32,7 @@ import {
 } from 'react';
 import { trackGoal } from '@/lib/analytics';
 import { createTanDash, type PlayState, type RunResult, type TanDashEngine } from '@/lib/play/engine';
+import { TuneSwitcher } from './TuneSwitcher';
 import {
   CATCH_MILESTONES,
   localDay,
@@ -435,6 +436,7 @@ export function TanDash({ data }: { data: PlayData }) {
       className={`${styles.root} ${pixelFont.variable} ${dotFont.variable}`}
       style={PLAY_CSS_VARS as CSSProperties}
     >
+      {process.env.NODE_ENV === 'development' && <TuneSwitcher engineRef={engineRef} stageRef={stageRef} />}
       <div ref={cabinetRef} className={styles.cabinet}>
         <div
           ref={stageRef}

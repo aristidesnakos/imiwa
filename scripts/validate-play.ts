@@ -37,6 +37,14 @@
  * 5), and no tile is ever placed on a stump or without room to jump one
  * (section 5b); both were broken until 2026-10-12 and nothing noticed.
  *
+ * One more is about sound (section 9). The tunes parse and sit in range; the
+ * notation refuses a bar of 15 steps rather than slide a tune off its drums;
+ * and the scheduler, replayed against a fake AudioContext (no browser here, and
+ * it is only time arithmetic), queues every note on the step grid and never in
+ * the past, stops at once, resumes at the step it was interrupted on, starts
+ * from the top after rewind(), and does not burst a backlog after a stalled
+ * frame. Nothing else hears any of it: a wrong note is a silent bug.
+ *
  * Relative imports, not `@/`: scripts/ is outside tsconfig.json, and this runs
  * under tsx (lib/play/build.ts and lib/stories/index.ts import the same way).
  */
@@ -48,7 +56,24 @@ import { N5_KANJI } from '../lib/constants/n5-kanji';
 import { EPISODES } from '../lib/stories';
 import { buildPlayData, episodeWorldCount } from '../lib/play/build';
 import { EXTRA_WORLDS, LOOK_ALIKES, MYSTERY_POWER, PLAY_SIGNS, POWERS } from '../lib/play/signs';
-import { GAME_W } from '../lib/play/engine';
+import { GAME_W, SPEED_RAMP, speedAt } from '../lib/play/engine';
+import { LOOKAHEAD, MUSIC_LEVEL, createMusic } from '../lib/play/music';
+import { THEME } from '../lib/play/theme';
+import {
+  STEPS_PER_BAR,
+  TEMPO_GAIN,
+  midiHz,
+  noteMidi,
+  parseTune,
+  pitchClass,
+  stepSeconds,
+  tempoScale,
+  type Note,
+  type StepEvents,
+  type Tune,
+  type TuneSource,
+} from '../lib/play/tune';
+import { CANDIDATES } from './music/candidates';
 import {
   CATCHES_PER_WORLD,
   LANE_PAD,
@@ -674,6 +699,49 @@ section('5b. The lane: no tile on a stump, and room to jump one');
     'the lane',
     problems,
     `${cases.length} rule cases; ${placed} waves placed (${Math.round((moved / placed) * 100)}% slid right, at most ${Math.round(farthest)}px), none on a stump or gold box; ${waves} waves and ${spawnedStumps} stumps replayed with no tile on a stump (one stump per ${Math.round(metres / Math.max(1, spawnedStumps))}px)`,
+  );
+}
+
+section('5c. The pace: how fast the run goes, and how fast that grows');
+{
+  // Section 5b replays the lane at 72..158 px/s, the normal run's whole range.
+  // The ramp may be stretched in time (perSec) but its start and cap are what
+  // the fairness replays cover, so they are pinned, and the pace itself is
+  // pinned too: it is a change to the treatment of the retention test, and the
+  // date of the last change is recorded in lib/play/measure.ts.
+  const problems: string[] = [];
+  const PINNED = {
+    normal: { start: 72, perSec: 1.15, cap: 158, capAtS: [70, 80] },
+    chill: { start: 58, perSec: 0.6, cap: 112, capAtS: [85, 95] },
+  } as const;
+  for (const mode of ['normal', 'chill'] as const) {
+    const r = SPEED_RAMP[mode];
+    const want = PINNED[mode];
+    for (const k of ['start', 'perSec', 'cap'] as const) {
+      if (r[k] !== want[k]) problems.push(`${mode}.${k} is ${r[k]}, pinned at ${want[k]}: a change to the pace is a change to the test (record it in lib/play/measure.ts)`);
+    }
+    const capAt = (r.cap - r.start) / r.perSec;
+    if (capAt < want.capAtS[0] || capAt > want.capAtS[1]) problems.push(`${mode} reaches its top speed at ${capAt.toFixed(1)}s, outside ${want.capAtS[0]}-${want.capAtS[1]}s`);
+    if (speedAt(0, mode) !== r.start) problems.push(`${mode} starts at ${speedAt(0, mode)}, not ${r.start}`);
+    let prev = 0;
+    for (let t = 0; t <= 600; t += 0.25) {
+      const v = speedAt(t, mode);
+      if (v < prev) problems.push(`${mode} slows down at ${t}s (${prev} -> ${v})`);
+      if (v > r.cap) problems.push(`${mode} passes its cap at ${t}s (${v} > ${r.cap})`);
+      prev = v;
+    }
+    if (speedAt(600, mode) !== r.cap) problems.push(`${mode} never settles at its cap`);
+  }
+  if (SPEED_RAMP.normal.start < 72 || SPEED_RAMP.normal.cap > 158) {
+    problems.push('the normal ramp leaves the 72..158 px/s range section 5b replays');
+  }
+  for (let t = 0; t <= 600; t += 0.25) {
+    if (speedAt(t, 'chill') > speedAt(t, 'normal')) problems.push(`chill is faster than normal at ${t}s`);
+  }
+  check(
+    'the pace',
+    problems,
+    `normal ${SPEED_RAMP.normal.start} -> ${SPEED_RAMP.normal.cap} px/s at ${SPEED_RAMP.normal.perSec}/s (top speed at ${((SPEED_RAMP.normal.cap - SPEED_RAMP.normal.start) / SPEED_RAMP.normal.perSec).toFixed(0)}s), chill ${SPEED_RAMP.chill.start} -> ${SPEED_RAMP.chill.cap} at ${SPEED_RAMP.chill.perSec}/s (${((SPEED_RAMP.chill.cap - SPEED_RAMP.chill.start) / SPEED_RAMP.chill.perSec).toFixed(0)}s); never slows, never passes its cap, chill never outruns normal`,
   );
 }
 
@@ -1394,6 +1462,617 @@ section('8. The app door: which list its form joins, and what its words promise'
     'app door words',
     words,
     `PLAY_APP_WAITLIST_COPY's ${lines.length} lines say there is no app and no date, and one email; none mentions weekly, story, stories or Travels, or promises an unsubscribe link; every signup field is set`,
+  );
+}
+
+section('9. The music: the notation refuses typos, the tunes sit in range, the scheduler keeps time');
+{
+  // Constants lib/play/music.ts keeps private, mirrored here. Scenario 3 measures the gate and tail on
+  // the replay, so changing them there fails here instead of going unnoticed.
+  /** How much of its length each voice sounds (`GATE` in music.ts). */
+  const GATE = { lead: 0.9, harmony: 0.7, bass: 0.95 } as const;
+  /** An oscillator runs this long past its gate so the release ramp finishes (`end + 0.02`). */
+  const TAIL = 0.02;
+  /** "A short fade": the longest time constant the bus's fade to silence may have. */
+  const FADE_MAX = 0.05;
+  /** A note that sounds for less than this, even at the fastest tempo, is a click. */
+  const MIN_SOUNDING = 0.03;
+  /** Midi range per channel, to catch an octave typo: lead g4..d6, harmony g3..d5, bass b2..a4. */
+  const RANGE = { lead: [67, 86], harmony: [55, 74], bass: [47, 69] } as const;
+  /** The tune ships in the /play client bundle, which has a Lighthouse byte budget. */
+  const THEME_MAX_BYTES = 3500;
+  const FRAME = 1 / 60;
+  const GRID_TOL = 1e-6;
+  const CHANNELS = ['lead', 'harmony', 'bass'] as const;
+  const noteName = (midi: number) => `${pitchClass(midi)}${Math.floor(midi / 12) - 1}`;
+  const ms = (s: number) => `${(s * 1000).toFixed(1)} ms`;
+  /** Steps a melodic channel's text adds up to, counted from the text and not from the parser. */
+  const stepsIn = (text: string) =>
+    text.split('|').reduce((n, bar) => n + bar.trim().split(/\s+/).filter(Boolean).reduce((m, tok) => m + Number(tok.split(':')[1] ?? 1), 0), 0);
+
+  // -- A. The tunes: THEME, and every candidate up for audition (the next THEME is one of them).
+  const sources = [
+    { id: 'THEME', source: THEME },
+    ...CANDIDATES.filter(c => c.source !== THEME).map(c => ({ id: c.id, source: c.source })),
+  ];
+  const tunes: { id: string; tune: Tune }[] = [];
+  const shape: string[] = [];
+  const seen: Record<string, number[]> = { bars: [], bpm: [], lead: [], harmony: [], bass: [], sounds: [] };
+  const span = (k: string, fmt: (n: number) => string = String) => {
+    const lo = fmt(Math.min(...seen[k]));
+    const hi = fmt(Math.max(...seen[k]));
+    return lo === hi ? lo : `${lo}..${hi}`;
+  };
+  for (const { id, source } of sources) {
+    let tune: Tune;
+    try {
+      tune = parseTune(source);
+    } catch (error) {
+      shape.push(`${id}: parseTune threw: ${(error as Error).message}`);
+      continue;
+    }
+    tunes.push({ id, tune });
+    seen.bars.push(tune.bars);
+    seen.bpm.push(tune.bpm);
+    if (tune.bars < 8 || tune.bars > 32) shape.push(`${id}: ${tune.bars} bars, outside 8..32`);
+    if (tune.bpm < 100 || tune.bpm > 160) shape.push(`${id}: ${tune.bpm} bpm, outside 100..160`);
+    const fastest = stepSeconds(tune.bpm, 1 + TEMPO_GAIN);
+    for (const ch of CHANNELS) {
+      const lo = Math.min(...tune[ch].map(n => n.midi));
+      const hi = Math.max(...tune[ch].map(n => n.midi));
+      seen[ch].push(lo, hi);
+      if (lo < RANGE[ch][0] || hi > RANGE[ch][1]) {
+        shape.push(`${id}: ${ch} spans ${noteName(lo)}..${noteName(hi)}, outside ${noteName(RANGE[ch][0])}..${noteName(RANGE[ch][1])}`);
+      }
+      const sounds = Math.min(...tune[ch].map(n => n.len)) * fastest * GATE[ch];
+      seen.sounds.push(sounds);
+      if (sounds < MIN_SOUNDING) shape.push(`${id}: the shortest ${ch} note sounds ${ms(sounds)} at the fastest tempo, under ${ms(MIN_SOUNDING)}`);
+      if (stepsIn(source[ch]) !== tune.steps) shape.push(`${id}: ${ch} adds up to ${stepsIn(source[ch])} steps, the loop is ${tune.steps}`);
+    }
+    const cells = source.drums.replace(/[\s|]/g, '').length;
+    if (cells !== tune.steps) shape.push(`${id}: drums are ${cells} cells, the loop is ${tune.steps} steps`);
+    const leadBars = new Set(tune.lead.map(n => Math.floor(n.step / STEPS_PER_BAR)));
+    if (leadBars.size !== tune.bars) shape.push(`${id}: the lead is silent in ${tune.bars - leadBars.size} of ${tune.bars} bars`);
+    const sounding = tune.lead.reduce((n, note) => n + note.len, 0) / tune.steps;
+    if (sounding < 0.6) shape.push(`${id}: the lead sounds on ${Math.round(sounding * 100)}% of steps, under 60%`);
+  }
+  check(
+    'tunes',
+    shape,
+    `${tunes.length} tunes (${tunes.map(t => t.id).join(', ')}) parse: ${span('bars')} bars at ${span('bpm')} bpm; lead ${span('lead', noteName)}, harmony ${span('harmony', noteName)}, bass ${span('bass', noteName)}; every channel fills the loop to the step, the lead is in every bar, and the shortest note still sounds ${ms(Math.min(...seen.sounds))} at the fastest tempo (+${TEMPO_GAIN * 100}%)`,
+  );
+
+  // -- B. The tune is in the client bundle.
+  const themeBytes = JSON.stringify(THEME).length;
+  check(
+    'tune size',
+    themeBytes < THEME_MAX_BYTES ? [] : [`THEME is ${themeBytes} bytes as JSON, over the ${THEME_MAX_BYTES} it may add to the /play client bundle`],
+    `THEME is ${themeBytes} bytes as JSON (under ${THEME_MAX_BYTES}: it ships in the /play client bundle)`,
+  );
+
+  // -- C. The parser refuses what it must, and says where. Each case spoils one thing in a valid tune.
+  const BASE: TuneSource = {
+    bpm: 120,
+    scale: 'c d e f g a b',
+    lead: 'c5:8 e5:8 | g5:16',
+    harmony: 'c4:16 | e4:16',
+    bass: 'c3:16 | g3:16',
+    drums: 'k...s...k...s... | k.h.s.h.k.h.s.h.',
+  };
+  const attempt = (patch: Partial<TuneSource>): { tune?: Tune; error?: string } => {
+    try {
+      return { tune: parseTune({ ...BASE, ...patch }) };
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  };
+  const REFUSALS: { what: string; patch: Partial<TuneSource>; reason: RegExp; where: RegExp }[] = [
+    { what: 'a 15-step bar', patch: { harmony: 'c4:16 | e4:15' }, reason: /15 steps/, where: /^harmony bar 2\b/ },
+    { what: 'a 17-step bar', patch: { bass: 'c3:17 | g3:16' }, reason: /17 steps/, where: /^bass bar 1\b/ },
+    { what: "a note called 'h5'", patch: { lead: 'c5:8 e5:8 | h5:16' }, reason: /not a note name/, where: /^lead bar 2\b/ },
+    { what: 'a note outside the scale', patch: { lead: 'c5:8 f#5:8 | g5:16' }, reason: /outside the scale/, where: /^lead bar 1\b/ },
+    { what: 'unequal bar counts', patch: { harmony: 'c4:16' }, reason: /has 1 bars, lead has 2/, where: /^harmony has 1 bars/ },
+    { what: 'a bad drum character', patch: { drums: 'k...s...k...s... | k.h.s.h.k.h.s.hx' }, reason: /not k, s, h or \./, where: /^drums bar 2\b/ },
+    { what: 'a drum bar of 15 cells', patch: { drums: 'k...s...k...s... | k.h.s.h.k.h.s.h' }, reason: /15 steps/, where: /^drums bar 2\b/ },
+    { what: "a zero length ('c5:0')", patch: { lead: 'c5:0 c5:16 | g5:16' }, reason: /no whole length/, where: /^lead bar 1\b/ },
+    { what: "a fractional length ('c5:1.5')", patch: { lead: 'c5:8 e5:8 | g5:1.5' }, reason: /no whole length/, where: /^lead bar 2\b/ },
+  ];
+  const refusals: string[] = [];
+  const located: string[] = [];
+  const good = attempt({});
+  if (!good.tune || good.tune.bars !== 2 || good.tune.steps !== 32 || good.tune.lead.length !== 3 || good.tune.at[0].drum !== 'k' || good.tune.at[16].lead?.midi !== noteMidi('g5')) {
+    refusals.push(`a valid two-bar tune did not parse to what it says: ${good.error ?? JSON.stringify(good.tune?.lead)}`);
+  }
+  const flats = attempt({ scale: 'c d e eb f g a bb', lead: 'eb5:8 bb4:8 | g5 r:15' });
+  if (flats.tune?.lead.map(n => n.midi).join() !== '75,70,79' || flats.tune?.lead[2].len !== 1) {
+    refusals.push(`flats in the scale and a bare note name (length 1) parsed to ${flats.error ?? flats.tune?.lead.map(n => `${n.midi}:${n.len}`).join(' ')}, not 75:8 70:8 79:1`);
+  }
+  const PINS: [string, number, number][] = [
+    ['noteMidi(c4)', noteMidi('c4'), 60],
+    ['noteMidi(a4)', noteMidi('a4'), 69],
+    ['noteMidi(c#4)', noteMidi('c#4'), 61],
+    ['noteMidi(db4)', noteMidi('db4'), 61],
+    ['midiHz(69)', midiHz(69), 440],
+    ['midiHz(81)', midiHz(81), 880],
+  ];
+  for (const [what, got, want] of PINS) if (got !== want) refusals.push(`${what} is ${got}, expected ${want}`);
+  for (const r of REFUSALS) {
+    const got = attempt(r.patch);
+    if (got.tune) {
+      refusals.push(`${r.what} parsed instead of being refused`);
+      continue;
+    }
+    if (!r.reason.test(got.error!)) refusals.push(`${r.what} was refused for the wrong reason: "${got.error}"`);
+    if (!r.where.test(got.error!)) located.push(`${r.what}: "${got.error}" does not say where (expected it to start ${r.where.source})`);
+  }
+  check(
+    'parser refusals',
+    refusals,
+    `a valid tune parses (flats, bare note names, middle C = 60, A4 = 440 Hz), and ${REFUSALS.length} typos are each refused for their own reason: ${REFUSALS.map(r => r.what).join('; ')}`,
+  );
+  check(
+    'parser errors say where',
+    located,
+    `all ${REFUSALS.length} refusals name the channel and bar (or, for unequal bar counts, the channel and both counts), so a typo in 16 bars of 3 channels is found without a search`,
+  );
+
+  // -- D. Tempo.
+  const tempo: string[] = [];
+  const eq = (what: string, got: number, want: number) => {
+    if (got !== want) tempo.push(`${what} is ${got}, expected ${want}`);
+  };
+  eq('tempoScale(0)', tempoScale(0), 1);
+  eq('tempoScale(1)', tempoScale(1), 1 + TEMPO_GAIN);
+  eq('tempoScale(-3)', tempoScale(-3), 1);
+  eq('tempoScale(7)', tempoScale(7), 1 + TEMPO_GAIN);
+  eq('tempoScale(NaN)', tempoScale(NaN), 1);
+  eq('stepSeconds(120, 1)', stepSeconds(120, 1), 0.125);
+  eq('stepSeconds(120, 2)', stepSeconds(120, 2), 0.0625);
+  for (const p of [-Infinity, -1, 0, 0.25, 0.5, 1, 2, Infinity, NaN]) {
+    const t = tempoScale(p);
+    if (!(t >= 1 && t <= 1 + TEMPO_GAIN)) tempo.push(`tempoScale(${p}) is ${t}, outside 1..${1 + TEMPO_GAIN}`);
+  }
+  for (let p = 0.01; p <= 1; p += 0.01) {
+    if (tempoScale(p) < tempoScale(p - 0.01)) tempo.push(`tempoScale falls between ${(p - 0.01).toFixed(2)} and ${p.toFixed(2)}`);
+  }
+  check(
+    'tempo',
+    tempo,
+    `tempoScale is 1 at the run's start speed and ${1 + TEMPO_GAIN} at its cap, clamps either side, treats NaN as the start, never falls; stepSeconds(120, 1) is 0.125 s`,
+  );
+
+  // -- E. The scheduler, replayed against a fake AudioContext.
+  // It implements exactly what lib/play/music.ts calls and records what the notes would have been.
+  class FakeParam {
+    calls: [string, ...number[]][] = [];
+    constructor(public value = 0) {}
+    private log(name: string, ...args: number[]): this {
+      this.calls.push([name, ...args]);
+      return this;
+    }
+    setValueAtTime(v: number, t: number) {
+      return this.log('setValueAtTime', v, t);
+    }
+    linearRampToValueAtTime(v: number, t: number) {
+      return this.log('linearRampToValueAtTime', v, t);
+    }
+    exponentialRampToValueAtTime(v: number, t: number) {
+      return this.log('exponentialRampToValueAtTime', v, t);
+    }
+    setTargetAtTime(target: number, t: number, timeConstant: number) {
+      return this.log('setTargetAtTime', target, t, timeConstant);
+    }
+    cancelScheduledValues(t: number) {
+      return this.log('cancelScheduledValues', t);
+    }
+  }
+  class FakeNode {
+    /** What this node feeds, and how many nodes feed it. */
+    to: FakeNode[] = [];
+    inputs = 0;
+    connect(next: FakeNode) {
+      this.to.push(next);
+      next.inputs += 1;
+      return next;
+    }
+    disconnect() {}
+  }
+  class FakeGain extends FakeNode {
+    gain = new FakeParam(1);
+  }
+  class FakeFilter extends FakeNode {
+    type = 'lowpass';
+    frequency = new FakeParam(350);
+  }
+  class FakeOsc extends FakeNode {
+    type = 'sine';
+    frequency = new FakeParam(440);
+    wave: { duty: number } | null = null;
+    t = NaN;
+    at = NaN;
+    stopAt = NaN;
+    constructor(private ac: FakeContext) {
+      super();
+    }
+    setPeriodicWave(wave: { duty: number }) {
+      this.wave = wave;
+    }
+    start(t: number) {
+      this.t = t;
+      this.at = this.ac.currentTime;
+      this.ac.oscStarts.push(this);
+    }
+    stop(t: number) {
+      this.stopAt = t;
+    }
+    /** Told by what music.ts does to it: the narrow pulse is the lead, the square the harmony, a pitch sweep a drum's thump, the plain triangle the bass. */
+    get voice(): 'lead' | 'harmony' | 'bass' | 'thump' {
+      if (this.wave) return this.wave.duty < 0.4 ? 'lead' : 'harmony';
+      return this.frequency.calls.some(c => c[0] === 'exponentialRampToValueAtTime') ? 'thump' : 'bass';
+    }
+    get hz(): number {
+      return this.frequency.calls.find(c => c[0] === 'setValueAtTime')?.[1] ?? NaN;
+    }
+  }
+  class FakeSource extends FakeNode {
+    buffer: unknown = null;
+    constructor(private ac: FakeContext) {
+      super();
+    }
+    start(t: number, _offset?: number) {
+      this.ac.bufStarts.push({ t, at: this.ac.currentTime });
+    }
+    stop() {}
+  }
+  class FakeContext {
+    currentTime = 0;
+    sampleRate = 8000;
+    state: 'running' | 'suspended' = 'running';
+    destination = new FakeNode();
+    gains: FakeGain[] = [];
+    oscStarts: FakeOsc[] = [];
+    bufStarts: { t: number; at: number }[] = [];
+    createGain() {
+      const g = new FakeGain();
+      this.gains.push(g);
+      return g;
+    }
+    createOscillator() {
+      return new FakeOsc(this);
+    }
+    createBufferSource() {
+      return new FakeSource(this);
+    }
+    createBiquadFilter() {
+      return new FakeFilter();
+    }
+    /** The duty cycle is recovered from the first harmonic (imag[1] = (1 - cos(2π·duty)) / π), which is how the voices are told apart. */
+    createPeriodicWave(_real: Float32Array, imag: Float32Array) {
+      return { duty: Math.acos(1 - Math.PI * imag[1]) / (2 * Math.PI) };
+    }
+    createBuffer(_channels: number, length: number) {
+      return { getChannelData: () => new Float32Array(length) };
+    }
+    /** The gain nodes wired straight to the output: music.ts makes one per start. */
+    get buses() {
+      return this.gains.filter(g => g.to.includes(this.destination));
+    }
+  }
+
+  /** A fake context with a player on it. `play` runs frames like the engine: sync, then the clock moves on. */
+  function rig(tune: Tune, state: 'running' | 'suspended' = 'running') {
+    const ac = new FakeContext();
+    ac.state = state;
+    const music = createMusic(() => ac as unknown as AudioContext, tune);
+    const mark = () => ({ osc: ac.oscStarts.length, buf: ac.bufStarts.length });
+    const play = (seconds: number, tempo = 1, on = true, dt: number | (() => number) = FRAME): void => {
+      let elapsed = 0;
+      while (elapsed < seconds - 1e-9) {
+        const d = typeof dt === 'number' ? dt : dt();
+        music.sync(on, tempo);
+        if (ac.state === 'running') ac.currentTime += d; // a suspended context's clock stands still
+        elapsed += d;
+      }
+    };
+    return { ac, music, mark, play };
+  }
+
+  /** Everything that starts at one instant, which is one step of the tune. */
+  interface Group {
+    t: number;
+    osc: FakeOsc[];
+    bufs: number;
+  }
+  function groupsOf(ac: FakeContext, from = { osc: 0, buf: 0 }): Group[] {
+    const by = new Map<number, Group>();
+    const at = (t: number): Group => {
+      let g = by.get(t);
+      if (!g) by.set(t, (g = { t, osc: [], bufs: 0 }));
+      return g;
+    };
+    for (const o of ac.oscStarts.slice(from.osc)) at(o.t).osc.push(o);
+    for (const b of ac.bufStarts.slice(from.buf)) at(b.t).bufs += 1;
+    return [...by.values()].sort((a, b) => a.t - b.t);
+  }
+  // A step's events as a string: the lead, harmony and bass pitches in Hz, then thumps and noise bursts.
+  const hzOf = (n?: Note) => (n ? String(midiHz(n.midi)) : '');
+  const thumps = (e: StepEvents) => (e.drum === 'k' || e.drum === 's' ? 1 : 0);
+  const bursts = (e: StepEvents) => (e.drum === 's' || e.drum === 'h' ? 1 : 0);
+  const stepSig = (e: StepEvents) => [hzOf(e.lead), hzOf(e.harmony), hzOf(e.bass), thumps(e), bursts(e)].join('/');
+  const groupSig = (g: Group) => {
+    const hz = (voice: string) => g.osc.filter(o => o.voice === voice).map(o => o.hz).join('+');
+    return [hz('lead'), hz('harmony'), hz('bass'), g.osc.filter(o => o.voice === 'thump').length, g.bufs].join('/');
+  };
+  const EMPTY = stepSig({});
+  /** The first step at or after `from` where anything begins (a step with only rests has no start to see). */
+  const firstEventStep = (tune: Tune, from: number): number => {
+    for (let s = from; s < from + tune.steps; s++) if (stepSig(tune.at[s % tune.steps]) !== EMPTY) return s;
+    return from;
+  };
+  const inWindow = (times: number[], from: number, to: number) => times.filter(t => t >= from - GRID_TOL && t < to - GRID_TOL).length;
+
+  /**
+   * `groups` are consecutive stretches of a replay whose first group is step `step0`. Each must sit on
+   * the step grid from the first, play what the tune has on that step, sound each melodic note for its
+   * length × gate, and no step with anything on it may be missing between the first and the last.
+   */
+  function audit(id: string, tune: Tune, groups: Group[], step0: number, sec: number): string[] {
+    if (groups.length === 0) return [`${id}: nothing was scheduled`];
+    const out: string[] = [];
+    const t0 = groups[0].t;
+    const scheduled = new Set<number>();
+    let last = step0;
+    for (const g of groups) {
+      const n = Math.round((g.t - t0) / sec);
+      const off = g.t - t0 - n * sec;
+      if (Math.abs(off) > GRID_TOL) {
+        out.push(`${id}: a start at ${g.t.toFixed(4)} s is ${ms(off)} off the ${ms(sec)} step grid`);
+        continue;
+      }
+      const s = step0 + n;
+      scheduled.add(s);
+      last = Math.max(last, s);
+      const e = tune.at[s % tune.steps];
+      if (groupSig(g) !== stepSig(e)) {
+        out.push(`${id}: step ${s} (bar ${(Math.floor(s / STEPS_PER_BAR) % tune.bars) + 1}, step ${(s % STEPS_PER_BAR) + 1}) sounds ${groupSig(g)}, the tune has ${stepSig(e)}`);
+      }
+      for (const o of g.osc) {
+        if (o.voice === 'thump') continue;
+        const note = e[o.voice];
+        if (!note) continue;
+        const sounds = o.stopAt - g.t - TAIL;
+        const want = note.len * sec * GATE[o.voice];
+        if (Math.abs(sounds - want) > GRID_TOL) out.push(`${id}: step ${s} ${o.voice} sounds ${ms(sounds)}, but ${note.len} steps × gate ${GATE[o.voice]} is ${ms(want)}`);
+      }
+    }
+    for (let s = step0; s <= last; s++) {
+      if (!scheduled.has(s) && stepSig(tune.at[s % tune.steps]) !== EMPTY) out.push(`${id}: step ${s} has events and was never scheduled`);
+    }
+    return out;
+  }
+
+  const P = { loop: [], early: [], grid: [], tempo: [], stop: [], rewind: [], swap: [], suspended: [], stall: [], bus: [] } as Record<string, string[]>;
+  const stats = { loops: [] as string[], starts: 0, ahead: [Infinity, -Infinity], steps: 0, resumed: [] as string[], stalls: [] as string[], runSeconds: 0 };
+  const oscCount = (e: StepEvents) => (e.lead ? 1 : 0) + (e.harmony ? 1 : 0) + (e.bass ? 1 : 0) + thumps(e);
+
+  for (const { id, tune } of tunes) {
+    const sec = stepSeconds(tune.bpm, 1);
+    const loop = tune.steps * sec;
+    const first = firstEventStep(tune, 0);
+
+    // 1-4. Three replays: tempo 1 at 60 fps (long enough for two loops), tempo 1.1, and tempo 1.05 on
+    // frames of 4-300 ms (a slow frame is survivable up to LOOKAHEAD).
+    const seconds = Math.ceil(Math.max(70, 2 * loop + 2));
+    stats.runSeconds = seconds;
+    const runA = rig(tune);
+    runA.play(seconds, 1);
+    const runB = rig(tune);
+    runB.play(35, 1.1);
+    const rnd = seeded(7);
+    const runC = rig(tune);
+    runC.play(40, 1.05, true, () => 0.004 + rnd() * 0.296);
+    const groupsA = groupsOf(runA.ac);
+
+    // 1. One loop holds exactly the notes, kicks, snares and hats the tune has, and so does the next.
+    const hits = (h: string) => tune.drums.filter(d => d.hit === h).length;
+    const wantOsc = tune.lead.length + tune.harmony.length + tune.bass.length + hits('k') + hits('s');
+    const wantBuf = hits('s') + hits('h');
+    const t0 = groupsA[0].t;
+    if (groupsA[groupsA.length - 1].t < t0 + 2 * loop) P.loop.push(`${id}: the ${seconds} s replay did not reach the end of loop 2`);
+    for (const k of [0, 1]) {
+      const osc = inWindow(runA.ac.oscStarts.map(o => o.t), t0 + k * loop, t0 + (k + 1) * loop);
+      const buf = inWindow(runA.ac.bufStarts.map(b => b.t), t0 + k * loop, t0 + (k + 1) * loop);
+      if (osc !== wantOsc || buf !== wantBuf) P.loop.push(`${id}: loop ${k + 1} starts ${osc} oscillators and ${buf} noise bursts, the tune needs ${wantOsc} and ${wantBuf}`);
+    }
+    stats.loops.push(`${id} ${wantOsc}+${wantBuf}`);
+
+    // 2. Nothing is queued in the past, and nothing further ahead than LOOKAHEAD and a step.
+    for (const [run, rate, name] of [[runA, 1, 'tempo 1'], [runB, 1.1, 'tempo 1.1'], [runC, 1.05, 'slow frames']] as const) {
+      const step = stepSeconds(tune.bpm, rate);
+      for (const s of [...run.ac.oscStarts, ...run.ac.bufStarts]) {
+        const ahead = s.t - s.at;
+        stats.starts += 1;
+        stats.ahead = [Math.min(stats.ahead[0], ahead), Math.max(stats.ahead[1], ahead)];
+        if (ahead < -1e-9) P.early.push(`${id} (${name}): a start was queued ${ms(-ahead)} in the past`);
+        else if (ahead > LOOKAHEAD + step + 1e-9) P.early.push(`${id} (${name}): a start was queued ${ms(ahead)} ahead, past LOOKAHEAD ${ms(LOOKAHEAD)} and a step`);
+      }
+    }
+
+    // 3-4. Every start is on the step grid at its tempo and plays its own step.
+    P.grid.push(...audit(`${id} @1`, tune, groupsA, first, sec));
+    stats.steps += groupsA.length;
+    P.tempo.push(...audit(`${id} @1.1`, tune, groupsOf(runB.ac), first, stepSeconds(tune.bpm, 1.1)));
+    P.tempo.push(...audit(`${id} @1.05 on slow frames`, tune, groupsOf(runC.ac), first, stepSeconds(tune.bpm, 1.05)));
+
+    // 5. Off at 5 s: a fade to nothing, silence for 3 s, then back on at the step the stop interrupted.
+    {
+      const r = rig(tune);
+      r.play(5);
+      const x = (r.ac.currentTime - groupsOf(r.ac)[0].t) / sec;
+      if (Math.abs(x - Math.round(x)) < 1e-6) P.stop.push(`${id}: the stop at 5 s falls on a step boundary, so the first unsounded step is ambiguous`);
+      const interrupted = first + Math.floor(x) + 1; // the first step whose time is after the stop
+      const bus = r.ac.buses[r.ac.buses.length - 1];
+      const stoppedAt = r.ac.currentTime;
+      r.music.sync(false, 1);
+      const fade = bus.gain.calls.find(c => c[0] === 'setTargetAtTime');
+      if (!fade || fade[1] !== 0 || Math.abs(fade[2] - stoppedAt) > 1e-9) P.stop.push(`${id}: stopping did not fade the bus to 0 at once (${JSON.stringify(fade)})`);
+      else if (fade[3] > FADE_MAX) P.stop.push(`${id}: the bus fades with time constant ${ms(fade[3])}, over ${ms(FADE_MAX)}`);
+      const off = r.mark();
+      const gains = r.ac.gains.length;
+      r.play(3, 1, false);
+      if (r.ac.oscStarts.length !== off.osc || r.ac.bufStarts.length !== off.buf) P.stop.push(`${id}: ${r.ac.oscStarts.length - off.osc + r.ac.bufStarts.length - off.buf} starts were queued during 3 s of sync(false)`);
+      if (r.ac.gains.length !== gains) P.stop.push(`${id}: a bus was made while the music was off`);
+      const back = r.mark();
+      r.play(2);
+      const resumeAt = firstEventStep(tune, interrupted);
+      P.stop.push(...audit(`${id} resume`, tune, groupsOf(r.ac, back), resumeAt, sec));
+      stats.resumed.push(`${id} step ${resumeAt % tune.steps}`);
+    }
+
+    // 6. rewind() while stopped: the next start is the top of the tune.
+    {
+      const r = rig(tune);
+      r.play(5);
+      r.music.sync(false, 1);
+      r.play(0.5, 1, false);
+      r.music.rewind();
+      const back = r.mark();
+      r.play(1.5);
+      P.rewind.push(...audit(`${id} rewind`, tune, groupsOf(r.ac, back), first, sec));
+    }
+
+    // 6b. setTune() mid-play (the local-dev tune switcher): the old tune's bus fades to 0 at once, one new
+    // bus is made, and the other tune plays from its own first step on its own step grid.
+    {
+      const other = tunes.find(t => t.tune !== tune)!;
+      const r = rig(tune);
+      r.play(5);
+      const oldBus = r.ac.buses[r.ac.buses.length - 1];
+      const swappedAt = r.ac.currentTime;
+      r.music.setTune(other.tune);
+      const fade = oldBus.gain.calls.find(c => c[0] === 'setTargetAtTime');
+      if (!fade || fade[1] !== 0 || Math.abs(fade[2] - swappedAt) > 1e-9) P.swap.push(`${id} -> ${other.id}: the old tune's bus was not faded to 0 at the swap (${JSON.stringify(fade)})`);
+      const back = r.mark();
+      const buses = r.ac.buses.length;
+      r.play(2);
+      if (r.ac.buses.length !== buses + 1) P.swap.push(`${id} -> ${other.id}: the swap made ${r.ac.buses.length - buses} new buses, not 1`);
+      P.swap.push(...audit(`${id} -> ${other.id}`, other.tune, groupsOf(r.ac, back), firstEventStep(other.tune, 0), stepSeconds(other.tune.bpm, 1)));
+    }
+
+    // 7. A suspended context is left alone, and the frame after it runs starts the tune.
+    {
+      const r = rig(tune, 'suspended');
+      r.play(2);
+      if (r.ac.gains.length || r.ac.oscStarts.length || r.ac.bufStarts.length) {
+        P.suspended.push(`${id}: a suspended context got ${r.ac.gains.length} gain nodes, ${r.ac.oscStarts.length} oscillator and ${r.ac.bufStarts.length} noise starts`);
+      }
+      r.ac.state = 'running';
+      const back = r.mark();
+      r.play(1);
+      P.suspended.push(...audit(`${id} after resume()`, tune, groupsOf(r.ac, back), first, sec));
+      try {
+        createMusic(() => null, tune).sync(true, 1);
+      } catch (error) {
+        P.suspended.push(`${id}: sync(true) with no context threw ${(error as Error).message}`);
+      }
+    }
+
+    // 8. A frame that stalls for 2 s queues one LOOKAHEAD of music and nothing from the past.
+    {
+      const r = rig(tune);
+      r.play(1);
+      const lastSync = r.ac.currentTime - FRAME;
+      const queued = Math.ceil((lastSync + LOOKAHEAD - groupsOf(r.ac)[0].t) / sec); // steps queued so far
+      r.ac.currentTime += 2;
+      const now = r.ac.currentTime;
+      const before = r.mark();
+      r.music.sync(true, 1);
+      const after = r.mark();
+      const burst = after.osc - before.osc + after.buf - before.buf;
+      const wsteps = Math.ceil(LOOKAHEAD / sec) + 1;
+      let bound = 0;
+      for (let s = 0; s < tune.steps; s++) {
+        let n = 0;
+        for (let k = 0; k < wsteps; k++) n += oscCount(tune.at[(s + k) % tune.steps]) + bursts(tune.at[(s + k) % tune.steps]);
+        bound = Math.max(bound, n);
+      }
+      if (burst > bound) P.stall.push(`${id}: one sync after a 2 s stall queued ${burst} starts, more than the ${bound} a ${ms(LOOKAHEAD)} window of the tune holds`);
+      const late = [...r.ac.oscStarts.slice(before.osc), ...r.ac.bufStarts.slice(before.buf)].filter(s => s.t < now - 1e-9);
+      if (late.length) P.stall.push(`${id}: ${late.length} starts after the stall were queued in the past`);
+      r.play(1);
+      P.stall.push(...audit(`${id} after the stall`, tune, groupsOf(r.ac, before), firstEventStep(tune, first + queued), sec));
+      stats.stalls.push(`${id} ${burst} of ${bound}`);
+    }
+
+    // 9. Every start makes a new bus at the music level, every stop fades it, and a stopped bus is never fed again.
+    {
+      const r = rig(tune);
+      const fedAtStop: number[] = [];
+      for (let cycle = 0; cycle < 3; cycle++) {
+        r.play(1.5);
+        const buses = r.ac.buses;
+        if (buses.length !== cycle + 1) P.bus.push(`${id}: start ${cycle + 1} left ${buses.length} bus(es) in all, expected a new one each start`);
+        const bus = buses[buses.length - 1];
+        if (bus.gain.value !== MUSIC_LEVEL) P.bus.push(`${id}: start ${cycle + 1} opened its bus at ${bus.gain.value}, not MUSIC_LEVEL ${MUSIC_LEVEL}`);
+        fedAtStop.push(bus.inputs);
+        if (cycle % 2 === 0) r.music.sync(false, 1);
+        else r.music.close();
+        if (!bus.gain.calls.some(c => c[0] === 'setTargetAtTime' && c[1] === 0)) P.bus.push(`${id}: stop ${cycle + 1} (${cycle % 2 === 0 ? 'sync(false)' : 'close()'}) never faded its bus to 0`);
+        r.play(0.5, 1, false);
+      }
+      r.ac.buses.forEach((bus, i) => {
+        if (bus.inputs !== fedAtStop[i]) P.bus.push(`${id}: bus ${i + 1} took ${bus.inputs - fedAtStop[i]} more notes after it was stopped`);
+      });
+      if (new Set(r.ac.buses).size !== 3) P.bus.push(`${id}: 3 starts made ${new Set(r.ac.buses).size} distinct buses`);
+    }
+  }
+
+  const n = tunes.length;
+  check(
+    'music: notes per loop',
+    P.loop,
+    `${n} tunes × ${stats.runSeconds} s at tempo 1: each of the first two loops starts exactly the oscillators and noise bursts the tune holds (${stats.loops.join(', ')}), none missing, none doubled`,
+  );
+  check(
+    'music: never late, never far ahead',
+    P.early,
+    `${stats.starts} starts over ${n} tunes × 3 replays (tempo 1, tempo 1.1, tempo 1.05 on 4-300 ms frames): none in the past, the earliest ${ms(stats.ahead[0])} ahead of the clock, the furthest ${ms(stats.ahead[1])} (the bound is LOOKAHEAD ${ms(LOOKAHEAD)} and a step)`,
+  );
+  check(
+    'music: the step grid',
+    P.grid,
+    `${stats.steps} steps at tempo 1 over ${n} tunes: each start on the 1/16 grid to ${GRID_TOL * 1e6} µs, playing exactly its step's pitches and drums, every melodic note held for length × gate (lead ${GATE.lead}, harmony ${GATE.harmony}, bass ${GATE.bass}), no step with a note skipped`,
+  );
+  check(
+    'music: tempo',
+    P.tempo,
+    `at tempo 1.1 and 1.05 (the second on slow frames) steps fall stepSeconds(bpm, tempo) apart, e.g. ${tunes.map(t => `${t.id} ${ms(stepSeconds(t.tune.bpm, 1.1))} (${ms(stepSeconds(t.tune.bpm, 1))} at 1)`).join(', ')}`,
+  );
+  check(
+    'music: stop and resume',
+    P.stop,
+    `${n} tunes stopped at 5 s: the bus fades to 0 within ${ms(FADE_MAX)} of the stop, 3 s of sync(false) queue nothing and make no bus, and sync(true) carries on at the step the stop interrupted (${stats.resumed.join(', ')}), not at bar 1`,
+  );
+  check('music: rewind', P.rewind, `rewind() while stopped, then sync(true): all ${n} tunes start from step 0 and play in order`);
+  check(
+    'music: swapping the tune',
+    P.swap,
+    `setTune() at 5 s: the old bus fades to 0 at once, one new bus is made, and each of the ${n} tunes hands over to another from that tune's first step, on its own step grid`,
+  );
+  check(
+    'music: suspended context',
+    P.suspended,
+    `a suspended context for 2 s: no bus and no start; the frame after resume() plays from step 0; a null context is ignored`,
+  );
+  check(
+    'music: a stalled frame',
+    P.stall,
+    `after a 2 s stall one sync queues at most one LOOKAHEAD window of events (${stats.stalls.join(', ')}), none in the past, and the tune carries on from the next step`,
+  );
+  check(
+    'music: a new bus each start',
+    P.bus,
+    `${n * 3} starts after a stop (sync(false) and close() alternating) each got a new bus at MUSIC_LEVEL ${MUSIC_LEVEL}; each stop faded its bus to 0 and nothing was fed to it afterwards`,
   );
 }
 

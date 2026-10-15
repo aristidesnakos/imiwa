@@ -30,6 +30,7 @@
     "stories:sync-videos": "tsx --tsconfig tsconfig.json scripts/stories/sync-videos.ts",
     "validate:video-sync": "tsx --tsconfig tsconfig.json scripts/stories/validate-video-sync.ts",
     "og:render": "tsx --tsconfig tsconfig.json scripts/render-share-cards.ts",
+    "music:render": "tsx --tsconfig tsconfig.json scripts/music/render-tunes.ts",
     "stories:ship":"tsx --tsconfig tsconfig.json scripts/stories/ship-episode.ts",
     "stories:episode-issue": "tsx --tsconfig tsconfig.json scripts/stories/episode-issue.ts create",
     "stories:episode-status": "tsx --tsconfig tsconfig.json scripts/stories/episode-issue.ts status",

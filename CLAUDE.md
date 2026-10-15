@@ -63,6 +63,7 @@ pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.js
 
 ```bash
 pnpm sentences:publish --level N5 --dry-run      # queue + decisions -> published/<level>.json
+pnpm music:render [route|dash|town]              # audition candidate tunes -> out/music/*.wav (headless Chrome)
 pnpm check-indexation                            # Search Console indexed-page trend
 pnpm check-query-performance                     # per-query trend; is romaji actually landing?
 pnpm submit-indexnow
@@ -532,7 +533,8 @@ as a **six-week retention test**, pre-registered in the KanjiFun appraisal doc w
 returning within 7 days at >= 2x the rate of visitors who did not (and >= 15%). Do not add goals,
 placements or promotion during the window: the read has to stay clean. One exception, Ari's own
 decision on 2026-10-11, the first day: a fourth door on the homepage (see "Where it is linked"). It
-is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) with it in mind.
+is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) with it in mind. The
+pace and the music changed on 2026-10-15 (day 5): see "The pace and the music" below.
 
 - **Content comes from the contract in `lib/play/`, never from the island.** `signs.ts` holds the
   82 hand-curated signs (one English word, one kana reading each) and the six game-only worlds;
@@ -545,6 +547,27 @@ is a known tilt on the read, so judge reach (>= 300 starters, about 50 a week) w
   remains (world 1, five kanji against six catches, repeats exactly one), and a tile is never placed on
   a stump or gold box (`placeWave`, `stumpFits`), a ground tile also getting a speed-scaled run-up
   behind a stump (`runUp`, derived from the jump physics in its comment).
+- **The pace and the music (2026-10-15, day 5: two treatment changes, logged in `measure.ts`, no
+  goal).** Speed is the only thing that makes a run harder over time (worlds change what is asked):
+  a straight line in `SPEED_RAMP` / `speedAt(t, speed)`, `engine.ts`, normal 72 + 1.15·t to a 158
+  cap (top at 75 s, was 1.5·t and 57 s), chill 58 + 0.6·t to 112 (90 s, was 0.8·t and 68 s). Start
+  and cap are pinned (a tile reaches Tan in 2.2 s at the start, 1.0 s at the cap): `validate:play`
+  5b replays the lane at 72..158 px/s, 5c pins the ramp, so a pace change is a deliberate edit there.
+  The music is an original looping chiptune (pulse, triangle and noise voices): `tune.ts` the
+  notation and parser (bars must be 16 steps, a `scale` list refuses wrong accidentals,
+  `tempoScale` lifts the tempo up to +10% with the run's speed), `theme.ts` the shipped tune
+  (`THEME`), `music.ts` the voices and scheduler. **The scheduler owns no timer**: the engine calls
+  `sync` every frame of a run, so whatever stops the loop (pause, death, game over) ends the music
+  within its 0.4 s lookahead. It follows the "♪ ON/OFF" toggle (M key) and the saved `sound` option,
+  which defaults to true, so **music is on by default for everyone who has not turned sound off**.
+  It starts only from the gesture that starts a run (autoplay rules), does nothing if the
+  AudioContext is not running (the iOS silent switch) and restarts from bar 1 on a new run. Nothing
+  is stored; 2.6 kB gzipped of script, measured (`scriptKb: 230`). `pnpm music:render` auditions
+  candidates (unchosen ones stay in `scripts/music/candidates.ts`, out of the bundle), and on local
+  dev a `TuneSwitcher` panel (top right of `/play`, fed by `/api/dev/tunes`, a 404 in production)
+  swaps the tune mid-run; `validate:play`
+  section 9 checks the notation, the shipped tune and the scheduler. The iOS app (`tan-dash` repo)
+  has its own engine and neither change.
 - **The island never imports kanji data.** `app/play/page.tsx` calls `buildPlayData()` and passes
   ~10 kB of JSON to `components/play/TanDash.tsx`, the same pattern as the sheet builder.
   `lib/play/engine.ts` is the framework-free canvas engine.
