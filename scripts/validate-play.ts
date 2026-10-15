@@ -73,7 +73,6 @@ import {
   type Tune,
   type TuneSource,
 } from '../lib/play/tune';
-import { CANDIDATES } from './music/candidates';
 import {
   CATCHES_PER_WORLD,
   LANE_PAD,
@@ -1486,15 +1485,13 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
   const CHANNELS = ['lead', 'harmony', 'bass'] as const;
   const noteName = (midi: number) => `${pitchClass(midi)}${Math.floor(midi / 12) - 1}`;
   const ms = (s: number) => `${(s * 1000).toFixed(1)} ms`;
+  const tuneCount = (k: number) => `${k} ${k === 1 ? 'tune' : 'tunes'}`;
   /** Steps a melodic channel's text adds up to, counted from the text and not from the parser. */
   const stepsIn = (text: string) =>
     text.split('|').reduce((n, bar) => n + bar.trim().split(/\s+/).filter(Boolean).reduce((m, tok) => m + Number(tok.split(':')[1] ?? 1), 0), 0);
 
-  // -- A. The tunes: THEME, and every candidate up for audition (the next THEME is one of them).
-  const sources = [
-    { id: 'THEME', source: THEME },
-    ...CANDIDATES.filter(c => c.source !== THEME).map(c => ({ id: c.id, source: c.source })),
-  ];
+  // -- A. The tune.
+  const sources = [{ id: 'THEME', source: THEME }];
   const tunes: { id: string; tune: Tune }[] = [];
   const shape: string[] = [];
   const seen: Record<string, number[]> = { bars: [], bpm: [], lead: [], harmony: [], bass: [], sounds: [] };
@@ -1539,7 +1536,7 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
   check(
     'tunes',
     shape,
-    `${tunes.length} tunes (${tunes.map(t => t.id).join(', ')}) parse: ${span('bars')} bars at ${span('bpm')} bpm; lead ${span('lead', noteName)}, harmony ${span('harmony', noteName)}, bass ${span('bass', noteName)}; every channel fills the loop to the step, the lead is in every bar, and the shortest note still sounds ${ms(Math.min(...seen.sounds))} at the fastest tempo (+${TEMPO_GAIN * 100}%)`,
+    `${tuneCount(tunes.length)} (${tunes.map(t => t.id).join(', ')}) parse: ${span('bars')} bars at ${span('bpm')} bpm; lead ${span('lead', noteName)}, harmony ${span('harmony', noteName)}, bass ${span('bass', noteName)}; every channel fills the loop to the step, the lead is in every bar, and the shortest note still sounds ${ms(Math.min(...seen.sounds))} at the fastest tempo (+${TEMPO_GAIN * 100}%)`,
   );
 
   // -- B. The tune is in the client bundle.
@@ -1760,7 +1757,7 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
   }
 
   /** A fake context with a player on it. `play` runs frames like the engine: sync, then the clock moves on. */
-  function rig(tune: Tune, state: 'running' | 'suspended' = 'running') {
+  const rig = (tune: Tune, state: 'running' | 'suspended' = 'running') => {
     const ac = new FakeContext();
     ac.state = state;
     const music = createMusic(() => ac as unknown as AudioContext, tune);
@@ -1775,7 +1772,7 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
       }
     };
     return { ac, music, mark, play };
-  }
+  };
 
   /** Everything that starts at one instant, which is one step of the tune. */
   interface Group {
@@ -1783,7 +1780,7 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
     osc: FakeOsc[];
     bufs: number;
   }
-  function groupsOf(ac: FakeContext, from = { osc: 0, buf: 0 }): Group[] {
+  const groupsOf = (ac: FakeContext, from = { osc: 0, buf: 0 }): Group[] => {
     const by = new Map<number, Group>();
     const at = (t: number): Group => {
       let g = by.get(t);
@@ -1793,7 +1790,7 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
     for (const o of ac.oscStarts.slice(from.osc)) at(o.t).osc.push(o);
     for (const b of ac.bufStarts.slice(from.buf)) at(b.t).bufs += 1;
     return [...by.values()].sort((a, b) => a.t - b.t);
-  }
+  };
   // A step's events as a string: the lead, harmony and bass pitches in Hz, then thumps and noise bursts.
   const hzOf = (n?: Note) => (n ? String(midiHz(n.midi)) : '');
   const thumps = (e: StepEvents) => (e.drum === 'k' || e.drum === 's' ? 1 : 0);
@@ -1816,7 +1813,7 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
    * the step grid from the first, play what the tune has on that step, sound each melodic note for its
    * length × gate, and no step with anything on it may be missing between the first and the last.
    */
-  function audit(id: string, tune: Tune, groups: Group[], step0: number, sec: number): string[] {
+  const audit = (id: string, tune: Tune, groups: Group[], step0: number, sec: number): string[] => {
     if (groups.length === 0) return [`${id}: nothing was scheduled`];
     const out: string[] = [];
     const t0 = groups[0].t;
@@ -1849,9 +1846,9 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
       if (!scheduled.has(s) && stepSig(tune.at[s % tune.steps]) !== EMPTY) out.push(`${id}: step ${s} has events and was never scheduled`);
     }
     return out;
-  }
+  };
 
-  const P = { loop: [], early: [], grid: [], tempo: [], stop: [], rewind: [], swap: [], suspended: [], stall: [], bus: [] } as Record<string, string[]>;
+  const P = { loop: [], early: [], grid: [], tempo: [], stop: [], rewind: [], suspended: [], stall: [], bus: [] } as Record<string, string[]>;
   const stats = { loops: [] as string[], starts: 0, ahead: [Infinity, -Infinity], steps: 0, resumed: [] as string[], stalls: [] as string[], runSeconds: 0 };
   const oscCount = (e: StepEvents) => (e.lead ? 1 : 0) + (e.harmony ? 1 : 0) + (e.bass ? 1 : 0) + thumps(e);
 
@@ -1941,24 +1938,6 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
       P.rewind.push(...audit(`${id} rewind`, tune, groupsOf(r.ac, back), first, sec));
     }
 
-    // 6b. setTune() mid-play (the local-dev tune switcher): the old tune's bus fades to 0 at once, one new
-    // bus is made, and the other tune plays from its own first step on its own step grid.
-    {
-      const other = tunes.find(t => t.tune !== tune)!;
-      const r = rig(tune);
-      r.play(5);
-      const oldBus = r.ac.buses[r.ac.buses.length - 1];
-      const swappedAt = r.ac.currentTime;
-      r.music.setTune(other.tune);
-      const fade = oldBus.gain.calls.find(c => c[0] === 'setTargetAtTime');
-      if (!fade || fade[1] !== 0 || Math.abs(fade[2] - swappedAt) > 1e-9) P.swap.push(`${id} -> ${other.id}: the old tune's bus was not faded to 0 at the swap (${JSON.stringify(fade)})`);
-      const back = r.mark();
-      const buses = r.ac.buses.length;
-      r.play(2);
-      if (r.ac.buses.length !== buses + 1) P.swap.push(`${id} -> ${other.id}: the swap made ${r.ac.buses.length - buses} new buses, not 1`);
-      P.swap.push(...audit(`${id} -> ${other.id}`, other.tune, groupsOf(r.ac, back), firstEventStep(other.tune, 0), stepSeconds(other.tune.bpm, 1)));
-    }
-
     // 7. A suspended context is left alone, and the frame after it runs starts the tune.
     {
       const r = rig(tune, 'suspended');
@@ -2031,17 +2010,17 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
   check(
     'music: notes per loop',
     P.loop,
-    `${n} tunes × ${stats.runSeconds} s at tempo 1: each of the first two loops starts exactly the oscillators and noise bursts the tune holds (${stats.loops.join(', ')}), none missing, none doubled`,
+    `${tuneCount(n)} × ${stats.runSeconds} s at tempo 1: each of the first two loops starts exactly the oscillators and noise bursts the tune holds (${stats.loops.join(', ')}), none missing, none doubled`,
   );
   check(
     'music: never late, never far ahead',
     P.early,
-    `${stats.starts} starts over ${n} tunes × 3 replays (tempo 1, tempo 1.1, tempo 1.05 on 4-300 ms frames): none in the past, the earliest ${ms(stats.ahead[0])} ahead of the clock, the furthest ${ms(stats.ahead[1])} (the bound is LOOKAHEAD ${ms(LOOKAHEAD)} and a step)`,
+    `${stats.starts} starts over ${tuneCount(n)} × 3 replays (tempo 1, tempo 1.1, tempo 1.05 on 4-300 ms frames): none in the past, the earliest ${ms(stats.ahead[0])} ahead of the clock, the furthest ${ms(stats.ahead[1])} (the bound is LOOKAHEAD ${ms(LOOKAHEAD)} and a step)`,
   );
   check(
     'music: the step grid',
     P.grid,
-    `${stats.steps} steps at tempo 1 over ${n} tunes: each start on the 1/16 grid to ${GRID_TOL * 1e6} µs, playing exactly its step's pitches and drums, every melodic note held for length × gate (lead ${GATE.lead}, harmony ${GATE.harmony}, bass ${GATE.bass}), no step with a note skipped`,
+    `${stats.steps} steps at tempo 1 over ${tuneCount(n)}: each start on the 1/16 grid to ${GRID_TOL * 1e6} µs, playing exactly its step's pitches and drums, every melodic note held for length × gate (lead ${GATE.lead}, harmony ${GATE.harmony}, bass ${GATE.bass}), no step with a note skipped`,
   );
   check(
     'music: tempo',
@@ -2051,14 +2030,9 @@ section('9. The music: the notation refuses typos, the tunes sit in range, the s
   check(
     'music: stop and resume',
     P.stop,
-    `${n} tunes stopped at 5 s: the bus fades to 0 within ${ms(FADE_MAX)} of the stop, 3 s of sync(false) queue nothing and make no bus, and sync(true) carries on at the step the stop interrupted (${stats.resumed.join(', ')}), not at bar 1`,
+    `${tuneCount(n)} stopped at 5 s: the bus fades to 0 within ${ms(FADE_MAX)} of the stop, 3 s of sync(false) queue nothing and make no bus, and sync(true) carries on at the step the stop interrupted (${stats.resumed.join(', ')}), not at bar 1`,
   );
-  check('music: rewind', P.rewind, `rewind() while stopped, then sync(true): all ${n} tunes start from step 0 and play in order`);
-  check(
-    'music: swapping the tune',
-    P.swap,
-    `setTune() at 5 s: the old bus fades to 0 at once, one new bus is made, and each of the ${n} tunes hands over to another from that tune's first step, on its own step grid`,
-  );
+  check('music: rewind', P.rewind, `rewind() while stopped, then sync(true): ${n === 1 ? 'the tune starts' : `all ${n} tunes start`} from step 0 and ${n === 1 ? 'plays' : 'play'} in order`);
   check(
     'music: suspended context',
     P.suspended,

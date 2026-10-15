@@ -33,7 +33,7 @@ import {
 } from './rules';
 import { MYSTERY_POWER, POWERS, type PowerKanji } from './signs';
 import { THEME } from './theme';
-import { parseTune, tempoScale, type Tune, type TuneSource } from './tune';
+import { parseTune, tempoScale, type Tune } from './tune';
 import type { PlayData, PlayKanji, PlayWorld } from './types';
 
 export type PlayState = 'title' | 'play' | 'paused' | 'dying' | 'over';
@@ -104,8 +104,6 @@ export interface TanDashEngine {
   /** Call from a user gesture. */
   resume(): void;
   setOptions(options: Partial<GameOptions>): void;
-  /** Swaps the music mid-run and restarts it from bar 1; an unparseable tune is ignored. For auditioning tunes (the local-dev switcher). */
-  setTune(source: TuneSource): void;
   /** The stage's CSS size and the device pixel ratio; sizes the backing store. */
   resize(cssWidth: number, cssHeight: number, dpr: number): void;
   /** False while the stage is off screen or the tab is hidden: stops the loop. */
@@ -1202,13 +1200,6 @@ export function createTanDash(
       audio.unlock();
       setState('play');
       kick();
-    },
-    setTune(source) {
-      try {
-        music?.setTune(parseTune(source));
-      } catch {
-        // Not a tune; keep the one playing.
-      }
     },
     setOptions(next) {
       Object.assign(opts, next);

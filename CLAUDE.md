@@ -63,7 +63,7 @@ pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.js
 
 ```bash
 pnpm sentences:publish --level N5 --dry-run      # queue + decisions -> published/<level>.json
-pnpm music:render [route|dash|town]              # audition candidate tunes -> out/music/*.wav (headless Chrome)
+pnpm music:render                                # the shipped tune -> out/music/theme.wav (headless Chrome)
 pnpm check-indexation                            # Search Console indexed-page trend
 pnpm check-query-performance                     # per-query trend; is romaji actually landing?
 pnpm submit-indexnow
@@ -562,10 +562,9 @@ pace and the music changed on 2026-10-15 (day 5): see "The pace and the music" b
   which defaults to true, so **music is on by default for everyone who has not turned sound off**.
   It starts only from the gesture that starts a run (autoplay rules), does nothing if the
   AudioContext is not running (the iOS silent switch) and restarts from bar 1 on a new run. Nothing
-  is stored; 2.6 kB gzipped of script, measured (`scriptKb: 230`). `pnpm music:render` auditions
-  candidates (unchosen ones stay in `scripts/music/candidates.ts`, out of the bundle), and on local
-  dev a `TuneSwitcher` panel (top right of `/play`, fed by `/api/dev/tunes`, a 404 in production)
-  swaps the tune mid-run; `validate:play`
+  is stored; 2.6 kB gzipped of script, measured (`scriptKb: 230`). `pnpm music:render` renders it
+  to a WAV through the game's own synth (peak and RMS printed: a hot peak is a click, which the first
+  renders caught); `validate:play`
   section 9 checks the notation, the shipped tune and the scheduler. The iOS app (`tan-dash` repo)
   has its own engine and neither change.
 - **The island never imports kanji data.** `app/play/page.tsx` calls `buildPlayData()` and passes

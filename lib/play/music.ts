@@ -181,14 +181,11 @@ export interface Music {
   sync(on: boolean, tempo: number): void;
   /** The next start begins at the first bar; a start after a pause carries on instead. */
   rewind(): void;
-  /** Swaps the tune: the old one is faded out at once and the new one starts from its first bar. */
-  setTune(next: Tune): void;
   close(): void;
 }
 /* eslint-enable no-unused-vars */
 
-export function createMusic(getContext: () => AudioContext | null, initial: Tune): Music {
-  let tune = initial;
+export function createMusic(getContext: () => AudioContext | null, tune: Tune): Music {
   let bus: GainNode | null = null;
   let ctx: AudioContext | null = null;
   /** The next step to queue, wrapped at the loop. */
@@ -238,12 +235,6 @@ export function createMusic(getContext: () => AudioContext | null, initial: Tune
       while (queued.length && queued[0].t <= now) queued.shift();
     },
     rewind() {
-      step = 0;
-      queued.length = 0;
-    },
-    setTune(next) {
-      halt();
-      tune = next;
       step = 0;
       queued.length = 0;
     },

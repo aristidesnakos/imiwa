@@ -1,12 +1,15 @@
 /**
- * Renders the candidate tunes to WAV files to listen to.
+ * Renders the shipped tune (lib/play/theme.ts) to a WAV file to listen to, or
+ * to check a change to the voices or the levels without opening the game.
  *
- *   pnpm music:render [id…]        route, dash, town (default: all)
+ *   pnpm music:render
  *
  * The audio is made by the game's own synth (lib/play/music.ts `playStep`) in
  * headless Chrome's OfflineAudioContext, so what you hear is what ships, down
- * to the pulse waves. Files go to out/music/ (git-ignored): one loop of the
- * tune plus four bars of the next, so the seam where it wraps is audible.
+ * to the pulse waves. The file goes to out/music/theme.wav (git-ignored): one
+ * loop plus four bars of the next, so the seam where it wraps is audible, and
+ * the peak and RMS are printed (a peak over about -3 dBFS means a click or a
+ * runaway voice: the first renders caught exactly that).
  *
  * Needs Google Chrome (CHROME_PATH, or /Applications/Google Chrome.app) like
  * `pnpm og:render`. esbuild comes from tsx's own dependency, so there is
@@ -17,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import puppeteer from 'puppeteer';
-import { CANDIDATES } from './candidates';
+import { THEME } from '../../lib/play/theme';
 import { parseTune, stepSeconds } from '../../lib/play/tune';
 
 const OUT = path.join(process.cwd(), 'out', 'music');
@@ -46,9 +49,7 @@ async function bundleEntry(): Promise<string> {
 }
 
 async function main(): Promise<void> {
-  const want = process.argv.slice(2);
-  const picked = CANDIDATES.filter(c => want.length === 0 || want.includes(c.id));
-  if (picked.length === 0) throw new Error(`no such tune: ${want.join(', ')} (have ${CANDIDATES.map(c => c.id).join(', ')})`);
+  const picked = [{ id: 'theme', name: 'Theme', source: THEME }];
   fs.mkdirSync(OUT, { recursive: true });
 
   const code = await bundleEntry();
@@ -60,6 +61,7 @@ async function main(): Promise<void> {
     for (const c of picked) {
       const tune = parseTune(c.source);
       const r = await page.evaluate(
+        // eslint-disable-next-line no-unused-vars
         (src, loops) => (window as unknown as { MKMusic: { renderTune: (s: unknown, n: number) => Promise<unknown> } }).MKMusic.renderTune(src, loops),
         c.source as unknown as Record<string, unknown>,
         1,
