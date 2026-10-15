@@ -58,4 +58,5 @@ export const EPISODE_VIDEOS: Record<string, EpisodeVideo> = {
   'tans-family-and-friends': { youtubeId: 'VJMFVI5jsQc', aspect: 'portrait' },
   'counting-at-the-market': { youtubeId: 'LQN6gPIHrOc', aspect: 'portrait' },
   'how-much-is-it': { youtubeId: 'p047VkJC0M4', aspect: 'portrait' },
+  'what-time-is-it': { youtubeId: 'M8UwfcrnNOo', aspect: 'portrait' },
 };
