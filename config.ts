@@ -28,13 +28,11 @@ const config = {
     // carries Resend's SPF and `feedback-smtp` MX. No new DNS was needed.
     fromNoReply: `MichiKanji <noreply@michikanji.com>`,
     fromAdmin: `Ari at MichiKanji <ari@michikanji.com>`,
-    // Inbound destinations — deliberately still llanai.com. These are where
+    // Inbound destination — deliberately still llanai.com. This is where
     // mail LANDS, never a sender identity, and llanai.com is a live Google
-    // Workspace inbox that is actually read. Nothing user-visible carries
-    // either value: /api/feedback sends *to* supportEmail,
-    // and forwardRepliesTo is only the inbound webhook's forward target.
+    // Workspace inbox that is actually read. Nothing user-visible carries it:
+    // /api/feedback sends *to* supportEmail.
     supportEmail: "ari@llanai.com",
-    forwardRepliesTo: "ari@llanai.com",
   },
   // The weekly story's cadence, in one place, because until 2026-09-16 it
   // existed only as the word "weekly" in four pieces of prose and a blank

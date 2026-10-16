@@ -318,8 +318,10 @@ addressed to exactly `FORWARD_ADDRESSES` (`ari@michikanji.com`) to `FORWARD_TO`,
 (Standard Webhooks, the scheme Resend uses), the message is fetched through Resend's receiving API,
 and it goes on as a raw `.eml` attachment, so nothing is parsed or stored. The loop guard skips mail
 from or to `FORWARD_FROM`. Env vars live in Vercel only: `RESEND_API_KEY` must be Full access
-(receiving is refused to a Sending key), plus `RESEND_WEBHOOK_SECRET`. Not the same route as the
-unregistered `app/api/webhook/resend` ShipFast leftover.
+(receiving is refused to a Sending key), plus `RESEND_WEBHOOK_SECRET`. The ShipFast leftover at
+`app/api/webhook/resend` was deleted on 2026-10-16: not being registered with Resend did not stop
+anyone else POSTing to it, and it mailed whatever HTML it was sent from `ari@michikanji.com` to the
+owner. A public route is public whoever it was built for, so every route checks its own caller.
 
 ### No server-side user state
 

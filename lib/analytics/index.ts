@@ -72,11 +72,11 @@ async function waitForVisitorId(timeoutMs = 5000, intervalMs = 250): Promise<str
 // Since 2026-10-11 it is sealed (lib/email/sealed-token.ts), so nobody without the
 // secret can read the address in it, but it still confirms that address for whoever
 // holds it. A confirm JWT minted before then is base64url JSON holding the address,
-// readable by anyone, and stays valid for 48h. Every goal carries page_url, and
-// /api/datafast logs request bodies, so any goal fired on that page (the site-wide
-// announcement bar's, or a return-visit report, which components/ReturnVisitTracker.tsx
-// now skips there) would put the token, and for a JWT the address, into DataFast and
-// into the Vercel logs. Stripped here, in the one function that sends goals, so no
+// readable by anyone, and stays valid for 48h. Every goal carries page_url, so any
+// goal fired on that page (the site-wide announcement bar's, or a return-visit report,
+// which components/ReturnVisitTracker.tsx now skips there) would put the token, and for
+// a JWT the address, into DataFast (and, until /api/datafast stopped logging request
+// bodies on 2026-10-16, into the Vercel logs). Stripped here, in the one function that sends goals, so no
 // current or future goal on a tokened URL can leak it. Every other parameter (the UTM
 // tags above all) is kept exactly as it was.
 const REDACTED_PAGE_PARAMS = new Set(['token']);
@@ -170,31 +170,6 @@ export async function trackConversion(event: ConversionEvent): Promise<void> {
       console.error('Error tracking conversion (deferred):', error);
     }
   })();
-}
-
-// Get visitor data from DataFast
-export async function getVisitorData(visitorId?: string): Promise<any> {
-  if (typeof window === 'undefined') return null;
-  
-  try {
-    const id = visitorId || getDataFastVisitorId();
-    
-    if (!id) {
-      console.log('DataFast visitor ID not available');
-      return null;
-    }
-    
-    const response = await fetch(`/api/datafast?visitor_id=${id}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch visitor data: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching visitor data:', error);
-    return null;
-  }
 }
 
 // Debug function to check consent status

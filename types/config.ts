@@ -37,7 +37,6 @@ export interface ConfigProps {
     fromNoReply: string;
     fromAdmin: string;
     supportEmail?: string;
-    forwardRepliesTo?: string;
   };
   newsletter: {
     /** 0 = Sunday … 6 = Saturday. The day a broadcast is scheduled for. */

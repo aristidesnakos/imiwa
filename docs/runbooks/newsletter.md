@@ -635,9 +635,9 @@ leave ([the two lists](#the-two-lists)).
 - **Only the job schedules from `config.newsletter`.** It is still the one definition the runbook,
   the job and the calendar agree with: `nextSendAt()` turns `sendDay` and `sendTimeUtc` into the
   `scheduled_at` the job sends Resend.
-- **No bounce/complaint webhook.** `app/api/webhook/resend/route.ts` is a ShipFast leftover that
-  parses `formData` for inbound forwarding; Resend's event webhooks post signed JSON and need a
-  separate route. Confirm Resend already auto-suppresses hard bounces before building one —
+- **No bounce/complaint webhook.** The only Resend webhook route is `app/api/webhooks/resend`,
+  which forwards inbound mail (the ShipFast leftover `app/api/webhook/resend` was deleted on
+  2026-10-16). Event webhooks would need their own signed route. Confirm Resend already auto-suppresses hard bounces before building one —
   otherwise it is monitoring, not safety.
 - **The Friday probe is monitoring, not sending.** `check-subscribe-live` reads two endpoints'
   configuration state, never with an address, and opens an Issue. It creates nothing, sends nothing, and has no credentials

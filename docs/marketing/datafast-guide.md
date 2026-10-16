@@ -2,16 +2,17 @@
 
 ## Overview
 
-This document details the implementation of DataFast analytics tracking in our Next.js application, including client-side script integration, server-side API tracking capabilities, and visitor data retrieval.
+This document details the implementation of DataFast analytics tracking in our Next.js application, including client-side script integration and server-side goal tracking.
+
+> **Changed 2026-10-16.** `/api/datafast` now accepts goals only. Its `payment` type and its `GET ?visitor_id=` lookup were removed, with `getVisitorData()`: neither had a caller, the first let anyone post revenue under our key, and the second put an unescaped `visitor_id` into the upstream path, so `..%2F` reached any DataFast read endpoint the key could. Do not bring either back as a public route.
 
 ## Architecture
 
-Our DataFast implementation consists of four main components:
+Our DataFast implementation consists of three main components:
 
 1. **Client-side tracking script** - Automatic pageview and interaction tracking
-2. **Server-side API integration** - Custom goal tracking and payment tracking
-3. **Visitor data API** - Retrieve visitor information and analytics data
-4. **Consent management** - GDPR-compliant analytics initialization
+2. **Server-side API integration** - Custom goal tracking
+3. **Consent management** - GDPR-compliant analytics initialization
 
 ## Implementation Details
 
@@ -56,7 +57,7 @@ if (!document.querySelector('script[src*="datafa.st/js/script.js"]')) {
 
 **File**: `/app/api/datafast/route.ts`
 
-Handles custom goal and payment tracking via DataFast API:
+Forwards custom goals to the DataFast API:
 
 ```typescript
 export async function POST(request: NextRequest) {
@@ -73,10 +74,6 @@ export async function POST(request: NextRequest) {
           name: data.name,
           ...(data.metadata && { metadata: data.metadata })
         };
-        break;
-      case 'payment':
-        endpoint = 'https://datafa.st/api/v1/payments';
-        payload = data as DataFastPayment;
         break;
     }
 
@@ -97,48 +94,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-### 3. Visitor Data Retrieval
-
-**File**: `/app/api/datafast/route.ts`
-
-Retrieve visitor analytics data via GET request:
-
-```typescript
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const visitorId = searchParams.get('visitor_id');
-
-    if (!visitorId) {
-      return NextResponse.json(
-        { error: 'visitor_id parameter required' },
-        { status: 400 }
-      );
-    }
-
-    const response = await fetch(`https://datafa.st/api/v1/visitors/${visitorId}`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.DATAFAST_API_KEY}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`DataFast API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error('DataFast API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch visitor data' },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### 4. Analytics Provider Component
+### 3. Analytics Provider Component
 
 **File**: `/components/AnalyticsProvider.tsx`
 
@@ -242,28 +198,6 @@ async headers() {
 - `name`: Required - Goal name (lowercase, max 64 chars)
 - `metadata`: Optional - Custom properties (max 10, specific naming rules)
 
-### Payment Tracking
-
-**Endpoint**: `POST /api/datafast`
-
-```json
-{
-  "type": "payment",
-  "amount": 2999,
-  "currency": "USD",
-  "transaction_id": "txn_abc123",
-  "datafast_visitor_id": "visitor_abc123xyz789",
-  "email": "user@example.com",
-  "timestamp": "2025-12-19T11:56:11.351Z"
-}
-```
-
-### Visitor Data Retrieval
-
-**Endpoint**: `GET /api/datafast?visitor_id={visitor_id}`
-
-Retrieves visitor analytics data including pageviews, goals, and other tracked events.
-
 ## Client-Side Usage
 
 ### Tracking Conversions
@@ -280,32 +214,6 @@ await trackConversion({
     utm_source: 'google'
   }
 });
-```
-
-### Tracking Payments
-
-```typescript
-import { trackPayment } from '@/lib/analytics';
-
-// Track a payment event
-await trackPayment({
-  amount: 2999,
-  currency: 'USD',
-  transaction_id: 'stripe_pi_abc123',
-  email: 'user@example.com',
-  customer_id: 'cus_abc123'
-});
-```
-
-### Retrieving Visitor Data
-
-```typescript
-import { getVisitorData } from '@/lib/analytics';
-
-// Get visitor analytics data
-const visitorData = await getVisitorData();
-// Or with a specific visitor ID
-const visitorData = await getVisitorData('visitor_abc123xyz789');
 ```
 
 ## Consent Management
