@@ -93,6 +93,11 @@
  *     in or put one off, and it is on before anyone has chosen it. Both can move engagement
  *     and returns either way. Days 1-4 ran on the old pace and in silence, so say so next to the
  *     verdict, and the cohorts may be split on this date. No goal was added.
+ *   - From 2026-10-16 (day 6) the sign ("MEANS" / "READS") sits at mid-screen, above the
+ *     top tile row, instead of at the top just under the score line (lib/play/engine.ts
+ *     drawSign). Tan now jumps in front of it. The text, the rules and the tiles are
+ *     unchanged. It is a layout change that could move engagement or catches either way,
+ *     so say so next to the verdict. No goal was added.
  */
 
 export const PLAY_GOALS = {

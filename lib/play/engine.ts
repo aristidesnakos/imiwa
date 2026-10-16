@@ -1013,25 +1013,31 @@ export function createTanDash(
       iy += 10;
     }
     if (tan.sup > 0) textPix(`上 ${Math.ceil(tan.sup)}`, W - 6, iy, COL.gold, 'right');
-    // The sign
-    if (G.order && !(G.toast && G.toast.t < 2.2)) {
-      const by = 30;
-      rect(COL.ink, 10, by, W - 20, 32);
-      rect(COL.cream, 11, by + 1, W - 22, 30);
-      rect(COL.terra, 11, by + 1, W - 22, 9);
-      ctx.font = `8px ${FONT_PIX}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = COL.cream;
-      ctx.fillText(G.order.mode === 'en' ? 'MEANS' : 'READS', W / 2, by + 2);
-      ctx.fillStyle = COL.ink;
-      ctx.font = `16px ${FONT_DOT}`;
-      ctx.textBaseline = 'middle';
-      ctx.fillText(G.order.text, W / 2, by + 21);
-      // Posts
-      rect(COL.ink, 26, by + 32, 3, 4);
-      rect(COL.ink, W - 29, by + 32, 3, 4);
-    }
+  }
+
+  /**
+   * The sign, at mid-screen rather than the top, so the eye does not cross the
+   * screen to read it and back to Tan. Its posts end at y 168, above the top tile
+   * row (ROW.h, y 176).
+   */
+  function drawSign() {
+    if (!G.order || (G.toast && G.toast.t < 2.2)) return;
+    const by = 132;
+    rect(COL.ink, 10, by, W - 20, 32);
+    rect(COL.cream, 11, by + 1, W - 22, 30);
+    rect(COL.terra, 11, by + 1, W - 22, 9);
+    ctx.font = `8px ${FONT_PIX}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = COL.cream;
+    ctx.fillText(G.order.mode === 'en' ? 'MEANS' : 'READS', W / 2, by + 2);
+    ctx.fillStyle = COL.ink;
+    ctx.font = `16px ${FONT_DOT}`;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(G.order.text, W / 2, by + 21);
+    // Posts
+    rect(COL.ink, 26, by + 32, 3, 4);
+    rect(COL.ink, W - 29, by + 32, 3, 4);
   }
 
   function drawToast() {
@@ -1100,6 +1106,8 @@ export function createTanDash(
         if (reduced() || Math.floor(G.t * 6) % 2) rect(COL.cream, p.x + 16, p.y + bob - 2, 2, 2);
       }
     }
+    // Under Tan, so he jumps in front of the sign rather than behind it.
+    if (state === 'play' || state === 'paused' || state === 'dying') drawSign();
     drawTan();
     for (const p of G.parts) rect(p.color, p.x, p.y, 2, 2);
     for (const f of G.floats) {
