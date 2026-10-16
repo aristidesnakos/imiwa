@@ -45,6 +45,7 @@ pnpm validate:palette        # brand-palette alignment in app/ and components/
 pnpm validate:stories        # episode data: strict N5, bubble geometry, targets, quiz, assets
 pnpm validate:video-sync     # the YouTube-title -> episode matching rule and the videos.ts rewrite
 pnpm validate:play           # Tan Dash: signs, worlds, one right answer per wave, the return-visit model
+pnpm validate:routes         # every app/**/route.* method has an access class in scripts/route-access.json, and its defence is in the handler
 npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts   # N5 quiz: one right answer per question
 ```
 

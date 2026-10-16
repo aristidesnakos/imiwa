@@ -1,0 +1,71 @@
+name: Route Access Check
+
+# Holds every route handler under app/ to a written access decision.
+#
+# The 2026-10-16 audit found two public routes that nobody had re-read for nine
+# to twelve months: the ShipFast webhook at /api/webhook/resend, an open relay
+# that sent attacker-written HTML from ari@michikanji.com, and a DataFast proxy
+# whose GET lent the server key to anyone (both closed in 30331ee). Every other
+# validator here checks data or pure logic, so nothing could see either.
+# `pnpm validate:routes` lists each exported method of each app/**/route.* file
+# and fails unless scripts/route-access.json gives it an access class and a
+# reason, and unless the class's defence is visible in that handler: a Svix
+# signature check, a sealed-token verify, blockedResponse() first, or a rate
+# limiter's .check.
+#
+# A route found unsafe gets no entry, so the check stays red until it is fixed.
+#
+# Like palette-check.yml, this needs no build: it parses the route sources with
+# the TypeScript compiler and runs in seconds, so it fires on any app/ change.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'scripts/validate-routes.ts'
+      - 'scripts/route-access.json'
+      - '.github/workflows/route-access-check.yml'
+  # Catch anything reaching main through a route other than a PR.
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'scripts/validate-routes.ts'
+      - 'scripts/route-access.json'
+      - '.github/workflows/route-access-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: route-access-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-routes:
+    name: Validate route access
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Must run before setup-node so that `cache: pnpm` can find pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate route access
+        run: pnpm validate:routes

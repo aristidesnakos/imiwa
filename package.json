@@ -44,6 +44,7 @@
     "validate:announcements": "tsx --tsconfig tsconfig.json scripts/announcements/validate.ts",
     "validate:play": "tsx --tsconfig tsconfig.json scripts/validate-play.ts",
     "validate:countdown": "tsx --tsconfig tsconfig.json scripts/validate-jlpt-countdown.ts",
+    "validate:routes": "tsx --tsconfig tsconfig.json scripts/validate-routes.ts",
     "announcements:status": "tsx --tsconfig tsconfig.json scripts/announcements/status.ts"
   },
   "dependencies": {

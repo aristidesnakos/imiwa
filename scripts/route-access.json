@@ -1,0 +1,59 @@
+{
+  "_about": [
+    "Who may call each route handler under app/, checked by `pnpm validate:routes` (scripts/validate-routes.ts, whose header defines the classes).",
+    "Keys are URL paths; each exported HTTP method needs an access class and one line of why. A new route.ts fails CI until it has an entry here."
+  ],
+  "routes": {
+    "/api/admin/sentences/decisions/[level]": {
+      "GET": { "access": "local-only", "reason": "The sentence review dashboard reads a level's verdicts from local files; 404 in production." },
+      "POST": { "access": "local-only", "reason": "Writes a review verdict to data/sentences/decisions with fs; 404 in production." },
+      "DELETE": { "access": "local-only", "reason": "Removes a review verdict from the local decisions file; 404 in production." }
+    },
+    "/api/datafast": {
+      "POST": { "access": "public-beacon", "reason": "Forwards one goal from lib/analytics' sendGoal to DataFast's goals endpoint with the server key; goals only (since 2026-10-16), and a client goal is forgeable by nature." }
+    },
+    "/api/feedback": {
+      "POST": { "access": "rate-limited-form", "reason": "The feedback form emails Ari or calls a webhook, so it allows 2 per 10 minutes per IP (per warm instance)." }
+    },
+    "/api/genkouyoushi/[format]": {
+      "GET": { "access": "public-read", "reason": "Blank genkouyoushi print documents, prerendered for a fixed list of formats." }
+    },
+    "/api/kana-sheets": {
+      "GET": { "access": "public-read", "reason": "Kana practice sheets as printable HTML, drawn from public KanjiVG files and cached publicly." }
+    },
+    "/api/kanji-lookup": {
+      "GET": { "access": "public-read", "reason": "The homepage search's suggestions, ranked on the server from the kanji lists." }
+    },
+    "/api/kanji-sheets": {
+      "GET": { "access": "public-read", "reason": "Printable kanji practice sheets; strict parameters, cached publicly." }
+    },
+    "/api/kanji-svg/[hex]": {
+      "GET": { "access": "public-read", "reason": "The raw KanjiVG diagram the stroke-order animation swaps in; page content, exempt from robots' /api/ block." }
+    },
+    "/api/subscribe": {
+      "POST": { "access": "rate-limited-form", "reason": "Newsletter and app-waitlist signup; sends a confirmation email, so it allows 2 per 10 minutes per IP (per warm instance)." }
+    },
+    "/api/subscribe/confirm": {
+      "POST": { "access": "sealed-token", "reason": "Adds a contact only for a valid sealed confirm token (or a legacy JWT until 2026-10-20)." }
+    },
+    "/api/unsubscribe": {
+      "GET": { "access": "sealed-token", "reason": "Checks the unsubscribe token and renders a confirm form; changes nothing, so a link scanner cannot unsubscribe anyone." },
+      "POST": { "access": "sealed-token", "reason": "RFC 8058 one-click unsubscribe; flips only the contact a valid unsubscribe token names." }
+    },
+    "/api/webhooks/resend": {
+      "POST": { "access": "signed-webhook", "reason": "Resend's email.received webhook; refuses any request whose Svix signature does not verify." }
+    },
+    "/kanji/[character]/stroke-order.svg": {
+      "GET": { "access": "public-read", "reason": "The stroke-order image Google Images indexes, fetched from KanjiVG through lib/kanjivg." }
+    },
+    "/robots.txt": {
+      "GET": { "access": "public-read", "reason": "robots.txt." }
+    },
+    "/search": {
+      "GET": { "access": "public-read", "reason": "The homepage search form's GET target; redirects to one kanji page or to /kanji?search=." }
+    },
+    "/sitemap.xml": {
+      "GET": { "access": "public-read", "reason": "The sitemap." }
+    }
+  }
+}
