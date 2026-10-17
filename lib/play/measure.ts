@@ -98,6 +98,12 @@
  *     drawSign). Tan now jumps in front of it. The text, the rules and the tiles are
  *     unchanged. It is a layout change that could move engagement or catches either way,
  *     so say so next to the verdict. No goal was added.
+ *   - From 2026-10-17 (day 7) the world card ("WORLD N") sits on the sign's centre line
+ *     instead of at the top, so it fades into the sign in place (lib/play/engine.ts
+ *     drawToast, SIGN). Its title and Japanese title lines and its "NEW KANJI" label are
+ *     gone: it lists the kanji to pick, with each meaning. The rules and the tiles are
+ *     unchanged. It is a layout and copy change that could move engagement or catches
+ *     either way, so say so next to the verdict. No goal was added.
  */
 
 export const PLAY_GOALS = {

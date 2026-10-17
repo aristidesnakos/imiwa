@@ -142,6 +142,11 @@ const DEATH_TO_RESULTS_MS = 900;
 /** Tile rows: on the ground, mid-air, high (double jump). */
 const ROW = { g: GY - 20, m: 220, h: 176 } as const;
 type RowKey = keyof typeof ROW;
+/**
+ * The sign's box. The world card is centred on the same line, so the card and the
+ * sign it hands over to are in one place.
+ */
+const SIGN = { y: 132, h: 32 } as const;
 
 /**
  * How fast the run goes, in game px/s, as a straight line over run time `t`
@@ -1022,8 +1027,8 @@ export function createTanDash(
    */
   function drawSign() {
     if (!G.order || (G.toast && G.toast.t < 2.2)) return;
-    const by = 132;
-    rect(COL.ink, 10, by, W - 20, 32);
+    const by = SIGN.y;
+    rect(COL.ink, 10, by, W - 20, SIGN.h);
     rect(COL.cream, 11, by + 1, W - 22, 30);
     rect(COL.terra, 11, by + 1, W - 22, 9);
     ctx.font = `8px ${FONT_PIX}`;
@@ -1040,6 +1045,11 @@ export function createTanDash(
     rect(COL.ink, W - 29, by + 32, 3, 4);
   }
 
+  /**
+   * The world card: the world number, then the kanji to pick and what each means,
+   * and nothing else. It is centred on the sign's line (SIGN), not the top of the
+   * screen, so the card fades into the sign in the same place.
+   */
   function drawToast() {
     const T = G.toast;
     if (!T) return;
@@ -1049,8 +1059,8 @@ export function createTanDash(
     const w = T.world;
     const ks = w.kanji;
     const rows = Math.ceil(ks.length / 5);
-    const ph = 66 + rows * 34;
-    const y0 = 64;
+    const ph = 52 + (rows - 1) * 34;
+    const y0 = Math.round(SIGN.y + SIGN.h / 2 - ph / 2);
     rect(COL.ink, 8, y0, W - 16, ph);
     rect(COL.cream, 9, y0 + 1, W - 18, ph - 2);
     rect(COL.terra, 9, y0 + 1, W - 18, 11);
@@ -1059,21 +1069,12 @@ export function createTanDash(
     ctx.fillStyle = COL.cream;
     ctx.font = `8px ${FONT_PIX}`;
     ctx.fillText(`WORLD ${w.n}`, W / 2, y0 + 3);
-    ctx.fillStyle = COL.ink;
-    ctx.font = `12px ${FONT_DOT}`;
-    ctx.fillText(w.title, W / 2, y0 + 16);
-    ctx.fillStyle = COL.terraDeep;
-    ctx.font = `12px ${FONT_DOT}`;
-    ctx.fillText(w.titleJa, W / 2, y0 + 31);
-    ctx.fillStyle = COL.ink;
-    ctx.font = `8px ${FONT_PIX}`;
-    ctx.fillText('NEW KANJI', W / 2, y0 + 49);
     ks.forEach((c, i) => {
       const r = Math.floor(i / 5);
       const inRow = Math.min(5, ks.length - r * 5);
       const col = i % 5;
       const x = W / 2 - (inRow * 32) / 2 + col * 32 + 6;
-      const y = y0 + 60 + r * 34;
+      const y = y0 + 16 + r * 34;
       tile(x, y, c, false, a);
       ctx.globalAlpha = a;
       ctx.fillStyle = COL.ink;
