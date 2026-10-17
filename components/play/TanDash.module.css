@@ -374,9 +374,8 @@
   padding: calc(var(--s) * 5) calc(var(--s) * 8);
 }
 
-/* "I'd play this as a phone app": secondary, so it never competes with PLAY AGAIN. */
+/* "I'd play this as a phone app": secondary, so it never competes with PLAY AGAIN or SHARE. */
 .btn.door {
-  align-self: center;
   font-family: var(--td-font-dot);
   font-size: calc(var(--s) * 7);
   background: transparent;
@@ -433,6 +432,27 @@
   gap: calc(var(--s) * 4);
   padding: calc(var(--s) * 4) calc(var(--s) * 6) calc(var(--s) * 5);
   border-top: var(--s) solid var(--td-cream-chip);
+}
+
+/* SHARE and the phone-app door sit side by side under PLAY AGAIN, the same height. */
+.row {
+  display: flex;
+  align-items: stretch;
+  gap: calc(var(--s) * 3);
+}
+
+.row .btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* The door's reply once it is pressed: it takes the door's place in the row. */
+.ack {
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: center;
+  margin: 0;
+  text-align: center;
 }
 
 .head {

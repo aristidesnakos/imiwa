@@ -104,6 +104,12 @@
  *     gone: it lists the kanji to pick, with each meaning. The rules and the tiles are
  *     unchanged. It is a layout and copy change that could move engagement or catches
  *     either way, so say so next to the verdict. No goal was added.
+ *   - From 2026-10-17 (day 7, after the world card change) the results card drops its
+ *     "Tap a kanji to see it written" line, and SHARE and the phone-app door sit side by
+ *     side under PLAY AGAIN instead of stacked (components/play/TanDash.tsx, .row in
+ *     TanDash.module.css). The tiles still open /kanji/<c> in a new tab. It could move
+ *     engagement, shares or the waitlist either way, so say so next to the verdict. No
+ *     goal was added.
  */
 
 export const PLAY_GOALS = {

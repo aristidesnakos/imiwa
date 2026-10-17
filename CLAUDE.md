@@ -610,7 +610,8 @@ pace and the music changed on 2026-10-15 (day 5): see "The pace and the music" b
 - **The results card is about what was mixed up** (since 2026-10-12, day 2 of the test: a change to the
   treatment, so the 7 Dec read can split on it). Top to bottom: a small score, the mix-ups as
   asked-for / you-took pairs (`result.mix`, the last three distinct), the Kanji-dex with the run's
-  `+N`, then PLAY AGAIN and SHARE pinned under a scrolling body, the app door last. Each tile opens
+  `+N`, then PLAY AGAIN pinned under a scrolling body, with SHARE and the app door side by side beneath it
+  (since 2026-10-17, day 7). Each tile opens
   `/kanji/<c>` in a **new tab**, because the card is component state and a same-tab visit would
   remount `/play` and lose the list. A run with no wrong grabs says "No mix-ups". Combo, world, the
   caught chips, best and streak are off the card (best and streak are on the title screen); the share

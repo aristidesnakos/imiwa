@@ -567,7 +567,6 @@ export function TanDash({ data }: { data: PlayData }) {
                           </li>
                         ))}
                       </ul>
-                      <p className={`${styles.small} ${styles.mid}`}>Tap a kanji to see it written</p>
                     </section>
                   ) : (
                     <section className={styles.group}>
@@ -603,20 +602,22 @@ export function TanDash({ data }: { data: PlayData }) {
                   >
                     PLAY AGAIN
                   </button>
-                  <button type="button" className={styles.btn} onClick={onShare}>
-                    {shareLabel}
-                  </button>
+                  <div className={styles.row}>
+                    <button type="button" className={styles.btn} onClick={onShare}>
+                      {shareLabel}
+                    </button>
+                    {appDoorOpen ? (
+                      <p className={`${styles.small} ${styles.mid} ${styles.ack}`}>{PLAY_APP_WAITLIST_COPY.ack}</p>
+                    ) : (
+                      <button type="button" className={`${styles.btn} ${styles.door}`} onClick={onAppDoor}>
+                        {PLAY_APP_WAITLIST_COPY.button}
+                      </button>
+                    )}
+                  </div>
                   {manualText && (
                     <p ref={noteRef} className={`${styles.small} ${styles.note}`}>
                       {manualText}
                     </p>
-                  )}
-                  {appDoorOpen ? (
-                    <p className={`${styles.small} ${styles.mid}`}>{PLAY_APP_WAITLIST_COPY.ack}</p>
-                  ) : (
-                    <button type="button" className={`${styles.btn} ${styles.door}`} onClick={onAppDoor}>
-                      {PLAY_APP_WAITLIST_COPY.button}
-                    </button>
                   )}
                 </div>
               </div>
