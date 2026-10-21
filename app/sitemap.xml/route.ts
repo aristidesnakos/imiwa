@@ -59,6 +59,8 @@ const STATIC_PAGES: { path: string; lastmod: string; priority: string }[] = [
   // Blank manuscript paper, written for "genkouyoushi paper / pdf / template".
   { path: '/free-resources/genkouyoushi', lastmod: '2026-10-10', priority: '0.7' },
   { path: '/free-resources/kana-sheets', lastmod: '2026-01-10', priority: '0.7' },
+  // Written for "shi vs tsu katakana" / "so vs n katakana" (2026-10-21).
+  { path: '/katakana/shi-tsu-so-n', lastmod: '2026-10-21', priority: '0.7' },
   { path: '/free-resources/kanji-sheets', lastmod: '2026-10-10', priority: '0.7' },
   // The builder: written for "kanji worksheet generator", a query the hub's
   // copy deliberately no longer answers.

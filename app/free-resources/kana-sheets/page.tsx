@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
 import Header from '@/components/sections/Header';
 import { SheetCard } from '@/components/kana/SheetCard';
@@ -70,6 +71,13 @@ export default function KanaSheetsPage() {
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
             Generate printable practice sheets for hiragana and katakana learning with proper stroke order diagrams
+          </p>
+          <p className="mt-3 text-muted-foreground">
+            Mixing up シ and ツ, or ソ and ン?{' '}
+            <Link href="/katakana/shi-tsu-so-n" className="font-medium text-japan-deep-ocean underline underline-offset-2 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              Here is how to tell them apart
+            </Link>
+            .
           </p>
         </div>
 
