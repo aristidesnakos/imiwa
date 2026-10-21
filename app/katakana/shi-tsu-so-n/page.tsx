@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ArrowLeft } from 'lucide-react';
 
 import { getSEOTags } from '@/lib/seo';
 import { SITE_URL, SITE_NAME } from '@/lib/seo/site';
@@ -138,6 +139,21 @@ export default function ShiTsuSoNPage() {
       <Header />
 
       <main id="main-content" tabIndex={-1} className="container mx-auto max-w-3xl px-4 py-12">
+        <nav className="mb-6 text-sm text-japan-mountain-mist" aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li className="flex items-center">
+              <Link href="/" className="flex items-center hover:text-japan-deep-ocean">
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Home
+              </Link>
+            </li>
+            <li aria-hidden className="text-japan-sakura-waters">/</li>
+            <li className="font-medium text-japan-ink-black" aria-current="page">
+              シ vs ツ, ソ vs ン
+            </li>
+          </ol>
+        </nav>
+
         <h1 className="text-3xl font-bold md:text-4xl">シ vs ツ and ソ vs ン: how to tell them apart</h1>
         <p className="mt-4 text-lg leading-relaxed text-japan-mountain-mist">
           シ (shi), ツ (tsu), ソ (so) and ン (n) look almost identical, and they catch nearly everyone who has just
