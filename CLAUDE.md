@@ -312,12 +312,19 @@ drawing. Rerun it after changing the drawing; `validate:sheets` fails on a missi
 ### Inbound mail forwarding
 
 `app/api/webhooks/resend/route.ts` receives Resend's `email.received` webhook (registered at
-`https://michikanji.com/api/webhooks/resend`; the apex 301s every request to www in `vercel.json`
-except those carrying Resend's `svix-id` header, so deliveries reach the route) and forwards mail
-addressed to exactly `FORWARD_ADDRESSES` (`ari@michikanji.com`) to `FORWARD_TO`, sent from
-`FORWARD_FROM`. The logic is in `lib/email/inbound-forward.ts`: the webhook's signature is checked
-(Standard Webhooks, the scheme Resend uses), the message is fetched through Resend's receiving API,
-and it goes on as a raw `.eml` attachment, so nothing is parsed or stored. The loop guard skips mail
+`https://www.michikanji.com/api/webhooks/resend`, subscribed to `email.received` only) and forwards
+mail addressed to exactly `FORWARD_ADDRESSES` (`ari@michikanji.com`) to `FORWARD_TO`, sent from
+`FORWARD_FROM`. **Register it on the www host, never the apex.** The apex 301s every request to www,
+twice over: a project-level domain redirect (Vercel → Domains) and a `vercel.json` rule. Resend
+(Svix) does not follow redirects, so a delivery to the apex counts as a failure, and after eight
+failed attempts per event Resend deactivated the endpoint (2026-10-17, from the weekly broadcast's
+`email.sent` / `email.delivered` events). A `svix-id` exemption in `vercel.json` (119a91c, since
+removed) never worked, because the project-level redirect runs before `vercel.json` rules. The
+route ignores every event but `email.received` with a 200, so subscribing to the others only buys
+two invocations per subscriber per broadcast. The logic is in `lib/email/inbound-forward.ts`: the
+webhook's signature is checked (Standard Webhooks, the scheme Resend uses), the message is fetched
+through Resend's receiving API, and it goes on as a raw `.eml` attachment, so nothing is parsed or
+stored. The loop guard skips mail
 from or to `FORWARD_FROM`. Env vars live in Vercel only: `RESEND_API_KEY` must be Full access
 (receiving is refused to a Sending key), plus `RESEND_WEBHOOK_SECRET`. The ShipFast leftover at
 `app/api/webhook/resend` was deleted on 2026-10-16: not being registered with Resend did not stop
