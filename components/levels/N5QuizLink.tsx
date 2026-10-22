@@ -2,8 +2,10 @@
  * components/levels/N5QuizLink.tsx
  *
  * One line of text linking to /kanji/n5/quiz, for the pages that teach the N5 kanji but
- * did not link to the quiz: every N5 character page, the N5 sheets page, and (for the
- * JLPT-format mode only) /kanji/n5, whose own buttons already link the kanji quiz.
+ * did not link to the quiz: the N5 sheets page and (for the JLPT-format mode only)
+ * /kanji/n5, whose own buttons already link the kanji quiz. Every N5 character page shows
+ * the same door as a card instead (N5QuizCard, below), because the line was too quiet to
+ * be clicked.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * TWO STATES, ONE COPY
@@ -37,6 +39,8 @@
  */
 
 import Link from 'next/link';
+import { ListChecks } from 'lucide-react';
+import { PracticeCard } from '@/components/levels/PracticeCard';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
 import { jlptFormatSummary, type JlptFormatSummary } from '@/lib/jlpt/published';
 
@@ -87,5 +91,58 @@ export function N5QuizLink({ lead, fallback = 'quiz', className, summary = jlptF
       </Link>
       : pick the meaning, the reading or the kanji.
     </p>
+  );
+}
+
+/**
+ * The same door as a bold card (PracticeCard), for the N5 character pages, where one line
+ * of 14px text at the foot of the page went unseen. Both states of N5QuizLink, same
+ * claims: the JLPT-format words are N5QuizLink's, split across the heading and the
+ * sentence, and the plain quiz's are the line's own.
+ *
+ * The tile is "水 = ?", the quiz door's picture on the homepage (StartDoors), drawn in CSS
+ * so the card carries no image bytes.
+ */
+export function N5QuizCard({ className, summary = jlptFormatSummary() }: Omit<Props, 'lead' | 'fallback'>) {
+  const tile = (
+    <span className="flex aspect-square w-full flex-col items-center justify-center rounded-lg border border-border bg-muted text-japan-deep-ocean">
+      <span lang="ja" className="text-4xl font-bold leading-none sm:text-5xl">
+        水
+      </span>
+      <span className="mt-1 text-lg font-bold text-japan-mountain-mist sm:text-2xl">= ?</span>
+    </span>
+  );
+  const icon = <ListChecks aria-hidden />;
+
+  if (summary) {
+    return (
+      <PracticeCard
+        id="n5-quiz-card"
+        eyebrow="Free quiz · JLPT"
+        heading="Practise the N5 kanji in JLPT format"
+        href={JLPT_FORMAT_HREF}
+        cta="Try the JLPT-format sets"
+        icon={icon}
+        tile={tile}
+        className={className}
+      >
+        Our own questions, shaped like the exam&rsquo;s kanji questions, in {describeJlptSets(summary)}.
+      </PracticeCard>
+    );
+  }
+
+  return (
+    <PracticeCard
+      id="n5-quiz-card"
+      eyebrow="Free quiz"
+      heading={`Test yourself on all ${N5_KANJI.length} N5 kanji`}
+      href={QUIZ_PATH}
+      cta="Take the N5 quiz"
+      icon={icon}
+      tile={tile}
+      className={className}
+    >
+      Pick the meaning, the reading or the kanji.
+    </PracticeCard>
   );
 }

@@ -2,7 +2,9 @@
  * components/play/PlayLink.tsx
  *
  * One line of text linking to /play, Tan Dash, for the pages whose reader has just met the
- * kanji the game asks for: every N5 character page, every episode page, and /kanji/n5.
+ * kanji the game asks for: every episode page and /kanji/n5. Every N5 character page shows
+ * the `kanji` variant as a card instead (PlayCard, at the foot of this file), because a
+ * 14px line at the foot of a page was too quiet to be clicked.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * THREE VARIANTS, EVERY CLAIM COMPUTED, NONE PROMISING SPEED
@@ -40,15 +42,18 @@
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * A Server Component with no client boundary, so nothing to hydrate on /kanji/% and
- * /stories/.+ pages, which are gated on total transfer. Text only, no image, for the same
- * reason. It imports lib/play/build.ts, and with it the N5 list, the readings layer and every
+ * /stories/.+ pages, which are gated on total transfer. The line is text only, no image, for
+ * the same reason (the card's one image is a 4 kB tile, below the fold). It imports lib/play/build.ts, and with it the N5 list, the readings layer and every
  * episode, into the SERVER bundle only; never import this file from a client component.
  * `prefetch={false}`: it renders on 82 kanji pages and every episode, and points at a
  * client-heavy route whose payload a prefetch would add to each page's own byte budget
  * (CLAUDE.md, "Performance budgets").
  */
 
+import Image from 'next/image';
 import Link from 'next/link';
+import { Gamepad2 } from 'lucide-react';
+import { PracticeCard } from '@/components/levels/PracticeCard';
 import { buildPlayData } from '@/lib/play/build';
 import type { PlayData } from '@/lib/play/types';
 
@@ -76,6 +81,16 @@ function worldsBefore(n: number): string {
   return `worlds 1 to ${n - 1}`;
 }
 
+/** "食 is in world 13 of 14." or "山 is in world 1, where every run starts." Shared by the line and the card. */
+function KanjiWorld({ kanji, n, total }: { kanji: string; n: number; total: number }) {
+  return (
+    <>
+      <span lang="ja">{kanji}</span> is in world {n}
+      {n === 1 ? ', where every run starts.' : ` of ${total}.`}
+    </>
+  );
+}
+
 type Props = { className?: string } & (
   | { /** The character this page is about. */ kanji: string }
   | { /** The episode this page is. */ episodeSlug: string }
@@ -98,8 +113,7 @@ export function PlayLink(props: Props) {
           Tan Dash
         </Link>{' '}
         is a free one-thumb game that works through all {data.kanji.length} N5 kanji, world by world.{' '}
-        <span lang="ja">{props.kanji}</span> is in world {world.n}
-        {world.n === 1 ? ', where every run starts.' : ` of ${total}.`}
+        <KanjiWorld kanji={props.kanji} n={world.n} total={total} />
       </p>
     );
   }
@@ -126,5 +140,50 @@ export function PlayLink(props: Props) {
       </Link>{' '}
       is a free one-thumb game that works through all {data.kanji.length} N5 kanji, world by world.
     </p>
+  );
+}
+
+/**
+ * The `kanji` line as a bold card (PracticeCard), for the N5 character pages, where the
+ * line was 14px text at the foot of the page and went unseen. Same claims as the line, split
+ * across the card: the game's name moves to the eyebrow and the button, "free" and
+ * "one-thumb" and the world sentence stay, and nothing promises speed or that a run reaches
+ * the kanji. A character the game does not ask for renders nothing, as the line does.
+ *
+ * The tile is the 4 kB crop of the share card the homepage door uses
+ * (public/assets/tan-dash-tile.png). Below the fold, so it lazy-loads, and no JavaScript.
+ *
+ * NO GOAL, ON PURPOSE. The six-week retention test (lib/play/measure.ts) takes no new goals,
+ * and a click here is a page view of /play from a /kanji/<c> page, which DataFast already
+ * records. It is untagged, like the homepage door, so its players are in arrival=other.
+ */
+export function PlayCard({ kanji, className }: { kanji: string; className?: string }) {
+  const data = playData();
+  const world = data.worlds.find(w => w.kanji.includes(kanji));
+  if (!world) return null;
+
+  return (
+    <PracticeCard
+      id="play-card"
+      eyebrow="Free game"
+      heading="Practise the N5 kanji in a game"
+      href={PLAY_PATH}
+      cta="Play Tan Dash"
+      icon={<Gamepad2 aria-hidden />}
+      tile={
+        <Image
+          src="/assets/tan-dash-tile.png"
+          alt=""
+          width={128}
+          height={128}
+          sizes="(min-width: 640px) 128px, 88px"
+          className="h-auto w-full rounded-lg border border-border"
+        />
+      }
+      className={className}
+    >
+      A one-thumb game that works through all {data.kanji.length} N5 kanji, world by world.{' '}
+      <KanjiWorld kanji={kanji} n={world.n} total={data.worlds.length} />
+    </PracticeCard>
   );
 }

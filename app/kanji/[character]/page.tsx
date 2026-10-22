@@ -25,8 +25,8 @@ import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSect
 import { WhereToEatSection } from '@/components/kanji/WhereToEatSection';
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
 import { LevelNavigation, neighboursWithin, type LevelNeighbours } from '@/components/kanji/LevelNavigation';
-import { N5QuizLink } from '@/components/levels/N5QuizLink';
-import { PlayLink } from '@/components/play/PlayLink';
+import { N5QuizCard } from '@/components/levels/N5QuizLink';
+import { PlayCard } from '@/components/play/PlayLink';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 import { sentencesForKanji } from '@/lib/sentences/published';
 import { levelHref, levelPagePath, type JlptLevel } from '@/lib/levels';
@@ -589,21 +589,16 @@ export default async function KanjiDetailPage({ params }: Props) {
             finished this character is the one who wants the next. */}
         {levelNeighbours && <LevelNavigation level={kanjiData.level} neighbours={levelNeighbours} />}
 
-        {/* N5 only: the way from one character to testing the whole level. One line, no
-            heading, centred under the pager's level link because it is the level's other
-            door, not a moment. Server-rendered with prefetch off; see N5QuizLink. */}
+        {/* N5 only: the two free ways from this character to the rest of the level, the quiz
+            and the game, as cards in the book card's own style. They were one 14px line each
+            and went unseen. Server-rendered with prefetch off, no goal, and the game's card
+            renders nothing for a character the game does not ask for; see PracticeCard,
+            N5QuizCard and PlayCard. */}
         {kanjiData.level === 'N5' && (
-          <N5QuizLink className="mx-auto mt-3 max-w-xl text-balance text-center text-sm text-japan-mountain-mist" />
-        )}
-
-        {/* N5 only: the same level's third door, the game, directly under the quiz and in
-            its classes. One line, no heading, text only: /kanji/% is gated on total transfer.
-            Server-rendered with prefetch off; see PlayLink. */}
-        {kanjiData.level === 'N5' && (
-          <PlayLink
-            kanji={kanjiData.kanji}
-            className="mx-auto mt-3 max-w-xl text-balance text-center text-sm text-japan-mountain-mist"
-          />
+          <div className="mt-8 space-y-4">
+            <N5QuizCard />
+            <PlayCard kanji={kanjiData.kanji} />
+          </div>
         )}
 
         {/* Related Kanji — last content section, before the commercial blocks. */}

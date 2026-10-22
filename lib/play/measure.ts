@@ -110,6 +110,14 @@
  *     TanDash.module.css). The tiles still open /kanji/<c> in a new tab. It could move
  *     engagement, shares or the waitlist either way, so say so next to the verdict. No
  *     goal was added.
+ *   - From 2026-10-22 (day 12) every N5 character page shows Tan Dash as a bold card, in the style
+ *     of the book card, instead of one 14px line of text (components/play/PlayLink.tsx PlayCard,
+ *     components/levels/PracticeCard.tsx), with a "Play Tan Dash" button and the game's tile. It
+ *     is a placement change on the page where readers have just met the kanji, so reach should
+ *     rise and the starters it adds are casual clickers: engagement and returns could move either
+ *     way. Untagged, like the homepage door, so these players are in the arrival=other cohorts;
+ *     the only trace is a `/kanji/<c>` -> `/play` page sequence. Days 1-11 ran on the line, so
+ *     say so next to the verdict, and split the cohorts on this date. No goal was added.
  */
 
 export const PLAY_GOALS = {

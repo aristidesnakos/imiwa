@@ -593,8 +593,10 @@ pace and the music changed on 2026-10-15 (day 5): see "The pace and the music" b
   deferred script reads it (`lib/email/confirm-token-scrub.ts`), so the token reaches only Vercel's
   request log, in that one GET, and there as ciphertext: it is sealed (see "The newsletter"). The
   game's own progress is `mk-play`. All three keys are in the privacy policy.
-- **Where it is linked:** `components/play/PlayLink.tsx`, one line of text on every N5 kanji page,
-  every episode page (naming its world) and `/kanji/n5`; and one line in every episode email
+- **Where it is linked:** `components/play/PlayLink.tsx`, a bold card (`PlayCard`, on the shell
+  `components/levels/PracticeCard.tsx`, with the quiz's `N5QuizCard` above it) on every N5 kanji
+  page since 2026-10-22 (day 12; it was a 14px line nobody saw), and one line of text on every
+  episode page (naming its world) and `/kanji/n5`; and one line in every episode email
   (`playLine` in `lib/email/quiz-email.ts`); and, since 2026-10-11, the homepage's fourth door
   (`components/home/StartDoors.tsx`, a card with a 4 kB tile, `public/assets/tan-dash-tile.png`, cut
   from the share card). **The door is untagged**: its link is plain `/play`, so players who came
