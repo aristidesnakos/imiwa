@@ -2,8 +2,10 @@ import type { ReactNode } from 'react';
 import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
 
 /**
- * "Where to eat the kanji you just learned": one sentence and one link from nine food
- * kanji to Japan Ramen Guide (japanramenguide.com).
+ * "Looking for ramen spots in Japan?": one sentence and one link from nine food kanji to
+ * Japan Ramen Guide (japanramenguide.com). The heading is a question a visitor might
+ * actually have. It replaced "Where to eat the kanji you just learned", the working title
+ * in the proposal, which read as a label for the idea rather than anything a reader asks.
  *
  * This is the return half of a link swap agreed with its owner on 2026-10-21. His site links
  * to MichiKanji from three pages (the menu guide, the ramen-characters post and the glossary,
@@ -140,7 +142,7 @@ export function WhereToEatSection({ kanji }: { kanji: string }) {
   return (
     <section className={SECTION_BAND} aria-labelledby="where-to-eat-heading">
       <h2 id="where-to-eat-heading" className={`${SECTION_HEADING} mb-2`}>
-        Where to eat the kanji you just learned
+        Looking for ramen spots in Japan?
       </h2>
       <p className="text-japan-mountain-mist">{copy}</p>
     </section>
