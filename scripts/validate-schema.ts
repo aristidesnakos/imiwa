@@ -58,7 +58,6 @@ import {
   SITE_URL,
   SITE_NAME,
   SITE_LOGO,
-  SITE_OG_IMAGE,
   KANJI_CONTENT_PUBLISHED,
   KANJI_CONTENT_LAST_MODIFIED,
 } from '../lib/seo/site';
@@ -73,6 +72,7 @@ import {
   youtubeWatchUrl,
 } from '../lib/stories/videos';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '../lib/stroke-order-image';
+import { KANJI_SHARE_CARD_SIZE, kanjiShareCardUrl } from '../lib/seo/kanji-share-card';
 import { PLAY_CONTENT_LAST_MODIFIED, PLAY_OG_IMAGE, PLAY_PATH, PLAY_URL } from '../lib/play/seo';
 import { SHARE_CARDS, SHARE_CARD_SIZE, episodeShareCardImage, type ShareCardId } from '../lib/seo/share-cards';
 import { EPISODES, STORIES_HUB_LAST_MODIFIED } from '../lib/stories';
@@ -603,7 +603,7 @@ function normaliseUrl(u: string): string {
 
 /**
  * `Article.image` on a kanji page: the character's own stroke-order diagram,
- * then the site-wide OG image.
+ * then the character's own link card (the page's og:image).
  *
  * The diagram is asserted to be THIS page's character. Resolution alone would
  * pass a template slip that put one character's diagram on all ~1,900 pages,
@@ -615,10 +615,13 @@ function normaliseUrl(u: string): string {
  *
  * This used to assert a single ImageObject at the OG image. An array would have
  * slipped past that check entirely (asObject() of an array is null), which is
- * why the length and both entries are asserted here, not just the first.
+ * why the length and both entries are asserted here, not just the first. The
+ * card, like the diagram, is asserted to be THIS character's: until 2026-10-23
+ * the second entry was the site-wide /opengraph-image on every page.
  */
 function validateKanjiArticleImages(file: string, type: string, value: unknown, kanjiChar: string): void {
   const diagramUrl = `${SITE_URL}${strokeOrderImagePath(kanjiChar)}`;
+  const cardUrl = kanjiShareCardUrl(kanjiChar);
   const T = `${type}.image`;
 
   if (!Array.isArray(value) || value.length !== 2) {
@@ -626,9 +629,9 @@ function validateKanjiArticleImages(file: string, type: string, value: unknown, 
       file,
       schemaType: type,
       field: 'image',
-      expected: `[ImageObject ${diagramUrl} with licence metadata, ImageObject ${SITE_OG_IMAGE.url}]`,
+      expected: `[ImageObject ${diagramUrl} with licence metadata, ImageObject ${cardUrl}]`,
       actual: value === undefined ? 'missing' : JSON.stringify(value).slice(0, 160),
-      hint: 'The per-kanji stroke-order diagram leads, so image search associates this page with its own image; the site OG image stays second.',
+      hint: 'The per-kanji stroke-order diagram leads, so image search associates this page with its own image; the character\'s link card is second.',
     });
     return;
   }
@@ -681,10 +684,79 @@ function validateKanjiArticleImages(file: string, type: string, value: unknown, 
     fail({ file, schemaType: `${T}[1]`, field: '(entry)', expected: 'an ImageObject', actual: JSON.stringify(value[1]).slice(0, 120) });
   } else {
     const O = `${T}[1]`;
+    const cardHint = 'Use kanjiShareCardImage() from lib/seo/kanji-share-card.ts, the image the page names as its og:image.';
     requireEquals(file, O, '@type', og['@type'], 'ImageObject');
-    requireEquals(file, O, 'url', og.url, SITE_OG_IMAGE.url, 'Use SITE_OG_IMAGE from lib/seo/site.ts.');
-    requireEquals(file, O, 'width', og.width, SITE_OG_IMAGE.width, 'Use SITE_OG_IMAGE from lib/seo/site.ts.');
-    requireEquals(file, O, 'height', og.height, SITE_OG_IMAGE.height, 'Use SITE_OG_IMAGE from lib/seo/site.ts.');
+    const actual = asString(og.url);
+    if (actual === null || normaliseUrl(actual) !== normaliseUrl(cardUrl)) {
+      fail({
+        file,
+        schemaType: O,
+        field: 'url',
+        expected: cardUrl,
+        actual: actual === null ? 'missing' : actual,
+        hint: `The link card of the character this page is about. ${cardHint}`,
+      });
+    }
+    requireEquals(file, O, 'width', og.width, KANJI_SHARE_CARD_SIZE.width, cardHint);
+    requireEquals(file, O, 'height', og.height, KANJI_SHARE_CARD_SIZE.height, cardHint);
+  }
+}
+
+/**
+ * A kanji page shares as its own link card
+ * (app/kanji/[character]/share-card.png), not the site-wide one. Asserted on
+ * the rendered tags, because the failure is silent: getSEOTags fills
+ * `openGraph.images` with /opengraph-image whenever a page names none, and the
+ * page then shares as the generic card with nothing reporting it. Twitter is
+ * checked too, since it only inherits the card when getSEOTags leaves
+ * `twitter.images` empty. The card URL must also resolve: a built handler under
+ * [character], for a character with a prerendered page.
+ */
+function validateKanjiShareCardTags(file: string, html: string, kanjiChar: string): void {
+  const cardUrl = kanjiShareCardUrl(kanjiChar);
+  const hint =
+    'images: [kanjiShareCardImage(...)] in the openGraph block of app/kanji/[character]/page.tsx. Left out, getSEOTags falls back to the site-wide /opengraph-image.';
+
+  for (const [attr, key] of [
+    ['property', 'og:image'],
+    ['name', 'twitter:image'],
+  ] as const) {
+    const images = metaContents(html, attr, key);
+    if (images.length !== 1 || normaliseUrl(images[0]) !== normaliseUrl(cardUrl)) {
+      fail({
+        file,
+        schemaType: '(head)',
+        field: key,
+        expected: `exactly one, ${cardUrl}`,
+        actual: images.length ? JSON.stringify(images) : 'missing',
+        hint,
+      });
+      continue;
+    }
+    const res = resolveAsset(images[0]);
+    if (!res.ok) {
+      fail({
+        file,
+        schemaType: '(head)',
+        field: key,
+        expected: 'a URL that resolves to a built route',
+        actual: `${JSON.stringify(images[0])} — ${res.how}`,
+        hint: 'app/kanji/[character]/share-card.png/route.tsx draws it.',
+      });
+    }
+  }
+  const sizeHint = 'kanjiShareCardImage() carries KANJI_SHARE_CARD_SIZE (lib/seo/kanji-share-card.ts).';
+  requireEquals(file, '(head)', 'og:image:width', metaContents(html, 'property', 'og:image:width')[0], String(KANJI_SHARE_CARD_SIZE.width), sizeHint);
+  requireEquals(file, '(head)', 'og:image:height', metaContents(html, 'property', 'og:image:height')[0], String(KANJI_SHARE_CARD_SIZE.height), sizeHint);
+  const alt = (metaContents(html, 'property', 'og:image:alt')[0] ?? '').normalize('NFC');
+  if (!alt.includes(kanjiChar.normalize('NFC'))) {
+    fail({
+      file,
+      schemaType: '(head)',
+      field: 'og:image:alt',
+      expected: `alt text naming ${kanjiChar} (kanjiShareCardAlt in lib/seo/kanji-share-card.ts)`,
+      actual: alt ? JSON.stringify(alt) : 'missing',
+    });
   }
 }
 
@@ -1369,6 +1441,7 @@ function validatePage(absPath: string, opts: { kanjiChar: string | null; storySl
   for (const article of articles) validateArticle(file, article, expectedPageUrl, opts.kanjiChar);
 
   validateStrokeOrderImg(file, html, opts.kanjiChar);
+  validateKanjiShareCardTags(file, html, opts.kanjiChar);
 
   const faqs = entitiesOfType(entities, 'FAQPage');
   if (faqs.length === 0) {
@@ -2207,7 +2280,8 @@ function main(): void {
   console.log('\n✓ Structured data valid.');
   console.log('  - Article author/publisher match the brand; no repo-name leakage');
   console.log('  - All required Article fields present (dates, image, publisher, mainEntityOfPage)');
-  console.log('  - Kanji Article image: the page\'s own stroke-order diagram with KanjiVG licence metadata, then the OG image');
+  console.log('  - Kanji Article image: the page\'s own stroke-order diagram with KanjiVG licence metadata, then its own link card');
+  console.log('  - Every kanji page names its own 1200x630 link card on og:image and twitter:image');
   console.log('  - Every kanji page renders that diagram as an <img> in its server HTML, with alt text');
   console.log('  - Every logo/image URL in JSON-LD resolves to a real file');
   console.log(`  - Every entity URL is on ${SITE_HOST}; apex ${APEX_HOST} absent from the build`);

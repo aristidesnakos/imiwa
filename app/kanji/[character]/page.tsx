@@ -9,12 +9,12 @@ import {
   SITE_URL,
   SITE_NAME,
   SITE_LOGO,
-  SITE_OG_IMAGE,
   KANJI_CONTENT_PUBLISHED,
   KANJI_CONTENT_LAST_MODIFIED,
 } from '@/lib/seo/site';
 import { KANJIVG_LICENCE } from '@/lib/kanjivg';
 import { STROKE_ORDER_IMAGE_SIZE, strokeOrderImagePath } from '@/lib/stroke-order-image';
+import { kanjiShareCardImage } from '@/lib/seo/kanji-share-card';
 import { badgeVariants } from '@/components/ui/badge';
 import { StrokeOrderViewer } from '@/components/StrokeOrderViewer';
 import { CTASection } from '@/components/CTASection';
@@ -185,6 +185,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: 'article',
+      // The character's own card (app/kanji/[character]/share-card.png),
+      // named explicitly: left out, getSEOTags fills `openGraph.images` with
+      // the site-wide /opengraph-image. Twitter inherits this image
+      // (getSEOTags leaves `twitter.images` empty when openGraph has images).
+      images: [kanjiShareCardImage(kanjiData.kanji, primaryMeaning, kanjiData)],
     },
     canonicalUrlRelative: `/kanji/${encodeURIComponent(kanjiData.kanji)}`,
   });
@@ -213,6 +218,7 @@ export default async function KanjiDetailPage({ params }: Props) {
   // The same image the viewer renders at rest, by the same helper, so the
   // JSON-LD can only ever name the diagram that is actually on the page.
   const strokeOrderImageUrl = `${SITE_URL}${strokeOrderImagePath(kanjiData.kanji)}`;
+  const shareCard = kanjiShareCardImage(kanjiData.kanji, primaryMeaning, kanjiData);
 
   // Structured readings, with romaji. Every reading-bearing surface below goes
   // through this rather than reading the raw fields, which carry two different
@@ -254,7 +260,9 @@ export default async function KanjiDetailPage({ params }: Props) {
     // It carries Google's image licence metadata
     // (developers.google.com/search/docs/appearance/structured-data/image-license-metadata),
     // which is how an image result shows KanjiVG's licence and credit rather
-    // than none. The site-wide OG image stays as a second, generic entry.
+    // than none. The character's own link card is second: the image the page
+    // shares as (its og:image), by the same helper, so the two cannot name
+    // different files. It replaced the site-wide OG image on 2026-10-23.
     image: [
       {
         '@type': 'ImageObject',
@@ -273,9 +281,9 @@ export default async function KanjiDetailPage({ params }: Props) {
       },
       {
         '@type': 'ImageObject',
-        url: SITE_OG_IMAGE.url,
-        width: SITE_OG_IMAGE.width,
-        height: SITE_OG_IMAGE.height,
+        url: shareCard.url,
+        width: shareCard.width,
+        height: shareCard.height,
       },
     ],
     author: {

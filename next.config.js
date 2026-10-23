@@ -59,6 +59,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-icons'],
   },
+
+  // app/kanji/[character]/share-card.png/route.tsx reads Tan from disk on every
+  // request (it is never prerendered), so the file has to travel with the
+  // function. Named here rather than trusted to the tracer. The key is a
+  // picomatch glob matched against the route, so `*` stands in for the
+  // [character] segment, which picomatch would read as a character class.
+  outputFileTracingIncludes: {
+    '/kanji/*/share-card.png': ['./app/kanji/_og/tan-point.png'],
+  },
   async redirects() {
     return [
       // The sponsor-slot sales page, retired 2026-09-28. It sold a banner that
