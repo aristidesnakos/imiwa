@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { CUSTOM_SHEETS_PATH } from '@/lib/sheets/kanji-sheets';
 import Header from '@/components/sections/Header';
 import { N4_KANJI } from '@/lib/constants/n4-kanji';
@@ -26,6 +27,7 @@ export const metadata: Metadata = getSEOTags({
     title: 'N4 Kanji Practice Sheets Generator | Printable Japanese Worksheets',
     description: 'Generate high-quality printable practice sheets for JLPT N4 kanji. Perfect for learning proper stroke order and building muscle memory.',
     type: 'website',
+    images: [shareCardImage('kanji-sheets-n4')],
   },
   canonicalUrlRelative: '/free-resources/kanji-sheets/n4-sheets',
 });

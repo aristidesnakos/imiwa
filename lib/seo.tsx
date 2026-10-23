@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import config from "@/config";
+import { shareCardImage } from "@/lib/seo/share-cards";
 
 type LocationInfo = {
   cityName: string;
@@ -48,14 +49,10 @@ export const getSEOTags = ({
       description: openGraph?.description || pageDescription,
       url: openGraph?.url || `https://${config.domainName}${canonicalUrlRelative || ''}`,
       siteName: config.appName,
-      images: openGraph?.images || [
-        {
-          url: `https://${config.domainName}/opengraph-image`,
-          width: 1200,
-          height: 630,
-          alt: config.appName,
-        },
-      ],
+      // A page that names no card of its own shares as the homepage's, the
+      // branded one (lib/seo/share-cards.ts). Until 2026-10-23 this was the
+      // navy app/opengraph-image.tsx card, which had no Tan and no palette.
+      images: openGraph?.images || [shareCardImage('home')],
       locale: openGraph?.locale || 'en_US',
     },
 
@@ -63,9 +60,7 @@ export const getSEOTags = ({
       title: openGraph?.title || pageTitle,
       description: openGraph?.description || pageDescription,
       card: "summary_large_image",
-      images: openGraph?.images
-        ? undefined
-        : [`https://${config.domainName}/opengraph-image`],
+      images: openGraph?.images ? undefined : [shareCardImage('home').url],
     },
 
     alternates: {

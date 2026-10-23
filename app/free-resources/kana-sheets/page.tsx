@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import Header from '@/components/sections/Header';
 import { SheetCard } from '@/components/kana/SheetCard';
 import { KanaWorkbookCTA } from '@/components/kana/KanaWorkbookCTA';
@@ -28,6 +29,7 @@ export const metadata: Metadata = getSEOTags({
     title: 'Kana Practice Sheets Generator | Printable Hiragana & Katakana PDFs',
     description: 'Generate high-quality printable practice sheets for Japanese kana. Perfect for learning proper hiragana and katakana stroke order.',
     type: 'website',
+    images: [shareCardImage('kana-sheets')],
   },
   canonicalUrlRelative: '/free-resources/kana-sheets',
 });

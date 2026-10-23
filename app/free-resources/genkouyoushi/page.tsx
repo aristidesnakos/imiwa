@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Download, Printer } from 'lucide-react';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { SITE_NAME, SITE_URL } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
 import { buttonVariants } from '@/components/ui/button';
@@ -60,6 +61,7 @@ export const metadata: Metadata = getSEOTags({
     title: TITLE,
     description: DESCRIPTION,
     type: 'website',
+    images: [shareCardImage('genkouyoushi')],
   },
   canonicalUrlRelative: PAGE_PATH,
 });

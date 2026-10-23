@@ -66,6 +66,10 @@ const nextConfig = {
       // so it goes rather than being hidden. Permanent, so the indexed URL
       // passes to the homepage instead of decaying into a 404.
       { source: '/advertise', destination: '/', permanent: true },
+      // The navy site-wide link card (app/opengraph-image.tsx), retired
+      // 2026-10-23 for the branded homepage card. Pages shared before then,
+      // and anything that indexed the image, still name the old URL.
+      { source: '/opengraph-image', destination: '/og/home.jpg', permanent: true },
     ];
   },
   async headers() {

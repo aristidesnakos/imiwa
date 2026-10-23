@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { SITE_NAME, SITE_URL } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
 import { BookCTA } from '@/components/commerce/BookCTA';
@@ -89,6 +90,7 @@ export const metadata: Metadata = getSEOTags({
     title: TITLE,
     description: DESCRIPTION,
     type: 'website',
+    images: [shareCardImage('sheet-builder')],
   },
   canonicalUrlRelative: '/free-resources/kanji-sheets/custom',
 });

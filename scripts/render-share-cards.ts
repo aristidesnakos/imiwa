@@ -24,6 +24,17 @@
  *   character, not text on the card.)
  * - Colours are the brand palette of the strip, as named constants below.
  *
+ * PAGE CARDS
+ * ----------
+ * One per page in SHARE_CARDS. `home` is also every unnamed page's card (the
+ * getSEOTags fallback). A sheet on a card is the real thing: the PDFs in
+ * public/downloads rasterised by pdftoppm, or, for the builder and the five
+ * level pages, a document from lib/sheets/render.ts (the code that prints
+ * them) with KanjiVG fetched as the sheets route fetches it. A level page's
+ * sheet shows a kanji of that level (LEVEL_SHEET_CARDS), so N4-N1 cards carry
+ * a non-N5 kanji inside the picture, as the 探 is inside Tan; the N5 check
+ * still covers every kanji set as text.
+ *
  * EPISODE CARDS
  * -------------
  * Three panels of the comic with their speech bubbles, under the episode's
@@ -40,15 +51,25 @@
  * fits. Commit the files; nothing renders at request time.
  */
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-import puppeteer, { type Page } from 'puppeteer';
+import puppeteer, { type Browser, type Page } from 'puppeteer';
 
 import { N5_KANJI } from '../lib/constants/n5-kanji';
+import { N4_KANJI } from '../lib/constants/n4-kanji';
+import { N3_KANJI } from '../lib/constants/n3-kanji';
+import { N2_KANJI } from '../lib/constants/n2-kanji';
+import { N1_KANJI } from '../lib/constants/n1-kanji';
+import type { KanjiData } from '../lib/constants/kanji-types';
+import { fetchKanjiVgSource, kanjiVgHex } from '../lib/kanjivg';
+import { n5SequenceOrder } from '../lib/levels/n5-sequence';
+import { extractStrokeCount, prepareStrokeOrder, renderRowsDocument, renderSheetDocument, type PreparedSheet } from '../lib/sheets/render';
 import { EPISODES } from '../lib/stories';
 import type { Episode } from '../lib/stories/types';
-import { SHARE_CARDS, SHARE_CARD_SIZE, type ShareCardId } from '../lib/seo/share-cards';
+import { LEVEL_SHEET_CARDS, SHARE_CARDS, SHARE_CARD_SIZE, type ShareCardId } from '../lib/seo/share-cards';
 
 const ROOT = resolve(__dirname, '..');
 const PUBLIC_DIR = join(ROOT, 'public');
@@ -245,6 +266,257 @@ ${
   return { out: SHARE_CARDS[id].file, html, texts: ['日'], label: id };
 }
 
+const MAGNIFIER = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="${INK_2}" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 21 21"/></svg>`;
+
+/** A reading chip: kana in the display face, romaji beside it in sage. */
+function chip(kana: string, romaji: string, size = 30): string {
+  return `<span style="display:inline-flex;align-items:baseline;gap:10px"><span class="serif" style="font-weight:700;font-size:${size}px;color:${INK}">${kana}</span><span style="font-weight:500;font-size:${Math.round(size * 0.68)}px;color:${SAGE_DEEP}">${romaji}</span></span>`;
+}
+
+/** A sheet image in a paper frame, rotated, with the sage drop shadow. */
+function paper(src: string, x: number, y: number, w: number, h: number, rot: number, fit = 'fill'): string {
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${rot}deg);background:${CREAM};border:2px solid ${SAGE_DEEP};border-radius:6px;overflow:hidden;box-shadow:12px 14px 0 ${SAGE_DEEP}"><img src="${src}" style="width:100%;height:100%;object-fit:${fit};object-position:top;display:block" alt=""></div>`;
+}
+
+/** The left-hand column every page card shares: pill, headline, tag line. */
+function leftColumn(o: { pill: string; h1: string; size: number; ja?: string; tag: string; width?: number; tagWidth?: number; after?: string }): string {
+  return `<div style="position:absolute;left:64px;top:66px;width:${o.width ?? 600}px">
+  <div class="pill">${o.pill}</div>
+  <div class="h1" style="font-size:${o.size}px;margin-top:30px">${o.h1}</div>
+  ${o.ja ? `<div class="serif" style="font-weight:700;font-size:34px;color:${TERRA};margin-top:16px" lang="ja">${o.ja}</div>` : ''}
+  <div class="tag" style="margin-top:${o.ja ? 14 : 22}px;width:${o.tagWidth ?? 500}px">${o.tag}</div>
+  ${o.after ?? ''}
+</div>`;
+}
+
+const urlLine = (path: string) => `<div class="url" style="left:64px;bottom:44px">michikanji.com${path ? `<b>${path}</b>` : ''}</div>`;
+
+const ALL_LEVELS: Record<string, readonly KanjiData[]> = { N5: N5_KANJI, N4: N4_KANJI, N3: N3_KANJI, N2: N2_KANJI, N1: N1_KANJI };
+const ALL_KANJI_COUNT = Object.values(ALL_LEVELS).reduce((n, list) => n + list.length, 0);
+
+/** The homepage, and every page that names no card of its own. */
+function homeCard(): Card {
+  const kanji = '水';
+  const readings = [
+    ['みず', 'mizu'],
+    ['スイ', 'sui'],
+  ];
+  const html = page(`
+<div class="blob" style="width:640px;height:640px;left:640px;top:-60px"></div>
+<div style="position:absolute;left:64px;top:62px;width:1080px">
+  <div class="pill">Free kanji dictionary</div>
+  <div class="h1" style="font-size:76px;margin-top:26px">Look up any <span style="color:${TERRA}">Japanese kanji</span></div>
+  <div class="tag" style="margin-top:18px;width:760px">Stroke order, readings and meanings for all ${ALL_KANJI_COUNT.toLocaleString('en-US')} JLPT kanji. Type a meaning or a reading, in romaji or kana.</div>
+</div>
+<div style="position:absolute;left:64px;top:330px;width:740px;height:88px;background:${CREAM};border:4px solid ${INK};border-radius:22px;box-shadow:10px 12px 0 ${SAGE_DEEP};display:flex;align-items:center;padding:0 26px">
+  ${MAGNIFIER}
+  <span style="font-weight:700;font-size:38px;color:${INK};margin-left:18px">mizu</span>
+  <span style="width:3px;height:42px;background:${TERRA};margin-left:3px"></span>
+</div>
+<div style="position:absolute;left:64px;top:440px;width:740px;height:84px;background:${CREAM};border:3px solid ${SAGE_DEEP};border-radius:18px;display:flex;align-items:center;padding:0 14px;gap:20px">
+  <div style="width:60px;height:60px;border:3px solid ${INK};border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none"><span class="serif" style="font-weight:900;font-size:42px;line-height:1;color:${INK};margin-top:-4px">${kanji}</span></div>
+  <span style="font-weight:700;font-size:30px;color:${INK}">water</span>
+  ${readings.map(([k, r]) => chip(k, r, 26)).join('')}
+</div>
+<img class="tan" src="${asset('assets/tan-point.png')}" style="width:360px;height:360px;left:836px;top:262px">
+${urlLine('')}`);
+  return { out: SHARE_CARDS.home.file, html, texts: [kanji, ...readings.map(r => r[0])], label: 'home' };
+}
+
+/** /kanji: the dictionary, every level. */
+function kanjiCard(): Card {
+  // Eight tiles: Tan stands in the ninth place.
+  const tiles = ['日', '本', '語', '水', '火', '木', '山', '川'];
+  const hot = 3; // 水, the homepage's example
+  const size = 124;
+  const gap = 16;
+  const tileHtml = tiles
+    .map((k, i) => {
+      const x = (i % 3) * (size + gap);
+      const y = Math.floor(i / 3) * (size + gap);
+      const on = i === hot;
+      return `<div style="position:absolute;left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${CREAM};border:${on ? 5 : 4}px solid ${on ? TERRA : INK};border-radius:20px;box-shadow:7px 8px 0 ${on ? TERRA_INK : SAGE_DEEP};display:flex;align-items:center;justify-content:center"><span class="serif" style="font-weight:900;font-size:82px;line-height:1;color:${INK};margin-top:-8px">${k}</span></div>`;
+    })
+    .join('');
+  const levels = Object.entries(ALL_LEVELS)
+    .map(
+      ([level, list]) =>
+        `<span style="display:inline-flex;align-items:baseline;gap:8px;border:3px solid ${SAGE_DEEP};background:${CREAM};border-radius:12px;padding:5px 14px 7px"><span style="font-weight:700;font-size:22px;color:${INK}">${level}</span><span style="font-weight:500;font-size:18px;color:${SAGE_DEEP}">${list.length.toLocaleString('en-US')}</span></span>`
+    )
+    .join('');
+  const html = page(`
+<div class="blob" style="width:600px;height:600px;left:640px;top:30px"></div>
+<div style="position:absolute;left:672px;top:62px;width:${size * 3 + gap * 2}px;height:${size * 3 + gap * 2}px;transform:rotate(-3deg)">${tileHtml}</div>
+<img class="tan" src="${asset('assets/tan-point.png')}" style="width:300px;height:300px;left:924px;top:318px">
+${leftColumn({
+  pill: 'Free · JLPT N5 to N1',
+  h1: `Kanji stroke order<br><span style="color:${TERRA}">dictionary</span>`,
+  size: 62,
+  tag: 'Search every JLPT kanji by meaning or by reading, in kana or romaji.',
+  width: 620,
+  tagWidth: 540,
+  after: `<div style="display:flex;gap:10px;margin-top:26px">${levels}</div>`,
+})}
+${urlLine('/kanji')}`);
+  return { out: SHARE_CARDS.kanji.file, html, texts: tiles, label: 'kanji' };
+}
+
+/** /kanji/n5: the whole list on one board, in the page's teaching order. */
+function kanjiN5Card(): Card {
+  const order = n5SequenceOrder();
+  // Wide and short, so Tan stands below the board and covers none of it.
+  const cols = 12;
+  const cell = 41;
+  const pad = 18;
+  const rows = Math.ceil(order.length / cols);
+  const glyphs = order
+    .map(
+      (k, i) =>
+        `<span class="serif" style="position:absolute;left:${pad + (i % cols) * cell}px;top:${pad + Math.floor(i / cols) * cell}px;width:${cell}px;height:${cell}px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:30px;line-height:1;color:${INK}">${k}</span>`
+    )
+    .join('');
+  const html = page(`
+<div class="blob" style="width:600px;height:600px;left:640px;top:30px"></div>
+<div style="position:absolute;left:618px;top:44px;width:${pad * 2 + cols * cell}px;height:${pad * 2 + rows * cell}px;transform:rotate(2deg);background:${CREAM};border:4px solid ${INK};border-radius:22px;box-shadow:12px 14px 0 ${SAGE_DEEP}">${glyphs}</div>
+<img class="tan" src="${asset('assets/tan-thumbsup.png')}" style="width:262px;height:262px;left:920px;top:370px">
+${leftColumn({
+  pill: 'Free JLPT N5 kanji list',
+  h1: `All ${order.length}<br><span style="color:${TERRA}">N5 kanji</span>`,
+  size: 100,
+  tag: 'In the order to learn them, with readings in kana and romaji and stroke order.',
+  width: 540,
+  tagWidth: 520,
+})}
+${urlLine('/kanji/n5')}`);
+  return { out: SHARE_CARDS['kanji-n5'].file, html, texts: order, label: 'kanji-n5' };
+}
+
+/** /free-resources/kana-sheets: the two completed charts, fanned. */
+function kanaSheetsCard(): Card {
+  const ja = 'ひらがな・カタカナ';
+  // The charts are 1516x1782.
+  const w = 340;
+  const h = Math.round(w * (1782 / 1516));
+  const html = page(`
+<div class="blob" style="width:600px;height:600px;left:640px;top:30px"></div>
+${paper(asset('assets/hiragana-completed-sheet.png'), 668, 54, w, h, -6)}
+${paper(asset('assets/katakana-completed-sheet.png'), 806, 96, w, h, 5)}
+<img class="tan" src="${asset('assets/tan-brush.png')}" style="width:316px;height:316px;left:590px;top:314px">
+${leftColumn({
+  pill: 'Free · printable PDFs',
+  h1: `Kana practice<br><span style="color:${TERRA}">sheets</span>`,
+  size: 84,
+  ja,
+  tag: 'Hiragana and katakana charts in stroke order, and blank grids to practise on.',
+  tagWidth: 470,
+})}
+${urlLine('/free-resources/kana-sheets')}`);
+  return { out: SHARE_CARDS['kana-sheets'].file, html, texts: [ja], label: 'kana-sheets' };
+}
+
+/** /free-resources/genkouyoushi: the two blank sheets, as printed (landscape A4). */
+function genkouyoushiCard(sheets: { square400: string; large: string }): Card {
+  const ja = 'げんこうようし';
+  const w = 440;
+  const h = Math.round(w / 1.4151);
+  const html = page(`
+<div class="blob" style="width:600px;height:600px;left:640px;top:30px"></div>
+${paper(dataUri(sheets.large), 676, 62, w, h, -6)}
+${paper(dataUri(sheets.square400), 712, 214, w, h, 3)}
+<img class="tan" src="${asset('assets/tan-brush.png')}" style="width:300px;height:300px;left:600px;top:324px">
+${leftColumn({
+  pill: 'Free · printable PDF',
+  h1: `Genkouyoushi<br><span style="color:${TERRA}">paper</span>`,
+  size: 76,
+  ja,
+  tag: 'The standard 400-square sheet, and large squares for learners. Print it or get the PDF.',
+  tagWidth: 470,
+})}
+${urlLine('/free-resources/genkouyoushi')}`);
+  return { out: SHARE_CARDS.genkouyoushi.file, html, texts: [ja], label: 'genkouyoushi' };
+}
+
+/** /free-resources/kanji-sheets/custom: a word typed in, its rows printed beside it. */
+function sheetBuilderCard(rowsPng: string): Card {
+  const word = '日本語';
+  const sw = 360;
+  const sh = Math.round(sw * 1.4144);
+  const html = page(`
+<div class="blob" style="width:600px;height:600px;left:640px;top:30px"></div>
+${paper(dataUri(rowsPng), 774, 40, sw, sh, 4)}
+<div style="position:absolute;left:640px;top:118px;width:300px;height:76px;transform:rotate(-3deg);background:${CREAM};border:4px solid ${INK};border-radius:18px;box-shadow:9px 10px 0 ${SAGE_DEEP};display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 22px">
+  <span class="serif" style="font-weight:900;font-size:40px;line-height:1;color:${INK}">${word}<span style="display:inline-block;width:3px;height:38px;background:${TERRA};margin-left:3px;vertical-align:-4px"></span></span>
+  <span style="background:${TERRA_INK};color:${CREAM};font-weight:700;font-size:20px;border-radius:12px;padding:9px 16px 11px">Print</span>
+</div>
+<img class="tan" src="${asset('assets/tan-point.png')}" style="width:300px;height:300px;left:900px;top:330px">
+${leftColumn({
+  pill: 'Free · no sign-up',
+  h1: `Make your own<br><span style="color:${TERRA}">kanji sheets</span>`,
+  size: 70,
+  tag: 'Paste any kanji, a word or a list, or add a whole JLPT level, then print.',
+  width: 600,
+  tagWidth: 480,
+})}
+${urlLine('/free-resources/kanji-sheets/custom')}`);
+  return { out: SHARE_CARDS['sheet-builder'].file, html, texts: [word], label: 'sheet-builder' };
+}
+
+/** A level sheet page: a real sheet for one kanji of that level. */
+function levelSheetsCard(level: keyof typeof LEVEL_SHEET_CARDS, sheetPng: string): Card {
+  const { id } = LEVEL_SHEET_CARDS[level];
+  const count = ALL_LEVELS[level].length;
+  const sw = 372;
+  const sh = Math.round(sw * 1.4144);
+  const html = page(`
+<div class="blob" style="width:600px;height:600px;left:640px;top:30px"></div>
+${paper(dataUri(sheetPng), 690, 46, sw, sh, 4)}
+<img class="tan" src="${asset('assets/tan-brush.png')}" style="width:316px;height:316px;left:722px;top:314px">
+${leftColumn({
+  pill: 'Free · printable',
+  h1: `${level} kanji<br><span style="color:${TERRA}">practice sheets</span>`,
+  size: 66,
+  tag: `Stroke order, readings and practice squares for all ${count.toLocaleString('en-US')} JLPT ${level} kanji.`,
+})}
+${urlLine(SHARE_CARDS[id].page)}`);
+  // The sheet is a picture of the page's own content, like the 探 on Tan's
+  // headband: its kanji is the level's, not card text, so it is not checked.
+  return { out: SHARE_CARDS[id].file, html, texts: [], label: id };
+}
+
+// ─── sheets, drawn by the site's own renderer ───────────────────────────────
+
+/** One kanji (or several) as the site prints them, through lib/sheets/render.ts. */
+async function prepareSheets(level: string, chars: readonly string[]): Promise<PreparedSheet[]> {
+  return Promise.all(
+    chars.map(async c => {
+      const data = ALL_LEVELS[level].find(k => k.kanji === c);
+      if (!data) throw new Error(`${c} is not on the ${level} list`);
+      const source = await fetchKanjiVgSource(kanjiVgHex(c));
+      if (!source.svg) throw new Error(`KanjiVG has no diagram for ${c} (HTTP ${source.status})`);
+      const { svg, notice } = prepareStrokeOrder(source.svg);
+      return { kanjiData: { ...data, level }, strokeOrderSvg: svg, strokeCount: extractStrokeCount(source.svg), licenceNotice: notice };
+    })
+  );
+}
+
+/**
+ * A sheet document's first A4 page (794x1123 CSS px) as a PNG in the scratch
+ * dir, with print styles on, so it looks as it prints (no print hint).
+ */
+async function rasteriseDocument(browser: Browser, html: string, name: string): Promise<string> {
+  const p = await browser.newPage();
+  try {
+    await p.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
+    await p.emulateMediaType('print');
+    await p.setContent(html, { waitUntil: 'load', timeout: 120_000 });
+    const file = join(scratchDir(), `${name}.png`);
+    writeFileSync(file, await p.screenshot({ type: 'png', clip: { x: 0, y: 0, width: 794, height: 1123 } }));
+    return file;
+  } finally {
+    await p.close();
+  }
+}
+
 // ─── episode cards ──────────────────────────────────────────────────────────
 
 function episodeCard(episode: Episode, panels: readonly number[], square?: string): Card {
@@ -324,46 +596,83 @@ function arg(flag: string): string | undefined {
   return i > 0 ? process.argv[i + 1] : undefined;
 }
 
+const LEVEL_OF_CARD = Object.fromEntries(Object.entries(LEVEL_SHEET_CARDS).map(([level, { id }]) => [id, level])) as Record<
+  string,
+  keyof typeof LEVEL_SHEET_CARDS
+>;
+
+/** A page card. The sheet cards draw their sheet first, some in `browser`. */
+async function pageCard(id: ShareCardId, browser: Browser): Promise<Card> {
+  switch (id) {
+    case 'home':
+      return homeCard();
+    case 'kanji':
+      return kanjiCard();
+    case 'kanji-n5':
+      return kanjiN5Card();
+    case 'stories':
+      return storiesCard();
+    case 'kanji-n5-quiz':
+      return quizCard();
+    case 'kanji-sheets':
+    case 'free-resources':
+      return sheetsCard(id, pdfPage('michikanji-n5-kanji-practice-sheets.pdf', 110));
+    case 'kana-sheets':
+      return kanaSheetsCard();
+    case 'genkouyoushi':
+      return genkouyoushiCard({
+        square400: pdfPage('michikanji-genkouyoushi-400.pdf', 80),
+        large: pdfPage('michikanji-genkouyoushi-large-squares.pdf', 80),
+      });
+    case 'sheet-builder': {
+      const sheets = await prepareSheets('N5', [...'日本語']);
+      return sheetBuilderCard(await rasteriseDocument(browser, renderRowsDocument(sheets, 3), 'builder-rows'));
+    }
+    default: {
+      const level = LEVEL_OF_CARD[id];
+      const [s] = await prepareSheets(level, [LEVEL_SHEET_CARDS[level].sample]);
+      const html = renderSheetDocument(s.kanjiData, s.strokeOrderSvg, s.strokeCount, s.licenceNotice);
+      return levelSheetsCard(level, await rasteriseDocument(browser, html, id));
+    }
+  }
+}
+
 async function main(): Promise<void> {
   const flagValues = new Set([arg('--panels'), arg('--square')].filter(Boolean));
   const wanted = process.argv.slice(2).filter(a => !a.startsWith('--') && !flagValues.has(a));
   const pageIds = Object.keys(SHARE_CARDS) as ShareCardId[];
   const targets = wanted.length ? wanted : [...pageIds, ...EPISODES.map(e => `episode:${e.slug}`)];
-
-  const cards: Card[] = [];
-  let sheetPng: string | undefined;
   for (const target of targets) {
-    if (target.startsWith('episode:')) {
-      const slug = target.slice('episode:'.length);
-      const episode = EPISODES.find(e => e.slug === slug);
-      if (!episode) throw new Error(`No registered episode "${slug}"`);
-      const panels = (arg('--panels')?.split(',').map(Number) ?? EPISODE_CARDS[slug] ?? [1, 2, 3]) as number[];
-      if (panels.length !== 3 || panels.some(n => !(n >= 1 && n <= 6))) throw new Error('--panels takes three panel numbers, 1-6');
-      if (!EPISODE_CARDS[slug] && !arg('--panels')) console.log(`  note: ${slug} has no EPISODE_CARDS entry; using panels 1-3. Look at the card.`);
-      const square = wanted.length === 1 ? arg('--square') : undefined;
-      if (square && !existsSync(square)) throw new Error(`--square ${square} does not exist`);
-      cards.push(episodeCard(episode, panels, square));
-    } else if (pageIds.includes(target as ShareCardId)) {
-      const id = target as ShareCardId;
-      if (id === 'stories') cards.push(storiesCard());
-      else if (id === 'kanji-n5-quiz') cards.push(quizCard());
-      else {
-        if (!sheetPng) sheetPng = rasteriseSheet();
-        cards.push(sheetsCard(id, sheetPng));
-      }
-    } else {
+    if (!target.startsWith('episode:') && !pageIds.includes(target as ShareCardId)) {
       throw new Error(`Unknown card "${target}". Cards: ${pageIds.join(', ')}, episode:<slug>.`);
     }
   }
 
-  console.log('N5 check (every kanji set as text on a card):');
-  for (const card of cards) {
-    const kanji = checkN5(card.label, card.texts);
-    console.log(`  ${card.label}: ${kanji.length ? `${kanji.join(' ')} — all on the N5 list` : 'no kanji'}`);
-  }
-
   const browser = await puppeteer.launch({ headless: true, executablePath: chromePath(), timeout: 240_000 });
   try {
+    const cards: Card[] = [];
+    for (const target of targets) {
+      if (target.startsWith('episode:')) {
+        const slug = target.slice('episode:'.length);
+        const episode = EPISODES.find(e => e.slug === slug);
+        if (!episode) throw new Error(`No registered episode "${slug}"`);
+        const panels = (arg('--panels')?.split(',').map(Number) ?? EPISODE_CARDS[slug] ?? [1, 2, 3]) as number[];
+        if (panels.length !== 3 || panels.some(n => !(n >= 1 && n <= 6))) throw new Error('--panels takes three panel numbers, 1-6');
+        if (!EPISODE_CARDS[slug] && !arg('--panels')) console.log(`  note: ${slug} has no EPISODE_CARDS entry; using panels 1-3. Look at the card.`);
+        const square = wanted.length === 1 ? arg('--square') : undefined;
+        if (square && !existsSync(square)) throw new Error(`--square ${square} does not exist`);
+        cards.push(episodeCard(episode, panels, square));
+      } else {
+        cards.push(await pageCard(target as ShareCardId, browser));
+      }
+    }
+
+    console.log('N5 check (every kanji set as text on a card):');
+    for (const card of cards) {
+      const kanji = checkN5(card.label, card.texts);
+      console.log(`  ${card.label}: ${kanji.length ? `${kanji.join(' ')} — all on the N5 list` : 'no kanji'}`);
+    }
+
     const p = await browser.newPage();
     await p.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
     console.log('Cards:');
@@ -373,15 +682,23 @@ async function main(): Promise<void> {
   }
 }
 
-/** Page 1 of the N5 PDF as a PNG, via pdftoppm (poppler). */
-function rasteriseSheet(): string {
-  const { execFileSync } = require('node:child_process') as typeof import('node:child_process');
-  const { mkdtempSync } = require('node:fs') as typeof import('node:fs');
-  const { tmpdir } = require('node:os') as typeof import('node:os');
-  const dir = mkdtempSync(join(tmpdir(), 'mk-sheet-'));
-  const pdf = join(PUBLIC_DIR, 'downloads', 'michikanji-n5-kanji-practice-sheets.pdf');
-  execFileSync('pdftoppm', ['-f', '1', '-l', '1', '-r', '110', '-png', '-singlefile', pdf, join(dir, 'sheet')]);
-  return join(dir, 'sheet.png');
+let scratch: string | undefined;
+function scratchDir(): string {
+  if (!scratch) scratch = mkdtempSync(join(tmpdir(), 'mk-og-'));
+  return scratch;
+}
+
+/** Page 1 of a PDF in public/downloads as a PNG, via pdftoppm (poppler). */
+const pdfPages = new Map<string, string>();
+function pdfPage(file: string, dpi: number): string {
+  let png = pdfPages.get(file);
+  if (!png) {
+    const out = join(scratchDir(), file.replace(/\.pdf$/, ''));
+    execFileSync('pdftoppm', ['-f', '1', '-l', '1', '-r', String(dpi), '-png', '-singlefile', join(PUBLIC_DIR, 'downloads', file), out]);
+    png = `${out}.png`;
+    pdfPages.set(file, png);
+  }
+  return png;
 }
 
 main().catch(error => {

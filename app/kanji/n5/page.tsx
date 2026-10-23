@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Download, ListChecks, Printer } from 'lucide-react';
 
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { SITE_URL, SITE_NAME } from '@/lib/seo/site';
 import Header from '@/components/sections/Header';
 import EmailCapture from '@/components/EmailCapture';
@@ -74,6 +75,7 @@ export const metadata: Metadata = getSEOTags({
     title: `JLPT N5 Kanji List — all ${COUNT} kanji, in the order to learn them`,
     description: DESCRIPTION,
     type: 'website',
+    images: [shareCardImage('kanji-n5')],
   },
   canonicalUrlRelative: PAGE_PATH,
 });

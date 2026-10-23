@@ -1707,11 +1707,11 @@ function jpegSize(buf: Buffer): { width: number; height: number } | null {
  * 1200x630 card (lib/seo/share-cards.ts), not the site-wide one.
  *
  * Asserted on the rendered tags for the reason /play's card is: getSEOTags
- * fills `openGraph.images` with the site-wide /opengraph-image whenever a page
- * leaves it out, and nothing reports it. /stories shipped that way, and
- * Facebook showed its card with no image at all. The four page cards are
- * static JPEGs, so their real pixel size is read too; `pnpm validate:stories`
- * reads the episodes'.
+ * fills `openGraph.images` with the homepage's card whenever a page leaves it
+ * out, and nothing reports it. /stories shipped that way (with the old navy
+ * /opengraph-image), and Facebook showed its card with no image at all. The
+ * page cards are static JPEGs, so their real pixel size is read too;
+ * `pnpm validate:stories` reads the episodes'.
  */
 function validateShareCards(): number {
   const targets = [
@@ -1719,7 +1719,7 @@ function validateShareCards(): number {
       page: SHARE_CARDS[id].page,
       card: `${SITE_URL}${SHARE_CARDS[id].file}`,
       ogType: 'website',
-      source: `app${SHARE_CARDS[id].page}/page.tsx`,
+      source: SHARE_CARDS[id].page === '/' ? 'lib/seo.tsx (the getSEOTags fallback)' : `app${SHARE_CARDS[id].page}/page.tsx`,
       call: `shareCardImage('${id}')`,
       render: 'pnpm og:render',
       readPixels: true,
@@ -1736,7 +1736,7 @@ function validateShareCards(): number {
   ];
 
   for (const t of targets) {
-    const abs = path.join(BUILD_APP_DIR, `${t.page.replace(/^\//, '')}.html`);
+    const abs = path.join(BUILD_APP_DIR, `${t.page === '/' ? 'index' : t.page.replace(/^\//, '')}.html`);
     const file = relative(abs);
     if (!fs.existsSync(abs)) {
       fail({
@@ -1763,7 +1763,7 @@ function validateShareCards(): number {
           field: key,
           expected: `exactly one, ${t.card}`,
           actual: images.length ? JSON.stringify(images) : 'missing',
-          hint: `Name the card: images: [${t.call}] in the openGraph block of ${t.source}. Left out, getSEOTags falls back to the site-wide /opengraph-image.`,
+          hint: `Name the card: images: [${t.call}] in the openGraph block of ${t.source}. Left out, getSEOTags falls back to the homepage's card.`,
         });
       }
     }
@@ -1783,8 +1783,8 @@ function validateShareCards(): number {
     }
     requireEquals(file, '(head)', 'og:type', metaContents(html, 'property', 'og:type')[0], t.ogType, `type: '${t.ogType}' in the openGraph block of ${t.source}.`);
 
-    // The card itself: a committed file in public/, and for the four page
-    // cards, the size the tags above claim.
+    // The card itself: a committed file in public/, and for the page cards,
+    // the size the tags above claim.
     const res = resolveAsset(t.card);
     if (!res.ok || !res.how.startsWith('public/')) {
       fail({

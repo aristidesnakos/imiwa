@@ -5,6 +5,7 @@ import Header from '@/components/sections/Header';
 import { EmailCapture } from '@/components/EmailCapture';
 import { sendDayName } from '@/lib/email/send-schedule';
 import { getSEOTags } from '@/lib/seo';
+import { shareCardImage } from '@/lib/seo/share-cards';
 import { hasLevelPage, LEVEL_LABELS, levelHref, levelPagePath, type JlptLevel } from '@/lib/levels';
 import { KanjiSearchClient } from './KanjiSearchClient';
 import { N5_KANJI } from '@/lib/constants/n5-kanji';
@@ -73,6 +74,7 @@ export const metadata: Metadata = getSEOTags({
     title: 'Japanese Kanji Stroke Order Dictionary | JLPT N5, N4, N3, N2 & N1',
     description: `Interactive kanji learning with ${totalKanji} characters. Master stroke order, readings, and meanings.`,
     type: 'website',
+    images: [shareCardImage('kanji')],
   },
   canonicalUrlRelative: '/kanji',
 });

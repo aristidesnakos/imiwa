@@ -28,9 +28,13 @@ export const SITE_LOGO = {
   height: 512,
 } as const;
 
-/** Site-wide OG image rendered by `app/opengraph-image.tsx`. */
+/**
+ * The site-wide link card: the homepage's, `SHARE_CARDS.home` in
+ * lib/seo/share-cards.ts (which imports this file, so the path is restated
+ * here rather than imported). `pnpm og:render home` draws it.
+ */
 export const SITE_OG_IMAGE = {
-  url: `${SITE_URL}/opengraph-image`,
+  url: `${SITE_URL}/og/home.jpg`,
   width: 1200,
   height: 630,
 } as const;

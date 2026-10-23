@@ -60,9 +60,6 @@
     "deadAlpha": 1,
     "stock": 1
   },
-  "app/opengraph-image.tsx": {
-    "literal": 1
-  },
   "app/page.tsx": {
     "deadAlpha": 10,
     "blackWhite": 4
