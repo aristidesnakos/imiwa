@@ -702,16 +702,32 @@ the apex splits the brand entity across two hostnames. `schema-check` CI gates t
 Article's `dateModified`. Bump it when the main content of every character page changes, whether
 through the data or the template. Never bump it for chrome such as the header or footer.
 
-**Link cards (og:image), since 2026-10-13.** `getSEOTags` falls back to the site-wide
-`/opengraph-image` for any page that does not name its own image, silently: `/stories` shared that
-way and Facebook showed it with no image. A page we post gets its own card. `lib/seo/share-cards.ts`
-lists them (`/stories`, `/kanji/n5/quiz`, the two sheets pages, and every episode's `og.jpg`), and
-`pnpm og:render [card…]` draws them as static 1200x630 JPEGs under ~300 kB
-(`scripts/render-share-cards.ts`; its header holds the rules: type in HTML in Noto Serif/Sans JP,
-real Tan cutouts never mirrored, the strip's palette, and every kanji set on a card checked against
-the N5 list). They are JPEGs because `next/og` writes only PNG, too heavy for painted art; `/play`
-keeps its PNG route. An episode card shows three panels picked by eye in `EPISODE_CARDS` (none may
-put a bubble over a face). `stories:ship` draws it, and `validate:stories` checks its size.
+**Link cards (og:image), since 2026-10-13; on every page since 2026-10-23.** Every public page
+names its own 1200x630 card, in one design (cream, sage grid, terracotta pill, Tan). `getSEOTags`
+falls back to the homepage's card (`SHARE_CARDS.home`) for a page that names none, silently, so a new
+page we post needs its own entry; `validate:schema` fails a listed page that does not name its card.
+The navy `app/opengraph-image.tsx` it used to fall back to is deleted, and `/opengraph-image` 308s to
+`/og/home.jpg`. `lib/seo/share-cards.ts` lists the static cards (`/`, `/kanji`, `/kanji/n5`, the quiz,
+`/stories`, `/free-resources`, the kanji, kana and genkouyoushi sheets, the builder, the five level
+sheet pages, and every episode's `og.jpg`), and `pnpm og:render [card…]` draws them as JPEGs under
+~300 kB, the size beyond which WhatsApp drops an og:image (`scripts/render-share-cards.ts`; its header
+holds the rules: type in HTML in Noto Serif/Sans JP, real Tan cutouts never mirrored, the strip's
+palette, every kanji set as text checked against the N5 list, and sheets drawn by the site's own
+`lib/sheets/render.ts`). They are JPEGs because `next/og` writes only PNG, too heavy for painted art;
+`/play` keeps its PNG route. An episode card shows three panels picked by eye in `EPISODE_CARDS`
+(none may put a bubble over a face). `stories:ship` draws it, and `validate:stories` checks its size.
+
+The ~1,900 character pages are the exception, because that many JPEGs do not belong in git:
+`app/kanji/[character]/share-card.png/route.tsx` draws each card on request with `next/og` (a
+~230-250 kB PNG, with a committed 340px Tan in `app/kanji/_og/`, named in `outputFileTracingIncludes`),
+`force-dynamic` and CDN-cached like `stroke-order.svg`. Its fonts are Google Fonts `text=` subsets of
+just that card's glyphs, fetched through the Data Cache; a failed fetch is a `no-store` 502.
+`lib/seo/kanji-share-card.ts` decides what the card says (headline size and lines, at most four
+reading chips) so its alt text names exactly what is drawn, and the page uses the same helper for its
+og:image and the Article's second `image`. The glyph is the one kanji on any card allowed off the N5
+list. The headline is `getPrimaryMeaning`, so a data quirk there shows on the card (監 reads
+"special Nara-period administrative division…").
+
 Facebook caches cards, so after a deploy that changes one, re-scrape the URL in the Sharing Debugger.
 
 Two weekly Search Console monitors exist and they answer different questions — do not merge them:
