@@ -187,7 +187,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       // The character's own card (app/kanji/[character]/share-card.png),
       // named explicitly: left out, getSEOTags fills `openGraph.images` with
-      // the site-wide /opengraph-image. Twitter inherits this image
+      // the homepage's card. Twitter inherits this image
       // (getSEOTags leaves `twitter.images` empty when openGraph has images).
       images: [kanjiShareCardImage(kanjiData.kanji, primaryMeaning, kanjiData)],
     },
