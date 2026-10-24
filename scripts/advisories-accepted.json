@@ -1,0 +1,16 @@
+{
+  "_about": [
+    "Critical and high advisories on production dependencies that `pnpm audit --prod` reports and we have decided not to fix, read by `pnpm check-advisories` (scripts/check-dependency-advisories.ts, whose header says why).",
+    "Keys are GitHub advisory ids. Each needs a reason and a point to look again. Moderate and low advisories need no entry: they are printed and never fail. An entry for an advisory that is no longer reported is a warning, so delete it."
+  ],
+  "accepted": {
+    "GHSA-6g55-p6wh-862q": {
+      "reason": "postcss 8.4.31 is pinned exactly by next@15.5.x, so only a Next release can move it. The file read needs attacker-controlled CSS naming a sourceMappingURL; postcss runs at build time on CSS from this repo and its locked dependencies, never on a request.",
+      "revisit": "when a next release depends on postcss >= 8.5.12"
+    },
+    "GHSA-r28c-9q8g-f849": {
+      "reason": "Same postcss 8.4.31 that next@15.5.x pins exactly. Path traversal in previous source map auto-loading needs attacker-controlled CSS; the build parses only this repo's CSS and its locked dependencies, never a request's.",
+      "revisit": "when a next release depends on postcss >= 8.5.18"
+    }
+  }
+}

@@ -1,0 +1,195 @@
+name: Dependency Advisories
+
+# Asks the advisory database about what this repo ships: `pnpm audit --prod`,
+# with the decision rules in scripts/check-dependency-advisories.ts (read its
+# header for why this exists: a critical Next.js advisory sat unseen for days
+# because GitHub's Dependabot alerts were off and nothing ran an audit).
+#
+# A critical or high advisory on a production dependency fails the run unless
+# scripts/advisories-accepted.json accepts it with a reason. Failure opens ONE
+# GitHub issue, which is the notification: nobody reads the Actions tab.
+
+on:
+  # Daily, because the failure this guards against is an advisory published
+  # between two of our own commits. The audit is one registry call after an
+  # install, so a day is cheap.
+  schedule:
+    - cron: '37 6 * * *'
+  # A change to the dependency set or to the accepted list is checked at once,
+  # not at the next scheduled run.
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'scripts/advisories-accepted.json'
+      - 'scripts/check-dependency-advisories.ts'
+      - '.github/workflows/dependency-audit.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-advisories
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # Open, update and close the notification issue.
+  issues: write
+
+jobs:
+  audit:
+    name: Audit production dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The rules (what blocks, what is accepted, what counts as "could not
+      # look") replayed on fixtures, so a change to them cannot pass unseen.
+      - name: Replay the decision rules
+        run: pnpm exec tsx --tsconfig tsconfig.json scripts/check-dependency-advisories.ts --self-test
+
+      # Exit 0 clean, 1 an unaccepted advisory, 2 the audit did not run. The
+      # code is kept rather than failing here, so the next step can report it
+      # before the run goes red.
+      - name: Audit production dependencies
+        id: audit
+        run: |
+          set +e
+          pnpm exec tsx --tsconfig tsconfig.json scripts/check-dependency-advisories.ts 2>&1 | tee audit.txt
+          code=${PIPESTATUS[0]}
+          echo "code=${code}" >> "$GITHUB_OUTPUT"
+          echo "ids=$(grep -m1 '^BLOCKING_IDS=' audit.txt | cut -d= -f2-)" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CODE: ${{ steps.audit.outputs.code }}
+          IDS: ${{ steps.audit.outputs.ids }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          LABEL: dependency-audit
+          # Two titles, because "an advisory exists" and "the check is broken"
+          # call for different work and must never be mistaken for each other.
+          TITLE_ADVISORY: '🔒 [Dependencies] Unaccepted advisories on production dependencies'
+          TITLE_BROKEN: '🔧 [Dependencies] The advisory check could not run'
+        run: |
+          set -euo pipefail
+
+          # `gh issue create --label X` hard-fails if the label does not exist,
+          # which would swallow the alert it exists to raise.
+          gh label create "$LABEL" \
+            --color B60205 \
+            --description "Automated dependency advisory monitoring" \
+            >/dev/null 2>&1 || true
+
+          # Matched on exact title, so the two issues never absorb each other.
+          find_issue() {
+            T="$1" gh issue list --state open --label "$LABEL" --limit 100 \
+              --json number,title \
+              --jq 'map(select(.title == $ENV.T)) | .[0].number // empty' || true
+          }
+
+          close_if_open() {
+            local number
+            number=$(find_issue "$1")
+            if [ -n "$number" ]; then
+              gh issue close "$number" --comment "$2 ($RUN_URL)"
+              echo "Closed #${number}."
+            fi
+          }
+
+          OUTPUT=$(head -c 20000 audit.txt)
+
+          case "$CODE" in
+            0)
+              close_if_open "$TITLE_ADVISORY" "No unaccepted critical or high advisory on production dependencies as of this run."
+              close_if_open "$TITLE_BROKEN" "The advisory check ran again and answered."
+              ;;
+
+            1)
+              # The check worked, so a "could not run" issue is stale.
+              close_if_open "$TITLE_BROKEN" "The advisory check ran again and answered."
+
+              BODY=$(cat <<EOF
+          <!-- ids:${IDS} -->
+          \`pnpm audit --prod\` reports a critical or high advisory on a production dependency that
+          \`scripts/advisories-accepted.json\` does not accept.
+
+          **Run:** ${RUN_URL}
+
+          \`\`\`
+          ${OUTPUT}
+          \`\`\`
+
+          ### What to do
+
+          1. **Fix it.** Usually \`pnpm update <package>\` (a lockfile bump within the range
+             \`package.json\` already allows), then \`pnpm check-advisories\`.
+          2. **Or accept it**, only if it cannot be fixed from here and cannot be reached: add its
+             advisory id to \`scripts/advisories-accepted.json\` with the reason and when to look again.
+
+          This issue closes itself on the first clean run. It is commented on again only when the
+          set of advisories changes.
+
+          _Opened automatically by \`.github/workflows/dependency-audit.yml\`._
+          EOF
+              )
+
+              EXISTING=$(find_issue "$TITLE_ADVISORY")
+              if [ -z "$EXISTING" ]; then
+                gh issue create --title "$TITLE_ADVISORY" --label "$LABEL" --body "$BODY"
+              elif gh issue view "$EXISTING" --json body --jq .body | grep -qF "<!-- ids:${IDS} -->"; then
+                echo "Issue #${EXISTING} already lists exactly these advisories; nothing to add."
+              else
+                gh issue edit "$EXISTING" --body "$BODY"
+                gh issue comment "$EXISTING" --body "The set of advisories changed: \`${IDS}\`. See the updated description. ${RUN_URL}"
+              fi
+              ;;
+
+            *)
+              BODY=$(cat <<EOF
+          The advisory check did not run, so **no dependency was checked this time**. A new
+          advisory would currently go unseen.
+
+          **Run:** ${RUN_URL}
+
+          \`\`\`
+          ${OUTPUT}
+          \`\`\`
+
+          Likely causes: the npm registry or its audit endpoint was unreachable or changed its
+          answer, or the job failed before the check (install, runner setup). Re-run the workflow
+          (Actions > Dependency Advisories > Run workflow) and close this issue once it answers.
+
+          _Opened automatically by \`.github/workflows/dependency-audit.yml\`._
+          EOF
+              )
+              EXISTING=$(find_issue "$TITLE_BROKEN")
+              if [ -n "$EXISTING" ]; then
+                gh issue comment "$EXISTING" --body "Still failing. ${RUN_URL}"
+              else
+                gh issue create --title "$TITLE_BROKEN" --label "$LABEL" --body "$BODY"
+              fi
+              ;;
+          esac
+
+      # The issue is the notification; a red run is the record.
+      - name: Fail the run if the check did not pass
+        if: steps.audit.outputs.code != '0'
+        run: exit ${{ steps.audit.outputs.code }}
