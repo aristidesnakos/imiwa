@@ -144,6 +144,7 @@ export const N2_KANJI: KanjiData[] = [
   // Thinking/Analysis/Planning
   { kanji: "推", onyomi: "すい", kunyomi: "お（す）", meaning: "conjecture, infer, guess, suppose, support" },
   { kanji: "策", onyomi: "さく", kunyomi: "", meaning: "scheme, plan, policy, step, means" },
+  { kanji: "案", onyomi: "あん", kunyomi: "つくえ", meaning: "plan, suggestion, draft, idea" },
   { kanji: "析", onyomi: "せき", kunyomi: "", meaning: "chop, divide, tear, analyze" },
 
   // Skills/Abilities/Techniques
