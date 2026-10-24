@@ -1,0 +1,109 @@
+name: CI
+
+# What a change has to pass before it lands on main, as ONE check named "CI gate".
+#
+# Why a new workflow instead of adding `pull_request` to the existing ones: every
+# check workflow here is path-filtered, and a required check that a PR's paths do
+# not trigger never reports, so the PR waits forever. This one has no path filter,
+# so it always runs and always reports. The existing push workflows stay as they
+# are: they keep watching main after a merge.
+#
+# It runs what those workflows run, plus what none of them did on its own:
+#   - every offline validator (`pnpm validate:all`, which reads package.json, so a
+#     new validator joins the gate by existing),
+#   - the type-check, and the advisory rules' self-test,
+#   - a production build and `validate:schema` over the built pages.
+# None of it needs a secret, which is what makes it safe to run on a pull request
+# from a fork: the token below is read-only and no secret is passed.
+#
+# Ruleset side: require the check named "CI gate". The aggregate job exists so the
+# ruleset names one stable check and adding a job here never needs a ruleset edit.
+
+on:
+  pull_request:
+    branches: [main]
+
+# A newer push to the same PR supersedes the run in flight.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validators:
+    name: Validators and type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm exec tsc --noEmit
+
+      - name: Every offline validator
+        run: pnpm validate:all
+
+      - name: Advisory rules (offline self-test)
+        run: pnpm exec tsx --tsconfig tsconfig.json scripts/check-dependency-advisories.ts --self-test
+
+  build:
+    name: Build and structured data
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `next build` also runs the linter and type-checks, so a lint error fails here.
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: Structured data over the built pages
+        run: pnpm validate:schema
+
+  # The one check the ruleset requires. `if: always()` so it reports even when a
+  # job it needs failed or was cancelled, and it fails unless BOTH succeeded: a
+  # skipped job must not read as a pass.
+  gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    needs: [validators, build]
+    if: always()
+    steps:
+      - name: Require every job to have succeeded
+        env:
+          VALIDATORS: ${{ needs.validators.result }}
+          BUILD: ${{ needs.build.result }}
+        run: |
+          echo "validators: ${VALIDATORS}"
+          echo "build:      ${BUILD}"
+          [ "${VALIDATORS}" = "success" ] && [ "${BUILD}" = "success" ]
