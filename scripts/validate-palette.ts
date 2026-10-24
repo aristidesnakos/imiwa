@@ -94,12 +94,12 @@
  * `border-input` rendered in the inherited text colour for months, the second
  * is what shipped on `--destructive`. Both are covered by a negative test.
  *
- * There is no baseline here because there is no live debt: the only broken
- * tokens today are the eight `--sidebar-*` entries, and
- * `components/ui/sidebar.tsx` has zero importers. So a broken token that
+ * There is no baseline here because there is no live debt. A broken token that
  * nothing renders is a warning, and a broken token that something renders is a
- * failure. Wiring the sidebar up turns its warnings into failures on the same
- * commit, which is the point.
+ * failure, so adding a component that uses a broken token turns its warning
+ * into a failure on the same commit, which is the point. (Until 2026-10-24 the
+ * only broken tokens were eight `--sidebar-*` entries that the unused
+ * `components/ui/sidebar.tsx` held alive; both are deleted.)
  */
 
 import { readdirSync, statSync, readFileSync, writeFileSync } from 'fs';
@@ -268,13 +268,8 @@ section('1. Colour tokens are defined, and their wrapper matches their value');
   collect(resolved.theme.colors, []);
 
   // An undefined or mis-wrapped token only breaks something if a utility built
-  // on it renders. components/ui/sidebar.tsx has zero importers, so its eight
-  // tokens are inert dead config — real debt, but not a live defect, and
-  // failing the gate on day one over dead code teaches people to skip the gate.
-  const liveSource = files
-    .filter((f) => f !== 'components/ui/sidebar.tsx')
-    .map((f) => readFileSync(join(REPO, f), 'utf8'))
-    .join('\n');
+  // on it renders, so a broken token that no file uses is a warning, not a failure.
+  const liveSource = files.map((f) => readFileSync(join(REPO, f), 'utf8')).join('\n');
 
   const live: string[] = [];
   let bad = 0;
