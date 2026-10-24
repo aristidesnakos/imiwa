@@ -57,7 +57,7 @@ const nextConfig = {
   },
   
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 
   // app/kanji/[character]/share-card.png/route.tsx reads Tan from disk on every
