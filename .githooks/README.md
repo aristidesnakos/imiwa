@@ -58,3 +58,5 @@ What it deliberately allows:
   through; CI still runs. A hook that blocks you because of the machine is a hook
   that gets switched off.
 - **A deliberate skip:** `git push --no-verify`, or `SKIP_PREPUSH=1 git push`.
+
+<!-- throwaway PR that exercises .github/workflows/ci.yml on a real pull_request event; never merged -->
