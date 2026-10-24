@@ -27,12 +27,18 @@ The `commit-msg` hook rejects a CI-skip marker appearing **below** the subject l
 pedantry: Vercel scans the whole commit message, and a body that merely *described* the marker in
 prose once silently skipped four deployments.
 
+The `pre-push` hook runs `tsc --noEmit` and `pnpm validate:all` (about 20 seconds) before a push that
+updates `main`, and refuses the push if either fails. A push to any other branch skips it. With no
+`node_modules` (a fresh clone or worktree) it warns and lets the push through. `git push --no-verify`
+or `SKIP_PREPUSH=1 git push` skips it for one push.
+
 ### Validation — there is no unit test runner
 
 Correctness is enforced by targeted validators, each guarding one subsystem's contract. These are
 the closest thing to "running a single test":
 
 ```bash
+pnpm validate:all            # every offline validator below in one go (what CI and the pre-push hook run); it reads package.json, so a new validate:* script joins it; not validate:schema, which needs a build
 pnpm validate:schema         # structured data / JSON-LD across page types
 pnpm validate:kanji-data     # the level lists: no duplicates, one code point, readings present
 pnpm validate:sheets         # printable sheets: golden default documents, rows/genkou pagination, refusals
@@ -47,7 +53,7 @@ pnpm validate:video-sync     # the YouTube-title -> episode matching rule and th
 pnpm validate:play           # Tan Dash: signs, worlds, one right answer per wave, the return-visit model
 pnpm validate:routes         # every app/**/route.* method has an access class in scripts/route-access.json, and its defence is in the handler
 pnpm check-advisories        # production dependencies vs the advisory database; fails on an unaccepted high or critical (scripts/advisories-accepted.json); --self-test is offline
-npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts   # N5 quiz: one right answer per question
+pnpm validate:quiz           # N5 quiz: one right answer per question
 ```
 
 `validate:announcements` does more than check a config shape — it replays the acknowledgement model
@@ -60,6 +66,16 @@ branch protection, 218 commits in the 30 days to 2026-10-24) and Vercel deploys 
 independently, so every workflow below runs after the deploy and none can stop one. A red workflow
 means fix forward now. It also means a red check can sit unseen for days, which is why the
 dependency check opens an issue instead of only failing.
+
+Two things now run the same checks earlier. A pull request gets one check named `CI gate`
+(`.github/workflows/ci.yml`: type-check, `pnpm validate:all`, the advisory rules' self-test, a build and
+`validate:schema`; about 90 seconds, no path filter, no secrets, so it is safe on a fork's PR), and the
+`pre-push` hook runs the type-check and `validate:all` before a push to `main`. Neither is *required*:
+the only ruleset on `main` ("Protect main") forbids force-pushes and deletion. Requiring `CI gate` would
+also require a pull request, which would block the five jobs that push to `main` with the Actions token
+(indexation-alarm, indexnow-submit, organic-push-monitor, query-performance, sync-story-videos), and the
+Actions app cannot be exempted from a ruleset on a repo owned by a personal account (tested 2026-10-24,
+HTTP 422). They would need a GitHub App's installation token, and that app as the ruleset's bypass actor.
 
 Performance budgets run in CI on every push to `main`, and locally after a `pnpm build`:
 
