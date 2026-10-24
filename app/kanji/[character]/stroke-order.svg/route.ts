@@ -11,6 +11,7 @@ import {
   type KanjiVgSource,
 } from '@/lib/kanjivg';
 import { strokeOrderImageAlt } from '@/lib/stroke-order-image';
+import { redirectToBareImagePath } from '@/lib/seo/bare-image-path';
 
 /**
  * GET /kanji/<char>/stroke-order.svg: a character's stroke-order diagram as a
@@ -74,9 +75,12 @@ function textResponse(status: number, message: string): Response {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ character: string }> }
 ) {
+  const bare = redirectToBareImagePath(request);
+  if (bare) return bare;
+
   const { character } = await params;
   const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === safeDecode(character));
 

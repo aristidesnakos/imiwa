@@ -7,6 +7,7 @@ import { N3_KANJI } from '@/lib/constants/n3-kanji';
 import { N2_KANJI } from '@/lib/constants/n2-kanji';
 import { N1_KANJI } from '@/lib/constants/n1-kanji';
 import { getPrimaryMeaning } from '@/lib/seo/kanji-optimization';
+import { redirectToBareImagePath } from '@/lib/seo/bare-image-path';
 import {
   CHIP,
   HEADLINE,
@@ -179,9 +180,12 @@ function Chip({ chip, last }: { chip: ShareCardChip; last: boolean }) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ character: string }> }
 ) {
+  const bare = redirectToBareImagePath(request);
+  if (bare) return bare;
+
   const { character } = await params;
   const kanjiData = ALL_KANJI_DATA.find(k => k.kanji === safeDecode(character));
 

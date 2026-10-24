@@ -19,6 +19,10 @@
  * same file that it calls):
  *
  *   public-read        GET or HEAD only: static or idempotent. No marker.
+ *   public-image       GET or HEAD only: an image drawn or fetched on demand and
+ *                      cached by the CDN under its whole URL. Calls
+ *                      redirectToBareImagePath( from @/lib/seo/bare-image-path, so a
+ *                      query string cannot skip the cache and force a render each time.
  *   public-beacon      POST only: records a client analytics event anyone could
  *                      forge anyway. No marker, so the reason has to carry it.
  *   signed-webhook     calls a verify…( function and reads a Svix header (or
@@ -53,6 +57,7 @@ const ROUTE_FILE = /^app\/(?:.+\/)?route\.(?:ts|tsx|js|jsx|mjs)$/;
 
 type Access =
   | 'public-read'
+  | 'public-image'
   | 'public-beacon'
   | 'signed-webhook'
   | 'sealed-token'
@@ -232,6 +237,16 @@ type Marker = typeof localOnly;
 
 const CLASSES: Record<Access, { methods?: string[]; marker?: Marker; shown: string }> = {
   'public-read': { methods: ['GET', 'HEAD'], shown: 'GET or HEAD only' },
+  'public-image': {
+    methods: ['GET', 'HEAD'],
+    shown: 'calls redirectToBareImagePath( from @/lib/seo/bare-image-path',
+    marker: (mod, handler) => {
+      const guarded = callsIn(reachable(mod, handler)).some(
+        c => !c.receiver && c.name === 'redirectToBareImagePath' && mod.imports.get(c.name) === '@/lib/seo/bare-image-path',
+      );
+      return guarded ? null : 'never calls redirectToBareImagePath( from @/lib/seo/bare-image-path, so ?cb=<anything> skips the CDN';
+    },
+  },
   'public-beacon': { methods: ['POST'], shown: 'POST only' },
   'signed-webhook': {
     shown: 'calls verify…( and reads a Svix header',
@@ -322,6 +337,11 @@ section('1. The detector, on fixtures');
         if (!verifyWebhookSignature({ id: request.headers.get('svix-id'), body: await request.text() })) return new Response(null, { status: 400 });
         return new Response(null);
       }`, true],
+    ['public-image, guard called first', 'public-image', 'GET', `import { redirectToBareImagePath } from '@/lib/seo/bare-image-path';
+      export async function GET(request) { const bare = redirectToBareImagePath(request); if (bare) return bare; return new Response('png'); }`, true],
+    ['public-image, no guard', 'public-image', 'GET', `export async function GET() { return new Response('png'); }`, false],
+    ['public-image, guard from elsewhere', 'public-image', 'GET', `import { redirectToBareImagePath } from '@/lib/other';
+      export async function GET(request) { return redirectToBareImagePath(request) ?? new Response('png'); }`, false],
     ['signed-webhook, the ShipFast relay', 'signed-webhook', 'POST', `import { sendEmail } from '@/lib/resend';
       export async function POST(req) { const data = await req.formData(); await sendEmail({ html: data.get('body-html') }); return new Response(null); }`, false],
   ];

@@ -43,8 +43,11 @@
     "/api/webhooks/resend": {
       "POST": { "access": "signed-webhook", "reason": "Resend's email.received webhook; refuses any request whose Svix signature does not verify." }
     },
+    "/kanji/[character]/share-card.png": {
+      "GET": { "access": "public-image", "reason": "The per-kanji link card (og:image), drawn on demand with next/og; only characters on the lists get one, and a request with a query string is redirected to the bare path so it cannot skip the CDN." }
+    },
     "/kanji/[character]/stroke-order.svg": {
-      "GET": { "access": "public-read", "reason": "The stroke-order image Google Images indexes, fetched from KanjiVG through lib/kanjivg." }
+      "GET": { "access": "public-image", "reason": "The stroke-order image Google Images indexes, fetched from KanjiVG through lib/kanjivg; a request with a query string is redirected to the bare path so it cannot skip the CDN." }
     },
     "/robots.txt": {
       "GET": { "access": "public-read", "reason": "robots.txt." }
