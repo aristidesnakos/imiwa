@@ -38,3 +38,23 @@ What it deliberately allows:
 - **The `git commit -v` diff region** below the scissors line. This matters
   here because the workflow files above literally contain the marker, so a
   naive scan would reject any commit that touches them.
+
+## `pre-push`
+
+Before a push that updates `refs/heads/main`, runs `pnpm exec tsc --noEmit` and
+`pnpm validate:all` (about 20 seconds in all) and refuses the push if either
+fails.
+
+Why: work goes straight to `main` and Vercel deploys on push, so every GitHub
+workflow reports *after* the change is live. A check sat red for a day on
+2026-10-23 before anyone looked. This is the same set `.github/workflows/ci.yml`
+runs on a pull request, run first, on your machine.
+
+What it deliberately allows:
+
+- **Every other branch.** Only a push that updates `main` is checked, so feature
+  and throwaway branches push at full speed. Deleting a ref is not checked.
+- **A clone or worktree with no `node_modules`.** It says so and lets the push
+  through; CI still runs. A hook that blocks you because of the machine is a hook
+  that gets switched off.
+- **A deliberate skip:** `git push --no-verify`, or `SKIP_PREPUSH=1 git push`.

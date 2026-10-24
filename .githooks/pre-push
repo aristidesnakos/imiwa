@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# pre-push — run what CI would run, before a push to main that deploys it.
+#
+# WHY THIS EXISTS
+# ---------------
+# Work goes straight to main and Vercel deploys on push, so every workflow in
+# .github/workflows reports AFTER the change is live. On 2026-10-23 a check was
+# red for a day before anyone looked. This runs the type-check and every offline
+# validator (pnpm validate:all, ~1 minute) first, and refuses the push if one
+# fails. It is the same set .github/workflows/ci.yml requires of a pull request.
+#
+# It only looks at pushes that update refs/heads/main, so feature and throwaway
+# branches push at full speed, and a deletion is not checked.
+#
+# If dependencies are not installed (a fresh clone or worktree) it says so and lets
+# the push through: a hook that blocks you because of the machine is a hook that
+# gets switched off.
+#
+# ACTIVATE: the same one-time setting as commit-msg, git config core.hooksPath .githooks
+#
+# Skip for one push: git push --no-verify   (or SKIP_PREPUSH=1 git push)
+
+set -u
+
+[ "${SKIP_PREPUSH:-}" = "1" ] && exit 0
+
+# stdin: <local ref> <local sha> <remote ref> <remote sha>, one line per ref pushed.
+ZERO=0000000000000000000000000000000000000000
+touches_main=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$remote_ref" = "refs/heads/main" ] && [ "$local_sha" != "$ZERO" ] && touches_main=1
+done
+[ "$touches_main" = "1" ] || exit 0
+
+ROOT=$(git rev-parse --show-toplevel) || exit 0
+cd "$ROOT" || exit 0
+
+if [ ! -d node_modules ] || ! command -v pnpm >/dev/null 2>&1; then
+  echo "pre-push: dependencies are not installed here, so the checks are skipped (CI still runs them)." >&2
+  exit 0
+fi
+
+echo "pre-push: type-check and every offline validator before main moves (skip: git push --no-verify)" >&2
+
+if ! pnpm exec tsc --noEmit; then
+  echo "pre-push: the type-check failed; main was not pushed." >&2
+  exit 1
+fi
+
+if ! pnpm validate:all; then
+  echo "pre-push: a validator failed; main was not pushed." >&2
+  exit 1
+fi
+
+exit 0
