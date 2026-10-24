@@ -46,6 +46,7 @@ pnpm validate:stories        # episode data: strict N5, bubble geometry, targets
 pnpm validate:video-sync     # the YouTube-title -> episode matching rule and the videos.ts rewrite
 pnpm validate:play           # Tan Dash: signs, worlds, one right answer per wave, the return-visit model
 pnpm validate:routes         # every app/**/route.* method has an access class in scripts/route-access.json, and its defence is in the handler
+pnpm check-advisories        # production dependencies vs the advisory database; fails on an unaccepted high or critical (scripts/advisories-accepted.json); --self-test is offline
 npx tsx --tsconfig tsconfig.json scripts/validate-quiz.ts   # N5 quiz: one right answer per question
 ```
 
@@ -54,7 +55,13 @@ against synthetic visitors and dates, asserting that first-time visitors never s
 dismissing one entry never suppresses another, and that the impression cap retires an ignored bar.
 Those are user-facing promises asserted nowhere else.
 
-Performance budgets run in CI on every PR, and locally after a `pnpm build`:
+**CI reports; it does not gate.** Work goes straight to `main` (no PR since #41 on 2026-08-24, no
+branch protection, 218 commits in the 30 days to 2026-10-24) and Vercel deploys on push
+independently, so every workflow below runs after the deploy and none can stop one. A red workflow
+means fix forward now. It also means a red check can sit unseen for days, which is why the
+dependency check opens an issue instead of only failing.
+
+Performance budgets run in CI on every push to `main`, and locally after a `pnpm build`:
 
 ```bash
 pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.js
@@ -180,7 +187,10 @@ URL, built by `strokeOrderImagePath()` in `lib/stroke-order-image.ts`, is also t
 asserts all three. On Play, the viewer fetches the raw file from `app/api/kanji-svg/[hex]/route.ts`
 and swaps it in inline, because CSS has to reach the paths to animate them. Both routes fetch through
 `lib/kanjivg.ts`, with the hex from `codePointAt(0)` (never `charCodeAt`, which returns a lone
-surrogate above U+FFFF). The image route is `force-dynamic`. If the upstream fetch fails it answers
+surrogate above U+FFFF). The image route is `force-dynamic`, and, like the share card, it redirects
+any request that has a query string to the bare path (`lib/seo/bare-image-path.ts`): the CDN keys its
+cache on the whole URL, so `?cb=x` otherwise forced a fetch and a render every time. The `public-image`
+class in `validate:routes` fails if a handler stops calling it. If the upstream fetch fails it answers
 with a `no-store` 502, never a 404, because a 404 would tell Google the image is gone.
 `toStandaloneStrokeOrderSvg()` keeps KanjiVG's copyright header intact and adds the change notice
 CC BY-SA 3.0 requires. It also restates `.stroke-animation path` from `globals.css` inside the file,
@@ -648,13 +658,13 @@ So verify colour work against computed values in a browser, not by reading the c
 **Hard rule: components use the brand palette, and `pnpm validate:palette` enforces it.** Stock
 Tailwind colours (`text-gray-500`), pure `black`/`white`, and hard-coded literals (`bg-[#7BB3D3]`)
 are failures — use a `japan-*` token or a semantic one (`primary`, `muted`, `card`, `destructive`).
-`palette-check.yml` gates every PR touching `app/`, `components/`, `globals.css` or the Tailwind
+`palette-check.yml` checks every push touching `app/`, `components/`, `globals.css` or the Tailwind
 config.
 
 There is a third silent-drop mechanism alongside the two above, and it is the most common:
 **an opacity modifier on a `japan-*` token compiles to nothing.** `bg-japan-soft-mist/60` and
 `border-japan-sakura-waters/20` emit no CSS at all, because Tailwind cannot fold alpha into a colour
-whose value is a bare `var(--x)` holding a hex. 69 of these are live in the tree. Write a tint as
+whose value is a bare `var(--x)` holding a hex. 29 of these are live in the tree (2026-10-24). Write a tint as
 `color-mix` on the token instead, and give a *border* the `color:` type hint or tailwind-merge reads
 the arbitrary value as a border-width and strips the element's own `border` class:
 
@@ -663,11 +673,11 @@ to-[color-mix(in_srgb,var(--sakura-waters)_25%,var(--temple-stone))]          ba
 border-[color:color-mix(in_srgb,var(--sakura-waters)_55%,var(--temple-stone))] border
 ```
 
-625 pre-existing violations across 52 files are frozen per-file in `scripts/palette-baseline.json`,
+358 pre-existing violations across 29 files (2026-10-24) are frozen per-file in `scripts/palette-baseline.json`,
 so the gate is green today and any *increase* fails. The counts only ever fall:
 `pnpm validate:palette --tighten` re-records them downward and refuses to raise one. Fixing a batch
 of them is a welcome standalone change — note that converting the tokens to channel triplets with
-`<alpha-value>` would make all 69 dead-alpha usages start rendering at once, which is a visible
+`<alpha-value>` would make all 29 dead-alpha usages start rendering at once, which is a visible
 site-wide shift and wants its own review.
 
 Several brand colours are too light to carry text, so the palette uses **fill/ink pairs**: use
@@ -697,7 +707,7 @@ exactly one thing on that page: a moment rather than content.
 `robots.txt` and `sitemap.xml` are dynamic route handlers, not build artifacts. Kanji pages emit
 three linked JSON-LD types (Article, FAQPage, BreadcrumbList); `lib/seo/site.ts` is the single source
 of absolute URLs, and JSON-LD must use the canonical `www` host — the apex 301s to it, and hardcoding
-the apex splits the brand entity across two hostnames. `schema-check` CI gates this on every PR.
+the apex splits the brand entity across two hostnames. `schema-check` CI checks this on every push.
 `KANJI_CONTENT_LAST_MODIFIED` (`lib/seo/site.ts`) sets every kanji URL's `lastmod` and every
 Article's `dateModified`. Bump it when the main content of every character page changes, whether
 through the data or the template. Never bump it for chrome such as the header or footer.
@@ -720,7 +730,8 @@ palette, every kanji set as text checked against the N5 list, and sheets drawn b
 The ~1,900 character pages are the exception, because that many JPEGs do not belong in git:
 `app/kanji/[character]/share-card.png/route.tsx` draws each card on request with `next/og` (a
 ~230-250 kB PNG, with a committed 340px Tan in `app/kanji/_og/`, named in `outputFileTracingIncludes`),
-`force-dynamic` and CDN-cached like `stroke-order.svg`. Its fonts are Google Fonts `text=` subsets of
+`force-dynamic` and CDN-cached like `stroke-order.svg`, and like it redirects a query string to the bare
+path (measured 2026-10-24: a cache-busted request cost a 1.3 s render against 0.29 s for a hit). Its fonts are Google Fonts `text=` subsets of
 just that card's glyphs, fetched through the Data Cache; a failed fetch is a `no-store` 502.
 `lib/seo/kanji-share-card.ts` decides what the card says (headline size and lines, at most four
 reading chips) so its alt text names exactly what is drawn, and the page uses the same helper for its
@@ -751,7 +762,7 @@ send you to completely different consoles.
 
 ### Performance budgets
 
-`lighthouserc.js` gates pushes and PRs across `/`, `/kanji`, `/kanji/日`, `/kanji/n5`,
+`lighthouserc.js` asserts on every push (and any PR) across `/`, `/kanji`, `/kanji/日`, `/kanji/n5`,
 `/kanji/n5/quiz`, `/stories`, one episode, the sheet builder, genkouyoushi and `/play`. Every URL must match exactly one `assertMatrix`
 entry, because LHCI applies each entry whose pattern matches, which is why the character-page
 pattern is `/kanji/%`. Read the header comment before changing a threshold: it records how each
@@ -780,8 +791,17 @@ structurally separate from licensed text, or the result becomes Adapted Material
   it, so a broken import there surfaces only when its scheduled workflow runs. Check `scripts/` by
   hand whenever you delete or move a `lib/` module.
 - `middleware.ts` runs on every non-static path for AI-crawler tracking.
+- **Dependencies are audited daily and kept to what is imported.** `pnpm check-advisories` runs from
+  `.github/workflows/dependency-audit.yml` (06:37 UTC, and on any `package.json`/lockfile push). It
+  fails on an unaccepted critical or high advisory on a production dependency and opens one GitHub
+  issue; GitHub's Dependabot alerts were also switched on 2026-10-24. `scripts/advisories-accepted.json`
+  holds the two postcss highs that `next@15.5.x` pins exactly, each with a reason and when to look
+  again. Anything imported only by `scripts/` (`puppeteer`, `dotenv`) or only by lint (`eslint`) belongs
+  in `devDependencies`, so `pnpm audit --prod` sees what ships. On 2026-10-24, 49 packages nothing
+  imported were removed (including a `vercel` CLI in `dependencies`) with 37 dead files; before
+  adding a package, check that something will import it.
 - `next lint` is deprecated and prints a migration notice; the pre-existing `no-unused-vars` warnings
-  in `lib/utils.ts`, `lib/hooks/use-toast.ts`, `lib/sentences/validate.ts` and
+  in `lib/utils.ts`, `lib/sentences/validate.ts` and
   `sentence-reviewer.tsx` are noise — do not treat a clean-looking lint run as a change signal
   without filtering to the files you touched. In a git worktree under `.claude/worktrees/`,
   `pnpm lint` fails outright because ESLint also loads the parent checkout's config; lint the

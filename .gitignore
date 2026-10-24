@@ -68,3 +68,6 @@ package-lock.json
 
 # Personal study material (third-party, copyrighted). Never commit it.
 /docs/kanji-list/
+
+# Frames pulled out of a screen recording while cutting a video. Scratch, never committed.
+/.tmp-frames/
