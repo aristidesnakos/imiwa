@@ -25,6 +25,7 @@ import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSect
 import { WhereToEatSection } from '@/components/kanji/WhereToEatSection';
 import { YenConverterSection } from '@/components/kanji/YenConverterSection';
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
+import { MarkLearnedButton } from '@/components/kanji/MarkLearnedButton';
 import { LevelNavigation, neighboursWithin, type LevelNeighbours } from '@/components/kanji/LevelNavigation';
 import { N5QuizCard } from '@/components/levels/N5QuizLink';
 import { PlayCard } from '@/components/play/PlayLink';
@@ -493,6 +494,12 @@ export default async function KanjiDetailPage({ params }: Props) {
               JLPT {kanjiData.level}
               <span className="sr-only">: see all {kanjiData.level} kanji</span>
             </Link>
+          </div>
+
+          {/* The same learned toggle as the /kanji grid, so a character marked
+              here is marked there. See MarkLearnedButton. */}
+          <div className="flex justify-center">
+            <MarkLearnedButton kanji={kanjiData.kanji} />
           </div>
         </div>
         
