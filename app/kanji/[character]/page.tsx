@@ -23,6 +23,7 @@ import { RelatedKanjiSection } from '@/components/kanji/RelatedKanjiSection';
 import { ExampleSentencesSection } from '@/components/kanji/ExampleSentencesSection';
 import { StoryAppearancesSection } from '@/components/kanji/StoryAppearancesSection';
 import { WhereToEatSection } from '@/components/kanji/WhereToEatSection';
+import { YenConverterSection } from '@/components/kanji/YenConverterSection';
 import { KanjiActionBar } from '@/components/kanji/KanjiActionBar';
 import { LevelNavigation, neighboursWithin, type LevelNeighbours } from '@/components/kanji/LevelNavigation';
 import { N5QuizCard } from '@/components/levels/N5QuizLink';
@@ -561,6 +562,11 @@ export default async function KanjiDetailPage({ params }: Props) {
             of a link swap. Renders nothing for every other character; see WhereToEatSection
             for what each line may claim. */}
         <WhereToEatSection kanji={kanjiData.kanji} />
+
+        {/* Four price-tag kanji (円 税 込 抜): a sentence and a link to YenPocket, the partner's
+            yen converter. Disjoint from the food kanji above; renders nothing for every other
+            character. See YenConverterSection for what each line may claim. */}
+        <YenConverterSection kanji={kanjiData.kanji} />
 
         {/* Tan thumbs-up accent — only for kanji with no example sentences yet
             (most kanji today: every level above N5 is unreviewed). Where
