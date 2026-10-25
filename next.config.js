@@ -34,6 +34,15 @@ const nextConfig = {
         pathname: '/vi/*/hqdefault.jpg',
       },
       {
+        // YenPocket's icon, the partner page's own og:image, shown on the link card in
+        // components/kanji/YenConverterSection.tsx. next/image proxies it, so a visitor's browser
+        // never contacts japanramenguide.com. The component refuses any other path before it
+        // renders, so widen this and its check together.
+        protocol: 'https',
+        hostname: 'japanramenguide.com',
+        pathname: '/apps/yenpocket/**',
+      },
+      {
         protocol: 'https',
         hostname: 'pbs.twimg.com',
         pathname: '/profile_images/**',

@@ -2,7 +2,8 @@
  * components/levels/PracticeCard.tsx
  *
  * The bold card for a free way to practise the kanji a reader has just met: the quiz
- * (N5QuizCard) and the game (PlayCard). It is the shell of BookCTA's `nextStep` card, on
+ * (N5QuizCard) and the game (PlayCard), and, with `external`, the partner's yen converter
+ * (YenConverterSection). It is the shell of BookCTA's `nextStep` card, on
  * purpose: tile, a small-caps eyebrow, a bold heading, one sentence and a filled button.
  * Those two links used to be one 14px line each at the foot of a kanji page, and a line
  * that quiet is not seen, so it is not clicked.
@@ -41,6 +42,13 @@ import { cn } from '@/lib/utils';
 interface PracticeCardProps {
   /** The heading's id, unique on the page; the section is named by it. */
   id: string;
+  /**
+   * `href` leaves the site: a plain anchor that opens a new tab, with `noopener` and
+   * deliberately not `noreferrer`, because the owner of the page it points at asked to see
+   * michikanji.com as the source of the visit (YenConverterSection). The default is an
+   * internal `<Link>` with prefetch off.
+   */
+  external?: boolean;
   /** Small capitals above the heading, e.g. "Free quiz". Keep it under ~16 characters: it wraps beside the tile on a phone. */
   eyebrow: string;
   heading: string;
@@ -56,7 +64,23 @@ interface PracticeCardProps {
   children: ReactNode;
 }
 
-export function PracticeCard({ id, eyebrow, heading, href, cta, icon, tile, className, children }: PracticeCardProps) {
+export function PracticeCard({
+  id,
+  external = false,
+  eyebrow,
+  heading,
+  href,
+  cta,
+  icon,
+  tile,
+  className,
+  children,
+}: PracticeCardProps) {
+  const buttonClass = cn(
+    buttonVariants({ size: 'lg' }),
+    'mt-5 w-full after:absolute after:inset-0 after:content-[""] group-hover:bg-japan-mountain-mist sm:mt-auto sm:w-auto sm:self-start',
+  );
+
   return (
     <section className={className} aria-labelledby={id}>
       <div className="group relative grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 rounded-lg border border-border bg-card p-6 transition-colors hover:border-japan-sakura-waters sm:grid-cols-[8rem_minmax(0,1fr)] sm:grid-rows-[auto_1fr] sm:gap-x-8 sm:gap-y-2 md:p-8">
@@ -78,17 +102,18 @@ export function PracticeCard({ id, eyebrow, heading, href, cta, icon, tile, clas
               route whose payload a prefetch would add to each page's own byte budget
               (CLAUDE.md, "Performance budgets"). `group-hover` repeats the button's own hover
               so it reacts when the pointer is anywhere on the card, since all of it is the link. */}
-          <Link
-            href={href}
-            prefetch={false}
-            className={cn(
-              buttonVariants({ size: 'lg' }),
-              'mt-5 w-full after:absolute after:inset-0 after:content-[""] group-hover:bg-japan-mountain-mist sm:mt-auto sm:w-auto sm:self-start',
-            )}
-          >
-            {icon}
-            {cta}
-          </Link>
+          {external ? (
+            <a href={href} target="_blank" rel="noopener" className={buttonClass}>
+              {icon}
+              {cta}
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          ) : (
+            <Link href={href} prefetch={false} className={buttonClass}>
+              {icon}
+              {cta}
+            </Link>
+          )}
         </div>
       </div>
     </section>

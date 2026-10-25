@@ -563,9 +563,9 @@ export default async function KanjiDetailPage({ params }: Props) {
             for what each line may claim. */}
         <WhereToEatSection kanji={kanjiData.kanji} />
 
-        {/* Four price-tag kanji (円 税 込 抜): a sentence and a link to YenPocket, the partner's
-            yen converter. Disjoint from the food kanji above; renders nothing for every other
-            character. See YenConverterSection for what each line may claim. */}
+        {/* Four price-tag kanji (円 税 込 抜): a card for YenPocket, the partner's yen converter,
+            built from that page's own Open Graph metadata. Disjoint from the food kanji above;
+            renders nothing for every other character. See YenConverterSection. */}
         <YenConverterSection kanji={kanjiData.kanji} />
 
         {/* Tan thumbs-up accent — only for kanji with no example sentences yet

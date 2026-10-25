@@ -1,106 +1,104 @@
-import type { ReactNode } from 'react';
-import { SECTION_BAND, SECTION_HEADING } from '@/components/kanji/section';
+import Image from 'next/image';
+import { ExternalLink } from 'lucide-react';
+import { PracticeCard } from '@/components/levels/PracticeCard';
+import { fetchLinkPreview, type LinkPreview } from '@/lib/link-preview';
 
 /**
- * "Converting yen into your own currency?": one sentence and one link from four price-tag
- * kanji to YenPocket (japanramenguide.com/apps/yenpocket), the yen converter the owner of
- * Japan Ramen Guide made after the ramen pages. It sits beside WhereToEatSection, which says
- * why the link exists and holds the rules both are kept to; the sets of characters are
- * disjoint, so a page shows at most one of the two.
+ * A link card to YenPocket (japanramenguide.com/apps/yenpocket), the yen converter the owner of
+ * Japan Ramen Guide made after the ramen pages, on four price-tag kanji: 円, and 税 込 抜, the
+ * three characters of 税込 / 税抜 (tax included / before tax), which his page explains in its FAQ.
+ * It sits beside WhereToEatSection, which says why these links exist and holds the rules both are
+ * kept to; the two sets of characters are disjoint, so a page shows at most one of them.
  *
- * The same rules apply here, and the ones that bite:
+ * THE CARD IS HIS PAGE'S OWN METADATA. The heading, the sentence, the picture and the eyebrow are
+ * its Open Graph title, description, image and site name, read by lib/link-preview.ts at build and
+ * then at most once a day (the page's `revalidate`), in the shell of the quiz and game cards
+ * (PracticeCard). So the card can say nothing his page does not, which is the rule the swap was
+ * held to, and it follows him when he edits it: "26 currencies" or "Free on iPhone" changes here
+ * the day it changes there. Only the button's words are ours, and the link itself is a constant,
+ * never read from his page.
  *
- *   - Editorial, in the body, followable, and no `noreferrer`, so his analytics sees
- *     michikanji.com as the source. See WhereToEatSection for the Referrer-Policy reason.
- *   - True. Checked against the page on 2026-10-25. It is an iPhone and Apple Watch app
- *     (Android and web are not mentioned), converts yen into 26 currencies, keeps its rates on
- *     the phone so it works offline, and has a camera scanner that reads a price tag and says
- *     whether the price includes tax. 税込 and 税抜 appear on it, in its FAQ, as the two
- *     prices a Japanese tag often shows; 円 does not appear as a character, so that line is
- *     about the currency and claims nothing else. The converter is free and the scanner is
- *     a one-time purchase, so the lines that name the scanner say it is optional and give no
- *     price: a price on his page can change, and a line should go if its target stops saying it.
- *   - Modest. Four pages: 円 (the yen) and the three characters of 税込 / 税抜. 抜 and 込 are
- *     there only because the page itself explains the pair.
+ * If the request fails, or his page stops publishing a title or description, the card shows the
+ * copy pinned in PINNED, read from his page on 2026-10-25, rather than nothing: a build must not
+ * depend on his site being up, and the backlink should not disappear because it was down. Re-read
+ * PINNED against the page when you touch this file.
  *
- * Text only, no image and no client boundary: /kanji/% is gated on total transfer. No goal
- * (DataFast is over its event limit, and the Tan Dash test runs until 7 Dec 2026 without new
- * goals or placements); a click shows up as an exit link in DataFast.
+ * THE PICTURE is his og:image, a 512px app icon (428 kB), shown at 128px through next/image, so a
+ * visitor's browser talks to us and Vercel fetches the file: his host never sees a reader, and the
+ * privacy policy needs no new line. next/image refuses a host it was not told about and throws at
+ * render, so `shownImage` accepts exactly what next.config.js `images.remotePatterns` allows
+ * (https, japanramenguide.com, under /apps/yenpocket/) and anything else gets the ¥ tile. Widen
+ * the two together. The card sits below the fold and the image lazy-loads; /kanji/% is gated on
+ * total transfer, and only /kanji/日 is the measured page.
  *
- * Renders null for every other character, no heading and no empty state. A Map, not an
- * object: the route accepts arbitrary strings, and `COPY['__proto__']` on a plain object is
- * truthy.
+ * Same link rules as WhereToEatSection: followable, `noopener` and no `noreferrer` so his
+ * analytics sees michikanji.com as the source, a new tab with the screen-reader note (all in
+ * PracticeCard's `external` branch). It is a block card rather than a sentence on purpose, at
+ * Ari's request on 2026-10-25, so the editorial sentence the ramen links carry is not here: the
+ * card is labelled by the owner's site name and describes the page in the page's own words.
+ *
+ * No goal, as for the ramen links (DataFast is over its event limit, and the Tan Dash test runs
+ * until 7 Dec 2026 without new goals or placements); a click shows up as an exit link. Renders
+ * nothing for every other character, with no heading and no empty state. A Set, not an object:
+ * the route accepts arbitrary strings.
  */
 
-const YENPOCKET = 'https://japanramenguide.com/apps/yenpocket';
+const PAGE = 'https://japanramenguide.com/apps/yenpocket';
+const KANJI = new Set(['円', '税', '込', '抜']);
 
-// The ring is spelled out because a raw <a> does not go through buttonVariants.
-const LINK =
-  'rounded-sm font-medium text-japan-deep-ocean underline underline-offset-4 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+const PINNED = {
+  title: 'YenPocket: Japan Yen Converter & Price Tag Scanner',
+  description:
+    'Convert yen to 26 currencies, scan Japanese price tags, see if tax is included and track the tax-free minimum. Works offline. Free on iPhone and Apple Watch.',
+  siteName: 'Japan Ramen Guide',
+  image: `${PAGE}/icon-512.png`,
+} satisfies LinkPreview;
 
-function Ja({ children }: { children: ReactNode }) {
-  return <span lang="ja">{children}</span>;
+function shownImage(src: string | null): string | null {
+  if (!src) return null;
+  try {
+    const url = new URL(src);
+    const ok = url.protocol === 'https:' && url.hostname === 'japanramenguide.com' && url.pathname.startsWith('/apps/yenpocket/');
+    return ok ? `${url.origin}${url.pathname}` : null;
+  } catch {
+    return null;
+  }
 }
 
-// Anchor text names the page being linked, not the character.
-function YenPocket({ children }: { children: ReactNode }) {
-  return (
-    <a href={YENPOCKET} target="_blank" rel="noopener" className={LINK}>
-      {children}
-      <span className="sr-only"> (opens in a new tab)</span>
-    </a>
-  );
-}
+export async function YenConverterSection({ kanji }: { kanji: string }) {
+  if (!KANJI.has(kanji)) return null;
 
-const CONVERTER = (
-  <YenPocket>YenPocket, Japan Ramen Guide&rsquo;s yen converter for iPhone and Apple Watch</YenPocket>
-);
-
-const COPY = new Map<string, ReactNode>([
-  [
-    '円',
-    <>
-      <Ja>円</Ja> (en) is the yen, and it follows the number on many price tags, as in <Ja>500円</Ja>.{' '}
-      {CONVERTER} turns yen into 26 currencies, and it keeps the latest rates on your phone, so it still converts
-      offline.
-    </>,
-  ],
-  [
-    '税',
-    <>
-      <Ja>税</Ja> is tax. It starts <Ja>税込</Ja> (tax included) and <Ja>税抜</Ja> (before tax), the two prices a
-      Japanese price tag often shows. {CONVERTER} has a camera scanner, an optional purchase, that reads a tag and
-      says whether the price includes tax.
-    </>,
-  ],
-  [
-    '込',
-    <>
-      <Ja>込</Ja> is what marks the tax as included in <Ja>税込</Ja>, the price with tax; <Ja>税抜</Ja> is the price
-      before it. {CONVERTER} has a camera scanner, an optional purchase, that reads a price tag and says whether the
-      price includes tax.
-    </>,
-  ],
-  [
-    '抜',
-    <>
-      <Ja>抜</Ja> is what takes the tax out in <Ja>税抜</Ja>, the price before tax; <Ja>税込</Ja> is the price with
-      it. {CONVERTER} has a camera scanner, an optional purchase, that reads a price tag and says whether the price
-      includes tax.
-    </>,
-  ],
-]);
-
-export function YenConverterSection({ kanji }: { kanji: string }) {
-  const copy = COPY.get(kanji);
-  if (!copy) return null;
+  const preview = (await fetchLinkPreview(PAGE)) ?? PINNED;
+  const image = shownImage(preview.image);
 
   return (
-    <section className={SECTION_BAND} aria-labelledby="yen-converter-heading">
-      <h2 id="yen-converter-heading" className={`${SECTION_HEADING} mb-2`}>
-        Converting yen into your own currency?
-      </h2>
-      <p className="text-japan-mountain-mist">{copy}</p>
-    </section>
+    <PracticeCard
+      id="yenpocket-card"
+      external
+      eyebrow={preview.siteName ?? PINNED.siteName}
+      heading={preview.title}
+      href={PAGE}
+      cta="See YenPocket"
+      icon={<ExternalLink aria-hidden />}
+      tile={
+        image ? (
+          <Image
+            src={image}
+            alt=""
+            width={128}
+            height={128}
+            sizes="(min-width: 640px) 128px, 88px"
+            className="h-auto w-full rounded-lg border border-border"
+          />
+        ) : (
+          <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-border bg-japan-soft-mist text-4xl font-bold text-japan-deep-ocean">
+            ¥
+          </div>
+        )
+      }
+      className="mt-12"
+    >
+      {preview.description}
+    </PracticeCard>
   );
 }
