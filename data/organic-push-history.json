@@ -546,16 +546,51 @@
       0,
       749,
       32.7
+    ],
+    "2026-10-17": [
+      1,
+      544,
+      33.6
+    ],
+    "2026-10-18": [
+      1,
+      830,
+      31.7
+    ],
+    "2026-10-19": [
+      0,
+      1404,
+      30.5
+    ],
+    "2026-10-20": [
+      0,
+      1602,
+      29.8
+    ],
+    "2026-10-21": [
+      3,
+      1821,
+      26.1
+    ],
+    "2026-10-22": [
+      2,
+      2192,
+      27.5
+    ],
+    "2026-10-23": [
+      1,
+      2493,
+      26.1
     ]
   },
   "urls": {
     "https://www.michikanji.com/kanji/n5": {
       "s": "Submitted and indexed",
-      "c": "2026-09-29"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/n5/quiz": {
       "s": "Submitted and indexed",
-      "c": "2026-10-11"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/stories": {
       "s": "Discovered - currently not indexed",
@@ -563,11 +598,11 @@
     },
     "https://www.michikanji.com/kanji/%E6%97%A5": {
       "s": "Submitted and indexed",
-      "c": "2026-10-11"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E6%9C%AC": {
       "s": "Submitted and indexed",
-      "c": "2026-10-17"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E4%B8%80": {
       "s": "Submitted and indexed",
@@ -579,15 +614,15 @@
     },
     "https://www.michikanji.com/kanji/%E4%B8%89": {
       "s": "Submitted and indexed",
-      "c": "2026-10-07"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E5%9B%9B": {
       "s": "Submitted and indexed",
-      "c": "2026-10-17"
+      "c": "2026-10-23"
     },
     "https://www.michikanji.com/kanji/%E4%BA%94": {
       "s": "Submitted and indexed",
-      "c": "2026-09-29"
+      "c": "2026-10-20"
     },
     "https://www.michikanji.com/kanji/%E5%85%AD": {
       "s": "Submitted and indexed",
@@ -595,11 +630,11 @@
     },
     "https://www.michikanji.com/kanji/%E4%B8%83": {
       "s": "Submitted and indexed",
-      "c": "2026-10-09"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E5%85%AB": {
       "s": "Submitted and indexed",
-      "c": "2026-09-21"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E4%B9%9D": {
       "s": "Discovered - currently not indexed",
@@ -607,7 +642,7 @@
     },
     "https://www.michikanji.com/kanji/%E5%8D%81": {
       "s": "Submitted and indexed",
-      "c": "2026-09-27"
+      "c": "2026-10-20"
     },
     "https://www.michikanji.com/kanji/%E7%99%BE": {
       "s": "Submitted and indexed",
@@ -618,7 +653,7 @@
       "c": "2026-10-18"
     },
     "https://www.michikanji.com/kanji/%E4%B8%87": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%86%86": {
@@ -631,14 +666,14 @@
     },
     "https://www.michikanji.com/kanji/%E5%B9%B4": {
       "s": "Submitted and indexed",
-      "c": "2026-10-16"
+      "c": "2026-10-23"
     },
     "https://www.michikanji.com/kanji/%E6%9C%88": {
       "s": "Submitted and indexed",
-      "c": "2026-10-10"
+      "c": "2026-10-25"
     },
     "https://www.michikanji.com/kanji/%E5%8D%88": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%8D%8A": {
@@ -647,7 +682,7 @@
     },
     "https://www.michikanji.com/kanji/%E4%BA%BA": {
       "s": "Submitted and indexed",
-      "c": "2026-10-18"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E5%A5%B3": {
       "s": "Crawled - currently not indexed",
@@ -655,19 +690,19 @@
     },
     "https://www.michikanji.com/kanji/%E7%94%B7": {
       "s": "Submitted and indexed",
-      "c": "2026-10-01"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E5%AD%90": {
       "s": "Crawled - currently not indexed",
       "c": "2026-06-03"
     },
     "https://www.michikanji.com/kanji/%E6%AF%8D": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E7%88%B6": {
       "s": "Submitted and indexed",
-      "c": "2026-10-07"
+      "c": "2026-10-22"
     },
     "https://www.michikanji.com/kanji/%E5%8F%8B": {
       "s": "Submitted and indexed",
@@ -675,19 +710,19 @@
     },
     "https://www.michikanji.com/kanji/%E5%A4%A7": {
       "s": "Submitted and indexed",
-      "c": "2026-10-07"
+      "c": "2026-10-25"
     },
     "https://www.michikanji.com/kanji/%E5%B0%8F": {
       "s": "Submitted and indexed",
-      "c": "2026-09-24"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E9%AB%98": {
       "s": "Submitted and indexed",
-      "c": "2026-07-01"
+      "c": "2026-10-22"
     },
     "https://www.michikanji.com/kanji/%E9%95%B7": {
       "s": "Submitted and indexed",
-      "c": "2026-10-18"
+      "c": "2026-10-23"
     },
     "https://www.michikanji.com/kanji/%E7%99%BD": {
       "s": "Crawled - currently not indexed",
@@ -699,27 +734,27 @@
     },
     "https://www.michikanji.com/kanji/%E5%A4%A9": {
       "s": "Submitted and indexed",
-      "c": "2026-09-25"
+      "c": "2026-10-23"
     },
     "https://www.michikanji.com/kanji/%E7%81%AB": {
       "s": "Submitted and indexed",
-      "c": "2026-09-26"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E6%B0%B4": {
       "s": "Submitted and indexed",
-      "c": "2026-09-02"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E6%9C%A8": {
       "s": "Submitted and indexed",
       "c": "2026-09-26"
     },
     "https://www.michikanji.com/kanji/%E5%9C%9F": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%B1%B1": {
       "s": "Submitted and indexed",
-      "c": "2026-10-15"
+      "c": "2026-10-23"
     },
     "https://www.michikanji.com/kanji/%E5%B7%9D": {
       "s": "Discovered - currently not indexed",
@@ -743,15 +778,15 @@
     },
     "https://www.michikanji.com/kanji/%E5%8C%97": {
       "s": "Submitted and indexed",
-      "c": "2026-09-25"
+      "c": "2026-10-25"
     },
     "https://www.michikanji.com/kanji/%E8%A1%8C": {
       "s": "Submitted and indexed",
-      "c": "2026-09-21"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E6%9D%A5": {
       "s": "Submitted and indexed",
-      "c": "2026-09-21"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E8%A6%8B": {
       "s": "Submitted and indexed",
@@ -759,15 +794,15 @@
     },
     "https://www.michikanji.com/kanji/%E5%87%BA": {
       "s": "Submitted and indexed",
-      "c": "2026-08-21"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E5%85%A5": {
       "s": "Submitted and indexed",
-      "c": "2026-10-06"
+      "c": "2026-10-22"
     },
     "https://www.michikanji.com/kanji/%E8%AA%AD": {
       "s": "Submitted and indexed",
-      "c": "2026-09-21"
+      "c": "2026-10-25"
     },
     "https://www.michikanji.com/kanji/%E6%9B%B8": {
       "s": "Crawled - currently not indexed",
@@ -779,7 +814,7 @@
     },
     "https://www.michikanji.com/kanji/%E8%81%9E": {
       "s": "Submitted and indexed",
-      "c": "2026-09-21"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E9%A3%9F": {
       "s": "Crawled - currently not indexed",
@@ -787,19 +822,19 @@
     },
     "https://www.michikanji.com/kanji/%E7%94%9F": {
       "s": "Submitted and indexed",
-      "c": "2026-10-11"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E6%B0%97": {
       "s": "Submitted and indexed",
-      "c": "2026-10-17"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E4%BC%91": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%9B%BD": {
       "s": "Submitted and indexed",
-      "c": "2026-10-12"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E5%AD%A6": {
       "s": "Submitted and indexed",
@@ -823,23 +858,23 @@
     },
     "https://www.michikanji.com/kanji/%E5%89%8D": {
       "s": "Submitted and indexed",
-      "c": "2026-10-17"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E5%BE%8C": {
       "s": "Submitted and indexed",
-      "c": "2026-09-27"
+      "c": "2026-10-20"
     },
     "https://www.michikanji.com/kanji/%E9%96%93": {
-      "s": "Crawled - currently not indexed",
-      "c": "2026-05-20"
+      "s": "Submitted and indexed",
+      "c": "2026-10-22"
     },
     "https://www.michikanji.com/kanji/%E5%A4%96": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%90%8D": {
       "s": "Submitted and indexed",
-      "c": "2026-10-18"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E5%88%86": {
       "s": "Submitted and indexed",
@@ -895,7 +930,7 @@
     },
     "https://www.michikanji.com/kanji/%E7%A4%BE": {
       "s": "Submitted and indexed",
-      "c": "2026-09-15"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E6%A5%AD": {
       "s": "Discovered - currently not indexed",
@@ -915,10 +950,10 @@
     },
     "https://www.michikanji.com/kanji/%E4%BB%95": {
       "s": "Submitted and indexed",
-      "c": "2026-10-01"
+      "c": "2026-10-25"
     },
     "https://www.michikanji.com/kanji/%E7%94%A8": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E8%87%AA": {
@@ -935,11 +970,11 @@
     },
     "https://www.michikanji.com/kanji/%E5%BF%83": {
       "s": "Submitted and indexed",
-      "c": "2026-10-17"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E8%80%85": {
       "s": "Submitted and indexed",
-      "c": "2026-10-01"
+      "c": "2026-10-20"
     },
     "https://www.michikanji.com/kanji/%E5%85%84": {
       "s": "Submitted and indexed",
@@ -951,7 +986,7 @@
     },
     "https://www.michikanji.com/kanji/%E5%A7%89": {
       "s": "Submitted and indexed",
-      "c": "2026-09-27"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E5%A6%B9": {
       "s": "Discovered - currently not indexed",
@@ -974,15 +1009,15 @@
       "c": "2026-10-08"
     },
     "https://www.michikanji.com/kanji/%E6%98%BC": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%A4%95": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E6%98%A5": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%A4%8F": {
@@ -999,7 +1034,7 @@
     },
     "https://www.michikanji.com/kanji/%E6%9B%9C": {
       "s": "Submitted and indexed",
-      "c": "2026-07-01"
+      "c": "2026-10-19"
     },
     "https://www.michikanji.com/kanji/%E9%80%B1": {
       "s": "Crawled - currently not indexed",
@@ -1019,7 +1054,7 @@
     },
     "https://www.michikanji.com/kanji/%E6%96%B0": {
       "s": "Submitted and indexed",
-      "c": "2026-10-15"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E5%8F%A4": {
       "s": "Submitted and indexed",
@@ -1034,7 +1069,7 @@
       "c": "2026-05-08"
     },
     "https://www.michikanji.com/kanji/%E5%BC%B7": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%BC%B1": {
@@ -1051,7 +1086,7 @@
     },
     "https://www.michikanji.com/kanji/%E6%82%AA": {
       "s": "Submitted and indexed",
-      "c": "2026-08-17"
+      "c": "2026-10-22"
     },
     "https://www.michikanji.com/kanji/%E5%AE%89": {
       "s": "Crawled - currently not indexed",
@@ -1059,7 +1094,7 @@
     },
     "https://www.michikanji.com/kanji/%E9%87%8D": {
       "s": "Submitted and indexed",
-      "c": "2026-08-08"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E7%89%B9": {
       "s": "Submitted and indexed",
@@ -1115,22 +1150,22 @@
     },
     "https://www.michikanji.com/kanji/%E8%B5%B7": {
       "s": "Submitted and indexed",
-      "c": "2026-10-01"
+      "c": "2026-10-19"
     },
     "https://www.michikanji.com/kanji/%E8%BB%A2": {
       "s": "Submitted and indexed",
       "c": "2026-07-05"
     },
     "https://www.michikanji.com/kanji/%E6%AD%A2": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E9%80%81": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E6%80%9D": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E8%80%83": {
@@ -1155,7 +1190,7 @@
     },
     "https://www.michikanji.com/kanji/%E6%95%99": {
       "s": "Submitted and indexed",
-      "c": "2026-10-07"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E7%A0%94": {
       "s": "Crawled - currently not indexed",
@@ -1167,14 +1202,14 @@
     },
     "https://www.michikanji.com/kanji/%E5%8B%89": {
       "s": "Submitted and indexed",
-      "c": "2026-09-06"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E5%AD%97": {
       "s": "Crawled - currently not indexed",
       "c": "2026-05-10"
     },
     "https://www.michikanji.com/kanji/%E6%96%87": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E4%BD%9C": {
@@ -1195,7 +1230,7 @@
     },
     "https://www.michikanji.com/kanji/%E7%9D%80": {
       "s": "Submitted and indexed",
-      "c": "2026-10-07"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E5%A3%B2": {
       "s": "Submitted and indexed",
@@ -1203,7 +1238,7 @@
     },
     "https://www.michikanji.com/kanji/%E8%B2%B7": {
       "s": "Submitted and indexed",
-      "c": "2026-08-23"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E8%B2%B8": {
       "s": "Discovered - currently not indexed",
@@ -1227,11 +1262,11 @@
     },
     "https://www.michikanji.com/kanji/%E8%A9%A6": {
       "s": "Submitted and indexed",
-      "c": "2026-09-07"
+      "c": "2026-10-19"
     },
     "https://www.michikanji.com/kanji/%E9%A7%85": {
       "s": "Submitted and indexed",
-      "c": "2026-10-10"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E6%97%85": {
       "s": "Submitted and indexed",
@@ -1239,7 +1274,7 @@
     },
     "https://www.michikanji.com/kanji/%E9%81%8B": {
       "s": "Submitted and indexed",
-      "c": "2026-10-10"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E5%AE%B6": {
       "s": "Discovered - currently not indexed",
@@ -1258,11 +1293,11 @@
       "c": "2026-08-19"
     },
     "https://www.michikanji.com/kanji/%E5%AE%A4": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%A0%82": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E9%99%A2": {
@@ -1271,7 +1306,7 @@
     },
     "https://www.michikanji.com/kanji/%E5%9C%B0": {
       "s": "Submitted and indexed",
-      "c": "2026-10-02"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E6%96%B9": {
       "s": "Submitted and indexed",
@@ -1303,7 +1338,7 @@
     },
     "https://www.michikanji.com/kanji/%E9%A2%A8": {
       "s": "Submitted and indexed",
-      "c": "2026-10-09"
+      "c": "2026-10-21"
     },
     "https://www.michikanji.com/kanji/%E6%B5%B7": {
       "s": "Submitted and indexed",
@@ -1315,7 +1350,7 @@
     },
     "https://www.michikanji.com/kanji/%E9%A3%AF": {
       "s": "Submitted and indexed",
-      "c": "2026-10-01"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E8%82%89": {
       "s": "Crawled - currently not indexed",
@@ -1334,7 +1369,7 @@
       "c": "2026-09-23"
     },
     "https://www.michikanji.com/kanji/%E7%89%9B": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E9%B3%A5": {
@@ -1358,7 +1393,7 @@
       "c": "2026-10-01"
     },
     "https://www.michikanji.com/kanji/%E8%8A%B1": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E6%A5%BD": {
@@ -1366,8 +1401,8 @@
       "c": null
     },
     "https://www.michikanji.com/kanji/%E6%AD%8C": {
-      "s": "Crawled - currently not indexed",
-      "c": "2026-04-24"
+      "s": "Discovered - currently not indexed",
+      "c": null
     },
     "https://www.michikanji.com/kanji/%E6%98%A0": {
       "s": "Submitted and indexed",
@@ -1383,7 +1418,7 @@
     },
     "https://www.michikanji.com/kanji/%E5%8A%9B": {
       "s": "Submitted and indexed",
-      "c": "2026-08-22"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E7%97%85": {
       "s": "URL is unknown to Google",
@@ -1394,8 +1429,8 @@
       "c": null
     },
     "https://www.michikanji.com/kanji/%E9%80%9A": {
-      "s": "Crawled - currently not indexed",
-      "c": "2026-01-07"
+      "s": "Discovered - currently not indexed",
+      "c": null
     },
     "https://www.michikanji.com/kanji/%E7%89%A9": {
       "s": "Crawled - currently not indexed",
@@ -1419,7 +1454,7 @@
     },
     "https://www.michikanji.com/kanji/%E5%A7%8B": {
       "s": "Submitted and indexed",
-      "c": "2026-09-23"
+      "c": "2026-10-26"
     },
     "https://www.michikanji.com/kanji/%E7%B5%82": {
       "s": "Discovered - currently not indexed",
@@ -1435,7 +1470,7 @@
     },
     "https://www.michikanji.com/kanji/%E7%84%A1": {
       "s": "Submitted and indexed",
-      "c": "2026-10-15"
+      "c": "2026-10-22"
     },
     "https://www.michikanji.com/kanji/%E6%8C%81": {
       "s": "Submitted and indexed",
@@ -1451,14 +1486,14 @@
     },
     "https://www.michikanji.com/kanji/%E5%85%83": {
       "s": "Submitted and indexed",
-      "c": "2026-07-11"
+      "c": "2026-10-23"
     },
     "https://www.michikanji.com/kanji/%E4%BB%A3": {
       "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%90%8C": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E4%BB%A5": {
@@ -1510,11 +1545,11 @@
       "c": "2026-10-01"
     },
     "https://www.michikanji.com/kanji/%E7%95%8C": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E8%B3%AA": {
-      "s": "Discovered - currently not indexed",
+      "s": "URL is unknown to Google",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E7%94%B0": {
@@ -1551,10 +1586,10 @@
     },
     "https://www.michikanji.com/kanji/%E7%A7%81": {
       "s": "Submitted and indexed",
-      "c": "2026-10-13"
+      "c": "2026-10-24"
     },
     "https://www.michikanji.com/kanji/%E5%85%AC": {
-      "s": "URL is unknown to Google",
+      "s": "Discovered - currently not indexed",
       "c": null
     },
     "https://www.michikanji.com/kanji/%E5%91%B3": {
@@ -2331,6 +2366,186 @@
           "url": "https://www.michikanji.com/kanji/%E5%85%AC",
           "from": "Discovered - currently not indexed",
           "to": "URL is unknown to Google"
+        }
+      ]
+    },
+    {
+      "takenOn": "2026-10-26",
+      "property": "sc-domain:michikanji.com",
+      "since": "2026-09-29",
+      "sitemap": {
+        "lastDownloaded": "2026-10-17T21:21:28.654Z",
+        "lastSubmitted": "2026-09-29T07:04:16.922Z",
+        "submitted": 1936,
+        "errors": 0,
+        "warnings": 0
+      },
+      "groups": {
+        "level-pages": {
+          "total": 3,
+          "errors": 0,
+          "indexed": 2,
+          "crawledSince": 2,
+          "states": {
+            "Submitted and indexed": 2,
+            "Discovered - currently not indexed": 1
+          }
+        },
+        "n5": {
+          "total": 82,
+          "errors": 0,
+          "indexed": 61,
+          "crawledSince": 50,
+          "states": {
+            "Submitted and indexed": 61,
+            "Discovered - currently not indexed": 7,
+            "URL is unknown to Google": 3,
+            "Crawled - currently not indexed": 11
+          }
+        },
+        "n4": {
+          "total": 171,
+          "errors": 0,
+          "indexed": 71,
+          "crawledSince": 48,
+          "states": {
+            "Crawled - currently not indexed": 47,
+            "Submitted and indexed": 71,
+            "Discovered - currently not indexed": 44,
+            "URL is unknown to Google": 9
+          }
+        }
+      },
+      "changes": [
+        {
+          "url": "https://www.michikanji.com/kanji/%E4%B8%87",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%8D%88",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%AF%8D",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%9C%9F",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E4%BC%91",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E9%96%93",
+          "from": "Crawled - currently not indexed",
+          "to": "Submitted and indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%A4%96",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E7%94%A8",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%98%BC",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%A4%95",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%98%A5",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%BC%B7",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%AD%A2",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E9%80%81",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%80%9D",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%96%87",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%AE%A4",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%A0%82",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E7%89%9B",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E8%8A%B1",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E6%AD%8C",
+          "from": "Crawled - currently not indexed",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E9%80%9A",
+          "from": "Crawled - currently not indexed",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%90%8C",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E7%95%8C",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E8%B3%AA",
+          "from": "Discovered - currently not indexed",
+          "to": "URL is unknown to Google"
+        },
+        {
+          "url": "https://www.michikanji.com/kanji/%E5%85%AC",
+          "from": "URL is unknown to Google",
+          "to": "Discovered - currently not indexed"
         }
       ]
     }
