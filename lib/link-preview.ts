@@ -10,9 +10,11 @@
  * would ship a parser for nothing. The one page that calls it is statically generated with
  * `revalidate = 86400`, so the request happens at build and then at most once a day.
  *
- * It never throws and never returns half a card: a failed request, a non-HTML answer, or a
- * page with no title or no description is `null`, and the caller keeps what it already had. A
- * build must not depend on someone else's site being up.
+ * It never throws and never returns half a card: a failed request, a non-HTML answer, a
+ * redirect to another host, or a page with no title or no description is `null`, and the caller
+ * keeps what it already had. A build must not depend on someone else's site being up. The
+ * redirect rule is what keeps "the card says only what that page says" true: the link is the
+ * caller's constant, so text read from a different host would sit under a link to this one.
  *
  * The caller owns the link. This returns text for display only, so a page cannot point a card
  * somewhere else by changing its own `og:url`, and the image is returned as the page gave it
@@ -93,6 +95,21 @@ export function parsePreview(html: string, pageUrl: string): LinkPreview | null 
   };
 }
 
+/**
+ * True when the answer came from the host that was asked. `fetch` follows redirects, and a
+ * `www.` hop counts as another host: the caller's image check and its link name one host, so a
+ * page that moves is better served by the pinned copy than by text from somewhere else. An empty
+ * `landed` (a runtime that does not report it) is taken as no redirect.
+ */
+export function answeredByRequestedHost(requested: string, landed: string): boolean {
+  if (!landed) return true;
+  try {
+    return new URL(landed).hostname === new URL(requested).hostname;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
   try {
     const response = await fetch(url, {
@@ -101,6 +118,7 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview | null>
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!response.ok || !(response.headers.get('content-type') ?? '').includes('text/html')) return null;
+    if (!answeredByRequestedHost(url, response.url)) return null;
     return parsePreview(await response.text(), response.url || url);
   } catch {
     return null;
