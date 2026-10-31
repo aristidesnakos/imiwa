@@ -261,6 +261,7 @@ focus character across episodes.
 | 8 | How much is it? | 百 千 万 円 金 高 何 | 百円, 千円, 一万円, 高い, お金 | written 2026-10-01 | Sat 2026-10-10 | — |
 | 9 | What time is it? | 時 分 半 午 今 毎 | 何時, 半, 午前, 今, 毎日 | written 2026-10-05 | Sat 2026-10-17 | — |
 | 10 | A hot summer day | 年 月 火 土 暑 | 今年, 来月, 火よう日, 土よう日, 暑い | written 2026-10-12 | Sat 2026-10-24 | — |
+| 11 | Which way? | 西 南 北 右 左 外 中 | 右, 左, 北, 外, 中 | written 2026-10-19 | Sat 2026-10-31 | — |
 
 **Corrected 2026-09-30.** Episode 5 was written here as "The train to Tokyo / 東京", but 京 is not one of
 the 82 N5 kanji, so 東京 cannot appear in a strict-N5 episode: the episode is "The train east", teaches 東
@@ -342,6 +343,11 @@ Paste these as the href. Display text stays the kanji.
 | 10 | 火 | `https://michikanji.com/kanji/%E7%81%AB` |
 | 10 | 土 | `https://michikanji.com/kanji/%E5%9C%9F` |
 | 10 | 暑 | `https://michikanji.com/kanji/%E6%9A%91` |
+| 11 | 右 | `https://michikanji.com/kanji/%E5%8F%B3` |
+| 11 | 左 | `https://michikanji.com/kanji/%E5%B7%A6` |
+| 11 | 北 | `https://michikanji.com/kanji/%E5%8C%97` |
+| 11 | 外 | `https://michikanji.com/kanji/%E5%A4%96` |
+| 11 | 中 | `https://michikanji.com/kanji/%E4%B8%AD` |
 
 ### The reply question
 
@@ -360,6 +366,7 @@ just collecting praise:
 | 8 | Have you ever paid for Japanese study materials — a workbook, an app, a class? What made you say yes, or no? | Willingness to pay and the price anchor; discriminates the paid-reader thesis from free-tool use |
 | 9 | When in your day do you study Japanese, and for how long? | Study habit and session length; tells us whether a weekly six-panel read fits the time readers actually have |
 | 10 | Is it hot or cold where you are right now, and how do you say it in your own language? | Low-effort reply that starts a conversation and shows where readers live; fits the weather theme |
+| 11 | When you get lost, do you ask someone the way or look at your phone? | A one-line reply anyone can give; fits the getting-lost theme |
 
 **Episodes 7-14 still need a question each.** Write it on the Monday the script is written (one line, always
 an invitation to reply, never a link, rotating as above) and show it in the Japanese-read comment on the
